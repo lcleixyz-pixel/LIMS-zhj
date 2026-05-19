@@ -1,0 +1,23 @@
+body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f5f7fa; }
+#header { background: #1a3a5c; color: #fff; padding: 12px 0; margin-bottom: 0; }
+#header a { color: #fff; }
+.qms-logo a { color: #fff; text-decoration: none; }
+#login-info { color: #e0e8f0; padding-top: 8px; }
+.qms-nav { border-radius: 0; margin-bottom: 20px; border: none; background: #2c5282; }
+.qms-nav .navbar-brand, .qms-nav .nav > li > a { color: #fff !important; }
+.qms-nav .dropdown-menu a { color: #333 !important; }
+.main-content { min-height: 500px; padding-bottom: 40px; }
+.login-page { background: linear-gradient(135deg, #1a3a5c 0%, #2c5282 100%); min-height: 100vh; padding-top: 80px; }
+.login-box { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+.stat-card { background: #fff; border-radius: 6px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #2c5282; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.stat-card h2 { margin: 0; font-size: 28px; color: #1a3a5c; }
+.stat-card p { margin: 5px 0 0; color: #666; }
+.doc-level-1 { border-left-color: #c53030; }
+.doc-level-2 { border-left-color: #d69e2e; }
+.doc-level-3 { border-left-color: #38a169; }
+.doc-level-4 { border-left-color: #3182ce; }
+.status-draft { color: #718096; }
+.status-reviewing { color: #d69e2e; }
+.status-published { color: #38a169; }
+.status-obsolete { color: #e53e3e; }
+.footer { padding: 20px 0; margin-top: 30px; }

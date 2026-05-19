@@ -1,0 +1,42 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# PHP / CakePHP runtime
+**/tmp/cache/**
+**/tmp/logs/**
+**/tmp/sessions/**
+**/tmp/tests/**
+!**/tmp/**/.gitkeep
+
+# User uploads (keep directory structure only)
+**/webroot/files/**/*
+!**/webroot/files/**/.gitkeep
+**/webroot/schema/*.bak
+
+# Local config overrides (never commit secrets)
+**/Config/database.local.php
+.env
+.env.*
+
+# Logs and debug
+**/error_log
+**/debug.log
+**/*.log
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Node (if any)
+node_modules/
