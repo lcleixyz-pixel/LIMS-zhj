@@ -1,0 +1,17 @@
+<?php
+/**
+ * 复制本文件为 database.php 并填写实际连接信息。
+ * database.php 已列入 .gitignore 的本地覆盖规则（若使用 database.local.php）。
+ */
+class DATABASE_CONFIG {
+    public $default = array(
+        'datasource' => 'Database/Mysql',
+        'persistent' => false,
+        'host' => 'localhost',
+        'login' => 'root',
+        'password' => 'YOUR_PASSWORD_HERE',
+        'database' => 'jewelry_qms',
+        'prefix' => '',
+        'encoding' => 'utf8'
+    );
+}
