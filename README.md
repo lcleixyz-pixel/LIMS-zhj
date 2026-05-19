@@ -53,6 +53,7 @@ flinkiso-ver-2/
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | 三项目部署与环境要求 |
 | [docs/VERSIONING.md](docs/VERSIONING.md) | Git 分支、标签、提交规范 |
 | [docs/JEWELRY_QMS_GUIDE.md](docs/JEWELRY_QMS_GUIDE.md) | 体系文件适配、模板、审批流 |
+| [docs/REMOTE_UPLOAD.md](docs/REMOTE_UPLOAD.md) | 推送到 GitHub / Gitee 远程仓库 |
 
 ---
 
