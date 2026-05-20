@@ -42,7 +42,6 @@ class DocumentsController extends AppController {
         if ($this->request->is('post')) {
             $id = CakeText::uuid();
             $this->request->data['Document']['id'] = $id;
-            $this->request->data['Document']['company_id'] = $this->Session->read('User.company_id');
             $this->request->data['Document']['status'] = 'draft';
             $this->request->data['Document']['prepared_by'] = $this->Session->read('User.employee_id');
             $this->request->data['Document']['created_by'] = $this->Session->read('User.id');
@@ -110,9 +109,9 @@ class DocumentsController extends AppController {
         }
         if ($this->request->is('post')) {
             $rev = (int)$doc['Document']['revision'] + 1;
-            $versionLetter = chr(ord('A') + floor(($rev - 1) / 10));
-            $versionNum = $rev % 10;
-            $newVersion = $versionLetter . '/' . $versionNum;
+            $majorLetter = chr(ord('A') + (int)(($rev - 1) / 10));
+            $minorNum = (($rev - 1) % 10);
+            $newVersion = $majorLetter . '/' . $minorNum;
 
             $this->DocumentRevision->create();
             $this->DocumentRevision->save(array(
@@ -151,6 +150,9 @@ class DocumentsController extends AppController {
     }
 
     public function submit_review($id = null) {
+        if (!$this->request->is('post')) {
+            throw new MethodNotAllowedException('仅限 POST 请求');
+        }
         $doc = $this->Document->findById($id);
         if ($doc) {
             $this->Document->id = $id;

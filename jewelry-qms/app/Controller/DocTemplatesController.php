@@ -9,7 +9,6 @@ class DocTemplatesController extends AppCrudController {
         if ($this->request->is('post')) {
             $id = CakeText::uuid();
             $this->request->data['DocTemplate']['id'] = $id;
-            $this->request->data['DocTemplate']['company_id'] = $this->Session->read('User.company_id');
             if (!empty($_FILES['template_file']['name'])) {
                 $upload = $this->_uploadFile($_FILES['template_file'], 'templates', $id);
                 if ($upload) {
@@ -32,6 +31,9 @@ class DocTemplatesController extends AppCrudController {
             throw new NotFoundException();
         }
         $path = WWW_ROOT . $t['DocTemplate']['file_path'];
+        if (!file_exists($path)) {
+            throw new NotFoundException('文件未找到');
+        }
         $this->response->file($path, array('download' => true, 'name' => $t['DocTemplate']['file_name']));
         return $this->response;
     }

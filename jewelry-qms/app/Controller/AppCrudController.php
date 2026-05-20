@@ -1,9 +1,6 @@
 <?php
 App::uses('AppController', 'Controller');
 
-/**
- * 通用 CRUD 基类，各业务模块可继承并覆盖 $displayFields / $title
- */
 class AppCrudController extends AppController {
 
     public $paginate = array('limit' => 20, 'order' => array('created' => 'DESC'));
@@ -29,9 +26,6 @@ class AppCrudController extends AppController {
         $model = $this->modelClass;
         if ($this->request->is('post')) {
             $this->request->data[$model]['id'] = CakeText::uuid();
-            if (array_key_exists('company_id', $this->$model->schema())) {
-                $this->request->data[$model]['company_id'] = $this->Session->read('User.company_id');
-            }
             if ($this->$model->save($this->request->data)) {
                 $this->Session->setFlash('保存成功', 'default', array('class' => 'alert-success'));
                 return $this->redirect(array('action' => 'index'));

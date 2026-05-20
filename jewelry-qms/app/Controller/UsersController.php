@@ -7,7 +7,6 @@ class UsersController extends AppController {
 
     public function beforeFilter() {
         parent::beforeFilter();
-        $this->AuthAllowed = array('login', 'logout');
         if (in_array($this->action, array('login', 'logout'))) {
             return;
         }
@@ -46,7 +45,6 @@ class UsersController extends AppController {
                     'is_mr' => $user['User']['is_mr'],
                     'user_session_id' => $sessionId
                 ));
-                $_SESSION['User'] = $this->Session->read('User');
                 return $this->redirect(array('controller' => 'dashboards', 'action' => 'index'));
             }
             $this->Session->setFlash('用户名或密码错误', 'default', array('class' => 'alert-danger'));

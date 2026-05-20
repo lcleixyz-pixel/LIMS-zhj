@@ -1,5 +1,6 @@
 ﻿<?php
-App::uses('AppCrudController', 'Controller');
+App::uses('AppController', 'Controller');
+
 class NonconformitiesController extends AppCrudController {
-    public $uses = array('Nonconformitie');
+    public $uses = array('Nonconformity');
 }

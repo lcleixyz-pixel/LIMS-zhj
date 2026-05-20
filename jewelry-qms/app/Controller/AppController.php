@@ -72,14 +72,21 @@ class AppController extends Controller {
     }
 
     protected function _checkAccess($action = null) {
-        if ($this->Session->read('User.role') === 'admin') {
+        $role = $this->Session->read('User.role');
+        if ($role === 'admin' || $role === 'quality_manager') {
             return true;
         }
-        return true;
+        return false;
     }
 
     public function delete($id = null) {
+        if (!$id) {
+            throw new NotFoundException('参数错误');
+        }
         $model = $this->modelClass;
+        if (!$this->$model->exists($id)) {
+            throw new NotFoundException('记录不存在');
+        }
         $this->$model->id = $id;
         $this->$model->save(array('soft_delete' => 1), false);
         $this->Session->setFlash('已删除', 'default', array('class' => 'alert-success'));
@@ -87,7 +94,13 @@ class AppController extends Controller {
     }
 
     public function restore($id = null) {
+        if (!$id) {
+            throw new NotFoundException('参数错误');
+        }
         $model = $this->modelClass;
+        if (!$this->$model->exists($id)) {
+            throw new NotFoundException('记录不存在');
+        }
         $this->$model->id = $id;
         $this->$model->save(array('soft_delete' => 0), false);
         $this->Session->setFlash('已恢复', 'default', array('class' => 'alert-success'));

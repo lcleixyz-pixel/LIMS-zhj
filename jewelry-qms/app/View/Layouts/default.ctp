@@ -16,10 +16,10 @@
     <div class="row">
         <div class="col-md-3">
             <h4 class="qms-logo"><?php echo $this->Html->link(h($companyName), array('controller' => 'dashboards', 'action' => 'index')); ?></h4>
-            <small class="text-muted">鐝犲疂妫€娴嬪疄楠屽 QMS</small>
+            <small class="text-muted">珠宝检测实验室 QMS</small>
         </div>
         <div class="col-md-6 text-center">
-            <span class="label label-default">CMA/CNAS 璐ㄩ噺绠＄悊浣撶郴</span>
+            <span class="label label-default">CMA/CNAS 质量管理体系</span>
         </div>
         <div class="col-md-3 text-right" id="login-info">
             <strong><?php echo h($this->Session->read('User.name')); ?></strong>
@@ -27,8 +27,8 @@
                 <span class="badge badge-danger"><?php echo $notificationCount; ?></span>
             <?php endif; ?>
             <br>
-            <?php echo $this->Html->link('淇敼瀵嗙爜', array('controller' => 'users', 'action' => 'change_password'), array('class' => 'btn btn-xs btn-default')); ?>
-            <?php echo $this->Html->link('閫€鍑?, array('controller' => 'users', 'action' => 'logout'), array('class' => 'btn btn-xs btn-primary')); ?>
+            <?php echo $this->Html->link('修改密码', array('controller' => 'users', 'action' => 'change_password'), array('class' => 'btn btn-xs btn-default')); ?>
+            <?php echo $this->Html->link('退出', array('controller' => 'users', 'action' => 'logout'), array('class' => 'btn btn-xs btn-primary')); ?>
         </div>
     </div>
 </div>
@@ -44,5 +44,3 @@
 </div>
 </body>
 </html>
-
-
