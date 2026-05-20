@@ -1,0 +1,156 @@
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">文件详情 - {$doc.doc_number|default=''}</h5>
+        <div class="d-flex flex-wrap gap-1">
+            {if $doc.status != 'published'}
+            <a href="/document/edit?id={$doc.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            {/if}
+            {if $doc.status == 'draft'}
+            <a href="/document/submitReview?id={$doc.id}" class="btn btn-sm btn-outline-success" onclick="return confirm('确认提交审核？');">提交审核</a>
+            {/if}
+            {if $doc.status == 'published'}
+            <a href="/document/revise?id={$doc.id}" class="btn btn-sm btn-outline-warning">发起修订</a>
+            {/if}
+            {if $doc.file_path}
+            <a href="/document/download?id={$doc.id}" class="btn btn-sm btn-outline-info">下载附件</a>
+            {/if}
+            <a href="/document/index" class="btn btn-sm btn-outline-secondary">返回列表</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr>
+                <th width="150">文件编号</th>
+                <td>{$doc.doc_number|default=''}</td>
+                <th width="150">文件标题</th>
+                <td>{$doc.title|default=''}</td>
+            </tr>
+            <tr>
+                <th>文件层级</th>
+                <td>
+                    {if $doc.level == 1}一级 - 质量手册
+                    {elseif $doc.level == 2}二级 - 程序文件
+                    {elseif $doc.level == 3}三级 - 作业指导书
+                    {else}四级 - 记录表单{/if}
+                </td>
+                <th>版本号</th>
+                <td>{$doc.version|default='A/0'}</td>
+            </tr>
+            <tr>
+                <th>文件状态</th>
+                <td>
+                    {if $doc.status == 'draft'}<span class="badge bg-secondary">草稿</span>
+                    {elseif $doc.status == 'reviewing'}<span class="badge bg-warning text-dark">审核中</span>
+                    {elseif $doc.status == 'approved'}<span class="badge bg-info text-dark">已批准</span>
+                    {elseif $doc.status == 'published'}<span class="badge bg-success">已发布</span>
+                    {elseif $doc.status == 'obsolete'}<span class="badge bg-dark">已作废</span>
+                    {else}<span class="badge bg-secondary">{$doc.status}</span>{/if}
+                </td>
+                <th>生效日期</th>
+                <td>{$doc.effective_date|default='-'}</td>
+            </tr>
+            <tr>
+                <th>归口部门</th>
+                <td>{$doc.department.name|default='-'}</td>
+                <th>文件分类</th>
+                <td>{$doc.doc_category.name|default='-'}</td>
+            </tr>
+            <tr>
+                <th>复审日期</th>
+                <td>{$doc.review_date|default='-'}</td>
+                <th>创建/更新时间</th>
+                <td>{$doc.created|default='-'} / {$doc.modified|default='-'}</td>
+            </tr>
+            <tr>
+                <th>修订说明</th>
+                <td colspan="3">{$doc.change_reason|default='-'}</td>
+            </tr>
+            <tr>
+                <th>附件</th>
+                <td colspan="3">
+                    {if $doc.file_path}
+                    <a href="/document/download?id={$doc.id}">{$doc.file_name|default=$doc.file_path}</a>
+                    {else}无{/if}
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0">审批流程</h6></div>
+    <div class="card-body">
+        {volist name="approvals" id="row"}
+        <div class="border rounded p-2 mb-2">
+            <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+                <span class="badge bg-primary">层级 {$row.approval_level|default=''}</span>
+                <span class="badge {if $row.status == 'approved'}bg-success{elseif $row.status == 'rejected'}bg-danger{else}bg-secondary{/if}">
+                    {if $row.status == 'approved'}已通过{elseif $row.status == 'rejected'}已驳回{else}待处理{/if}
+                </span>
+                <strong>{$row.user.name|default=$row.user_id}</strong>
+                <span class="text-muted ms-2">
+                    {if $row.approval_level == 1}编制
+                    {elseif $row.approval_level == 2}审核
+                    {elseif $row.approval_level == 3}批准
+                    {/if}
+                </span>
+                <span class="text-muted ms-auto">{$row.approved_on|default='-'}</span>
+            </div>
+            {if $row.comments}
+            <div class="text-muted small">{$row.comments}</div>
+            {/if}
+            {if $row.status == 'pending' && isset($user.id) && $row.user_id == $user.id}
+            <form method="post" action="/approval/approve" class="row g-2 mt-2">
+                <input type="hidden" name="id" value="{$row.id}">
+                <div class="col-md-4">
+                    <select name="status" class="form-select form-select-sm" required>
+                        <option value="approved">同意</option>
+                        <option value="rejected">驳回</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <input type="text" name="comments" class="form-control form-control-sm" placeholder="审批意见">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-sm btn-primary">提交</button>
+                </div>
+            </form>
+            {/if}
+        </div>
+        {/volist}
+        {empty name="approvals"}
+        <p class="text-muted mb-0">暂无审批记录</p>
+        {/empty}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h6 class="mb-0">修订历史</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th>版本</th>
+                    <th>修订次</th>
+                    <th>修订说明</th>
+                    <th>快照文件</th>
+                    <th>修订时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="doc.document_revisions" id="rev"}
+                <tr>
+                    <td>{$rev.version|default=''}</td>
+                    <td>{$rev.revision|default=''}</td>
+                    <td>{$rev.change_reason|default=''}</td>
+                    <td>{$rev.file_name|default='-'}</td>
+                    <td>{$rev.created|default=''}</td>
+                </tr>
+                {/volist}
+                {empty name="doc.document_revisions"}
+                <tr><td colspan="5" class="text-center text-muted">暂无修订记录</td></tr>
+                {/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,50 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑 {$pageTitle|default='培训实施记录'}</h5></div>
+    <div class="card-body">
+        <form method="post" action="/training_record/edit">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="mb-3">
+                <label class="form-label">培训活动</label>
+                <select name="training_id" class="form-select" required>
+                    {volist name="trainings" id="t"}
+                    <option value="{$t.id}" {if $record.training_id == $t.id}selected{/if}>{$t.training_date|default=''} {$t.title}</option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">参训员工</label>
+                <select name="employee_id" class="form-select" required>
+                    {volist name="employees" id="e"}
+                    <option value="{$e.id}" {if $record.employee_id == $e.id}selected{/if}>{$e.name}</option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">出勤</label>
+                <select name="attendance" class="form-select">
+                    <option value="present" {if $record.attendance == 'present'}selected{/if}>present</option>
+                    <option value="absent" {if $record.attendance == 'absent'}selected{/if}>absent</option>
+                    <option value="excused" {if $record.attendance == 'excused'}selected{/if}>excused</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">成绩</label>
+                <input type="text" name="evaluation_score" class="form-control" value="{$record.evaluation_score|default=''}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">考核结果</label>
+                <select name="evaluation_result" class="form-select">
+                    <option value="pending" {if $record.evaluation_result == 'pending'}selected{/if}>pending</option>
+                    <option value="pass" {if $record.evaluation_result == 'pass'}selected{/if}>pass</option>
+                    <option value="fail" {if $record.evaluation_result == 'fail'}selected{/if}>fail</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">备注</label>
+                <textarea name="remarks" class="form-control" rows="2">{$record.remarks|default=''}</textarea>
+            </div>
+            <a href="/training_record/index" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>

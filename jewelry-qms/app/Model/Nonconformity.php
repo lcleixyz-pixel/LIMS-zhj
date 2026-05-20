@@ -1,5 +1,9 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class Nonconformity extends AppModel {
-    public $useTable = 'nonconformities';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class Nonconformity extends BaseModel
+{
+    protected $name = 'nonconformities';
 }

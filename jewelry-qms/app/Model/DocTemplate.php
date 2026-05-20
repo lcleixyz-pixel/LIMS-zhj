@@ -1,5 +1,9 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class DocTemplate extends AppModel {
-    public $useTable = 'doc_templates';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class DocTemplate extends BaseModel
+{
+    protected $name = 'doc_templates';
 }

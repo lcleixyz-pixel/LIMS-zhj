@@ -1,5 +1,9 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class TrainingPlan extends AppModel {
-    public $useTable = 'training_plans';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class TrainingPlan extends BaseModel
+{
+    protected $name = 'training_plans';
 }

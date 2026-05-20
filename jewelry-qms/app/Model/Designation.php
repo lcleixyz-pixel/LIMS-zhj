@@ -1,5 +1,9 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class Designation extends AppModel {
-    public $useTable = 'designations';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class Designation extends BaseModel
+{
+    protected $name = 'designations';
 }

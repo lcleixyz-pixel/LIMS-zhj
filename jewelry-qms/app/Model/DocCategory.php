@@ -1,5 +1,9 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class DocCategory extends AppModel {
-    public $useTable = 'doc_categories';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class DocCategory extends BaseModel
+{
+    protected $name = 'doc_categories';
 }

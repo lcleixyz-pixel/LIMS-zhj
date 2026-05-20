@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{$systemTitle|default='JewelryQMS'} - {$user.name|default='QMS'}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/qms.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+</head>
+<body>
+<div class="container-fluid qms-header">
+    <div class="row align-items-center py-2">
+        <div class="col-md-3">
+            <h5 class="mb-0"><a href="/dashboard/index" class="text-decoration-none text-dark">{$systemTitle|default='JewelryQMS'}</a></h5>
+            <small class="text-muted">珠宝检测实验室 QMS</small>
+        </div>
+        <div class="col-md-6 text-center">
+            <span class="badge bg-secondary">CMA/CNAS 质量管理体系</span>
+        </div>
+        <div class="col-md-3 text-end">
+            <strong>{$user.name|default=''}</strong>
+            <span class="badge bg-danger ms-1">{$notificationCount|default=0}</span>
+            <br>
+            <a href="/login/changePassword" class="btn btn-sm btn-outline-secondary">修改密码</a>
+            <a href="/login/logout" class="btn btn-sm btn-primary">退出</a>
+        </div>
+    </div>
+</div>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard/index">工作台</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">文件控制</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/document/index">体系文件列表</a></li>
+                        <li><a class="dropdown-item" href="/document/add">新建文件</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/doc_template/index">文件模板管理</a></li>
+                        <li><a class="dropdown-item" href="/doc_category/index">文件分类</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">审核与评审</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/audit_plan/index">内审计划</a></li>
+                        <li><a class="dropdown-item" href="/audit_schedule/index">审核日程</a></li>
+                        <li><a class="dropdown-item" href="/audit_finding/index">审核发现</a></li>
+                        <li><a class="dropdown-item" href="/management_review/index">管理评审</a></li>
+                        <li><a class="dropdown-item" href="/review_action/index">评审决议</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">质量改进</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/capa/index">CAPA</a></li>
+                        <li><a class="dropdown-item" href="/nonconformity/index">不符合工作</a></li>
+                        <li><a class="dropdown-item" href="/complaint/index">客户投诉</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">资源管理</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/equipment/index">设备台账</a></li>
+                        <li><a class="dropdown-item" href="/equipment_maintenance/index">维护保养</a></li>
+                        <li><a class="dropdown-item" href="/calibration/index">校准记录</a></li>
+                        <li><a class="dropdown-item" href="/training/index">培训活动</a></li>
+                        <li><a class="dropdown-item" href="/training_record/index">培训记录明细</a></li>
+                        <li><a class="dropdown-item" href="/competency_record/index">能力确认</a></li>
+                        <li><a class="dropdown-item" href="/supplier/index">供应商管理</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">系统设置</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/department/index">部门</a></li>
+                        <li><a class="dropdown-item" href="/employee/index">员工</a></li>
+                        <li><a class="dropdown-item" href="/user/index">用户</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container mt-3">
+    {if session('success')}
+    <div class="alert alert-success alert-dismissible fade show">{$Think.session.success}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {/if}
+    {if session('warning')}
+    <div class="alert alert-warning alert-dismissible fade show">{$Think.session.warning}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {/if}
+    {if session('error')}
+    <div class="alert alert-danger alert-dismissible fade show">{$Think.session.error}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {/if}
+    {__CONTENT__}
+</div>
+<div class="container mt-4">
+    <footer class="text-center text-muted py-3">
+        <small>&copy; {:date('Y')} {$systemTitle|default='JewelryQMS'} v{$systemVersion|default='2.0'}</small>
+    </footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

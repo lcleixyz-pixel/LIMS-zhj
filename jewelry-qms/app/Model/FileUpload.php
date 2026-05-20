@@ -1,5 +1,9 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class FileUpload extends AppModel {
-    public $useTable = 'file_uploads';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class FileUpload extends BaseModel
+{
+    protected $name = 'file_uploads';
 }

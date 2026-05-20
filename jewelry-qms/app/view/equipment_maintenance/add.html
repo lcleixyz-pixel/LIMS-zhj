@@ -1,0 +1,42 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">新增 {$pageTitle|default='设备维护保养'}</h5></div>
+    <div class="card-body">
+        <form method="post" action="/equipment_maintenance/add">
+            <div class="mb-3">
+                <label class="form-label">设备</label>
+                <select name="equipment_id" class="form-select" required>
+                    <option value="">请选择</option>
+                    {volist name="equipments" id="eq"}
+                    <option value="{$eq.id}">{$eq.equipment_number} {$eq.name}</option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label required">维护日期</label>
+                <input type="date" name="maintenance_date" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">类型</label>
+                <select name="maintenance_type" class="form-select">
+                    <option value="routine">routine</option>
+                    <option value="repair">repair</option>
+                    <option value="verification">verification</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">说明</label>
+                <textarea name="description" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">执行人</label>
+                <input type="text" name="performed_by" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">下次维护/核查到期</label>
+                <input type="date" name="next_due_date" class="form-control">
+            </div>
+            <a href="/equipment_maintenance/index" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>
