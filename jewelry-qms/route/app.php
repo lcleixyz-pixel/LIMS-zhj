@@ -25,12 +25,33 @@ Route::group(function () {
 
     Route::rule('user/changePassword', 'User/changePassword');
 
+    Route::rule('import/index', 'Import/index');
+    Route::post('import/upload', 'Import/upload');
+
+    Route::rule('notification/index', 'Notification/index');
+    Route::get('notification/read', 'Notification/read');
+    Route::get('notification/markAllRead', 'Notification/markAllRead');
+
+    Route::get('capa/advance', 'Capa/advance');
+    Route::rule('capa/advance', 'Capa/advance');
+    Route::get('audit_plan/approve', 'AuditPlan/approve');
+    Route::get('audit_finding/createCapa', 'AuditFinding/createCapa');
+    Route::get('nonconformity/createCapa', 'Nonconformity/createCapa');
+    Route::get('complaint/createCapa', 'Complaint/createCapa');
+    Route::rule('complaint/advance', 'Complaint/advance');
+    Route::get('management_review/complete', 'ManagementReview/complete');
+    Route::rule('review_action/verify', 'ReviewAction/verify');
+    Route::get('review_action/createCapa', 'ReviewAction/createCapa');
+    Route::get('training/complete', 'Training/complete');
+    Route::get('supplier/qualified', 'Supplier/qualified');
+
     $crudModules = [
         'user', 'department', 'employee',
         'doc_category' => 'DocCategory',
         'doc_template' => 'DocTemplate',
         'audit_plan' => 'AuditPlan',
         'audit_schedule' => 'AuditSchedule',
+        'audit_checklist' => 'AuditChecklist',
         'audit_finding' => 'AuditFinding',
         'management_review' => 'ManagementReview',
         'review_action' => 'ReviewAction',
@@ -63,5 +84,6 @@ Route::group(function () {
     }
 })->middleware([
     \app\middleware\Auth::class,
+    \app\middleware\Rbac::class,
     \app\middleware\AuditLog::class,
 ]);

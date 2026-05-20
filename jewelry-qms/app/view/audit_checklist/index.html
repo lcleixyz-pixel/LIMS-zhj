@@ -1,0 +1,22 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">审核检查表</h5>
+        <a href="/audit_checklist/add" class="btn btn-primary btn-sm">新增检查项</a>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped table-sm">
+            <thead><tr><th>条款</th><th>检查项</th><th>结果</th><th>操作</th></tr></thead>
+            <tbody>
+                {volist name="items" id="item"}
+                <tr>
+                    <td>{$item.clause|default='-'}</td>
+                    <td>{$item.check_item|mb_substr=0,50,'utf-8'}</td>
+                    <td>{$item.result|default='-'}</td>
+                    <td><a href="/audit_checklist/view?id={$item.id}">查看</a></td>
+                </tr>
+                {/volist}
+            </tbody>
+        </table>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>

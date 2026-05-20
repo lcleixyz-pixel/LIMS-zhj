@@ -1,0 +1,21 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">批量导入（CSV）</h5></div>
+    <div class="card-body">
+        <p class="text-muted">请将 Excel 另存为 UTF-8 CSV 后上传。首行为列标题。</p>
+        <form method="post" action="/import/upload" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">导入类型</label>
+                <select name="type" class="form-select">
+                    <option value="document">文件台账（文件编号,文件名称,层级,版本,归口部门,生效日期）</option>
+                    <option value="equipment">设备台账（设备编号,设备名称,型号,制造商,位置,校准周期月）</option>
+                    <option value="employee">人员花名册（工号,姓名,部门,邮箱,电话,入职日期）</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">CSV文件</label>
+                <input type="file" name="file" class="form-control" accept=".csv" required>
+            </div>
+            <button type="submit" class="btn btn-primary">开始导入</button>
+        </form>
+    </div>
+</div>

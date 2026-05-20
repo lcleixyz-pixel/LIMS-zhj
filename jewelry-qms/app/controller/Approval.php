@@ -28,9 +28,9 @@ class Approval extends BaseController
                         $doc->save();
                     }
                 }
-                Session::flash('success', '?????');
+                Session::flash('success', '审批已处理');
             } else {
-                Session::flash('error', '????????');
+                Session::flash('error', '审批处理失败，请检查权限或状态');
             }
         }
 

@@ -1,5 +1,7 @@
 <?php
 
+use think\facade\Config;
+
 if (!function_exists('qms_uuid')) {
     function qms_uuid(): string
     {
@@ -25,5 +27,38 @@ if (!function_exists('qms_controller_url')) {
     function qms_controller_url(string $controllerName): string
     {
         return strtolower(trim(preg_replace('/(?<!^)[A-Z]/', '_$0', $controllerName), '_'));
+    }
+}
+
+if (!function_exists('qms_status_label')) {
+    function qms_status_label(string $module, string $status): string
+    {
+        $labels = Config::get('qms.statusLabels.' . $module, []);
+
+        return $labels[$status] ?? $status;
+    }
+}
+
+if (!function_exists('qms_next_number')) {
+    function qms_next_number(string $prefix, string $modelClass, string $field = 'capa_number'): string
+    {
+        $year = date('Y');
+        $pattern = $prefix . $year;
+        $last = $modelClass::where($field, 'like', $pattern . '%')
+            ->order($field, 'desc')
+            ->value($field);
+        $seq = 1;
+        if ($last && preg_match('/(\d+)$/', (string) $last, $m)) {
+            $seq = (int) $m[1] + 1;
+        }
+
+        return $pattern . str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
+    }
+}
+
+if (!function_exists('qms_can')) {
+    function qms_can(string $controller): bool
+    {
+        return \app\service\RbacService::canAccess($controller);
     }
 }

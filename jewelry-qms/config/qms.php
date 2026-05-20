@@ -1,7 +1,7 @@
 <?php
 return [
     'title' => '珠宝检测实验室质量管理系统',
-    'version' => '2.0.0',
+    'version' => '2.1.0',
     'company_id' => '00000000-0000-0000-0000-000000000001',
 
     'docLevels' => [
@@ -26,8 +26,107 @@ return [
         'staff' => '一般人员',
     ],
 
+    'permissions' => [
+        'admin' => ['*'],
+        'quality_manager' => [
+            'dashboard', 'document', 'approval', 'doc_category', 'doc_template',
+            'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
+            'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
+            'equipment', 'equipment_maintenance', 'calibration',
+            'training', 'training_record', 'competency_record',
+            'supplier', 'supplier_evaluation', 'import', 'notification',
+            'department', 'employee', 'user',
+        ],
+        'auditor' => [
+            'dashboard', 'document', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
+            'capa', 'nonconformity', 'complaint', 'notification',
+        ],
+        'department_head' => [
+            'dashboard', 'document', 'capa', 'nonconformity', 'complaint',
+            'equipment', 'equipment_maintenance', 'calibration',
+            'training', 'training_record', 'competency_record', 'notification',
+        ],
+        'staff' => [
+            'dashboard', 'document', 'complaint', 'notification',
+        ],
+    ],
+
+    'statusLabels' => [
+        'capa' => [
+            'open' => '待处理',
+            'analyzing' => '原因分析',
+            'implementing' => '措施实施',
+            'verifying' => '效果验证',
+            'closed' => '已关闭',
+        ],
+        'audit_plan' => [
+            'draft' => '草稿',
+            'approved' => '已批准',
+            'in_progress' => '进行中',
+            'completed' => '已完成',
+        ],
+        'audit_schedule' => [
+            'planned' => '已计划',
+            'in_progress' => '审核中',
+            'completed' => '已完成',
+        ],
+        'audit_finding' => [
+            'open' => '待整改',
+            'correcting' => '整改中',
+            'verified' => '已验证',
+            'closed' => '已关闭',
+        ],
+        'management_review' => [
+            'planned' => '计划中',
+            'completed' => '已完成',
+            'follow_up' => '跟踪中',
+        ],
+        'review_action' => [
+            'open' => '待执行',
+            'in_progress' => '执行中',
+            'completed' => '已完成',
+            'overdue' => '已逾期',
+        ],
+        'complaint' => [
+            'received' => '已受理',
+            'investigating' => '调查中',
+            'handling' => '处理中',
+            'responded' => '已回复',
+            'closed' => '已关闭',
+        ],
+        'nonconformity' => [
+            'open' => '待评估',
+            'evaluating' => '评估中',
+            'correcting' => '纠正中',
+            'verified' => '已验证',
+            'closed' => '已关闭',
+        ],
+        'equipment' => [
+            'active' => '合格',
+            'calibrating' => '校准中',
+            'maintenance' => '限用',
+            'decommissioned' => '报废',
+        ],
+        'supplier' => [
+            'pending' => '待评价',
+            'qualified' => '合格',
+            'suspended' => '暂停',
+            'removed' => '黑名单',
+        ],
+        'training' => [
+            'planned' => '计划中',
+            'completed' => '已完成',
+            'cancelled' => '已取消',
+        ],
+    ],
+
     'upload' => [
-        'allowed_extensions' => ['doc', 'docx', 'pdf', 'xls', 'xlsx', 'jpg', 'png'],
+        'allowed_extensions' => ['doc', 'docx', 'pdf', 'xls', 'xlsx', 'csv', 'jpg', 'png'],
         'max_size' => 20 * 1024 * 1024,
+    ],
+
+    'notification' => [
+        'calibration_days' => 30,
+        'capa_overdue_days' => 0,
     ],
 ];

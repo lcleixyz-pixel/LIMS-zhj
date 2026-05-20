@@ -219,6 +219,9 @@ class Document extends BaseController
         if ($doc) {
             $doc->status = 'reviewing';
             $doc->save();
+            if ($doc->reviewed_by) {
+                \app\service\NotificationService::notifyApprovalPending($doc->reviewed_by, $doc->title, $doc->id);
+            }
             Session::flash('success', '已提交审核');
         }
 

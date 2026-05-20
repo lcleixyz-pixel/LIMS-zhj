@@ -1,0 +1,11 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">验证决议完成</h5></div>
+    <div class="card-body">
+        <p>{$record.action_item}</p>
+        <form method="post" action="/review_action/verify?id={$record.id}">
+            <div class="mb-3"><label>完成日期</label><input type="date" name="completion_date" class="form-control" value="{:date('Y-m-d')}"></div>
+            <div class="mb-3"><label>验证说明</label><textarea name="verification" class="form-control" rows="3" required></textarea></div>
+            <button type="submit" class="btn btn-primary">确认完成</button>
+        </form>
+    </div>
+</div>

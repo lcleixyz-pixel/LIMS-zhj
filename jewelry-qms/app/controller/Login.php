@@ -60,7 +60,7 @@ class Login extends BaseController
                 return redirect('/dashboard/index');
             }
 
-            View::assign('error', '????????');
+            View::assign('error', '用户名或密码错误');
         }
 
         View::assign('systemTitle', Config::get('qms.title', 'QMS'));
@@ -93,11 +93,11 @@ class Login extends BaseController
             if ($user && password_verify($oldPassword, $user->password)) {
                 $user->password = password_hash($newPassword, PASSWORD_DEFAULT);
                 $user->save();
-                Session::flash('success', '?????');
+                Session::flash('success', '密码已修改');
 
                 return redirect('/dashboard/index');
             }
-            View::assign('error', '?????');
+            View::assign('error', '原密码不正确');
         }
 
         return View::fetch('login/change_password');

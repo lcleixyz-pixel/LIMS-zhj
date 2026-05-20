@@ -20,7 +20,7 @@
         </div>
         <div class="col-md-3 text-end">
             <strong>{$user.name|default=''}</strong>
-            <span class="badge bg-danger ms-1">{$notificationCount|default=0}</span>
+            <a href="/notification/index" class="badge bg-danger ms-1 text-decoration-none">{$notificationCount|default=0}</a>
             <br>
             <a href="/login/changePassword" class="btn btn-sm btn-outline-secondary">修改密码</a>
             <a href="/login/logout" class="btn btn-sm btn-primary">退出</a>
@@ -47,6 +47,7 @@
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="/audit_plan/index">内审计划</a></li>
                         <li><a class="dropdown-item" href="/audit_schedule/index">审核日程</a></li>
+                        <li><a class="dropdown-item" href="/audit_checklist/index">审核检查表</a></li>
                         <li><a class="dropdown-item" href="/audit_finding/index">审核发现</a></li>
                         <li><a class="dropdown-item" href="/management_review/index">管理评审</a></li>
                         <li><a class="dropdown-item" href="/review_action/index">评审决议</a></li>
@@ -70,6 +71,7 @@
                         <li><a class="dropdown-item" href="/training_record/index">培训记录明细</a></li>
                         <li><a class="dropdown-item" href="/competency_record/index">能力确认</a></li>
                         <li><a class="dropdown-item" href="/supplier/index">供应商管理</a></li>
+                        <li><a class="dropdown-item" href="/supplier/qualified">合格供应商名录</a></li>
                     </ul>
                 </li>
                 <li class="nav-item dropdown">
@@ -78,6 +80,9 @@
                         <li><a class="dropdown-item" href="/department/index">部门</a></li>
                         <li><a class="dropdown-item" href="/employee/index">员工</a></li>
                         <li><a class="dropdown-item" href="/user/index">用户</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/import/index">批量导入</a></li>
+                        <li><a class="dropdown-item" href="/notification/index">通知中心</a></li>
                     </ul>
                 </li>
             </ul>
