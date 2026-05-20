@@ -1,5 +1,11 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class History extends AppModel {
-    public $useTable = 'histories';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class History extends BaseModel
+{
+    protected $name = 'histories';
+
+    protected $autoWriteTimestamp = false;
 }

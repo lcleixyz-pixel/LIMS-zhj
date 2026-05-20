@@ -1,5 +1,11 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class UserSession extends AppModel {
-    public $useTable = 'user_sessions';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class UserSession extends BaseModel
+{
+    protected $name = 'user_sessions';
+
+    protected $autoWriteTimestamp = false;
 }

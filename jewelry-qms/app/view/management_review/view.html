@@ -1,0 +1,32 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">管理评审 {$record.review_number}</h5>
+        <div>
+            {if $record.status != 'completed'}<a href="/management_review/complete?id={$record.id}" class="btn btn-sm btn-success">标记完成</a>{/if}
+            <a href="/review_action/add?management_review_id={$record.id}" class="btn btn-sm btn-primary">添加决议</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered mb-4">
+            <tr><th width="120">主题</th><td>{$record.title}</td></tr>
+            <tr><th>日期</th><td>{$record.review_date}</td></tr>
+            <tr><th>状态</th><td>{:qms_status_label('management_review', $record.status)}</td></tr>
+            <tr><th>评审输入</th><td><pre class="mb-0">{$record.inputs|default='-'}</pre></td></tr>
+            <tr><th>评审输出</th><td>{$record.outputs|default='-'}</td></tr>
+        </table>
+        <h6>评审决议跟踪</h6>
+        <table class="table table-sm">
+            <thead><tr><th>决议</th><th>截止</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+                {volist name="actions" id="a"}
+                <tr>
+                    <td>{$a.action_item|mb_substr=0,40,'utf-8'}</td>
+                    <td>{$a.due_date|default='-'}</td>
+                    <td>{:qms_status_label('review_action', $a.status)}</td>
+                    <td><a href="/review_action/view?id={$a.id}">查看</a></td>
+                </tr>
+                {/volist}
+            </tbody>
+        </table>
+    </div>
+</div>

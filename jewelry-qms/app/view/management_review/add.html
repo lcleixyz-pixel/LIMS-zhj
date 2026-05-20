@@ -1,0 +1,19 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">新建管理评审</h5></div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            系统自动汇总：CAPA {$reviewInputs.open_capa} | 投诉 {$reviewInputs.open_complaints} | 不符合 {$reviewInputs.open_nc} | 审核发现 {$reviewInputs.open_findings} | 逾期决议 {$reviewInputs.overdue_actions}
+        </div>
+        <form method="post" action="/management_review/add">
+            <div class="row">
+                <div class="col-md-6 mb-3"><label>评审编号</label><input name="review_number" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="required">评审日期</label><input type="date" name="review_date" class="form-control" required></div>
+                <div class="col-12 mb-3"><label class="required">主题</label><input name="title" class="form-control" required></div>
+                <div class="col-12 mb-3"><label>评审输入（可补充）</label><textarea name="inputs" class="form-control" rows="5"></textarea></div>
+                <div class="col-12 mb-3"><label>评审输出</label><textarea name="outputs" class="form-control" rows="3"></textarea></div>
+                <div class="col-12 mb-3"><label>决议事项</label><textarea name="resolutions" class="form-control" rows="3"></textarea></div>
+            </div>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>

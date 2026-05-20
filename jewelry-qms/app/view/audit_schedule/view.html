@@ -1,0 +1,33 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">审核日程</h5>
+        <div>
+            <a href="/audit_checklist/add?audit_schedule_id={$record.id}" class="btn btn-sm btn-primary">添加检查项</a>
+            <a href="/audit_finding/add?audit_schedule_id={$record.id}" class="btn btn-sm btn-warning">登记发现</a>
+            <a href="/audit_plan/view?id={$plan.id}" class="btn btn-sm btn-outline-secondary">返回计划</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <p>计划：{$plan.title|default='-'} | 日期：{$record.audit_date} | 条款：{$record.clause|default='-'}</p>
+        <h6>检查表</h6>
+        <table class="table table-sm mb-4">
+            <thead><tr><th>条款</th><th>检查项</th><th>结果</th></tr></thead>
+            <tbody>{volist name="checklists" id="c"}<tr><td>{$c.clause}</td><td>{$c.check_item}</td><td>{$c.result|default='-'}</td></tr>{/volist}</tbody>
+        </table>
+        <h6>审核发现</h6>
+        <table class="table table-sm">
+            <thead><tr><th>编号</th><th>类型</th><th>描述</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+                {volist name="findings" id="f"}
+                <tr>
+                    <td>{$f.finding_number}</td>
+                    <td>{$f.finding_type}</td>
+                    <td>{$f.description|mb_substr=0,30,'utf-8'}</td>
+                    <td>{:qms_status_label('audit_finding', $f.status)}</td>
+                    <td><a href="/audit_finding/view?id={$f.id}">查看</a></td>
+                </tr>
+                {/volist}
+            </tbody>
+        </table>
+    </div>
+</div>

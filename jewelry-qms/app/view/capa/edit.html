@@ -1,0 +1,31 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑CAPA - {$record.capa_number}</h5></div>
+    <div class="card-body">
+        <form method="post" action="/capa/edit?id={$record.id}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">责任人</label>
+                    <select name="assigned_to" class="form-select">
+                        <option value="">请选择</option>
+                        {volist name="users" id="u"}
+                        <option value="{$u.id}" {if $record.assigned_to==$u.id}selected{/if}>{$u.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">截止日期</label>
+                    <input type="date" name="due_date" class="form-control" value="{$record.due_date}">
+                </div>
+                <div class="col-12 mb-3"><label>问题描述</label><textarea name="description" class="form-control" rows="3">{$record.description}</textarea></div>
+                <div class="col-12 mb-3"><label>根本原因</label><textarea name="root_cause" class="form-control" rows="3">{$record.root_cause}</textarea></div>
+                <div class="col-12 mb-3"><label>纠正措施</label><textarea name="corrective_action" class="form-control" rows="3">{$record.corrective_action}</textarea></div>
+                <div class="col-12 mb-3"><label>预防措施</label><textarea name="preventive_action" class="form-control" rows="3">{$record.preventive_action}</textarea></div>
+                <div class="col-12 mb-3"><label>效果验证</label><textarea name="verification" class="form-control" rows="2">{$record.verification}</textarea></div>
+            </div>
+            <div class="text-end">
+                <a href="/capa/view?id={$record.id}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>

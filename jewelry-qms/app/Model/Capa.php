@@ -1,11 +1,21 @@
 <?php
-App::uses('AppModel', 'Model');
+declare(strict_types=1);
 
-class Capa extends AppModel {
-    public $useTable = 'capas';
-    public $displayField = 'capa_number';
-    public $belongsTo = array(
-        'CapaSource' => array('foreignKey' => 'source_id'),
-        'Employee' => array('foreignKey' => 'assigned_to')
-    );
+namespace app\model;
+
+class Capa extends BaseModel
+{
+    protected $name = 'capas';
+
+    protected $displayField = 'capa_number';
+
+    public function capaSource()
+    {
+        return $this->belongsTo(CapaSource::class, 'source_id');
+    }
+
+    public function assignedEmployee()
+    {
+        return $this->belongsTo(Employee::class, 'assigned_to');
+    }
 }

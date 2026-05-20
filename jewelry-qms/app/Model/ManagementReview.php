@@ -1,5 +1,14 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class ManagementReview extends AppModel {
-    public $useTable = 'management_reviews';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class ManagementReview extends BaseModel
+{
+    protected $name = 'management_reviews';
+
+    public function reviewActions()
+    {
+        return $this->hasMany(ReviewAction::class);
+    }
 }

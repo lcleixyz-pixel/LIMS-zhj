@@ -21,23 +21,25 @@ flinkiso-ver-2/
 │   └── flinkiso-ver-2x-on-premise/
 ├── flinkiso-lite-master/              # 参考项目 B：FlinkISO Lite（CakePHP 2.3.6）
 │   └── flinkiso-lite-master/
-└── jewelry-qms/                       # 定制项目：珠宝检测实验室 QMS（主交付物）
+├── jewelry-qms/                       # 定制项目：珠宝检测实验室 QMS（主交付物，ThinkPHP 8）
+└── jewelry-qms-legacy/                 # CakePHP 2.x 原版（归档对照）
 ```
 
 | 子项目 | 角色 | 技术栈 | 说明 |
 |--------|------|--------|------|
 | `flinkiso/.../on-premise` | 参考 | CakePHP 2.10.24 | 企业本地版，ONLYOFFICE、PDF、动态表单、计费 |
 | `flinkiso-lite-master/...` | 参考 + 基础框架来源 | CakePHP 2.3.6 | 模块广、CAPA/培训/供应商/内审等 |
-| `jewelry-qms` | **生产定制** | CakePHP 2.x | 中文 17025 QMS，九模块，四层级文件控制 |
+| `jewelry-qms` | **生产定制** | ThinkPHP 8 + PHP 8.1+ | 中文 17025 QMS，SSR 模板，沿用原库结构 |
+| `jewelry-qms-legacy` | 归档 | CakePHP 2.x | 迁移前代码备份，不再作为主运行版本 |
 
 ---
 
 ## 快速开始（Jewelry QMS）
 
-1. 安装 PHP、MySQL、Apache（见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)）
-2. 导入数据库：`jewelry-qms/app/webroot/schema/jewelry_qms.sql`
-3. 配置 `jewelry-qms/app/Config/database.php`
-4. 浏览器访问 `jewelry-qms` 对应 URL
+1. PHP 8.1+、Composer、MySQL；Web 根目录指向 `jewelry-qms/public`
+2. 导入数据库：`jewelry-qms/database/jewelry_qms.sql`
+3. 复制并编辑 `jewelry-qms/.example.env` → `.env`（库名主机账号等）；`config/qms.php` 为业务参数
+4. `composer install`，开发启动：`php think run`（或配置 Apache/Nginx 虚拟主机）
 5. 默认账号：`admin` / `password`（**首次登录后务必修改**）
 
 详细步骤见 [jewelry-qms/README.md](jewelry-qms/README.md) 与 [docs/JEWELRY_QMS_GUIDE.md](docs/JEWELRY_QMS_GUIDE.md)。
@@ -69,6 +71,6 @@ flinkiso-ver-2/
 | 组件 | 当前版本 | 说明 |
 |------|----------|------|
 | 工作区 | 1.0.0 | 初始纳入三项目 + 文档 |
-| jewelry-qms | 1.0.0 | 九模块骨架 + 文件控制完整实现 |
+| jewelry-qms | 2.0.0 | ThinkPHP 8 迁移版，功能与计划中的模块对齐 |
 
 版本记录见 [docs/VERSIONING.md](docs/VERSIONING.md) 与 Git 标签 `v1.0.0`。

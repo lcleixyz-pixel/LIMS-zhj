@@ -1,78 +1,86 @@
-# 珠宝检测实验室质量管理系统 (Jewelry QMS)
+![](https://www.thinkphp.cn/uploads/images/20230630/300c856765af4d8ae758c503185f8739.png)
 
-基于 CakePHP 2.x，面向 CMA/CNAS（ISO/IEC 17025）要求的实验室质量管理体系信息化。
+ThinkPHP 8
+===============
+## Jewelry QMS（本目录）
 
-> 工作区总文档见上级目录 [README.md](../README.md)。架构、部署、体系文件适配见 [docs/](../docs/)。
+珠宝检测实验室 QMS，服务端渲染（`app/view`），公开入口 **`public/`**，数据库脚本 **`database/jewelry_qms.sql`**。
 
-## 功能模块
+- PHP **8.1+**，配置 `.env` + **`config/database.php`** / **`config/qms.php`**
+- 启动：`composer install`，根目录执行 `php think run`，浏览器访问控制台输出地址（默认 `:8000`）
+- CakePHP 2.x 旧版见仓库根目录 **`jewelry-qms-legacy/`**
 
-| 模块 | 说明 |
-|------|------|
-| 文件控制 | 四层级（质量手册/程序文件/SOP/记录表格）、Word 上传、差异化审批、版本修订 |
-| 内部审核 | 年度计划、审核日程、检查表、审核发现 |
-| 管理评审 | 评审会议、决议事项跟踪 |
-| CAPA | 纠正预防措施全生命周期 |
-| 设备与校准 | 设备台账、校准记录、到期提醒 |
-| 培训与能力 | 培训记录、能力确认与授权 |
-| 供应商 | 供应商评价与合格名录 |
-| 客户投诉 | 投诉受理与处理闭环 |
-| 不符合工作 | 识别、评价、处置、验证 |
+---
 
-## 环境要求
+## 特性
 
-- PHP 5.6+（推荐 7.4）
-- MySQL 5.7+ / MariaDB
-- Apache + mod_rewrite
-- 扩展：mbstring, pdo_mysql, json
+* 基于PHP`8.0+`重构
+* 升级`PSR`依赖
+* 依赖`think-orm`3.0+版本
+* 全新的`think-dumper`服务，支持远程调试
+* 支持`6.0`/`6.1`无缝升级
 
-## 安装步骤
+> ThinkPHP8的运行环境要求PHP8.0+
 
-1. 将 `jewelry-qms` 部署到 Web 目录（如 `htdocs/jewelry-qms`）
-2. 确保 `app/tmp` 可写（已创建 cache/logs/sessions 目录）
-3. 导入数据库：
-   ```bash
-   mysql -u root -p < app/webroot/schema/jewelry_qms.sql
-   ```
-4. 修改 `app/Config/database.php` 中的数据库连接信息
-5. 访问：`http://localhost/jewelry-qms/`
-6. 默认登录：**admin** / **password**
+现在开始，你可以使用官方提供的[ThinkChat](https://chat.topthink.com/)，让你在学习ThinkPHP的旅途中享受私人AI助理服务！
 
-## 审批规则（可在 `app/Config/core.php` 调整）
+![](https://www.topthink.com/uploads/assistant/20230630/4d1a3f0ad2958b49bb8189b7ef824cb0.png)
 
-- 质量手册、程序文件：**编制 → 审核 → 批准**（三级）
-- 作业指导书、记录表格：**编制 → 批准**（两级）
+ThinkPHP生态服务由[顶想云](https://www.topthink.com)（TOPThink Cloud）提供，为生态提供专业的开发者服务和价值之选。
 
-## 目录结构
+## 文档
 
-```
-jewelry-qms/
-├── app/
-│   ├── Config/          # 配置
-│   ├── Controller/      # 控制器
-│   ├── Model/           # 模型
-│   ├── View/            # 视图（中文界面）
-│   └── webroot/
-│       ├── schema/      # SQL 初始化脚本
-│       └── files/       # 上传文件存储
-├── lib/Cake/            # CakePHP 框架
-└── README.md
-```
+[完全开发手册](https://doc.thinkphp.cn)
 
-## 与现有检测业务系统对接
 
-本系统独立部署，建议通过 REST API 或数据库只读视图共享：
+## 赞助
 
-- 人员、设备、客户基础数据
-- 检测报告编号（用于投诉/不符合追溯）
+全新的[赞助计划](https://www.thinkphp.cn/sponsor)可以让你通过我们的网站、手册、欢迎页及GIT仓库获得巨大曝光，同时提升企业的品牌声誉，也更好保障ThinkPHP的可持续发展。
 
-## 后续定制
+[![](https://www.thinkphp.cn/sponsor/special.svg)](https://www.thinkphp.cn/sponsor/special)
 
-1. 在「文件模板管理」上传贵实验室现有 Word 模板（.docx）
-2. 按 `doc_number` 编码规则批量导入现有体系文件清单
-3. 配置各部门审批人（用户管理中设置 `is_approver`）
+[![](https://www.thinkphp.cn/sponsor.svg)](https://www.thinkphp.cn/sponsor)
 
-## 技术说明
+## 安装
 
-- 与检测业务系统松耦合，避免数据孤岛
-- UUID 主键、软删除、公司级数据隔离
-- 基于 FlinkISO Lite 架构裁剪，去除无关模块，专注 17025 条款
+~~~
+composer create-project topthink/think tp
+~~~
+
+启动服务
+
+~~~
+cd tp
+php think run
+~~~
+
+然后就可以在浏览器中访问
+
+~~~
+http://localhost:8000
+~~~
+
+如果需要更新框架使用
+~~~
+composer update topthink/framework
+~~~
+
+## 命名规范
+
+`ThinkPHP`遵循PSR-2命名规范和PSR-4自动加载规范。
+
+## 参与开发
+
+直接提交PR或者Issue即可
+
+## 版权信息
+
+ThinkPHP遵循Apache2开源协议发布，并提供免费使用。
+
+本项目包含的第三方源码和二进制文件之版权信息另行标注。
+
+版权所有Copyright © 2006-2024 by ThinkPHP (http://thinkphp.cn) All rights reserved。
+
+ThinkPHP® 商标和著作权所有者为上海顶想信息科技有限公司。
+
+更多细节参阅 [LICENSE.txt](LICENSE.txt)

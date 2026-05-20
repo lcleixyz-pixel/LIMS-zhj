@@ -1,5 +1,9 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class CapaSource extends AppModel {
-    public $useTable = 'capa_sources';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class CapaSource extends BaseModel
+{
+    protected $name = 'capa_sources';
 }

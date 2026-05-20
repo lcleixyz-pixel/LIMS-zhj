@@ -1,5 +1,9 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class CustomerComplaint extends AppModel {
-    public $useTable = 'customer_complaints';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class CustomerComplaint extends BaseModel
+{
+    protected $name = 'customer_complaints';
 }

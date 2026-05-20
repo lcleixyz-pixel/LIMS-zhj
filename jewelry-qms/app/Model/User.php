@@ -1,11 +1,26 @@
 <?php
-App::uses('AppModel', 'Model');
+declare(strict_types=1);
 
-class User extends AppModel {
-    public $displayField = 'name';
-    public $belongsTo = array(
-        'Employee' => array('foreignKey' => 'employee_id'),
-        'Department' => array('foreignKey' => 'department_id'),
-        'Company' => array('foreignKey' => 'company_id')
-    );
+namespace app\model;
+
+class User extends BaseModel
+{
+    protected $name = 'users';
+
+    protected $displayField = 'name';
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 }

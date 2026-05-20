@@ -1,0 +1,23 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">不符合 {$record.nc_number}</h5>
+        <div>
+            {if !$record.capa_id}<a href="/nonconformity/createCapa?id={$record.id}" class="btn btn-sm btn-warning" onclick="return confirm('创建CAPA？')">创建CAPA</a>{/if}
+            <a href="/nonconformity/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            <a href="/nonconformity/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="150">状态</th><td>{:qms_status_label('nonconformity', $record.status)}</td></tr>
+            <tr><th>严重程度</th><td>{$severityOptions[$record.severity]|default=$record.severity}</td></tr>
+            <tr><th>来源</th><td>{$sourceOptions[$record.source]|default=$record.source}</td></tr>
+            <tr><th>描述</th><td>{$record.description}</td></tr>
+            <tr><th>影响评估</th><td>{$record.impact_assessment|default='-'}</td></tr>
+            <tr><th>即时措施</th><td>{$record.immediate_action|default='-'}</td></tr>
+            <tr><th>处置决定</th><td>{$dispositionOptions[$record.disposition]|default='-'}</td></tr>
+            <tr><th>报告编号</th><td>{$record.report_number|default='-'}</td></tr>
+            <tr><th>关联CAPA</th><td>{if $capa}<a href="/capa/view?id={$capa.id}">{$capa.capa_number}</a>{else}-{/if}</td></tr>
+        </table>
+    </div>
+</div>

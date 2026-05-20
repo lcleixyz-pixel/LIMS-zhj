@@ -1,0 +1,51 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">新增 {$pageTitle|default='培训实施记录'}</h5></div>
+    <div class="card-body">
+        <form method="post" action="/training_record/add">
+            <div class="mb-3">
+                <label class="form-label">培训活动</label>
+                <select name="training_id" class="form-select" required>
+                    <option value="">请选择</option>
+                    {volist name="trainings" id="t"}
+                    <option value="{$t.id}">{$t.training_date|default=''} {$t.title}</option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">参训员工</label>
+                <select name="employee_id" class="form-select" required>
+                    <option value="">请选择</option>
+                    {volist name="employees" id="e"}
+                    <option value="{$e.id}">{$e.name} ({$e.employee_number})</option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">出勤</label>
+                <select name="attendance" class="form-select">
+                    <option value="present">present</option>
+                    <option value="absent">absent</option>
+                    <option value="excused">excused</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">成绩</label>
+                <input type="text" name="evaluation_score" class="form-control" placeholder="可选">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">考核结果</label>
+                <select name="evaluation_result" class="form-select">
+                    <option value="pending">pending</option>
+                    <option value="pass">pass</option>
+                    <option value="fail">fail</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">备注</label>
+                <textarea name="remarks" class="form-control" rows="2"></textarea>
+            </div>
+            <a href="/training_record/index" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>

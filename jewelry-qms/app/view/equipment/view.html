@@ -1,0 +1,30 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">设备 {$record.equipment_number}</h5>
+        <a href="/calibration/add?equipment_id={$record.id}" class="btn btn-sm btn-primary">登记校准</a>
+    </div>
+    <div class="card-body">
+        {if $daysUntil !== null && $daysUntil <= 30}
+        <div class="alert alert-{if $daysUntil <= 0}danger{else}warning{/if}">
+            {if $daysUntil <= 0}校准已过期{else}距下次校准还有 {$daysUntil} 天{/if}（{$record.next_calibration_date}）
+        </div>
+        {/if}
+        <table class="table table-bordered mb-4">
+            <tr><th width="120">名称</th><td>{$record.name}</td></tr>
+            <tr><th>状态</th><td>{:qms_status_label('equipment', $record.status)}</td></tr>
+            <tr><th>型号</th><td>{$record.model|default='-'}</td></tr>
+            <tr><th>上次校准</th><td>{$record.last_calibration_date|default='-'}</td></tr>
+            <tr><th>下次校准</th><td>{$record.next_calibration_date|default='-'}</td></tr>
+        </table>
+        <h6>校准记录</h6>
+        <table class="table table-sm mb-4">
+            <thead><tr><th>日期</th><th>机构</th><th>证书号</th><th>结果</th></tr></thead>
+            <tbody>{volist name="calibrations" id="c"}<tr><td>{$c.calibration_date}</td><td>{$c.calibration_org}</td><td>{$c.certificate_number}</td><td>{$c.result}</td></tr>{/volist}</tbody>
+        </table>
+        <h6>维护保养</h6>
+        <table class="table table-sm">
+            <thead><tr><th>日期</th><th>类型</th><th>说明</th></tr></thead>
+            <tbody>{volist name="maintenances" id="m"}<tr><td>{$m.maintenance_date}</td><td>{$m.maintenance_type}</td><td>{$m.description|default='-'}</td></tr>{/volist}</tbody>
+        </table>
+    </div>
+</div>

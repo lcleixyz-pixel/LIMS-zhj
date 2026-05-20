@@ -1,0 +1,33 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">内审计划 {$record.title}</h5>
+        <div>
+            {if $record.status == 'draft'}<a href="/audit_plan/approve?id={$record.id}" class="btn btn-sm btn-success" onclick="return confirm('批准计划？')">批准</a>{/if}
+            <a href="/audit_schedule/add?audit_plan_id={$record.id}" class="btn btn-sm btn-primary">添加日程</a>
+            <a href="/audit_plan/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered mb-4">
+            <tr><th width="120">年度</th><td>{$record.plan_year}</td></tr>
+            <tr><th>状态</th><td>{:qms_status_label('audit_plan', $record.status)}</td></tr>
+            <tr><th>范围</th><td>{$record.scope|default='-'}</td></tr>
+            <tr><th>依据</th><td>{$record.criteria|default='-'}</td></tr>
+        </table>
+        <h6>审核日程</h6>
+        <table class="table table-sm table-striped">
+            <thead><tr><th>日期</th><th>条款</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+                {volist name="schedules" id="s"}
+                <tr>
+                    <td>{$s.audit_date}</td>
+                    <td>{$s.clause|default='-'}</td>
+                    <td>{:qms_status_label('audit_schedule', $s.status)}</td>
+                    <td><a href="/audit_schedule/view?id={$s.id}">详情</a></td>
+                </tr>
+                {/volist}
+                {empty name="schedules"}<tr><td colspan="4" class="text-muted text-center">暂无日程</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

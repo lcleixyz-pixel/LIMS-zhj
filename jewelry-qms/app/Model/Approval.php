@@ -1,8 +1,14 @@
 <?php
-App::uses('AppModel', 'Model');
+declare(strict_types=1);
 
-class Approval extends AppModel {
-    public $belongsTo = array(
-        'User' => array('foreignKey' => 'user_id')
-    );
+namespace app\model;
+
+class Approval extends BaseModel
+{
+    protected $name = 'approvals';
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

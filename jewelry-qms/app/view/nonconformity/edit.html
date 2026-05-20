@@ -1,0 +1,57 @@
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">编辑不符合工作</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="/nonconformity/edit" enctype="multipart/form-data">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="name" class="form-label required">名称</label>
+                        <input type="text" class="form-control" id="name" name="name" required value="{$record.name|default=''}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="code" class="form-label">编号</label>
+                        <input type="text" class="form-control" id="code" name="code" value="{$record.code|default=''}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">状态</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="draft" {if $record.status == 'draft'}selected{/if}>草稿</option>
+                            <option value="active" {if $record.status == 'active'}selected{/if}>启用</option>
+                            <option value="inactive" {if $record.status == 'inactive'}selected{/if}>停用</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="department_id" class="form-label">所属部门</label>
+                        <select name="department_id" id="department_id" class="form-select">
+                            <option value="">请选择</option>
+                            {volist name="departments" id="dept"}
+                            <option value={$dept.id} {if $record.department_id == $dept.id}selected{/if}>{$dept.name}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="responsible_person" class="form-label">负责人</label>
+                        <input type="text" class="form-control" id="responsible_person" name="responsible_person" value="{$record.responsible_person|default=''}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="remark" class="form-label">备注</label>
+                        <input type="text" class="form-control" id="remark" name="remark" value="{$record.remark|default=''}">
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">描述</label>
+                <textarea class="form-control" id="description" name="description" rows="3">{$record.description|default=''}</textarea>
+            </div>
+            <div class="text-end">
+                <a href="/nonconformity/index" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">更新</button>
+            </div>
+        </form>
+    </div>
+</div>

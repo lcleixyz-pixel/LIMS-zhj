@@ -1,0 +1,27 @@
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">修订文件 - {$record.doc_number|default=''}</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <strong>当前文件信息：</strong><br>
+            编号: {$record.doc_number|default=''} | 标题: {$record.title|default=''} | 当前版本: {$record.version|default='1.0'}
+        </div>
+        <form method="post" action="/document/saveRevise" enctype="multipart/form-data">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="mb-3">
+                <label for="change_reason" class="form-label required">修订原因</label>
+                <textarea class="form-control" id="change_reason" name="change_reason" rows="4" required placeholder="请详细说明修订原因和变更内容"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="file" class="form-label">上传新版本附件</label>
+                <input type="file" class="form-control" id="file" name="file">
+                <small class="text-muted">如不上传新附件，将保留原附件</small>
+            </div>
+            <div class="text-end">
+                <a href="/document/view?id={$record.id}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">提交修订</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,19 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">审核发现 {$record.finding_number}</h5>
+        <div>
+            {if !$record.capa_id}<a href="/audit_finding/createCapa?id={$record.id}" class="btn btn-sm btn-warning" onclick="return confirm('创建CAPA？')">创建CAPA</a>{/if}
+            <a href="/audit_schedule/view?id={$record.audit_schedule_id}" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="120">类型</th><td>{$findingTypes[$record.finding_type]|default=$record.finding_type}</td></tr>
+            <tr><th>条款</th><td>{$record.clause|default='-'}</td></tr>
+            <tr><th>描述</th><td>{$record.description}</td></tr>
+            <tr><th>状态</th><td>{:qms_status_label('audit_finding', $record.status)}</td></tr>
+            <tr><th>截止日期</th><td>{$record.due_date|default='-'}</td></tr>
+            <tr><th>CAPA</th><td>{if $capa}<a href="/capa/view?id={$capa.id}">{$capa.capa_number}</a>{else}-{/if}</td></tr>
+        </table>
+    </div>
+</div>

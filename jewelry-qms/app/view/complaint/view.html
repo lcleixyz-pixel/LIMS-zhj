@@ -1,0 +1,24 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">投诉 {$record.complaint_number}</h5>
+        <div>
+            {if $record.status != 'closed'}
+            <a href="/complaint/advance?id={$record.id}" class="btn btn-sm btn-success">推进处理</a>
+            {if !$record.capa_id}<a href="/complaint/createCapa?id={$record.id}" class="btn btn-sm btn-warning" onclick="return confirm('创建CAPA？')">创建CAPA</a>{/if}
+            {/if}
+            <a href="/complaint/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="150">状态</th><td>{:qms_status_label('complaint', $record.status)}</td></tr>
+            <tr><th>客户</th><td>{$record.customer_name} / {$record.contact|default='-'}</td></tr>
+            <tr><th>报告编号</th><td>{$record.report_number|default='-'}</td></tr>
+            <tr><th>投诉内容</th><td>{$record.description}</td></tr>
+            <tr><th>调查情况</th><td>{$record.investigation|default='-'}</td></tr>
+            <tr><th>处理措施</th><td>{$record.handling|default='-'}</td></tr>
+            <tr><th>客户反馈</th><td>{$record.response|default='-'}</td></tr>
+            <tr><th>关联CAPA</th><td>{if $capa}<a href="/capa/view?id={$capa.id}">{$capa.capa_number}</a>{else}-{/if}</td></tr>
+        </table>
+    </div>
+</div>

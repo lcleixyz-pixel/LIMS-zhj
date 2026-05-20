@@ -1,0 +1,21 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">登记审核发现</h5></div>
+    <div class="card-body">
+        <form method="post" action="/audit_finding/add">
+            <div class="row">
+                <div class="col-md-6 mb-3"><label>发现编号</label><input name="finding_number" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="required">审核日程</label>
+                    <select name="audit_schedule_id" class="form-select" required>
+                        {volist name="auditSchedules" id="s"}<option value="{$s.id}" {if $Request.param.audit_schedule_id==$s.id}selected{/if}>{$s.audit_date} - {$s.clause|default=''}</option>{/volist}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3"><label>类型</label><select name="finding_type" class="form-select">{volist name="findingTypes" id="l" key="k"}<option value="{$k}">{$l}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label>条款</label><input name="clause" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label>责任部门</label><select name="department_id" class="form-select"><option value="">请选择</option>{volist name="departments" id="d"}<option value="{$d.id}">{$d.name}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label>截止日期</label><input type="date" name="due_date" class="form-control"></div>
+                <div class="col-12 mb-3"><label class="required">发现描述</label><textarea name="description" class="form-control" rows="4" required></textarea></div>
+            </div>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>

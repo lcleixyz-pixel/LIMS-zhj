@@ -1,0 +1,27 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">CAPA {$record.capa_number}</h5>
+        <div>
+            {if $record.status != 'closed'}
+            <a href="/capa/advance?id={$record.id}" class="btn btn-sm btn-success">推进状态</a>
+            {/if}
+            <a href="/capa/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            <a href="/capa/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="150">状态</th><td><span class="badge bg-primary">{$statusLabels[$record.status]|default=$record.status}</span></td></tr>
+            <tr><th>来源</th><td>{$record.source_type|default='-'} / {$record.source_record_id|default='-'}</td></tr>
+            <tr><th>问题描述</th><td>{$record.description}</td></tr>
+            <tr><th>根本原因</th><td>{$record.root_cause|default='-'}</td></tr>
+            <tr><th>纠正措施</th><td>{$record.corrective_action|default='-'}</td></tr>
+            <tr><th>预防措施</th><td>{$record.preventive_action|default='-'}</td></tr>
+            <tr><th>责任人</th><td>{$assignee.name|default=$record.assigned_to|default='-'}</td></tr>
+            <tr><th>截止日期</th><td>{$record.due_date|default='-'}</td></tr>
+            <tr><th>效果验证</th><td>{$record.verification|default='-'}</td></tr>
+            <tr><th>验证人</th><td>{$verifier.name|default='-'}</td></tr>
+            <tr><th>验证日期</th><td>{$record.verified_date|default='-'}</td></tr>
+        </table>
+    </div>
+</div>

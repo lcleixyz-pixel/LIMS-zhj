@@ -1,0 +1,18 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">登记设备</h5></div>
+    <div class="card-body">
+        <form method="post" action="/equipment/add">
+            <div class="row">
+                <div class="col-md-6 mb-3"><label class="required">设备编号</label><input name="equipment_number" class="form-control" required></div>
+                <div class="col-md-6 mb-3"><label class="required">设备名称</label><input name="name" class="form-control" required></div>
+                <div class="col-md-6 mb-3"><label>型号</label><input name="model" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label>制造商</label><input name="manufacturer" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label>位置</label><input name="location" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label>状态</label><select name="status" class="form-select">{volist name="statusLabels" id="l" key="k"}<option value="{$k}">{$l}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label>校准周期(月)</label><input type="number" name="calibration_cycle_months" class="form-control" value="12"></div>
+                <div class="col-md-6 mb-3 form-check mt-4"><input type="checkbox" name="calibration_required" value="1" class="form-check-input" checked id="cal_req"><label for="cal_req">需要校准</label></div>
+            </div>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>

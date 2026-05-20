@@ -1,5 +1,9 @@
-﻿<?php
-App::uses('AppModel', 'Model');
-class Notification extends AppModel {
-    public $useTable = 'notifications';
+<?php
+declare(strict_types=1);
+
+namespace app\model;
+
+class Notification extends BaseModel
+{
+    protected $name = 'notifications';
 }

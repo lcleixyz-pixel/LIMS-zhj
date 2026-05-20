@@ -1,0 +1,22 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">推进CAPA - {$record.capa_number}</h5></div>
+    <div class="card-body">
+        <p>当前状态：<strong>{$statusLabels[$record.status]|default=$record.status}</strong></p>
+        <form method="post" action="/capa/advance?id={$record.id}">
+            <input type="hidden" name="action" value="{if $record.status=='verifying'}close{else}advance{/if}">
+            {if $record.status == 'open'}
+            <div class="mb-3"><label>根本原因分析</label><textarea name="root_cause" class="form-control" rows="3">{$record.root_cause}</textarea></div>
+            {elseif $record.status == 'analyzing'}
+            <div class="mb-3"><label>纠正措施</label><textarea name="corrective_action" class="form-control" rows="3">{$record.corrective_action}</textarea></div>
+            <div class="mb-3"><label>预防措施</label><textarea name="preventive_action" class="form-control" rows="3">{$record.preventive_action}</textarea></div>
+            {elseif $record.status == 'implementing'}
+            <p class="text-muted">确认措施已实施，进入效果验证阶段</p>
+            {elseif $record.status == 'verifying'}
+            <div class="mb-3"><label>效果验证说明</label><textarea name="verification" class="form-control" rows="3" required></textarea></div>
+            <div class="mb-3"><label>验证日期</label><input type="date" name="verified_date" class="form-control" value="{:date('Y-m-d')}"></div>
+            {/if}
+            <button type="submit" class="btn btn-primary">{if $record.status=='verifying'}关闭CAPA{else}推进到下一阶段{/if}</button>
+            <a href="/capa/view?id={$record.id}" class="btn btn-secondary">取消</a>
+        </form>
+    </div>
+</div>
