@@ -2,89 +2,133 @@
 
 ## 1. 业务背景
 
-珠宝检测实验室通常具备：
+珠宝检测实验室通常具备两类系统：
 
-- **检测业务管理系统（LIMS）**：委托、样品、检测、报告、收费——已成熟且独立运行。
-- **质量管理体系（QMS）**：为 CMA/CNAS 评审建立的文件化体系——当前多依赖纸质/Excel，未信息化。
+- **检测业务系统（LIMS）**：委托、样品、检测、报告、收费等业务流程，通常已独立运行。
+- **质量管理系统（QMS）**：服务 CMA/CNAS 和 ISO/IEC 17025 的文件化质量体系，常见痛点是纸质、Word、Excel 分散管理。
 
-本工作区目标：**仅信息化 QMS**，与 LIMS **松耦合**，避免重复建设检测流程。
+本工作区目标是**仅信息化 QMS**，与既有 LIMS 松耦合，避免重复建设检测业务流程。
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    实验室信息系统（目标态）                    │
-├──────────────────────────┬──────────────────────────────────┤
-│   检测业务系统 (LIMS)      │   质量管理系统 (jewelry-qms)       │
-│   [已有，不纳入本仓库]      │   [本仓库主交付]                   │
-│                          │                                  │
-│ · 委托/样品/检测/报告      │ · 文件控制（四层级）               │
-│ · 财务                    │ · 内审 / 管评 / CAPA              │
-│                          │ · 设备校准 / 培训能力              │
-│                          │ · 供应商 / 投诉 / 不符合           │
-├──────────────────────────┴──────────────────────────────────┤
-│              共享主数据（API 或只读视图，后续对接）              │
-│         人员 │ 设备台账 │ 客户 │ 报告编号                       │
-└─────────────────────────────────────────────────────────────┘
+```text
+实验室信息系统目标态
+├── LIMS（已有，不纳入本仓库）
+│   ├── 委托 / 样品 / 检测 / 报告
+│   └── 财务 / 客户业务
+└── Jewelry QMS（本仓库主交付）
+    ├── 文件控制 / 审批 / 修订
+    ├── 内审 / 管评 / CAPA
+    ├── 设备校准 / 培训能力
+    └── 供应商 / 投诉 / 不符合
 ```
 
-## 2. 技术架构
+后续可通过只读 API 或数据库视图同步人员、设备、客户、报告编号等主数据。
 
-| 层级 | 选型 | 说明 |
-|------|------|------|
-| 语言 | PHP 5.6–7.4 | 与 CakePHP 2.x 兼容 |
-| 框架 | CakePHP 2.x MVC | 参考 Lite 裁剪 |
-| 数据库 | MySQL 8 / MariaDB，InnoDB | 定制库使用 utf8mb4 |
-| Web | Apache + mod_rewrite | 标准 Cake 路由 |
-| 前端 | Bootstrap 3 + jQuery | 中文界面 |
-| 文件 | Word (.docx) 上传存储 | 模板可调；可扩展 ONLYOFFICE |
+## 2. 当前技术架构
 
-### 2.1 jewelry-qms 模块划分
+| 层级 | 当前选型 | 说明 |
+|------|----------|------|
+| 语言 | PHP 8.1+ | 主项目已迁移到现代 PHP 运行环境 |
+| 框架 | ThinkPHP 8 | 服务端渲染，公开入口为 `public/` |
+| ORM | think-orm 3.x / 4.x | 通过模型类访问业务表 |
+| 数据库 | MySQL / MariaDB，InnoDB，utf8mb4 | 初始化脚本为 `database/jewelry_qms.sql` |
+| 前端 | ThinkPHP 模板 + Bootstrap 风格页面 | 视图位于 `app/view` |
+| 文件 | 上传/下载模式 | 文件写入 `public/uploads/`，后续可扩展 ONLYOFFICE |
 
+`flinkiso/`、`flinkiso-lite-master/` 和 `jewelry-qms-legacy/` 均为参考或归档目录，不作为主项目运行栈。
+
+## 3. Jewelry QMS 目录边界
+
+```text
+jewelry-qms/
+├── app/
+│   ├── controller/        # 控制器：登录、仪表盘、文件控制、业务模块
+│   ├── Model/             # 领域模型
+│   ├── middleware/        # Auth、RBAC、AuditLog
+│   ├── service/           # 审批、流程、通知、导入、文件服务
+│   └── view/              # 中文服务端模板
+├── config/
+│   ├── database.php       # 数据库连接，读取 .env
+│   └── qms.php            # 业务参数、版本、角色、权限、审批规则
+├── database/
+│   └── jewelry_qms.sql    # 初始化数据库脚本
+├── public/
+│   ├── index.php          # Web 入口
+│   └── uploads/           # 用户上传文件
+├── route/
+│   └── app.php            # 路由定义与中间件绑定
+└── runtime/               # 缓存、日志、运行时文件
 ```
-app/
-├── Controller/
-│   ├── AppController.php       # 登录、权限、上传、公共数据
-│   ├── AppCrudController.php   # 通用 CRUD 基类
-│   ├── DocumentsController.php # 文件控制（完整业务）
-│   ├── WorkflowComponent.php   # 差异化审批流
-│   └── …                       # 各业务模块控制器
-├── Model/                      # 领域模型 + WhoDidIt 审计
-├── View/                       # 中文 .ctp 模板
-└── webroot/schema/             # jewelry_qms.sql
+
+开发启动命令位于 `jewelry-qms` 目录内：
+
+```bash
+composer install
+php think run
 ```
 
-### 2.2 文件控制审批逻辑
+## 4. 核心业务模块
 
-配置项：`app/Config/core.php` → `QMS.approvalRules`
+当前版本 `2.1.0` 覆盖以下能力：
+
+| 模块 | 当前状态 |
+|------|----------|
+| 文件控制 | 四层级、模板、Word/PDF 等附件上传、提交审核、批准、发布、修订 |
+| 审批 | 按文件层级差异化审批，审批待办通知 |
+| 内审 | 计划批准、日程、检查表、发现，发现可触发 CAPA |
+| 管理评审 | 评审输入自动汇总，决议事项跟踪与验证 |
+| CAPA | 来源关联、原因分析、措施实施、效果验证、关闭 |
+| 不符合 / 投诉 | 严重程度、处置推进、闭环、CAPA 关联 |
+| 设备 / 校准 | 台账、校准记录、到期提醒、校准后更新 |
+| 培训 / 能力 | 培训完成标记、培训记录、能力确认 |
+| 供应商 | 评价驱动状态、合格供应商名录 |
+| 通知 / 导入 / 仪表盘 | 待办、校准到期、CAPA 超期、CSV 导入、聚合看板 |
+
+## 5. 文件控制审批逻辑
+
+业务配置位于 `jewelry-qms/config/qms.php`：
+
+| 配置 | 说明 |
+|------|------|
+| `docLevels` | 质量手册、程序文件、作业指导书、记录表格 |
+| `approvalRules` | 各层级审批级数 |
+| `roles` / `permissions` | 五角色权限矩阵 |
+| `upload` | 允许上传的扩展名和大小限制 |
+| `notification` | 到期与超期提醒参数 |
+
+审批规则：
 
 | 层级 | level 值 | 审批级数 | 流程 |
 |------|----------|----------|------|
-| 质量手册 | 1 | 3 | 编制 → 审核 → 批准 |
-| 程序文件 | 2 | 3 | 编制 → 审核 → 批准 |
-| 作业指导书 | 3 | 2 | 编制 → 批准 |
-| 记录表格 | 4 | 2 | 编制 → 批准 |
+| 质量手册 | 1 | 3 | 编制 -> 审核 -> 批准 |
+| 程序文件 | 2 | 3 | 编制 -> 审核 -> 批准 |
+| 作业指导书 | 3 | 2 | 编制 -> 批准 |
+| 记录表格 | 4 | 2 | 编制 -> 批准 |
 
-实现：`WorkflowComponent` 写入 `approvals` 表；全部通过后 `documents.status` → `published`。
+主要实现位于 `ApprovalService`、`WorkflowService`、`NotificationService`。路由层统一绑定 `Auth`、`Rbac`、`AuditLog` 中间件。
 
-## 3. 参考项目在本架构中的位置
+## 6. 安全与部署边界
 
-| 项目 | 借鉴内容 |
-|------|----------|
-| FlinkISO Lite | Cake 目录结构、CRUD 模式、CAPA/内审/培训/供应商模型思路 |
-| FlinkISO On-Premise | ONLYOFFICE、PDF、记录锁定、审批模块深度（后续移植） |
+- 当前面向单实验室部署，默认 `company_id` 配置在 `config/qms.php`。
+- 用户密码使用 bcrypt 哈希，初始化账号为 `admin` / `password`，生产首次登录后必须修改。
+- 生产环境必须关闭 `APP_DEBUG`，Web 根目录必须指向 `jewelry-qms/public`。
+- 上传文件位于 `public/uploads/`，需配合 Web 服务器限制脚本执行。
+- `.env`、`.git`、源码目录、备份文件不得对外暴露。
 
-**不直接运行**参考项目作为生产 QMS，避免框架版本双轨（2.3.6 vs 2.10.24）维护成本。
+## 7. 参考项目在架构中的位置
 
-## 4. 安全与多租户
+| 项目 | 位置 | 用途 |
+|------|------|------|
+| FlinkISO Lite | `flinkiso-lite-master/` | CAPA、培训、供应商、内审等业务思路参考 |
+| FlinkISO On-Premise | `flinkiso/` | ONLYOFFICE、PDF、记录锁定等后续能力参考 |
+| Jewelry QMS Legacy | `jewelry-qms-legacy/` | 迁移前 CakePHP 旧版归档 |
 
-- 当前为**单实验室单公司**部署：`company_id` 过滤（`AppModel::beforeFind`）。
-- 用户密码：`password_hash`（bcrypt）。
-- 生产环境：关闭 `debug`、修改默认密码、限制 `app/webroot/files` 直接执行权限。
+参考项目不直接作为生产 QMS 运行，避免维护多套框架和数据库结构。
 
-## 5. 扩展路线图
+## 8. 扩展路线图
 
 | 阶段 | 内容 |
 |------|------|
-| P0（当前） | 九模块骨架 + 文件控制完整 + 文档 + Git |
-| P1 | 各模块表单字段对齐现有体系文件、Excel 导入 |
-| P2 | LIMS 主数据同步 API |
-| P3 | ONLYOFFICE 在线编辑、PDF 受控打印 |
+| P0 | 文件控制与九模块基础能力 |
+| P1（当前） | CAPA、内审、管评、通知、导入、仪表盘等业务深化 |
+| P2 | LIMS 主数据同步 API 或只读视图 |
+| P3 | ONLYOFFICE 在线编辑、PDF 受控打印、记录锁定 |

@@ -1,52 +1,67 @@
-# 远程仓库上传指南
+# 远程仓库与协作说明
 
-本地已完成 Git 初始化、首次提交及标签 `v1.0.0`。因当前环境未安装 GitHub CLI（`gh`），请按下列方式之一将代码推送到远程。
+当前仓库已初始化 Git，并已配置 GitHub 远程仓库。
 
-## 方式一：GitHub
+## 当前远程
 
-1. 在 GitHub 新建仓库（建议私有），名称如 `jewelry-lab-qms`，**不要**勾选「Initialize with README」
-2. 在项目根目录执行：
-
-```powershell
-cd c:\Users\Martyr\Downloads\flinkiso-ver-2
-git remote add origin https://github.com/<你的用户名>/jewelry-lab-qms.git
-git branch -M main
-git push -u origin main
-git push origin v1.0.0
-```
-
-## 方式二：Gitee（码云）
-
-```powershell
-cd c:\Users\Martyr\Downloads\flinkiso-ver-2
-git remote add origin https://gitee.com/<你的用户名>/jewelry-lab-qms.git
-git branch -M main
-git push -u origin main
-git push origin v1.0.0
-```
-
-## 方式三：自建 Git 服务器
-
-```powershell
-git remote add origin git@your-server:/repos/flinkiso-ver-2.git
-git push -u origin main --tags
-```
-
-## 验证
-
-```powershell
-git status
+```bash
 git remote -v
-git log --oneline -3
-git tag
 ```
 
-## 仓库体积说明
+预期输出：
 
-本 Monorepo 含两个完整 FlinkISO 参考项目（约 1.1 万文件），首次推送体积较大，属正常现象。若仅需托管定制项目，可另建仅含 `jewelry-qms/` 的子仓库（需 `git subtree` 或拆分，联系开发协助）。
+```text
+origin  https://github.com/lcleixyz-pixel/LIMS-zhj.git (fetch)
+origin  https://github.com/lcleixyz-pixel/LIMS-zhj.git (push)
+```
+
+## 推送当前分支
+
+```bash
+git status
+git push -u origin <branch-name>
+```
+
+若需要创建新分支：
+
+```bash
+git switch -c feature/<name>
+git push -u origin feature/<name>
+```
+
+## 标签
+
+历史初始标签：
+
+```text
+v1.0.0
+```
+
+`v1.0.0` 表示首次纳入 FlinkISO 参考项目和 Jewelry QMS 初版。当前应用版本以 `CHANGELOG.md` 与 `jewelry-qms/config/qms.php` 为准。
+
+后续发布标签示例：
+
+```bash
+git tag -a v2.1.0 -m "Jewelry QMS 2.1.0"
+git push origin v2.1.0
+```
+
+## 验证命令
+
+```bash
+git status --short --branch
+git remote -v
+git log --oneline -5
+git tag -n --list
+```
 
 ## 协作建议
 
-- 主分支：`main` 保护，合并需评审
-- 开发分支：`develop` 或 `feature/*`
-- 敏感配置：勿提交真实 `database.php` 密码，使用 `database.php.example`（后续版本补充）
+- 主分支：`main` 保持稳定可部署。
+- 日常开发：使用 `feature/*`、`fix/*` 或 `codex/*` 分支。
+- 参考项目目录只读使用，避免与主项目功能开发混在同一提交。
+- 敏感配置不要提交：`.env`、真实数据库密码、上传文件、运行时缓存。
+
+## 仓库体积说明
+
+本 Monorepo 含两个完整 FlinkISO 参考项目，首次克隆和推送体积较大属正常现象。若后续只需要托管主项目，可另行拆分仅含 `jewelry-qms/` 的子仓库。
