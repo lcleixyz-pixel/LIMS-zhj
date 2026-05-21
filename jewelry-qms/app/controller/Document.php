@@ -5,6 +5,7 @@ namespace app\controller;
 
 use app\BaseController;
 use app\model\Approval;
+use app\model\Department;
 use app\model\DocCategory;
 use app\model\Document as DocumentModel;
 use app\model\DocumentRevision;
@@ -20,7 +21,7 @@ class Document extends BaseController
 {
     public function index()
     {
-        $query = DocumentModel::with(['docCategory', 'department'])->where('soft_delete', 0);
+        $query = DocumentModel::where('soft_delete', 0);
 
         if ($level = $this->request->param('level')) {
             $query->where('level', $level);
@@ -140,10 +141,26 @@ class Document extends BaseController
     public function view()
     {
         $id = $this->request->param('id');
-        $doc = DocumentModel::with(['docCategory', 'department', 'documentRevisions'])->find($id);
+        $doc = DocumentModel::find($id);
         if (!$doc) {
             throw new HttpException(404, '文件不存在');
         }
+
+        $categoryName = '-';
+        if (!empty($doc->category_id)) {
+            $category = DocCategory::find($doc->category_id);
+            $categoryName = $category ? $category->name : '-';
+        }
+
+        $departmentName = '-';
+        if (!empty($doc->department_id)) {
+            $department = Department::find($doc->department_id);
+            $departmentName = $department ? $department->name : '-';
+        }
+
+        $revisions = DocumentRevision::where('document_id', $id)
+            ->order('created', 'desc')
+            ->select();
 
         $approvals = Approval::with('user')
             ->where('record', $id)
@@ -153,6 +170,9 @@ class Document extends BaseController
             ->select();
 
         View::assign('doc', $doc);
+        View::assign('categoryName', $categoryName);
+        View::assign('departmentName', $departmentName);
+        View::assign('revisions', $revisions);
         View::assign('approvals', $approvals);
 
         return View::fetch('document/view');
@@ -252,6 +272,8 @@ class Document extends BaseController
         View::assign('templates', $templates);
         View::assign('departments', $departments);
         View::assign('employees', $employees);
+        View::assign('reviewers', $employees);
+        View::assign('approvers', $employees);
     }
 
     protected function _employeeToUser(?string $employeeId): ?string
