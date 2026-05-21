@@ -473,7 +473,7 @@ CREATE TABLE `competency_records` (
   `method_standard` varchar(200) DEFAULT NULL COMMENT '标准方法',
   `assessment_date` date DEFAULT NULL,
   `assessor_id` varchar(36) DEFAULT NULL,
-  `result` enum('qualified','unqualified','supervised') DEFAULT 'pending',
+  `result` enum('pending','qualified','unqualified','supervised') DEFAULT 'pending',
   `authorization_scope` text COMMENT '授权范围',
   `valid_until` date DEFAULT NULL,
   `publish` tinyint(1) DEFAULT 1,

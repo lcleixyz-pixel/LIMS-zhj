@@ -21,6 +21,12 @@ use think\facade\View;
 
 class Dashboard extends BaseController
 {
+    protected $middleware = [
+        \app\middleware\Auth::class,
+        \app\middleware\Rbac::class,
+        \app\middleware\AuditLog::class,
+    ];
+
     public function index()
     {
         NotificationService::checkCalibrationDue();
