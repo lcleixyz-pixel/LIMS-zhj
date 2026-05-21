@@ -38,6 +38,7 @@ class DocTemplate extends CrudBase
             return redirect('/doc_template/index');
         }
         View::assign('pageTitle', $this->pageTitle . ' - 新增');
+        $this->assignDefaultFormContext();
         return View::fetch('doc_template/add');
     }
 
