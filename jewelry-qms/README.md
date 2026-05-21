@@ -1,86 +1,123 @@
-![](https://www.thinkphp.cn/uploads/images/20230630/300c856765af4d8ae758c503185f8739.png)
+# Jewelry QMS
 
-ThinkPHP 8
-===============
-## Jewelry QMS（本目录）
+珠宝检测实验室质量管理系统，面向 CMA/CNAS 与 ISO/IEC 17025 质量体系信息化。当前目录是仓库主交付物，技术栈为 ThinkPHP 8 + PHP 8.1+，服务端渲染页面位于 `app/view`，公开入口为 `public/`。
 
-珠宝检测实验室 QMS，服务端渲染（`app/view`），公开入口 **`public/`**，数据库脚本 **`database/jewelry_qms.sql`**。
+CakePHP 2.x 旧版归档位于仓库根目录 `jewelry-qms-legacy/`，不再作为主运行版本。
 
-- PHP **8.1+**，配置 `.env` + **`config/database.php`** / **`config/qms.php`**
-- 启动：`composer install`，根目录执行 `php think run`，浏览器访问控制台输出地址（默认 `:8000`）
-- CakePHP 2.x 旧版见仓库根目录 **`jewelry-qms-legacy/`**
+## 功能模块
 
----
+| 模块 | 当前能力 |
+|------|----------|
+| 文件控制 | 四层级、模板管理、附件上传、审批、发布、修订 |
+| 审批 | 按文件层级差异化审批，审批待办通知 |
+| 内部审核 | 计划批准、日程、检查表、发现，发现可触发 CAPA |
+| 管理评审 | 输入汇总、决议事项跟踪与验证 |
+| CAPA | 来源关联、原因分析、措施实施、效果验证、关闭 |
+| 设备与校准 | 设备台账、校准记录、到期提醒 |
+| 培训与能力 | 培训记录、完成标记、能力确认 |
+| 供应商 | 评价驱动状态、合格供应商名录 |
+| 客户投诉 | 受理、调查、处置、回复、关闭 |
+| 不符合工作 | 评估、纠正、验证、关闭 |
+| 通知 / 导入 / 仪表盘 | 待办聚合、CSV 导入、校准到期、CAPA 超期提醒 |
 
-## 特性
+## 环境要求
 
-* 基于PHP`8.0+`重构
-* 升级`PSR`依赖
-* 依赖`think-orm`3.0+版本
-* 全新的`think-dumper`服务，支持远程调试
-* 支持`6.0`/`6.1`无缝升级
+- PHP 8.1+
+- Composer 2.x
+- MySQL 5.7+ 或 MariaDB 10.3+
+- PHP 扩展：`mbstring`, `pdo_mysql`, `json`, `openssl`, `fileinfo`
 
-> ThinkPHP8的运行环境要求PHP8.0+
+## 快速启动
 
-现在开始，你可以使用官方提供的[ThinkChat](https://chat.topthink.com/)，让你在学习ThinkPHP的旅途中享受私人AI助理服务！
-
-![](https://www.topthink.com/uploads/assistant/20230630/4d1a3f0ad2958b49bb8189b7ef824cb0.png)
-
-ThinkPHP生态服务由[顶想云](https://www.topthink.com)（TOPThink Cloud）提供，为生态提供专业的开发者服务和价值之选。
-
-## 文档
-
-[完全开发手册](https://doc.thinkphp.cn)
-
-
-## 赞助
-
-全新的[赞助计划](https://www.thinkphp.cn/sponsor)可以让你通过我们的网站、手册、欢迎页及GIT仓库获得巨大曝光，同时提升企业的品牌声誉，也更好保障ThinkPHP的可持续发展。
-
-[![](https://www.thinkphp.cn/sponsor/special.svg)](https://www.thinkphp.cn/sponsor/special)
-
-[![](https://www.thinkphp.cn/sponsor.svg)](https://www.thinkphp.cn/sponsor)
-
-## 安装
-
-~~~
-composer create-project topthink/think tp
-~~~
-
-启动服务
-
-~~~
-cd tp
+```bash
+cd jewelry-qms
+composer install
+cp .example.env .env
 php think run
-~~~
+```
 
-然后就可以在浏览器中访问
+浏览器访问命令输出的地址，默认通常为：
 
-~~~
-http://localhost:8000
-~~~
+```text
+http://127.0.0.1:8000
+```
 
-如果需要更新框架使用
-~~~
-composer update topthink/framework
-~~~
+## 数据库初始化
 
-## 命名规范
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS jewelry_qms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p jewelry_qms < database/jewelry_qms.sql
+```
 
-`ThinkPHP`遵循PSR-2命名规范和PSR-4自动加载规范。
+默认账号：
 
-## 参与开发
+```text
+admin / password
+```
 
-直接提交PR或者Issue即可
+首次登录后必须修改默认密码。
 
-## 版权信息
+## 配置
 
-ThinkPHP遵循Apache2开源协议发布，并提供免费使用。
+数据库连接通过 `.env` 配置，并由 `config/database.php` 读取：
 
-本项目包含的第三方源码和二进制文件之版权信息另行标注。
+```ini
+APP_DEBUG = false
 
-版权所有Copyright © 2006-2024 by ThinkPHP (http://thinkphp.cn) All rights reserved。
+DB_TYPE = mysql
+DB_HOST = 127.0.0.1
+DB_NAME = jewelry_qms
+DB_USER = your_user
+DB_PASS = your_password
+DB_PORT = 3306
+DB_CHARSET = utf8mb4
+```
 
-ThinkPHP® 商标和著作权所有者为上海顶想信息科技有限公司。
+业务配置位于 `config/qms.php`，包括：
 
-更多细节参阅 [LICENSE.txt](LICENSE.txt)
+- 系统标题与版本
+- 默认 `company_id`
+- 文件层级 `docLevels`
+- 审批规则 `approvalRules`
+- 五角色权限矩阵
+- 上传扩展名和大小限制
+- 通知提醒参数
+
+## 目录结构
+
+```text
+jewelry-qms/
+├── app/
+│   ├── controller/        # 控制器
+│   ├── Model/             # 模型
+│   ├── middleware/        # Auth / Rbac / AuditLog
+│   ├── service/           # 审批、流程、通知、文件、导入服务
+│   └── view/              # 服务端模板
+├── config/                # 应用与业务配置
+├── database/              # jewelry_qms.sql
+├── public/                # Web 入口与 uploads
+├── route/                 # 路由
+└── runtime/               # 缓存、日志、运行时文件
+```
+
+生产环境 Web 根目录必须指向：
+
+```text
+jewelry-qms/public
+```
+
+## 生产安全提醒
+
+- `.env` 中关闭 `APP_DEBUG`
+- 修改默认管理员密码
+- 配置 HTTPS
+- 确保 `runtime/` 和 `public/uploads/` 可写
+- 禁止外部访问 `.env`、`.git`、源码目录和备份文件
+- 定期备份数据库与 `public/uploads/`
+
+## 更多文档
+
+- 仓库总览：`../README.md`
+- 架构说明：`../docs/ARCHITECTURE.md`
+- 部署指南：`../docs/DEPLOYMENT.md`
+- 使用与体系文件适配：`../docs/JEWELRY_QMS_GUIDE.md`

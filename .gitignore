@@ -10,17 +10,24 @@ desktop.ini
 *.swo
 *~
 
-# PHP / CakePHP runtime
+# PHP / CakePHP legacy runtime
 **/tmp/cache/**
 **/tmp/logs/**
 **/tmp/sessions/**
 **/tmp/tests/**
 !**/tmp/**/.gitkeep
 
-# User uploads (keep directory structure only)
+# CakePHP legacy uploads (keep directory structure only)
 **/webroot/files/**/*
 !**/webroot/files/**/.gitkeep
 **/webroot/schema/*.bak
+
+# ThinkPHP jewelry-qms runtime and uploads
+jewelry-qms/vendor/
+jewelry-qms/runtime/*
+!jewelry-qms/runtime/.gitignore
+jewelry-qms/public/uploads/*
+!jewelry-qms/public/uploads/.gitkeep
 
 # Local config overrides (never commit secrets)
 **/Config/database.local.php

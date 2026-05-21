@@ -1,90 +1,154 @@
 # 部署指南
 
-## 1. 环境要求（通用）
+本文档以当前主交付物 `jewelry-qms` 为准：ThinkPHP 8、PHP 8.1+、公开入口 `public/`、数据库脚本 `database/jewelry_qms.sql`。
+
+两个 FlinkISO 目录仅作参考快照，`jewelry-qms-legacy/` 是 CakePHP 旧版归档，不作为生产部署入口。
+
+## 1. Jewelry QMS 环境要求
 
 | 组件 | 要求 |
 |------|------|
-| PHP | 5.6+，推荐 7.4；扩展 `mbstring`, `pdo_mysql`, `json`, `openssl` |
-| MySQL | 5.7+ 或 MariaDB 10.3+ |
-| Web 服务器 | Apache 2.4 + `mod_rewrite`，或 Nginx + PHP-FPM |
-| 操作系统 | Windows Server / Linux 均可 |
+| PHP | 8.1+，扩展 `mbstring`, `pdo_mysql`, `json`, `openssl`, `fileinfo` |
+| Composer | 2.x |
+| MySQL | 5.7+ 或 MariaDB 10.3+，推荐 utf8mb4 |
+| Web 服务器 | Nginx + PHP-FPM，或 Apache 2.4 + `mod_rewrite` |
+| 操作系统 | Linux / Windows Server 均可 |
 
-## 2. 部署 Jewelry QMS（推荐生产）
+## 2. 部署 Jewelry QMS
 
-### 2.1 目录
+### 2.1 代码目录
 
 将 `jewelry-qms` 放到 Web 可访问路径，例如：
 
-- Windows：`C:\xampp\htdocs\jewelry-qms\`
 - Linux：`/var/www/jewelry-qms/`
+- Windows：`C:\xampp\htdocs\jewelry-qms\`
 
-**DocumentRoot** 应指向 `jewelry-qms/app/webroot`（或使用根目录 `.htaccess` 重写到 webroot）。
+生产环境的 **DocumentRoot / root 必须指向**：
 
-### 2.2 数据库
+```text
+jewelry-qms/public
+```
+
+不要把 Web 根目录指向仓库根目录或 `jewelry-qms/app`，否则会暴露配置、源码或运行时目录。
+
+### 2.2 安装依赖
 
 ```bash
-mysql -u root -p -e "CREATE DATABASE jewelry_qms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root -p jewelry_qms < jewelry-qms/app/webroot/schema/jewelry_qms.sql
+cd jewelry-qms
+composer install --no-dev --optimize-autoloader
 ```
 
-编辑 `jewelry-qms/app/Config/database.php`：
+开发环境可直接执行：
 
-```php
-'host' => 'localhost',
-'login' => 'your_user',
-'password' => 'your_password',
-'database' => 'jewelry_qms',
+```bash
+composer install
+php think run
 ```
 
-### 2.3 目录权限
+默认开发访问地址通常为 `http://127.0.0.1:8000`，以命令输出为准。
 
-确保可写：
+### 2.3 数据库
 
+创建数据库并导入初始化脚本：
+
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS jewelry_qms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p jewelry_qms < jewelry-qms/database/jewelry_qms.sql
 ```
-jewelry-qms/tmp/cache/
-jewelry-qms/tmp/logs/
-jewelry-qms/tmp/sessions/
-jewelry-qms/app/webroot/files/
+
+脚本内包含默认公司、部门、管理员账号和基础分类数据。
+
+### 2.4 配置 `.env`
+
+复制示例配置：
+
+```bash
+cd jewelry-qms
+cp .example.env .env
 ```
 
-Windows：IIS/IUSR 或 Apache 运行用户对上述目录有修改权。
+至少修改以下项：
 
-### 2.4 生产检查清单
+```ini
+APP_DEBUG = false
 
-- [ ] `app/Config/core.php` 中 `Configure::write('debug', 0);`
-- [ ] 修改默认用户 `admin` 密码
-- [ ] 配置 HTTPS
-- [ ] 禁止对外暴露 `phpinfo`、`.git`
-- [ ] 定期备份数据库与 `app/webroot/files/`
+DB_TYPE = mysql
+DB_HOST = 127.0.0.1
+DB_NAME = jewelry_qms
+DB_USER = your_user
+DB_PASS = your_password
+DB_PORT = 3306
+DB_CHARSET = utf8mb4
 
-### 2.5 访问
+DEFAULT_LANG = zh-cn
+```
 
-- URL 示例：`http://your-server/jewelry-qms/`
-- 默认账号：`admin` / `password`
+数据库连接由 `config/database.php` 读取 `.env`；业务参数、文档层级、审批级数、角色权限由 `config/qms.php` 管理。
 
----
+### 2.5 可写目录
 
-## 3. 参考项目（可选本地对比）
+确保 Web/PHP 运行用户可写：
 
-### 3.1 FlinkISO Lite
+```text
+jewelry-qms/runtime/
+jewelry-qms/public/uploads/
+```
 
-路径：`flinkiso-lite-master/flinkiso-lite-master/`
+上传文件由系统写入 `public/uploads/<module>/<record_id>/`，运行日志和缓存写入 `runtime/`。
 
-1. 复制 `app/Config/database.php.default` 为 `database.php`（若存在）并配置
-2. 按项目内安装向导或导入 `app/Config/Schema/` 下 SQL
-3. 访问站点根目录，完成 Web 安装
+### 2.6 Web 服务器示例
 
-### 3.2 FlinkISO On-Premise
+Nginx 示例：
 
-路径：`flinkiso/flinkiso-ver-2x-on-premise/`
+```nginx
+server {
+    listen 80;
+    server_name qms.example.com;
+    root /var/www/jewelry-qms/public;
+    index index.php index.html;
 
-1. 导入 `app/webroot/schema/flinkiso-on-premise.sql`
-2. 配置 `app/Config/database.php`
-3. 需 ONLYOFFICE Document Server（若使用在线编辑）
+    location / {
+        if (!-e $request_filename) {
+            rewrite ^(.*)$ /index.php?s=$1 last;
+            break;
+        }
+    }
 
-参考项目**勿与 jewelry-qms 共用同一数据库名**。
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php8.1-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
 
----
+    location ~ /\.(env|git) {
+        deny all;
+    }
+}
+```
+
+Apache 可将虚拟主机 `DocumentRoot` 指向 `jewelry-qms/public`，并启用 `mod_rewrite`。`public/.htaccess` 已包含 ThinkPHP 路由重写规则。
+
+### 2.7 生产检查清单
+
+- [ ] `.env` 中 `APP_DEBUG = false`
+- [ ] Web 根目录指向 `jewelry-qms/public`
+- [ ] 已修改默认账号 `admin` / `password`
+- [ ] 已配置 HTTPS
+- [ ] 禁止对外访问 `.env`、`.git`、源码目录和备份文件
+- [ ] 定期备份数据库与 `jewelry-qms/public/uploads/`
+- [ ] `runtime/` 与 `public/uploads/` 权限正确
+
+## 3. 参考项目部署（可选）
+
+参考项目仅用于本地对比和功能借鉴，不建议与生产 Jewelry QMS 共用数据库或虚拟主机。
+
+| 项目 | 路径 | 说明 |
+|------|------|------|
+| FlinkISO Lite | `flinkiso-lite-master/flinkiso-lite-master/` | CakePHP 2.3.6 参考项目 |
+| FlinkISO On-Premise | `flinkiso/flinkiso-ver-2x-on-premise/` | CakePHP 2.10.24，包含 ONLYOFFICE/PDF 等参考能力 |
+| Jewelry QMS Legacy | `jewelry-qms-legacy/` | CakePHP 旧版归档，仅用于迁移对照 |
+
+这些项目若需运行，应按其自身 README 或原项目说明单独配置。
 
 ## 4. 与检测业务系统同机部署
 
@@ -92,15 +156,14 @@ Windows：IIS/IUSR 或 Apache 运行用户对上述目录有修改权。
 |------|------|
 | 端口/虚拟主机 | LIMS 与 QMS 分 vhost，如 `lims.lab.com` / `qms.lab.com` |
 | 数据库 | 分库：`lims_db` / `jewelry_qms` |
-| 集成 | 只读 API 或 MySQL 视图同步人员、设备、报告号 |
-
----
+| 集成 | 通过只读 API 或 MySQL 视图同步人员、设备、客户、报告编号 |
 
 ## 5. 故障排查
 
 | 现象 | 处理 |
 |------|------|
-| 404 除首页外均失败 | 检查 `mod_rewrite`、`.htaccess` |
-| 空白页 | 临时 `debug=2` 查看错误；查 `tmp/logs/error.log` |
-| 无法登录 | 确认 SQL 已导入；用户表存在 `admin` |
-| 上传失败 | 检查 `webroot/files` 权限与 PHP `upload_max_filesize` |
+| 首页可访问但其他路径 404 | 检查 Nginx/Apache 重写规则是否指向 `public/index.php` |
+| 空白页或页面错误 | 临时在受控环境开启 `APP_DEBUG = true`，查看 `runtime/log/` |
+| 无法连接数据库 | 检查 `.env` 中 `DB_HOST`、`DB_NAME`、`DB_USER`、`DB_PASS` |
+| 无法登录 | 确认已导入 `database/jewelry_qms.sql`，默认账号为 `admin` / `password` |
+| 上传失败 | 检查 `public/uploads/` 权限与 PHP `upload_max_filesize`、`post_max_size` |
