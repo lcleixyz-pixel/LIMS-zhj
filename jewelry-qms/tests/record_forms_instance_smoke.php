@@ -118,6 +118,8 @@ function invoke_private(object $object, string $method, array $args = []): mixed
     return $reflection->invokeArgs($object, $args);
 }
 
+putenv('RECORD_FORM_PDF_TOKEN_SECRET');
+
 $controller = make_controller([]);
 
 $template = new SmokeRecordFormTemplate();
@@ -163,6 +165,15 @@ $values = invoke_private(make_controller($postedFields), 'collectValues', [$sche
 assert_same('1', $values['accepted'], 'Checkbox array input is normalized to checked');
 assert_same('', $values['title'], 'Scalar field array input is not persisted as an array');
 assert_same([['name' => '有效行']], $values['rows'], 'Repeatable table still filters empty rows');
+
+assert_throws_http(
+    fn () => invoke_private(make_controller([]), 'pdfToken', ['record-1', time() + 300]),
+    500,
+    'PDF 签名密钥未配置',
+    'PDF token generation fails closed when signing secret is missing'
+);
+
+putenv('RECORD_FORM_PDF_TOKEN_SECRET=record-form-smoke-secret-32-chars-ok');
 
 $expires = time() + 300;
 $token = invoke_private(make_controller([]), 'pdfToken', ['record-1', $expires]);

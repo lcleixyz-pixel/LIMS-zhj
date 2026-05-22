@@ -13,7 +13,6 @@ use app\service\RecordFormSchemaService;
 use InvalidArgumentException;
 use RuntimeException;
 use think\exception\HttpException;
-use think\facade\Config;
 use think\facade\Session;
 use think\facade\View;
 
@@ -261,16 +260,17 @@ class RecordFormInstance extends BaseController
 
     private function pdfTokenSecret(): string
     {
-        $secret = getenv('RECORD_FORM_PDF_TOKEN_SECRET');
-        if ($secret === false || $secret === '') {
-            try {
-                $secret = (string)Config::get('qms.company_id', 'record-form-pdf');
-            } catch (\Throwable) {
-                $secret = 'record-form-pdf';
-            }
+        $secret = function_exists('env') ? trim((string)\env('RECORD_FORM_PDF_TOKEN_SECRET', '')) : '';
+        if ($secret === '') {
+            $rawSecret = getenv('RECORD_FORM_PDF_TOKEN_SECRET');
+            $secret = $rawSecret === false ? '' : trim((string)$rawSecret);
         }
 
-        return $secret === '' ? 'record-form-pdf' : $secret;
+        if (strlen($secret) < 32) {
+            throw new HttpException(500, 'PDF 签名密钥未配置');
+        }
+
+        return $secret;
     }
 
     private function defaultValues(array $schema): array
