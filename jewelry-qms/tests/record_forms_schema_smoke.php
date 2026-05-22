@@ -121,6 +121,21 @@ assert_throws(
     'Rejects invalid JSON'
 );
 assert_throws(
+    fn () => RecordFormSchemaService::decode('{"key":"training_date","label":"培训日期"}'),
+    InvalidArgumentException::class,
+    'Rejects JSON object root'
+);
+assert_throws(
+    fn () => RecordFormSchemaService::decode('["not a field"]'),
+    InvalidArgumentException::class,
+    'Rejects non-object field items'
+);
+assert_throws(
+    fn () => RecordFormSchemaService::decode('[{"key":"attendees","label":"参训人员","type":"repeatable_table","columns":"not columns"}]'),
+    InvalidArgumentException::class,
+    'Rejects non-array repeatable table columns'
+);
+assert_throws(
     fn () => RecordFormSchemaService::normalize([['key' => ' ', 'label' => '空 key']]),
     InvalidArgumentException::class,
     'Rejects blank key'

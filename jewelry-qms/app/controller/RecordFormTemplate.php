@@ -10,6 +10,7 @@ use app\service\RecordFormFixtureService;
 use app\service\RecordFormPrintService;
 use app\service\RecordFormSchemaService;
 use InvalidArgumentException;
+use RuntimeException;
 use think\exception\HttpException;
 use think\facade\Session;
 use think\facade\View;
@@ -38,6 +39,7 @@ class RecordFormTemplate extends BaseController
             'keyword' => $this->request->param('keyword', ''),
             'status' => $this->request->param('status', ''),
         ]);
+        View::assign('canCreateInstances', $this->canCreateInstances());
 
         return View::fetch('record_form_template/index');
     }
@@ -47,6 +49,13 @@ class RecordFormTemplate extends BaseController
         if ($this->request->isPost()) {
             $data = $this->request->post();
             $id = qms_uuid();
+            $errors = $this->validateTemplateInput($data);
+            if ($errors !== []) {
+                Session::flash('warning', implode('；', $errors));
+                View::assign('form', $data);
+
+                return View::fetch('record_form_template/add');
+            }
 
             try {
                 $schema = RecordFormSchemaService::decode((string)($data['field_schema'] ?? '[]'));
@@ -67,12 +76,17 @@ class RecordFormTemplate extends BaseController
             $record->version = trim((string)($data['version'] ?? 'A/0'));
             $record->status = $data['status'] ?? 'draft';
 
-            if (!empty($_FILES['source_file']['name'])) {
+            if ($this->hasUploadedSourceFile()) {
                 $upload = FileService::upload($_FILES['source_file'], 'record-form-sources', $id);
-                if ($upload) {
-                    $record->source_file_name = $upload['file_name'];
-                    $record->source_file_path = $upload['file_path'];
+                if (!$upload) {
+                    Session::flash('warning', '原始附件上传失败，请检查文件类型、大小或重新选择文件。');
+                    View::assign('form', $data);
+
+                    return View::fetch('record_form_template/add');
                 }
+
+                $record->source_file_name = $upload['file_name'];
+                $record->source_file_path = $upload['file_path'];
             }
 
             $record->save();
@@ -95,6 +109,14 @@ class RecordFormTemplate extends BaseController
         $record = $this->findTemplate();
         if ($this->request->isPost()) {
             $data = $this->request->post();
+            $errors = $this->validateTemplateInput($data);
+            if ($errors !== []) {
+                Session::flash('warning', implode('；', $errors));
+                $record->setAttrs($data);
+                View::assign('record', $record);
+
+                return View::fetch('record_form_template/edit');
+            }
 
             try {
                 $schema = RecordFormSchemaService::decode((string)($data['field_schema'] ?? '[]'));
@@ -116,12 +138,18 @@ class RecordFormTemplate extends BaseController
                 'status' => $data['status'] ?? 'draft',
             ];
 
-            if (!empty($_FILES['source_file']['name'])) {
+            if ($this->hasUploadedSourceFile()) {
                 $upload = FileService::upload($_FILES['source_file'], 'record-form-sources', $record->id);
-                if ($upload) {
-                    $update['source_file_name'] = $upload['file_name'];
-                    $update['source_file_path'] = $upload['file_path'];
+                if (!$upload) {
+                    Session::flash('warning', '原始附件上传失败，请检查文件类型、大小或重新选择文件。');
+                    $record->setAttrs($data);
+                    View::assign('record', $record);
+
+                    return View::fetch('record_form_template/edit');
                 }
+
+                $update['source_file_name'] = $upload['file_name'];
+                $update['source_file_path'] = $upload['file_path'];
             }
 
             $record->save($update);
@@ -140,6 +168,7 @@ class RecordFormTemplate extends BaseController
         $record = $this->findTemplate();
         View::assign('record', $record);
         View::assign('schema', RecordFormSchemaService::decode($record->field_schema));
+        View::assign('canCreateInstances', $this->canCreateInstances());
 
         return View::fetch('record_form_template/view');
     }
@@ -161,7 +190,11 @@ class RecordFormTemplate extends BaseController
             $values[$field['key']] = $field['default'] ?? '';
         }
 
-        return RecordFormPrintService::render($record->print_template_key, $record->toArray(), $values);
+        try {
+            return RecordFormPrintService::render($record->print_template_key, $record->toArray(), $values);
+        } catch (RuntimeException $exception) {
+            throw new HttpException(404, '打印预览不可用：' . $exception->getMessage());
+        }
     }
 
     public function source()
@@ -176,6 +209,12 @@ class RecordFormTemplate extends BaseController
 
     public function delete()
     {
+        if (!$this->request->isPost()) {
+            Session::flash('warning', '请从模板列表使用删除按钮操作。');
+
+            return redirect('/record_form_template/index');
+        }
+
         $record = $this->findTemplate();
         $record->soft_delete = 1;
         $record->save();
@@ -200,12 +239,49 @@ class RecordFormTemplate extends BaseController
 
     private function findTemplate(): TemplateModel
     {
-        $id = $this->request->param('id');
-        $record = TemplateModel::where('soft_delete', 0)->find($id);
+        $id = trim((string)$this->request->param('id', ''));
+        if ($id === '') {
+            throw new HttpException(404, '记录表格模板不存在');
+        }
+
+        $record = TemplateModel::where('soft_delete', 0)->where('id', $id)->find();
         if (!$record) {
             throw new HttpException(404, '记录表格模板不存在');
         }
 
         return $record;
+    }
+
+    private function validateTemplateInput(array $data): array
+    {
+        $errors = [];
+
+        if (trim((string)($data['doc_number'] ?? '')) === '') {
+            $errors[] = '编号不能为空';
+        }
+        if (trim((string)($data['name'] ?? '')) === '') {
+            $errors[] = '名称不能为空';
+        }
+
+        $printTemplateKey = trim((string)($data['print_template_key'] ?? ''));
+        if ($printTemplateKey === '') {
+            $errors[] = '打印模板键不能为空';
+        } elseif (preg_match('/\A[a-zA-Z0-9_-]+\z/', $printTemplateKey) !== 1) {
+            $errors[] = '打印模板键只能包含字母、数字、下划线和短横线';
+        }
+
+        return $errors;
+    }
+
+    private function hasUploadedSourceFile(): bool
+    {
+        return isset($_FILES['source_file'])
+            && trim((string)($_FILES['source_file']['name'] ?? '')) !== ''
+            && (int)($_FILES['source_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+    }
+
+    private function canCreateInstances(): bool
+    {
+        return class_exists(\app\controller\RecordFormInstance::class);
     }
 }

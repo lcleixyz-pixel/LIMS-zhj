@@ -22,8 +22,15 @@ class RecordFormSchemaService
 
     public static function normalize(array $schema): array
     {
+        if (!array_is_list($schema)) {
+            throw new InvalidArgumentException('字段配置根节点必须是字段数组');
+        }
+
         $fields = [];
-        foreach ($schema as $field) {
+        foreach ($schema as $index => $field) {
+            if (!is_array($field)) {
+                throw new InvalidArgumentException('字段配置第' . ($index + 1) . '项必须是对象');
+            }
             $fields[] = self::normalizeField($field);
         }
 
@@ -111,8 +118,15 @@ class RecordFormSchemaService
         ];
 
         if ($type === 'repeatable_table') {
+            if (isset($field['columns']) && !is_array($field['columns'])) {
+                throw new InvalidArgumentException('字段 ' . $key . ' 的 columns 必须是数组');
+            }
+
             $columns = [];
-            foreach (($field['columns'] ?? []) as $column) {
+            foreach (($field['columns'] ?? []) as $index => $column) {
+                if (!is_array($column)) {
+                    throw new InvalidArgumentException('字段 ' . $key . ' 的第' . ($index + 1) . '列必须是对象');
+                }
                 $columns[] = self::normalizeField($column);
             }
             $normalized['columns'] = $columns;

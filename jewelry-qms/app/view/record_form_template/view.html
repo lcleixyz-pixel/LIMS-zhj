@@ -2,13 +2,19 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">记录表格模板 - {$record.doc_number}</h5>
         <div class="d-flex gap-1">
+            {if $canCreateInstances}
             <a href="/record_form_instance/create?template_id={$record.id}" class="btn btn-sm btn-outline-success">填写记录</a>
+            {else}
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="填写记录功能将在 Task5 接入后启用">填写记录</button>
+            {/if}
             <a href="/record_form_template/preview?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-info">打印预览</a>
             {if $record.source_file_path}
             <a href="/record_form_template/source?id={$record.id}" class="btn btn-sm btn-outline-secondary">下载原始附件</a>
             {/if}
             <a href="/record_form_template/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
-            <a href="/record_form_template/delete?id={$record.id}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除？')">删除</a>
+            <form method="post" action="/record_form_template/delete?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除？')">删除</button>
+            </form>
             <a href="/record_form_template/index" class="btn btn-sm btn-outline-secondary">返回</a>
         </div>
     </div>
