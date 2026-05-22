@@ -1,0 +1,77 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">填写记录 - {$template.name}</h5></div>
+    <div class="card-body">
+        <form method="post" action="/record_form_instance/create?template_id={$template.id}">
+            <div class="mb-3">
+                <label class="form-label required">记录标题</label>
+                <input type="text" name="record_title" class="form-control" value="{$template.name}" required>
+            </div>
+            {volist name="schema" id="field"}
+            <div class="mb-3">
+                <label class="form-label {if $field.required}required{/if}">{$field.label}</label>
+                {if $field.help_text}<div class="form-text mb-1">{$field.help_text}</div>{/if}
+                {if $field.type == 'textarea'}
+                <textarea name="fields[{$field.key}]" class="form-control" rows="4">{$values[$field.key]|default=$field.default}</textarea>
+                {elseif $field.type == 'date'}
+                <input type="date" name="fields[{$field.key}]" class="form-control" value="{$values[$field.key]|default=$field.default}">
+                {elseif $field.type == 'number'}
+                <input type="number" step="0.01" name="fields[{$field.key}]" class="form-control" value="{$values[$field.key]|default=$field.default}">
+                {elseif $field.type == 'select'}
+                <select name="fields[{$field.key}]" class="form-select">
+                    <option value="">请选择</option>
+                    {volist name="field.options" id="option"}
+                    <option value="{$option}" {if isset($values[$field.key]) && $values[$field.key] == $option}selected{/if}>{$option}</option>
+                    {/volist}
+                </select>
+                {elseif $field.type == 'checkbox'}
+                <div class="form-check">
+                    <input type="checkbox" name="fields[{$field.key}]" value="1" class="form-check-input" id="field_{$field.key}" {if isset($values[$field.key]) && ($values[$field.key] == '1' || $values[$field.key] == 1)}checked{/if}>
+                    <label class="form-check-label" for="field_{$field.key}">是</label>
+                </div>
+                {elseif $field.type == 'repeatable_table'}
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle">
+                        <thead><tr>{volist name="field.columns" id="column"}<th>{$column.label}{if $column.required}<span class="text-danger">*</span>{/if}</th>{/volist}</tr></thead>
+                        <tbody>
+                            {foreach $values[$field.key] as $rowIndex=>$row}
+                            <tr>
+                                {volist name="field.columns" id="column"}
+                                <td>
+                                    {if $column.type == 'textarea'}
+                                    <textarea name="fields[{$field.key}][{$rowIndex}][{$column.key}]" class="form-control form-control-sm" rows="2">{$row[$column.key]|default=''}</textarea>
+                                    {elseif $column.type == 'date'}
+                                    <input type="date" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" class="form-control form-control-sm" value="{$row[$column.key]|default=''}">
+                                    {elseif $column.type == 'number'}
+                                    <input type="number" step="0.01" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" class="form-control form-control-sm" value="{$row[$column.key]|default=''}">
+                                    {elseif $column.type == 'select'}
+                                    <select name="fields[{$field.key}][{$rowIndex}][{$column.key}]" class="form-select form-select-sm">
+                                        <option value=""></option>
+                                        {volist name="column.options" id="option"}
+                                        <option value="{$option}" {if isset($row[$column.key]) && $row[$column.key] == $option}selected{/if}>{$option}</option>
+                                        {/volist}
+                                    </select>
+                                    {elseif $column.type == 'checkbox'}
+                                    <input type="checkbox" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" value="1" class="form-check-input" {if isset($row[$column.key]) && ($row[$column.key] == '1' || $row[$column.key] == 1)}checked{/if}>
+                                    {else}
+                                    <input type="text" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" class="form-control form-control-sm" value="{$row[$column.key]|default=''}">
+                                    {/if}
+                                </td>
+                                {/volist}
+                            </tr>
+                            {/foreach}
+                        </tbody>
+                    </table>
+                </div>
+                {else}
+                <input type="text" name="fields[{$field.key}]" class="form-control" value="{$values[$field.key]|default=$field.default}">
+                {/if}
+                {if isset($errors[$field.key])}<div class="text-danger small mt-1">{$errors[$field.key]}</div>{/if}
+            </div>
+            {/volist}
+            <div class="text-end">
+                <a href="/record_form_template/view?id={$template.id}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">保存草稿</button>
+            </div>
+        </form>
+    </div>
+</div>

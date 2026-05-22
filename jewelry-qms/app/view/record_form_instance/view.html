@@ -1,0 +1,60 @@
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">记录详情 - {$record.record_title}</h5>
+        <div class="d-flex gap-1">
+            <a href="/record_form_instance/print?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-info">打印预览</a>
+            <a href="/record_form_instance/exportPdf?id={$record.id}" class="btn btn-sm btn-outline-success">生成PDF</a>
+            {if $record.generated_pdf_path}
+            <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-primary">下载PDF</a>
+            {/if}
+            <a href="/record_form_instance/edit?id={$record.id}" class="btn btn-sm btn-outline-secondary">编辑</a>
+            <a href="/record_form_instance/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="150">编号</th><td>{$record.doc_number}</td><th width="150">状态</th><td>{$record.status}</td></tr>
+            <tr><th>记录标题</th><td>{$record.record_title}</td><th>模板</th><td>{$template.name}</td></tr>
+            <tr><th>创建时间</th><td>{$record.created|default='-'}</td><th>更新时间</th><td>{$record.modified|default='-'}</td></tr>
+            <tr><th>PDF</th><td colspan="3">{$record.generated_pdf_name|default='未生成'}</td></tr>
+        </table>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header"><h6 class="mb-0">填写内容</h6></div>
+    <div class="card-body">
+        {volist name="schema" id="field"}
+        <div class="mb-4">
+            <h6>{$field.label}</h6>
+            {if $field.type == 'repeatable_table'}
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead><tr>{volist name="field.columns" id="column"}<th>{$column.label}</th>{/volist}</tr></thead>
+                    <tbody>
+                        {volist name="values[$field.key]" id="row"}
+                        <tr>
+                            {volist name="field.columns" id="column"}
+                            <td>{$row[$column.key]|default='-'}</td>
+                            {/volist}
+                        </tr>
+                        {/volist}
+                        {empty name="values[$field.key]"}
+                        <tr><td colspan="{:count($field['columns'])}" class="text-center text-muted">未填写</td></tr>
+                        {/empty}
+                    </tbody>
+                </table>
+            </div>
+            {elseif $field.type == 'checkbox'}
+            <div>{if isset($values[$field.key]) && ($values[$field.key] == '1' || $values[$field.key] == 1)}是{else}否{/if}</div>
+            {elseif $field.type == 'textarea'}
+            <pre class="bg-light border rounded p-2 mb-0">{$values[$field.key]|default='-'}</pre>
+            {else}
+            <div>{$values[$field.key]|default='-'}</div>
+            {/if}
+        </div>
+        {/volist}
+        {empty name="schema"}
+        <p class="text-muted mb-0">暂无字段配置</p>
+        {/empty}
+    </div>
+</div>
