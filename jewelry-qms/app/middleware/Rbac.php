@@ -36,7 +36,8 @@ class Rbac
             return redirect('/dashboard/index');
         }
 
-        if (in_array($action, ['add', 'edit', 'delete'], true) && !RbacService::canWrite($controller)) {
+        $writeActions = ['add', 'edit', 'delete', 'create', 'seedsamples', 'exportpdf'];
+        if (in_array($action, $writeActions, true) && !RbacService::canWrite($controller)) {
             Session::flash('error', '您没有编辑权限');
 
             return redirect('/dashboard/index');
