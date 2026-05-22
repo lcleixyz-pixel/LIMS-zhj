@@ -3,7 +3,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const [, , inputUrl, outputPath] = process.argv;
+const [, , modeOrInput, maybeOutput] = process.argv;
+const projectRoot = process.cwd();
+
+let inputUrl = modeOrInput;
+let outputPath = maybeOutput;
+
+if (modeOrInput === 'smoke' && !maybeOutput) {
+  inputUrl = path.join(projectRoot, 'tests/record_forms_pdf_smoke.html');
+  outputPath = path.join(projectRoot, 'runtime/record-form-smoke.pdf');
+}
 
 if (!inputUrl || !outputPath) {
   console.error('Usage: node scripts/render-record-pdf.mjs <url-or-file> <output-path>');
