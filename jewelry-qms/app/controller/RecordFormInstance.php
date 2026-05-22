@@ -131,6 +131,7 @@ class RecordFormInstance extends BaseController
     {
         $record = $this->findInstance();
         $template = $this->findTemplateById((string)$record->template_id);
+        $this->decodeSchema($template);
         $values = $this->decodeValues($record->field_values);
 
         try {
@@ -233,12 +234,11 @@ class RecordFormInstance extends BaseController
             }
 
             if ($field['type'] === 'checkbox') {
-                $checked = isset($posted[$key]) && (string)$posted[$key] !== '0';
-                $values[$key] = $checked ? '1' : (($field['required'] ?? false) ? '' : '0');
+                $values[$key] = $this->normalizeCheckboxValue($posted[$key] ?? null);
                 continue;
             }
 
-            $values[$key] = $posted[$key] ?? '';
+            $values[$key] = $this->normalizeScalarValue($posted[$key] ?? '');
         }
 
         return $values;
@@ -261,10 +261,9 @@ class RecordFormInstance extends BaseController
             foreach ($columns as $column) {
                 $columnKey = $column['key'];
                 if ($column['type'] === 'checkbox') {
-                    $checked = isset($postedRow[$columnKey]) && (string)$postedRow[$columnKey] !== '0';
-                    $value = $checked ? '1' : (($column['required'] ?? false) ? '' : '0');
+                    $value = $this->normalizeCheckboxValue($postedRow[$columnKey] ?? null);
                 } else {
-                    $value = (string)($postedRow[$columnKey] ?? '');
+                    $value = $this->normalizeScalarValue($postedRow[$columnKey] ?? '');
                 }
                 $row[$columnKey] = $value;
                 if (trim($value) !== '' && !($column['type'] === 'checkbox' && $value === '0')) {
@@ -278,6 +277,31 @@ class RecordFormInstance extends BaseController
         }
 
         return $rows;
+    }
+
+    private function normalizeCheckboxValue(mixed $value): string
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                $normalized = $this->normalizeScalarValue($item);
+                if (trim($normalized) !== '' && $normalized !== '0') {
+                    return '1';
+                }
+            }
+
+            return '0';
+        }
+
+        return $value !== null && trim((string)$value) !== '' && (string)$value !== '0' ? '1' : '0';
+    }
+
+    private function normalizeScalarValue(mixed $value): string
+    {
+        if (is_array($value)) {
+            return '';
+        }
+
+        return (string)$value;
     }
 
     private function prepareFormValues(array $schema, array $values): array
@@ -305,7 +329,7 @@ class RecordFormInstance extends BaseController
         try {
             return RecordFormSchemaService::decode($template->field_schema);
         } catch (InvalidArgumentException $exception) {
-            throw new HttpException(500, '字段配置不可用：' . $exception->getMessage());
+            throw new HttpException(422, '记录表格字段配置错误：' . $exception->getMessage());
         }
     }
 
@@ -316,8 +340,15 @@ class RecordFormInstance extends BaseController
         }
 
         $decoded = json_decode($json, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new HttpException(422, '记录字段值损坏：' . json_last_error_msg());
+        }
 
-        return is_array($decoded) ? $decoded : [];
+        if (!is_array($decoded)) {
+            throw new HttpException(422, '记录字段值损坏：字段值根节点必须是对象');
+        }
+
+        return $decoded;
     }
 
     private function encodeValues(array $values): string
