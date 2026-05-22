@@ -1,0 +1,49 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑记录表格模板</h5></div>
+    <div class="card-body">
+        <form method="post" action="/record_form_template/edit?id={$record.id}" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">编号</label>
+                    <input type="text" name="doc_number" value="{$record.doc_number}" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">名称</label>
+                    <input type="text" name="name" value="{$record.name}" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">模块</label>
+                    <input type="text" name="module" value="{$record.module|default=''}" class="form-control">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">版本</label>
+                    <input type="text" name="version" value="{$record.version|default='A/0'}" class="form-control">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">状态</label>
+                    <select name="status" class="form-select">
+                        <option value="draft" {if $record.status == 'draft'}selected{/if}>草稿</option>
+                        <option value="published" {if $record.status == 'published'}selected{/if}>已发布</option>
+                        <option value="obsolete" {if $record.status == 'obsolete'}selected{/if}>已作废</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">打印模板键</label>
+                    <input type="text" name="print_template_key" value="{$record.print_template_key}" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">替换原始附件</label>
+                    <input type="file" name="source_file" class="form-control">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label required">字段配置 JSON</label>
+                <textarea name="field_schema" class="form-control font-monospace" rows="18" required>{$record.field_schema}</textarea>
+            </div>
+            <div class="text-end">
+                <a href="/record_form_template/view?id={$record.id}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
