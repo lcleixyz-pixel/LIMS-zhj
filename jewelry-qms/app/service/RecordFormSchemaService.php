@@ -73,16 +73,40 @@ class RecordFormSchemaService
             }
 
             if ($field['type'] === 'repeatable_table') {
-                $rows = is_array($value) ? array_values($value) : [];
+                if (!is_array($value)) {
+                    $errors[$key] = $field['label'] . '必须是明细数组';
+                    continue;
+                }
+
+                $rows = array_values($value);
                 foreach ($rows as $rowIndex => $row) {
+                    if (!is_array($row)) {
+                        $errors[$key . '.' . $rowIndex] = $field['label'] . '第' . ($rowIndex + 1) . '行必须是对象';
+                        continue;
+                    }
+
                     foreach ($field['columns'] as $column) {
-                        $cellValue = is_array($row) ? ($row[$column['key']] ?? '') : '';
+                        $cellValue = $row[$column['key']] ?? '';
                         if (($column['required'] ?? false) && self::isBlank($cellValue)) {
                             $errors[$key . '.' . $rowIndex . '.' . $column['key']] =
                                 $field['label'] . '第' . ($rowIndex + 1) . '行' . $column['label'] . '不能为空';
+                            continue;
+                        }
+
+                        $typeError = self::validateFieldType($column, $cellValue);
+                        if ($typeError !== null) {
+                            $errors[$key . '.' . $rowIndex . '.' . $column['key']] =
+                                $field['label'] . '第' . ($rowIndex + 1) . '行' . $typeError;
                         }
                     }
                 }
+
+                continue;
+            }
+
+            $typeError = self::validateFieldType($field, $value);
+            if ($typeError !== null) {
+                $errors[$key] = $typeError;
             }
         }
 
@@ -98,11 +122,19 @@ class RecordFormSchemaService
         if ($key === '') {
             throw new InvalidArgumentException('字段 key 不能为空');
         }
+        if (preg_match('/\A[a-zA-Z][a-zA-Z0-9_]*\z/', $key) !== 1) {
+            throw new InvalidArgumentException('字段 key 只能使用字母、数字和下划线，并以字母开头：' . $key);
+        }
         if ($label === '') {
             throw new InvalidArgumentException('字段 label 不能为空');
         }
         if (!in_array($type, self::TYPES, true)) {
             throw new InvalidArgumentException('不支持的字段类型：' . $type);
+        }
+
+        $options = self::normalizeOptions($field['options'] ?? []);
+        if ($type === 'select' && $options === []) {
+            throw new InvalidArgumentException('字段 ' . $key . ' 的 select 类型必须配置 options');
         }
 
         $normalized = [
@@ -111,7 +143,7 @@ class RecordFormSchemaService
             'type' => $type,
             'required' => (bool)($field['required'] ?? false),
             'default' => $field['default'] ?? '',
-            'options' => array_values($field['options'] ?? []),
+            'options' => $options,
             'print_bind' => (string)($field['print_bind'] ?? $key),
             'validation' => $field['validation'] ?? [],
             'help_text' => (string)($field['help_text'] ?? ''),
@@ -133,6 +165,60 @@ class RecordFormSchemaService
         }
 
         return $normalized;
+    }
+
+    private static function normalizeOptions(mixed $options): array
+    {
+        if ($options === null || $options === '') {
+            return [];
+        }
+        if (!is_array($options)) {
+            throw new InvalidArgumentException('字段 options 必须是数组');
+        }
+
+        $normalized = [];
+        foreach (array_values($options) as $option) {
+            if (is_array($option) || is_object($option)) {
+                throw new InvalidArgumentException('字段 options 只能包含标量值');
+            }
+
+            $value = trim((string)$option);
+            if ($value !== '') {
+                $normalized[] = $value;
+            }
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
+    private static function validateFieldType(array $field, mixed $value): ?string
+    {
+        if (self::isBlank($value)) {
+            return null;
+        }
+        if (is_array($value)) {
+            return $field['label'] . '必须是标量值';
+        }
+
+        $stringValue = trim((string)$value);
+        return match ($field['type']) {
+            'date' => self::isValidDate($stringValue) ? null : $field['label'] . '必须是有效日期',
+            'number' => is_numeric($stringValue) ? null : $field['label'] . '必须是数字',
+            'select' => in_array($stringValue, $field['options'] ?? [], true) ? null : $field['label'] . '不在可选范围内',
+            'checkbox' => in_array($stringValue, ['0', '1'], true) ? null : $field['label'] . '必须是勾选值',
+            default => null,
+        };
+    }
+
+    private static function isValidDate(string $value): bool
+    {
+        if (preg_match('/\A\d{4}-\d{2}-\d{2}\z/', $value) !== 1) {
+            return false;
+        }
+
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+
+        return $date instanceof \DateTimeImmutable && $date->format('Y-m-d') === $value;
     }
 
     private static function isBlank(mixed $value): bool

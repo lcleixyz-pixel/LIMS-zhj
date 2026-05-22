@@ -58,10 +58,10 @@
                         <td>
                             <a href="/record_form_template/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
                             <a href="/record_form_template/edit?id={$item.id}" class="btn btn-sm btn-outline-primary">编辑</a>
-                            {if $canCreateInstances}
+                            {if $canCreateInstances && $item.status == 'published'}
                             <a href="/record_form_instance/create?template_id={$item.id}" class="btn btn-sm btn-outline-success">填写</a>
                             {else}
-                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="填写记录功能将在 Task5 接入后启用">填写</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="只有已发布模板可填写记录">填写</button>
                             {/if}
                             <form method="post" action="/record_form_template/delete?id={$item.id}" class="d-inline">
                                 <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除？')">删除</button>

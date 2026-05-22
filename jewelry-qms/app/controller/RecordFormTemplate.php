@@ -268,9 +268,18 @@ class RecordFormTemplate extends BaseController
             $errors[] = '打印模板键不能为空';
         } elseif (preg_match('/\A[a-zA-Z0-9_-]+\z/', $printTemplateKey) !== 1) {
             $errors[] = '打印模板键只能包含字母、数字、下划线和短横线';
+        } elseif (($data['status'] ?? '') === 'published' && !$this->printTemplateExists($printTemplateKey)) {
+            $errors[] = '发布模板前必须配置可用的打印模板键';
         }
 
         return $errors;
+    }
+
+    private function printTemplateExists(string $printTemplateKey): bool
+    {
+        $path = root_path() . 'app' . DIRECTORY_SEPARATOR . 'record_form_print' . DIRECTORY_SEPARATOR . $printTemplateKey . '.php';
+
+        return is_file($path);
     }
 
     private function hasUploadedSourceFile(): bool

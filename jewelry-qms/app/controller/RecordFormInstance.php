@@ -30,6 +30,10 @@ class RecordFormInstance extends BaseController
         }
 
         $items = $query->order('created', 'desc')->paginate(20);
+        foreach ($items as $item) {
+            $item->setAttr('pdf_token', $this->canExportPdf($item) ? $this->issuePdfActionToken((string)$item->id) : '');
+        }
+
         View::assign('items', $items);
         View::assign('pages', $items->render());
         View::assign('filter', ['keyword' => $this->request->param('keyword', '')]);
@@ -39,7 +43,7 @@ class RecordFormInstance extends BaseController
 
     public function create()
     {
-        $template = $this->findTemplate();
+        $template = $this->findTemplate(true);
         $schema = $this->decodeSchema($template);
 
         if ($this->request->isPost()) {
@@ -54,9 +58,15 @@ class RecordFormInstance extends BaseController
                 return View::fetch('record_form_instance/create');
             }
 
+            $snapshot = $this->snapshotTemplate($template);
             $record = InstanceModel::create([
                 'id' => qms_uuid(),
                 'template_id' => $template->id,
+                'template_name' => $snapshot['name'],
+                'template_module' => $snapshot['module'],
+                'template_version' => $snapshot['version'],
+                'template_print_template_key' => $snapshot['print_template_key'],
+                'template_field_schema' => $snapshot['field_schema'],
                 'doc_number' => $template->doc_number,
                 'record_title' => trim((string)$this->request->post('record_title', $template->name)),
                 'field_values' => $this->encodeValues($values),
@@ -78,13 +88,13 @@ class RecordFormInstance extends BaseController
     public function edit()
     {
         $record = $this->findInstance();
-        if ($record->status === 'locked') {
-            Session::flash('warning', '已归档记录不能编辑');
+        if ($this->isTerminalStatus((string)$record->status)) {
+            Session::flash('warning', '已归档或已作废记录不能编辑');
 
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
 
-        $template = $this->findTemplateById((string)$record->template_id);
+        $template = $this->templateForRecord($record);
         $schema = $this->decodeSchema($template);
 
         if ($this->request->isPost()) {
@@ -95,6 +105,9 @@ class RecordFormInstance extends BaseController
                     'record_title' => trim((string)$this->request->post('record_title', $record->record_title)),
                     'field_values' => $this->encodeValues($values),
                     'status' => 'draft',
+                    'generated_html_path' => null,
+                    'generated_pdf_path' => null,
+                    'generated_pdf_name' => null,
                 ]);
                 Session::flash('success', '记录已保存');
 
@@ -118,11 +131,13 @@ class RecordFormInstance extends BaseController
     public function view()
     {
         $record = $this->findInstance();
-        $template = $this->findTemplateById((string)$record->template_id);
+        $template = $this->templateForRecord($record);
         View::assign('record', $record);
         View::assign('template', $template);
         View::assign('schema', $this->decodeSchema($template));
         View::assign('values', $this->decodeValues($record->field_values));
+        View::assign('canExportPdf', $this->canExportPdf($record));
+        View::assign('pdfToken', $this->canExportPdf($record) ? $this->issuePdfActionToken((string)$record->id) : '');
 
         return View::fetch('record_form_instance/view');
     }
@@ -134,35 +149,19 @@ class RecordFormInstance extends BaseController
         return $this->renderPrintHtml($record);
     }
 
-    public function internalPrint()
-    {
-        $id = trim((string)$this->request->param('id', ''));
-        if ($id === '') {
-            throw new HttpException(404, '记录不存在');
-        }
-
-        $expires = trim((string)$this->request->param('expires', ''));
-        $token = trim((string)$this->request->param('token', ''));
-        if ($expires === '' || $token === '') {
-            throw new HttpException(403, '打印链接无效');
-        }
-
-        if (!ctype_digit($expires) || (int)$expires < time()) {
-            throw new HttpException(403, '打印链接已过期');
-        }
-
-        if (!hash_equals($this->pdfToken($id, (int)$expires), $token)) {
-            throw new HttpException(403, '打印链接无效');
-        }
-
-        $record = $this->findInstanceById($id);
-
-        return $this->renderPrintHtml($record);
-    }
-
     public function exportPdf()
     {
         $record = $this->findInstance();
+        if (!$this->consumePdfActionToken((string)$record->id)) {
+            throw new HttpException(403, 'PDF 生成请求无效，请刷新页面后重试');
+        }
+
+        if (!$this->canExportPdf($record)) {
+            Session::flash('warning', '已归档或已作废记录不能重新生成 PDF。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
         if (!class_exists(PdfRenderService::class)) {
             Session::flash('warning', 'PDF 渲染服务尚未接入，请在 Task6 完成后再生成 PDF。');
 
@@ -191,25 +190,33 @@ class RecordFormInstance extends BaseController
         FileService::download($record->generated_pdf_path, $record->generated_pdf_name ?: $record->record_title . '.pdf');
     }
 
-    private function findTemplate(): TemplateModel
+    private function findTemplate(bool $requirePublished = false): TemplateModel
     {
         $id = trim((string)$this->request->param('template_id', ''));
         if ($id === '') {
             throw new HttpException(404, '记录表格模板不存在');
         }
 
-        return $this->findTemplateById($id);
+        return $this->findTemplateById($id, $requirePublished);
     }
 
-    private function findTemplateById(string $id): TemplateModel
+    private function findTemplateById(string $id, bool $requirePublished = false, bool $includeDeleted = false): TemplateModel
     {
         if ($id === '') {
             throw new HttpException(404, '记录表格模板不存在');
         }
 
-        $template = TemplateModel::where('soft_delete', 0)->where('id', $id)->find();
+        $query = TemplateModel::where('id', $id);
+        if (!$includeDeleted) {
+            $query->where('soft_delete', 0);
+        }
+
+        $template = $query->find();
         if (!$template) {
             throw new HttpException(404, '记录表格模板不存在');
+        }
+        if ($requirePublished && $template->status !== 'published') {
+            throw new HttpException(403, '只有已发布记录表格模板可填写');
         }
 
         return $template;
@@ -237,35 +244,114 @@ class RecordFormInstance extends BaseController
 
     private function renderPrintHtml(InstanceModel $record): string
     {
-        $template = $this->findTemplateById((string)$record->template_id);
+        $template = $this->templateForRecord($record);
         $this->decodeSchema($template);
         $values = $this->decodeValues($record->field_values);
 
         try {
-            return RecordFormPrintService::render($template->print_template_key, $template->toArray(), $values);
+            return RecordFormPrintService::render((string)$template['print_template_key'], $template, $values);
         } catch (RuntimeException $exception) {
             throw new HttpException(404, '打印预览不可用：' . $exception->getMessage());
         }
     }
 
-    private function pdfToken(string $recordId, int $expires): string
+    private function templateForRecord(InstanceModel $record): array
     {
-        return hash_hmac('sha256', $recordId . '|' . $expires, $this->pdfTokenSecret());
+        if ($this->hasTemplateSnapshot($record)) {
+            return $this->snapshotFromRecord($record);
+        }
+
+        return $this->backfillTemplateSnapshot($record);
     }
 
-    private function pdfTokenSecret(): string
+    private function hasTemplateSnapshot(InstanceModel $record): bool
     {
-        $secret = function_exists('env') ? trim((string)\env('RECORD_FORM_PDF_TOKEN_SECRET', '')) : '';
-        if ($secret === '') {
-            $rawSecret = getenv('RECORD_FORM_PDF_TOKEN_SECRET');
-            $secret = $rawSecret === false ? '' : trim((string)$rawSecret);
+        return trim((string)$record->template_field_schema) !== ''
+            && trim((string)$record->template_print_template_key) !== '';
+    }
+
+    private function snapshotFromRecord(InstanceModel $record): array
+    {
+        return [
+            'id' => (string)$record->template_id,
+            'doc_number' => (string)$record->doc_number,
+            'name' => (string)($record->template_name ?: $record->record_title),
+            'module' => (string)($record->template_module ?: ''),
+            'version' => (string)($record->template_version ?: ''),
+            'print_template_key' => (string)$record->template_print_template_key,
+            'field_schema' => (string)$record->template_field_schema,
+        ];
+    }
+
+    private function backfillTemplateSnapshot(InstanceModel $record): array
+    {
+        try {
+            $snapshot = $this->snapshotTemplate($this->findTemplateById((string)$record->template_id, false, true));
+        } catch (HttpException $exception) {
+            throw new HttpException(409, '记录缺少模板快照，且原模板不存在，请人工补齐后再查看或打印');
         }
 
-        if (strlen($secret) < 32) {
-            throw new HttpException(500, 'PDF 签名密钥未配置');
+        $record->save([
+            'template_name' => $snapshot['name'],
+            'template_module' => $snapshot['module'],
+            'template_version' => $snapshot['version'],
+            'template_print_template_key' => $snapshot['print_template_key'],
+            'template_field_schema' => $snapshot['field_schema'],
+        ]);
+
+        return $snapshot;
+    }
+
+    private function snapshotTemplate(TemplateModel $template): array
+    {
+        return [
+            'id' => (string)$template->id,
+            'doc_number' => (string)$template->doc_number,
+            'name' => (string)$template->name,
+            'module' => (string)$template->module,
+            'version' => (string)$template->version,
+            'print_template_key' => (string)$template->print_template_key,
+            'field_schema' => (string)$template->field_schema,
+        ];
+    }
+
+    private function canExportPdf(InstanceModel $record): bool
+    {
+        return !$this->isTerminalStatus((string)$record->status);
+    }
+
+    private function isTerminalStatus(string $status): bool
+    {
+        return in_array($status, ['locked', 'voided'], true);
+    }
+
+    private function issuePdfActionToken(string $recordId): string
+    {
+        $tokens = Session::get('record_form_pdf_tokens', []);
+        if (!is_array($tokens)) {
+            $tokens = [];
         }
 
-        return $secret;
+        $token = bin2hex(random_bytes(16));
+        $tokens[$recordId] = $token;
+        Session::set('record_form_pdf_tokens', $tokens);
+
+        return $token;
+    }
+
+    private function consumePdfActionToken(string $recordId): bool
+    {
+        $provided = trim((string)$this->request->post('pdf_token', ''));
+        $tokens = Session::get('record_form_pdf_tokens', []);
+        if (!is_array($tokens)) {
+            return false;
+        }
+
+        $expected = (string)($tokens[$recordId] ?? '');
+        unset($tokens[$recordId]);
+        Session::set('record_form_pdf_tokens', $tokens);
+
+        return $provided !== '' && $expected !== '' && hash_equals($expected, $provided);
     }
 
     private function defaultValues(array $schema): array
@@ -381,10 +467,11 @@ class RecordFormInstance extends BaseController
         return $values;
     }
 
-    private function decodeSchema(TemplateModel $template): array
+    private function decodeSchema(TemplateModel|array $template): array
     {
+        $fieldSchema = is_array($template) ? (string)($template['field_schema'] ?? '') : (string)$template->field_schema;
         try {
-            return RecordFormSchemaService::decode($template->field_schema);
+            return RecordFormSchemaService::decode($fieldSchema);
         } catch (InvalidArgumentException $exception) {
             throw new HttpException(422, '记录表格字段配置错误：' . $exception->getMessage());
         }

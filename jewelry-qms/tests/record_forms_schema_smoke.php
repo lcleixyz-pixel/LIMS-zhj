@@ -87,7 +87,7 @@ $supportedTypesSchema = [
     ['key' => 'textarea_field', 'label' => '多行文本', 'type' => 'textarea'],
     ['key' => 'date_field', 'label' => '日期', 'type' => 'date'],
     ['key' => 'number_field', 'label' => '数字', 'type' => 'number'],
-    ['key' => 'select_field', 'label' => '选项', 'type' => 'select'],
+    ['key' => 'select_field', 'label' => '选项', 'type' => 'select', 'options' => ['合格', '不合格']],
     ['key' => 'checkbox_field', 'label' => '勾选', 'type' => 'checkbox'],
     ['key' => 'person_field', 'label' => '人员', 'type' => 'person'],
     ['key' => 'department_field', 'label' => '部门', 'type' => 'department'],
@@ -141,6 +141,11 @@ assert_throws(
     'Rejects blank key'
 );
 assert_throws(
+    fn () => RecordFormSchemaService::normalize([['key' => 'bad-key', 'label' => '坏 key']]),
+    InvalidArgumentException::class,
+    'Rejects invalid key characters'
+);
+assert_throws(
     fn () => RecordFormSchemaService::normalize([['key' => 'blank_label', 'label' => ' ']]),
     InvalidArgumentException::class,
     'Rejects blank label'
@@ -149,6 +154,16 @@ assert_throws(
     fn () => RecordFormSchemaService::normalize([['key' => 'bad_type', 'label' => '坏类型', 'type' => 'file']]),
     InvalidArgumentException::class,
     'Rejects unsupported type'
+);
+assert_throws(
+    fn () => RecordFormSchemaService::normalize([['key' => 'empty_select', 'label' => '空选项', 'type' => 'select']]),
+    InvalidArgumentException::class,
+    'Rejects select fields without options'
+);
+assert_throws(
+    fn () => RecordFormSchemaService::normalize([['key' => 'bad_options', 'label' => '坏选项', 'options' => [['nested']]]]),
+    InvalidArgumentException::class,
+    'Rejects non-scalar options'
 );
 assert_throws(
     fn () => RecordFormSchemaService::encode([['key' => 'nan_default', 'label' => '非法默认值', 'default' => NAN]]),
@@ -174,5 +189,34 @@ $badValues = [
 $badErrors = RecordFormSchemaService::validateValues($normalized, $badValues);
 assert_same('培训日期不能为空', $badErrors['training_date'], 'Reports missing required date');
 assert_same('参训人员第1行姓名不能为空', $badErrors['attendees.0.name'], 'Reports missing required table cell');
+
+$typeSchema = RecordFormSchemaService::normalize([
+    ['key' => 'checked', 'label' => '确认', 'type' => 'checkbox'],
+    ['key' => 'score', 'label' => '分数', 'type' => 'number'],
+    ['key' => 'status', 'label' => '状态', 'type' => 'select', 'options' => ['合格', '不合格']],
+    ['key' => 'test_date', 'label' => '测试日期', 'type' => 'date'],
+    [
+        'key' => 'items',
+        'label' => '项目',
+        'type' => 'repeatable_table',
+        'columns' => [
+            ['key' => 'result', 'label' => '结果', 'type' => 'select', 'options' => ['满意', '可疑']],
+        ],
+    ],
+]);
+$typeErrors = RecordFormSchemaService::validateValues($typeSchema, [
+    'checked' => 'yes',
+    'score' => 'one',
+    'status' => '待定',
+    'test_date' => '2026-02-31',
+    'items' => [
+        ['result' => '不满意'],
+    ],
+]);
+assert_same('确认必须是勾选值', $typeErrors['checked'], 'Reports invalid checkbox value');
+assert_same('分数必须是数字', $typeErrors['score'], 'Reports invalid number value');
+assert_same('状态不在可选范围内', $typeErrors['status'], 'Reports invalid select option');
+assert_same('测试日期必须是有效日期', $typeErrors['test_date'], 'Reports invalid date');
+assert_same('项目第1行结果不在可选范围内', $typeErrors['items.0.result'], 'Reports invalid table select option');
 
 echo "record_forms_schema_smoke passed\n";

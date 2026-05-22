@@ -32,7 +32,7 @@
                     <tr>
                         <td><a href="/record_form_instance/view?id={$item.id}">{$item.record_title}</a></td>
                         <td>{$item.doc_number}</td>
-                        <td>{$item.template.name|default=$item.template_id}</td>
+                        <td>{if $item.template_name}{$item.template_name}{else}{$item.template.name|default=$item.template_id}{/if}</td>
                         <td>
                             {if $item.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
                             {elseif $item.status == 'generated'}<span class="badge bg-info">已生成</span>
@@ -45,7 +45,14 @@
                             <a href="/record_form_instance/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
                             <a href="/record_form_instance/edit?id={$item.id}" class="btn btn-sm btn-outline-primary">编辑</a>
                             <a href="/record_form_instance/print?id={$item.id}" target="_blank" class="btn btn-sm btn-outline-secondary">打印预览</a>
-                            <a href="/record_form_instance/exportPdf?id={$item.id}" class="btn btn-sm btn-outline-success">生成PDF</a>
+                            {if $item.pdf_token}
+                            <form method="post" action="/record_form_instance/exportPdf?id={$item.id}" class="d-inline">
+                                <input type="hidden" name="pdf_token" value="{$item.pdf_token}">
+                                <button type="submit" class="btn btn-sm btn-outline-success">生成PDF</button>
+                            </form>
+                            {else}
+                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已归档或已作废记录不能重新生成 PDF">生成PDF</button>
+                            {/if}
                         </td>
                     </tr>
                     {/volist}

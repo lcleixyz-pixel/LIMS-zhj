@@ -3,7 +3,14 @@
         <h5 class="mb-0">记录详情 - {$record.record_title}</h5>
         <div class="d-flex gap-1">
             <a href="/record_form_instance/print?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-info">打印预览</a>
-            <a href="/record_form_instance/exportPdf?id={$record.id}" class="btn btn-sm btn-outline-success">生成PDF</a>
+            {if $canExportPdf}
+            <form method="post" action="/record_form_instance/exportPdf?id={$record.id}" class="d-inline">
+                <input type="hidden" name="pdf_token" value="{$pdfToken}">
+                <button type="submit" class="btn btn-sm btn-outline-success">生成PDF</button>
+            </form>
+            {else}
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已归档或已作废记录不能重新生成 PDF">生成PDF</button>
+            {/if}
             {if $record.generated_pdf_path}
             <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-primary">下载PDF</a>
             {/if}

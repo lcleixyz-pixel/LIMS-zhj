@@ -16,7 +16,19 @@ class AuditLog
             $controller = $request->controller();
             $action = $request->action();
             $method = $request->method();
-            $logActions = ['delete', 'restore', 'add', 'edit', 'submitReview', 'revise', 'approve', 'changePassword'];
+            $logActions = [
+                'add',
+                'approve',
+                'changepassword',
+                'create',
+                'delete',
+                'edit',
+                'exportpdf',
+                'restore',
+                'revise',
+                'seedsamples',
+                'submitreview',
+            ];
             if (in_array(strtolower($action), $logActions, true)) {
                 try {
                     History::create([
@@ -24,7 +36,7 @@ class AuditLog
                         'model_name' => $controller,
                         'controller_name' => $controller,
                         'action' => $action,
-                        'record_id' => (string) $request->param('id', ''),
+                        'record_id' => $this->resolveRecordId($request, $response),
                         'user_id' => Session::get('user.id'),
                         'details' => $method . ' ' . $controller . '/' . $action,
                         'created' => date('Y-m-d H:i:s'),
@@ -35,5 +47,31 @@ class AuditLog
         }
 
         return $response;
+    }
+
+    private function resolveRecordId($request, $response): string
+    {
+        $recordId = trim((string)$request->param('id', ''));
+        if ($recordId !== '') {
+            return $recordId;
+        }
+
+        if (!method_exists($response, 'getHeader')) {
+            return '';
+        }
+
+        $location = (string)($response->getHeader('Location') ?? '');
+        if ($location === '') {
+            return '';
+        }
+
+        $query = (string)(parse_url($location, PHP_URL_QUERY) ?? '');
+        if ($query === '') {
+            return '';
+        }
+
+        parse_str($query, $params);
+
+        return trim((string)($params['id'] ?? ''));
     }
 }

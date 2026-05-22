@@ -8,7 +8,6 @@ Route::rule('login', 'Login/index');
 Route::get('logout', 'Login/logout');
 Route::get('login/logout', 'Login/logout');
 Route::rule('login/changePassword', 'Login/changePassword');
-Route::get('record_form_instance/internalPrint', 'RecordFormInstance/internalPrint');
 
 Route::group(function () {
     Route::get('/', 'Dashboard/index');
@@ -36,7 +35,7 @@ Route::group(function () {
     Route::rule('record_form_instance/edit', 'RecordFormInstance/edit');
     Route::get('record_form_instance/view', 'RecordFormInstance/view');
     Route::get('record_form_instance/print', 'RecordFormInstance/print');
-    Route::get('record_form_instance/exportPdf', 'RecordFormInstance/exportPdf');
+    Route::post('record_form_instance/exportPdf', 'RecordFormInstance/exportPdf');
     Route::get('record_form_instance/downloadPdf', 'RecordFormInstance/downloadPdf');
 
     Route::post('approval/approve', 'Approval/approve');
