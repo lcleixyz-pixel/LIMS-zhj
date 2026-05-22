@@ -9,11 +9,14 @@ class RecordFormPrintService
 {
     public static function render(string $templateKey, array $template, array $values): string
     {
-        $safeKey = preg_replace('/[^a-zA-Z0-9_-]/', '', $templateKey);
+        if ($templateKey === '' || preg_match('/\A[a-zA-Z0-9_-]+\z/', $templateKey) !== 1) {
+            throw new RuntimeException('非法打印模板标识：' . ($templateKey === '' ? '空' : $templateKey));
+        }
+
         $root = function_exists('root_path') ? \root_path() : dirname(__DIR__, 2) . DIRECTORY_SEPARATOR;
-        $path = $root . 'app' . DIRECTORY_SEPARATOR . 'record_form_print' . DIRECTORY_SEPARATOR . $safeKey . '.php';
+        $path = $root . 'app' . DIRECTORY_SEPARATOR . 'record_form_print' . DIRECTORY_SEPARATOR . $templateKey . '.php';
         if (!is_file($path)) {
-            throw new RuntimeException('打印模板不存在：' . $safeKey);
+            throw new RuntimeException('打印模板不存在：' . $templateKey);
         }
 
         ob_start();
@@ -36,11 +39,20 @@ class RecordFormPrintService
     {
         $rows = $values[$key] ?? [];
 
-        return is_array($rows) ? array_values($rows) : [];
+        if (!is_array($rows)) {
+            return [];
+        }
+
+        return array_values(array_filter($rows, static fn ($row): bool => is_array($row)));
     }
 
     public static function cell(array $row, string $key): string
     {
-        return htmlspecialchars((string)($row[$key] ?? ''), ENT_QUOTES, 'UTF-8');
+        $value = $row[$key] ?? '';
+        if (is_array($value)) {
+            return '';
+        }
+
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
     }
 }
