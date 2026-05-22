@@ -42,10 +42,7 @@ class PdfRenderService
 
         exec($command, $output, $code);
         if ($code !== 0 || !is_file($absolutePath)) {
-            $message = trim(implode("\n", $output));
-            if (strlen($message) > 1200) {
-                $message = substr($message, -1200);
-            }
+            $message = self::summarizeRenderError(implode("\n", $output));
 
             throw new RuntimeException('PDF 生成失败，退出码 ' . $code . ($message === '' ? '' : '：' . $message));
         }
@@ -62,5 +59,28 @@ class PdfRenderService
         $safeTitle = trim($safeTitle, '._-');
 
         return $safeTitle === '' ? 'record_form' : $safeTitle;
+    }
+
+    private static function summarizeRenderError(string $message): string
+    {
+        $message = trim($message);
+        foreach ([
+            rtrim(public_path(), DIRECTORY_SEPARATOR) => '[public-root]',
+            rtrim(root_path(), DIRECTORY_SEPARATOR) => '[app-root]',
+        ] as $absolute => $label) {
+            if ($absolute === '') {
+                continue;
+            }
+            $message = str_replace([
+                $absolute,
+                str_replace(DIRECTORY_SEPARATOR, '/', $absolute),
+            ], $label, $message);
+        }
+
+        if (strlen($message) > 1200) {
+            $message = '...' . substr($message, -1197);
+        }
+
+        return $message;
     }
 }

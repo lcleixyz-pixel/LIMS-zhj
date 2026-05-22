@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, URL } from 'node:url';
 
 const [, , modeOrInput, maybeOutput] = process.argv;
 const projectRoot = process.cwd();
@@ -24,9 +24,24 @@ if (!path.isAbsolute(outputPath)) {
   process.exit(2);
 }
 
+function resolveTarget(input) {
+  const schemeMatch = input.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):/);
+  if (schemeMatch) {
+    const url = new URL(input);
+    if (!['http:', 'https:', 'file:'].includes(url.protocol)) {
+      console.error(`Unsupported input URL scheme: ${url.protocol}. Use http:, https:, file:, or a local file path.`);
+      process.exit(2);
+    }
+
+    return url.href;
+  }
+
+  return pathToFileURL(path.resolve(projectRoot, input)).href;
+}
+
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 
-const target = path.isAbsolute(inputUrl) ? pathToFileURL(inputUrl).href : inputUrl;
+const target = resolveTarget(inputUrl);
 let browser;
 
 try {

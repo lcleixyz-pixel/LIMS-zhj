@@ -4,8 +4,23 @@ declare(strict_types=1);
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../app/common.php';
 
+if (!function_exists('root_path')) {
+    function root_path(): string
+    {
+        return dirname(__DIR__) . DIRECTORY_SEPARATOR;
+    }
+}
+
+if (!function_exists('public_path')) {
+    function public_path(): string
+    {
+        return dirname(__DIR__) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR;
+    }
+}
+
 use app\controller\RecordFormInstance;
 use app\model\RecordFormTemplate;
+use app\service\PdfRenderService;
 use think\exception\HttpException;
 
 class SmokeRecordFormTemplate extends RecordFormTemplate
@@ -37,6 +52,16 @@ function assert_contains(string $needle, string $haystack, string $message): voi
     }
 }
 
+function assert_not_contains(string $needle, string $haystack, string $message): void
+{
+    if (str_contains($haystack, $needle)) {
+        fwrite(STDERR, $message . PHP_EOL);
+        fwrite(STDERR, 'Unexpected: ' . $needle . PHP_EOL);
+        fwrite(STDERR, 'Actual: ' . $haystack . PHP_EOL);
+        exit(1);
+    }
+}
+
 function assert_throws_http(callable $callback, int $expectedStatus, string $expectedMessage, string $message): void
 {
     try {
@@ -61,17 +86,22 @@ function assert_throws_http(callable $callback, int $expectedStatus, string $exp
     exit(1);
 }
 
-function make_controller(array $postedFields): RecordFormInstance
+function make_controller(array $postedFields, array $params = []): RecordFormInstance
 {
     $controller = (new ReflectionClass(RecordFormInstance::class))->newInstanceWithoutConstructor();
-    $request = new class($postedFields) {
-        public function __construct(private array $postedFields)
+    $request = new class($postedFields, $params) {
+        public function __construct(private array $postedFields, private array $params)
         {
         }
 
         public function post(string $name = '', mixed $default = null): mixed
         {
             return $name === 'fields/a' ? $this->postedFields : $default;
+        }
+
+        public function param(string $name = '', mixed $default = null): mixed
+        {
+            return $this->params[$name] ?? $default;
         }
     };
 
@@ -81,11 +111,11 @@ function make_controller(array $postedFields): RecordFormInstance
     return $controller;
 }
 
-function invoke_private(RecordFormInstance $controller, string $method, array $args = []): mixed
+function invoke_private(object $object, string $method, array $args = []): mixed
 {
-    $reflection = new ReflectionMethod($controller, $method);
+    $reflection = new ReflectionMethod($object, $method);
 
-    return $reflection->invokeArgs($controller, $args);
+    return $reflection->invokeArgs($object, $args);
 }
 
 $controller = make_controller([]);
@@ -133,5 +163,48 @@ $values = invoke_private(make_controller($postedFields), 'collectValues', [$sche
 assert_same('1', $values['accepted'], 'Checkbox array input is normalized to checked');
 assert_same('', $values['title'], 'Scalar field array input is not persisted as an array');
 assert_same([['name' => '有效行']], $values['rows'], 'Repeatable table still filters empty rows');
+
+$expires = time() + 300;
+$token = invoke_private(make_controller([]), 'pdfToken', ['record-1', $expires]);
+assert_same(64, strlen($token), 'PDF token uses a SHA-256 HMAC hex digest');
+
+assert_throws_http(
+    fn () => make_controller([], ['id' => 'record-1', 'expires' => (string)$expires])->internalPrint(),
+    403,
+    '打印链接无效',
+    'Internal print rejects missing token before loading a record'
+);
+
+assert_throws_http(
+    fn () => make_controller([], [
+        'id' => 'record-1',
+        'expires' => (string)(time() - 1),
+        'token' => $token,
+    ])->internalPrint(),
+    403,
+    '打印链接已过期',
+    'Internal print rejects expired token before loading a record'
+);
+
+assert_throws_http(
+    fn () => make_controller([], [
+        'id' => 'record-1',
+        'expires' => (string)$expires,
+        'token' => str_repeat('0', 64),
+    ])->internalPrint(),
+    403,
+    '打印链接无效',
+    'Internal print rejects mismatched token before loading a record'
+);
+
+$summary = invoke_private(
+    (new ReflectionClass(PdfRenderService::class))->newInstanceWithoutConstructor(),
+    'summarizeRenderError',
+    [root_path() . 'scripts/render-record-pdf.mjs failed at ' . public_path() . 'uploads/file.pdf']
+);
+assert_not_contains(root_path(), $summary, 'PDF render error summary hides app root');
+assert_not_contains(public_path(), $summary, 'PDF render error summary hides public root');
+assert_contains('[app-root]', $summary, 'PDF render error summary keeps app-root placeholder');
+assert_contains('[public-root]', $summary, 'PDF render error summary keeps public-root placeholder');
 
 echo "record_forms_instance_smoke passed\n";

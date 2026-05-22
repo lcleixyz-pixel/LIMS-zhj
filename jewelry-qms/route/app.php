@@ -8,6 +8,7 @@ Route::rule('login', 'Login/index');
 Route::get('logout', 'Login/logout');
 Route::get('login/logout', 'Login/logout');
 Route::rule('login/changePassword', 'Login/changePassword');
+Route::get('record_form_instance/internalPrint', 'RecordFormInstance/internalPrint');
 
 Route::group(function () {
     Route::get('/', 'Dashboard/index');

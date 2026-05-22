@@ -13,6 +13,7 @@ use app\service\RecordFormSchemaService;
 use InvalidArgumentException;
 use RuntimeException;
 use think\exception\HttpException;
+use think\facade\Config;
 use think\facade\Session;
 use think\facade\View;
 
@@ -130,15 +131,34 @@ class RecordFormInstance extends BaseController
     public function print()
     {
         $record = $this->findInstance();
-        $template = $this->findTemplateById((string)$record->template_id);
-        $this->decodeSchema($template);
-        $values = $this->decodeValues($record->field_values);
 
-        try {
-            return RecordFormPrintService::render($template->print_template_key, $template->toArray(), $values);
-        } catch (RuntimeException $exception) {
-            throw new HttpException(404, '打印预览不可用：' . $exception->getMessage());
+        return $this->renderPrintHtml($record);
+    }
+
+    public function internalPrint()
+    {
+        $id = trim((string)$this->request->param('id', ''));
+        if ($id === '') {
+            throw new HttpException(404, '记录不存在');
         }
+
+        $expires = trim((string)$this->request->param('expires', ''));
+        $token = trim((string)$this->request->param('token', ''));
+        if ($expires === '' || $token === '') {
+            throw new HttpException(403, '打印链接无效');
+        }
+
+        if (!ctype_digit($expires) || (int)$expires < time()) {
+            throw new HttpException(403, '打印链接已过期');
+        }
+
+        if (!hash_equals($this->pdfToken($id, (int)$expires), $token)) {
+            throw new HttpException(403, '打印链接无效');
+        }
+
+        $record = $this->findInstanceById($id);
+
+        return $this->renderPrintHtml($record);
     }
 
     public function exportPdf()
@@ -150,7 +170,12 @@ class RecordFormInstance extends BaseController
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
 
-        $url = (string)$this->request->domain() . '/record_form_instance/print?id=' . $record->id;
+        $expires = time() + 300;
+        $url = (string)$this->request->domain() . '/record_form_instance/internalPrint?' . http_build_query([
+            'id' => $record->id,
+            'expires' => $expires,
+            'token' => $this->pdfToken((string)$record->id, $expires),
+        ]);
         $pdf = PdfRenderService::renderUrl($url, $record->id, $record->record_title);
         $record->save([
             'generated_pdf_path' => $pdf['file_path'],
@@ -203,12 +228,49 @@ class RecordFormInstance extends BaseController
             throw new HttpException(404, '记录不存在');
         }
 
+        return $this->findInstanceById($id);
+    }
+
+    private function findInstanceById(string $id): InstanceModel
+    {
         $record = InstanceModel::where('id', $id)->find();
         if (!$record) {
             throw new HttpException(404, '记录不存在');
         }
 
         return $record;
+    }
+
+    private function renderPrintHtml(InstanceModel $record): string
+    {
+        $template = $this->findTemplateById((string)$record->template_id);
+        $this->decodeSchema($template);
+        $values = $this->decodeValues($record->field_values);
+
+        try {
+            return RecordFormPrintService::render($template->print_template_key, $template->toArray(), $values);
+        } catch (RuntimeException $exception) {
+            throw new HttpException(404, '打印预览不可用：' . $exception->getMessage());
+        }
+    }
+
+    private function pdfToken(string $recordId, int $expires): string
+    {
+        return hash_hmac('sha256', $recordId . '|' . $expires, $this->pdfTokenSecret());
+    }
+
+    private function pdfTokenSecret(): string
+    {
+        $secret = getenv('RECORD_FORM_PDF_TOKEN_SECRET');
+        if ($secret === false || $secret === '') {
+            try {
+                $secret = (string)Config::get('qms.company_id', 'record-form-pdf');
+            } catch (\Throwable) {
+                $secret = 'record-form-pdf';
+            }
+        }
+
+        return $secret === '' ? 'record-form-pdf' : $secret;
     }
 
     private function defaultValues(array $schema): array
