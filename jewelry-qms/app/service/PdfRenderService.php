@@ -9,10 +9,36 @@ class PdfRenderService
 {
     public static function renderUrl(string $url, string $recordId, string $title): array
     {
-        $recordId = trim($recordId);
-        if ($recordId === '' || preg_match('/\A[a-zA-Z0-9_-]+\z/', $recordId) !== 1) {
-            throw new RuntimeException('非法记录标识：' . ($recordId === '' ? '空' : $recordId));
+        return self::renderInput($url, $recordId, $title);
+    }
+
+    public static function renderHtml(string $html, string $recordId, string $title): array
+    {
+        $recordId = self::normalizeRecordId($recordId);
+        $htmlDir = rtrim(root_path(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR
+            . 'runtime' . DIRECTORY_SEPARATOR . 'record-form-pdf-html' . DIRECTORY_SEPARATOR . $recordId . DIRECTORY_SEPARATOR;
+
+        if (!is_dir($htmlDir) && !mkdir($htmlDir, 0755, true) && !is_dir($htmlDir)) {
+            throw new RuntimeException('PDF 临时 HTML 目录创建失败');
         }
+
+        $htmlPath = $htmlDir . 'render-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.html';
+        if (file_put_contents($htmlPath, $html, LOCK_EX) === false) {
+            throw new RuntimeException('PDF 临时 HTML 写入失败');
+        }
+
+        try {
+            return self::renderInput($htmlPath, $recordId, $title);
+        } finally {
+            if (is_file($htmlPath)) {
+                @unlink($htmlPath);
+            }
+        }
+    }
+
+    private static function renderInput(string $input, string $recordId, string $title): array
+    {
+        $recordId = self::normalizeRecordId($recordId);
 
         $safeTitle = self::safeFileTitle($title);
         $relativeDir = 'uploads/record-form-pdf/' . $recordId;
@@ -36,7 +62,7 @@ class PdfRenderService
             'cd %s && node %s %s %s 2>&1',
             escapeshellarg($root),
             escapeshellarg($script),
-            escapeshellarg($url),
+            escapeshellarg($input),
             escapeshellarg($absolutePath)
         );
 
@@ -51,6 +77,16 @@ class PdfRenderService
             'file_name' => $fileName,
             'file_path' => $relativeDir . '/' . $fileName,
         ];
+    }
+
+    private static function normalizeRecordId(string $recordId): string
+    {
+        $recordId = trim($recordId);
+        if ($recordId === '' || preg_match('/\A[a-zA-Z0-9_-]+\z/', $recordId) !== 1) {
+            throw new RuntimeException('非法记录标识：' . ($recordId === '' ? '空' : $recordId));
+        }
+
+        return $recordId;
     }
 
     private static function safeFileTitle(string $title): string

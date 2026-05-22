@@ -118,6 +118,24 @@ function invoke_private(object $object, string $method, array $args = []): mixed
     return $reflection->invokeArgs($object, $args);
 }
 
+function method_source(string $className, string $methodName): string
+{
+    $method = new ReflectionMethod($className, $methodName);
+    $fileName = $method->getFileName();
+    if ($fileName === false) {
+        fwrite(STDERR, 'Unable to locate source for ' . $className . '::' . $methodName . PHP_EOL);
+        exit(1);
+    }
+
+    $lines = file($fileName);
+    if ($lines === false) {
+        fwrite(STDERR, 'Unable to read source file: ' . $fileName . PHP_EOL);
+        exit(1);
+    }
+
+    return implode('', array_slice($lines, $method->getStartLine() - 1, $method->getEndLine() - $method->getStartLine() + 1));
+}
+
 putenv('RECORD_FORM_PDF_TOKEN_SECRET');
 
 $controller = make_controller([]);
@@ -207,6 +225,12 @@ assert_throws_http(
     '打印链接无效',
     'Internal print rejects mismatched token before loading a record'
 );
+
+$exportPdfSource = method_source(RecordFormInstance::class, 'exportPdf');
+assert_contains('renderPrintHtml($record)', $exportPdfSource, 'PDF export renders print HTML in-process');
+assert_contains('PdfRenderService::renderHtml', $exportPdfSource, 'PDF export renders from local HTML');
+assert_not_contains('internalPrint', $exportPdfSource, 'PDF export avoids nested internalPrint HTTP requests');
+assert_not_contains('PdfRenderService::renderUrl', $exportPdfSource, 'PDF export avoids URL rendering under the built-in server');
 
 $summary = invoke_private(
     (new ReflectionClass(PdfRenderService::class))->newInstanceWithoutConstructor(),

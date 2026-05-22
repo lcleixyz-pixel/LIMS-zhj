@@ -169,13 +169,8 @@ class RecordFormInstance extends BaseController
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
 
-        $expires = time() + 300;
-        $url = (string)$this->request->domain() . '/record_form_instance/internalPrint?' . http_build_query([
-            'id' => $record->id,
-            'expires' => $expires,
-            'token' => $this->pdfToken((string)$record->id, $expires),
-        ]);
-        $pdf = PdfRenderService::renderUrl($url, $record->id, $record->record_title);
+        $html = $this->renderPrintHtml($record);
+        $pdf = PdfRenderService::renderHtml($html, $record->id, $record->record_title);
         $record->save([
             'generated_pdf_path' => $pdf['file_path'],
             'generated_pdf_name' => $pdf['file_name'],
