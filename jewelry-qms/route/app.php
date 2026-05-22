@@ -21,6 +21,23 @@ Route::group(function () {
     Route::rule('document/submitReview', 'Document/submitReview');
     Route::get('document/download', 'Document/download');
 
+    Route::rule('record_form_template/index', 'RecordFormTemplate/index');
+    Route::rule('record_form_template/add', 'RecordFormTemplate/add');
+    Route::rule('record_form_template/edit', 'RecordFormTemplate/edit');
+    Route::rule('record_form_template/view', 'RecordFormTemplate/view');
+    Route::rule('record_form_template/delete', 'RecordFormTemplate/delete');
+    Route::get('record_form_template/source', 'RecordFormTemplate/source');
+    Route::get('record_form_template/preview', 'RecordFormTemplate/preview');
+    Route::post('record_form_template/seedSamples', 'RecordFormTemplate/seedSamples');
+
+    Route::rule('record_form_instance/index', 'RecordFormInstance/index');
+    Route::rule('record_form_instance/create', 'RecordFormInstance/create');
+    Route::rule('record_form_instance/edit', 'RecordFormInstance/edit');
+    Route::get('record_form_instance/view', 'RecordFormInstance/view');
+    Route::get('record_form_instance/print', 'RecordFormInstance/print');
+    Route::get('record_form_instance/exportPdf', 'RecordFormInstance/exportPdf');
+    Route::get('record_form_instance/downloadPdf', 'RecordFormInstance/downloadPdf');
+
     Route::post('approval/approve', 'Approval/approve');
 
     Route::rule('user/changePassword', 'User/changePassword');

@@ -29,7 +29,7 @@ return [
     'permissions' => [
         'admin' => ['*'],
         'quality_manager' => [
-            'dashboard', 'document', 'approval', 'doc_category', 'doc_template',
+            'dashboard', 'document', 'record_form_template', 'record_form_instance', 'approval', 'doc_category', 'doc_template',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
             'equipment', 'equipment_maintenance', 'calibration',
@@ -38,16 +38,16 @@ return [
             'department', 'employee', 'user',
         ],
         'auditor' => [
-            'dashboard', 'document', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
+            'dashboard', 'document', 'record_form_template', 'record_form_instance', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'capa', 'nonconformity', 'complaint', 'notification',
         ],
         'department_head' => [
-            'dashboard', 'document', 'capa', 'nonconformity', 'complaint',
+            'dashboard', 'document', 'record_form_template', 'record_form_instance', 'capa', 'nonconformity', 'complaint',
             'equipment', 'equipment_maintenance', 'calibration',
             'training', 'training_record', 'competency_record', 'notification',
         ],
         'staff' => [
-            'dashboard', 'document', 'complaint', 'notification',
+            'dashboard', 'document', 'record_form_template', 'record_form_instance', 'complaint', 'notification',
         ],
     ],
 

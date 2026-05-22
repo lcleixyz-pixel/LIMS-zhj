@@ -220,6 +220,51 @@ CREATE TABLE `file_uploads` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `record_form_templates` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `document_id` varchar(36) DEFAULT NULL COMMENT '受控原始附件对应documents.id',
+  `doc_number` varchar(50) NOT NULL COMMENT '记录表格编号',
+  `name` varchar(300) NOT NULL,
+  `module` varchar(200) DEFAULT NULL,
+  `source_file_path` varchar(500) DEFAULT NULL,
+  `source_file_name` varchar(255) DEFAULT NULL,
+  `print_template_key` varchar(100) NOT NULL,
+  `field_schema` text NOT NULL,
+  `version` varchar(20) DEFAULT 'A/0',
+  `status` enum('draft','published','obsolete') DEFAULT 'draft',
+  `publish` tinyint(1) DEFAULT 1,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  `modified_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `doc_number` (`doc_number`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `record_form_instances` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `template_id` varchar(36) NOT NULL,
+  `doc_number` varchar(50) NOT NULL,
+  `record_title` varchar(300) NOT NULL,
+  `field_values` text NOT NULL,
+  `status` enum('draft','generated','locked','voided') DEFAULT 'draft',
+  `generated_html_path` varchar(500) DEFAULT NULL,
+  `generated_pdf_path` varchar(500) DEFAULT NULL,
+  `generated_pdf_name` varchar(255) DEFAULT NULL,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  `modified_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `template_id` (`template_id`),
+  KEY `doc_number` (`doc_number`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ========== 内部审核 ==========
 CREATE TABLE `audit_plans` (
   `id` varchar(36) NOT NULL,
