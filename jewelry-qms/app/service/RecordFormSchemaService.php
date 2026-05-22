@@ -46,7 +46,12 @@ class RecordFormSchemaService
 
     public static function encode(array $schema): string
     {
-        return json_encode(self::normalize($schema), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        $encoded = json_encode(self::normalize($schema), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        if ($encoded === false) {
+            throw new InvalidArgumentException('字段配置编码失败：' . json_last_error_msg());
+        }
+
+        return $encoded;
     }
 
     public static function validateValues(array $schema, array $values): array
