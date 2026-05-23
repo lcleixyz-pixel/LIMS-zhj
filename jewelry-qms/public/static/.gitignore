@@ -2,3 +2,5 @@
 !.gitignore
 !css/
 !css/qms.css
+!js/
+!js/record-form-editor.js

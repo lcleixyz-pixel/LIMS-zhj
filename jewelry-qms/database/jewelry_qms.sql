@@ -229,10 +229,14 @@ CREATE TABLE `record_form_templates` (
   `module` varchar(200) DEFAULT NULL,
   `source_file_path` varchar(500) DEFAULT NULL,
   `source_file_name` varchar(255) DEFAULT NULL,
+  `source_file_sha1` char(40) DEFAULT NULL,
   `print_template_key` varchar(100) NOT NULL,
   `field_schema` text NOT NULL,
   `version` varchar(20) DEFAULT 'A/0',
   `status` enum('draft','published','obsolete') DEFAULT 'draft',
+  `review_status` enum('pending','field_confirmed','needs_fidelity','deferred','completed') DEFAULT 'pending',
+  `review_note` text,
+  `reviewed_at` datetime DEFAULT NULL,
   `publish` tinyint(1) DEFAULT 1,
   `soft_delete` tinyint(1) DEFAULT 0,
   `created` datetime DEFAULT NULL,
@@ -241,7 +245,9 @@ CREATE TABLE `record_form_templates` (
   `modified_by` varchar(36) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `doc_number` (`doc_number`),
-  KEY `status` (`status`)
+  KEY `status` (`status`),
+  KEY `review_status` (`review_status`),
+  KEY `source_file_sha1` (`source_file_sha1`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `record_form_instances` (

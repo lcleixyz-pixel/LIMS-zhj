@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace app\controller;
 
 use app\BaseController;
+use app\model\Department as DepartmentModel;
+use app\model\Employee as EmployeeModel;
 use app\model\RecordFormInstance as InstanceModel;
 use app\model\RecordFormTemplate as TemplateModel;
 use app\service\FileService;
@@ -43,17 +45,20 @@ class RecordFormInstance extends BaseController
 
     public function create()
     {
-        $template = $this->findTemplate(true);
+        $template = $this->findTemplate();
+        if (!$this->isTemplateFillable($template)) {
+            Session::flash('warning', '只有已完成高保真复核的已发布记录表格模板可填写');
+
+            return redirect('/record_form_template/view?id=' . $template->id);
+        }
+
         $schema = $this->decodeSchema($template);
 
         if ($this->request->isPost()) {
             $values = $this->collectValues($schema);
             $errors = RecordFormSchemaService::validateValues($schema, $values);
             if ($errors !== []) {
-                View::assign('errors', $errors);
-                View::assign('template', $template);
-                View::assign('schema', $schema);
-                View::assign('values', $this->prepareFormValues($schema, $values));
+                $this->assignRecordFormEditorContext($template, $schema, $this->prepareFormValues($schema, $values), $errors);
 
                 return View::fetch('record_form_instance/create');
             }
@@ -77,10 +82,12 @@ class RecordFormInstance extends BaseController
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
 
-        View::assign('template', $template);
-        View::assign('schema', $schema);
-        View::assign('values', $this->prepareFormValues($schema, $this->defaultValues($schema)));
-        View::assign('errors', []);
+        $this->assignRecordFormEditorContext(
+            $template,
+            $schema,
+            $this->prepareFormValues($schema, $this->defaultValues($schema)),
+            []
+        );
 
         return View::fetch('record_form_instance/create');
     }
@@ -114,16 +121,15 @@ class RecordFormInstance extends BaseController
                 return redirect('/record_form_instance/view?id=' . $record->id);
             }
 
-            View::assign('errors', $errors);
-            View::assign('values', $this->prepareFormValues($schema, $values));
+            $preparedValues = $this->prepareFormValues($schema, $values);
+            $preparedErrors = $errors;
         } else {
-            View::assign('errors', []);
-            View::assign('values', $this->prepareFormValues($schema, $this->decodeValues($record->field_values)));
+            $preparedValues = $this->prepareFormValues($schema, $this->decodeValues($record->field_values));
+            $preparedErrors = [];
         }
 
         View::assign('record', $record);
-        View::assign('template', $template);
-        View::assign('schema', $schema);
+        $this->assignRecordFormEditorContext($template, $schema, $preparedValues, $preparedErrors);
 
         return View::fetch('record_form_instance/edit');
     }
@@ -215,11 +221,33 @@ class RecordFormInstance extends BaseController
         if (!$template) {
             throw new HttpException(404, '记录表格模板不存在');
         }
-        if ($requirePublished && $template->status !== 'published') {
-            throw new HttpException(403, '只有已发布记录表格模板可填写');
+        if ($requirePublished && !$this->isTemplateFillable($template)) {
+            throw new HttpException(403, '只有已完成高保真复核的已发布记录表格模板可填写');
         }
 
         return $template;
+    }
+
+    private function isTemplateFillable(TemplateModel $template): bool
+    {
+        $printTemplateKey = trim((string)$template->print_template_key);
+
+        return $template->status === 'published'
+            && (string)($template->review_status ?? '') === 'completed'
+            && $printTemplateKey !== ''
+            && $printTemplateKey !== 'generic_record_form'
+            && $this->printTemplateExists($printTemplateKey);
+    }
+
+    private function printTemplateExists(string $printTemplateKey): bool
+    {
+        if (preg_match('/\A[a-zA-Z0-9_-]+\z/', $printTemplateKey) !== 1) {
+            return false;
+        }
+
+        $path = root_path() . 'app' . DIRECTORY_SEPARATOR . 'record_form_print' . DIRECTORY_SEPARATOR . $printTemplateKey . '.php';
+
+        return is_file($path);
     }
 
     private function findInstance(): InstanceModel
@@ -465,6 +493,111 @@ class RecordFormInstance extends BaseController
         }
 
         return $values;
+    }
+
+    private function assignRecordFormEditorContext(TemplateModel|array $template, array $schema, array $values, array $errors): void
+    {
+        View::assign('template', $template);
+        View::assign('schema', $this->decorateSchemaForEditor($schema));
+        View::assign('values', $values);
+        View::assign('errors', $errors);
+        View::assign('employeeOptions', $this->employeeOptions());
+        View::assign('departmentOptions', $this->departmentOptions());
+    }
+
+    private function decorateSchemaForEditor(array $schema): array
+    {
+        foreach ($schema as &$field) {
+            if (($field['type'] ?? '') !== 'repeatable_table') {
+                continue;
+            }
+
+            $personColumn = $this->firstPersonColumn($field['columns'] ?? []);
+            if ($personColumn === '') {
+                continue;
+            }
+
+            $field['employee_picker'] = true;
+            $field['employee_name_column'] = $personColumn;
+            $field['employee_department_column'] = $this->firstDepartmentColumn($field['columns'] ?? []);
+        }
+        unset($field);
+
+        return $schema;
+    }
+
+    private function firstPersonColumn(array $columns): string
+    {
+        foreach ($columns as $column) {
+            if (($column['type'] ?? '') === 'person') {
+                return (string)$column['key'];
+            }
+        }
+
+        foreach ($columns as $column) {
+            if (($column['key'] ?? '') === 'name') {
+                return 'name';
+            }
+        }
+
+        return '';
+    }
+
+    private function firstDepartmentColumn(array $columns): string
+    {
+        foreach ($columns as $column) {
+            if (($column['type'] ?? '') === 'department') {
+                return (string)$column['key'];
+            }
+        }
+
+        foreach ($columns as $column) {
+            if (($column['key'] ?? '') === 'department') {
+                return 'department';
+            }
+        }
+
+        return '';
+    }
+
+    private function employeeOptions(): array
+    {
+        $departments = DepartmentModel::where('soft_delete', 0)->column('name', 'id');
+        $employees = EmployeeModel::where('soft_delete', 0)
+            ->where('publish', 1)
+            ->order('employee_number')
+            ->order('name')
+            ->select();
+
+        $options = [];
+        foreach ($employees as $employee) {
+            $options[] = [
+                'id' => (string)$employee->id,
+                'name' => (string)$employee->name,
+                'employee_number' => (string)($employee->employee_number ?? ''),
+                'department_name' => (string)($departments[(string)$employee->department_id] ?? ''),
+            ];
+        }
+
+        return $options;
+    }
+
+    private function departmentOptions(): array
+    {
+        $departments = DepartmentModel::where('soft_delete', 0)
+            ->where('publish', 1)
+            ->order('name')
+            ->select();
+
+        $options = [];
+        foreach ($departments as $department) {
+            $options[] = [
+                'id' => (string)$department->id,
+                'name' => (string)$department->name,
+            ];
+        }
+
+        return $options;
     }
 
     private function decodeSchema(TemplateModel|array $template): array

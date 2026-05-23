@@ -34,60 +34,55 @@ function assert_contains(string $needle, string $haystack, string $message): voi
     }
 }
 
-function sample_values(string $printTemplateKey): array
+function fixture_sample_values(array $schema): array
 {
-    return match ($printTemplateKey) {
-        'training_record' => [
-            'training_date' => '2026-05-22',
-            'training_topic' => '记录表格填写要求',
-            'trainer' => '质量负责人',
-            'training_content' => '模板 smoke',
-            'attendees' => [['name' => '张三', 'department' => '检测室', 'signature' => '张三']],
-            'effect_evaluation' => '符合要求',
-        ],
-        'periodic_check' => [
-            'equipment_name' => '电子天平',
-            'equipment_code' => 'EQ-001',
-            'check_date' => '2026-05-22',
-            'check_items' => [['item' => '示值误差', 'method' => '标准砝码', 'result' => '0.01g', 'conclusion' => '合格']],
-            'checker' => '设备管理员',
-        ],
-        'audit_checklist' => [
-            'audit_date' => '2026-05-22',
-            'audited_department' => '检测室',
-            'auditor' => '内审员',
-            'check_items' => [['clause' => '6.2', 'requirement' => '人员能力', 'evidence' => '培训记录', 'result' => '符合']],
-        ],
-        'management_review_plan' => [
-            'review_year' => '2026',
-            'meeting_date' => '2026-05-22',
-            'host' => '最高管理者',
-            'participants' => '质量负责人',
-            'inputs' => [['topic' => '质量目标', 'owner' => '质量负责人', 'material' => '年度统计']],
-        ],
-        'quality_control_record' => [
-            'monitor_date' => '2026-05-22',
-            'monitor_type' => '留样再测',
-            'sample_info' => '样品 A',
-            'results' => [['item' => '含量', 'expected' => '1.00', 'actual' => '1.01', 'judgement' => '满意']],
-            'follow_up' => '持续监控',
-        ],
-    };
+    $values = [];
+    foreach ($schema as $field) {
+        if ($field['type'] === 'repeatable_table') {
+            $row = [];
+            foreach (($field['columns'] ?? []) as $column) {
+                $row[$column['key']] = match ($column['type']) {
+                    'date' => '2026-05-22',
+                    'number' => '1',
+                    'checkbox' => '1',
+                    'select' => (string)($column['options'][0] ?? ''),
+                    default => $column['label'] . '样例',
+                };
+            }
+            $values[$field['key']] = [$row];
+            continue;
+        }
+
+        $values[$field['key']] = match ($field['type']) {
+            'date' => '2026-05-22',
+            'number' => '1',
+            'checkbox' => '1',
+            'select' => (string)($field['options'][0] ?? ''),
+            default => $field['label'] . '样例',
+        };
+    }
+
+    return $values;
 }
 
 $templates = RecordFormFixtureService::templates();
-assert_same(5, count($templates), 'Fixture service exposes exactly five templates');
+assert_same(9, count($templates), 'Fixture service exposes the formal personnel templates');
 
 $expectedKeys = [
+    'rf_xztc_bg_01_01_5325a1b0bd',
     'training_record',
-    'periodic_check',
-    'audit_checklist',
-    'management_review_plan',
-    'quality_control_record',
+    'rf_xztc_bg_01_03_5fa5a364df',
+    'rf_xztc_bg_01_04_5fb52565ba',
+    'rf_xztc_bg_01_05_66b005b382',
+    'rf_xztc_bg_01_06_f268e9aaf1',
+    'rf_xztc_bg_01_07_a0956d356f',
+    'rf_xztc_bg_01_08_6fcb518418',
+    'rf_xztc_bg_01_09_5f54bbf750',
 ];
-assert_same($expectedKeys, array_column($templates, 'print_template_key'), 'Fixture templates preserve planned print keys');
+assert_same($expectedKeys, array_column($templates, 'print_template_key'), 'Fixture templates preserve formal print keys');
 
 foreach ($templates as $template) {
+    assert_same('completed', $template['review_status'] ?? '', 'Formal fixture templates are completed');
     $encoded = RecordFormSchemaService::encode($template['field_schema']);
     $decoded = RecordFormSchemaService::decode($encoded);
     assert_same(RecordFormSchemaService::normalize($template['field_schema']), $decoded, 'Fixture schema round-trips for ' . $template['doc_number']);
@@ -95,7 +90,7 @@ foreach ($templates as $template) {
     $html = RecordFormPrintService::render(
         $template['print_template_key'],
         $template,
-        sample_values($template['print_template_key'])
+        fixture_sample_values($template['field_schema'])
     );
     assert_contains($template['name'], $html, 'Rendered HTML includes template name for ' . $template['print_template_key']);
     assert_contains($template['doc_number'], $html, 'Rendered HTML includes doc number for ' . $template['print_template_key']);

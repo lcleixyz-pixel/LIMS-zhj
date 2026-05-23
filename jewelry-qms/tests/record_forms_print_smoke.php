@@ -79,6 +79,13 @@ assert_contains('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;', $html, 'Esc
 assert_not_contains('<script>alert("x")</script>', $html, 'Does not render raw HTML values');
 assert_contains('质量部', $html, 'Keeps valid repeatable rows after malformed rows');
 assert_not_contains('bad row', $html, 'Ignores non-array repeatable rows');
+assert_contains('break-inside: avoid', $html, 'Print HTML asks Chromium not to split table rows across pages');
+assert_contains('page-break-inside: avoid', $html, 'Print HTML includes legacy page-break protection for PDF rendering');
+
+$printTemplates = glob(dirname(__DIR__) . '/app/record_form_print/*.php') ?: [];
+foreach ($printTemplates as $printTemplate) {
+    assert_contains('tablePaginationCss', file_get_contents($printTemplate) ?: '', basename($printTemplate) . ' includes shared print pagination CSS');
+}
 
 assert_throws(
     fn () => RecordFormPrintService::render('../training_record', $template, $values),

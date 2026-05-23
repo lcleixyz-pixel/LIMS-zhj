@@ -6,6 +6,7 @@ namespace app\controller;
 use app\BaseController;
 use app\model\RecordFormTemplate as TemplateModel;
 use app\service\FileService;
+use app\service\RecordFormBatchTemplateService;
 use app\service\RecordFormFixtureService;
 use app\service\RecordFormPrintService;
 use app\service\RecordFormSchemaService;
@@ -17,6 +18,14 @@ use think\facade\View;
 
 class RecordFormTemplate extends BaseController
 {
+    private const REVIEW_STATUSES = [
+        'pending' => '待复核',
+        'field_confirmed' => '字段已确认',
+        'needs_fidelity' => '需高保真',
+        'deferred' => '暂缓',
+        'completed' => '已完成',
+    ];
+
     public function index()
     {
         $query = TemplateModel::where('soft_delete', 0);
@@ -33,6 +42,7 @@ class RecordFormTemplate extends BaseController
         }
 
         $items = $query->order('doc_number', 'asc')->paginate(20);
+        $this->decorateTemplateRows($items);
         View::assign('items', $items);
         View::assign('pages', $items->render());
         View::assign('filter', [
@@ -42,6 +52,67 @@ class RecordFormTemplate extends BaseController
         View::assign('canCreateInstances', $this->canCreateInstances());
 
         return View::fetch('record_form_template/index');
+    }
+
+    public function review()
+    {
+        $query = TemplateModel::where('soft_delete', 0);
+
+        if ($keyword = trim((string)$this->request->param('keyword', ''))) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('doc_number', 'like', '%' . $keyword . '%')
+                    ->whereOr('name', 'like', '%' . $keyword . '%')
+                    ->whereOr('module', 'like', '%' . $keyword . '%')
+                    ->whereOr('source_file_name', 'like', '%' . $keyword . '%');
+            });
+        }
+        if ($status = trim((string)$this->request->param('status', ''))) {
+            $query->where('status', $status);
+        }
+        if ($reviewStatus = trim((string)$this->request->param('review_status', ''))) {
+            $query->where('review_status', $reviewStatus);
+        }
+
+        $items = $query->order('doc_number', 'asc')->order('name', 'asc')->paginate(30);
+        $this->decorateReviewRows($items);
+
+        View::assign('items', $items);
+        View::assign('pages', $items->render());
+        View::assign('filter', [
+            'keyword' => $this->request->param('keyword', ''),
+            'status' => $this->request->param('status', ''),
+            'review_status' => $this->request->param('review_status', ''),
+        ]);
+        View::assign('reviewStatusOptions', $this->reviewStatusOptions());
+        View::assign('reviewSummary', $this->reviewSummary());
+
+        return View::fetch('record_form_template/review');
+    }
+
+    public function updateReview()
+    {
+        if (!$this->request->isPost()) {
+            Session::flash('warning', '请从复核清单更新模板复核状态。');
+
+            return redirect('/record_form_template/review');
+        }
+
+        $record = $this->findTemplate();
+        $reviewStatus = trim((string)$this->request->post('review_status', 'pending'));
+        if (!array_key_exists($reviewStatus, self::REVIEW_STATUSES)) {
+            Session::flash('warning', '复核状态无效。');
+
+            return redirect('/record_form_template/review');
+        }
+
+        $record->save([
+            'review_status' => $reviewStatus,
+            'review_note' => trim((string)$this->request->post('review_note', '')),
+            'reviewed_at' => date('Y-m-d H:i:s'),
+        ]);
+        Session::flash('success', '模板复核状态已更新');
+
+        return redirect('/record_form_template/review');
     }
 
     public function add()
@@ -166,6 +237,7 @@ class RecordFormTemplate extends BaseController
     public function view()
     {
         $record = $this->findTemplate();
+        $record->setAttr('fillable', $this->isTemplateFillable($record));
         View::assign('record', $record);
         View::assign('schema', RecordFormSchemaService::decode($record->field_schema));
         View::assign('canCreateInstances', $this->canCreateInstances());
@@ -207,6 +279,16 @@ class RecordFormTemplate extends BaseController
         FileService::download($record->source_file_path, $record->source_file_name ?: $record->name);
     }
 
+    public function sourcePreview()
+    {
+        $record = $this->findTemplate();
+        if (!$record->source_file_path) {
+            throw new HttpException(404, '原始附件不存在');
+        }
+
+        FileService::preview($record->source_file_path, $record->source_file_name ?: $record->name);
+    }
+
     public function delete()
     {
         if (!$this->request->isPost()) {
@@ -237,6 +319,26 @@ class RecordFormTemplate extends BaseController
         return redirect('/record_form_template/index');
     }
 
+    public function seedBatch()
+    {
+        $summary = RecordFormBatchTemplateService::seed();
+        $message = sprintf(
+            '批量建立模板完成：总计 %d，新增 %d，更新 %d，跳过 %d，作废旧generic %d',
+            $summary['total'],
+            $summary['created'],
+            $summary['updated'],
+            $summary['skipped'],
+            $summary['retired_generic'] ?? 0
+        );
+        if (($summary['errors'] ?? []) !== []) {
+            $message .= '；问题：' . implode('；', array_slice($summary['errors'], 0, 3));
+        }
+
+        Session::flash($summary['skipped'] > 0 ? 'warning' : 'success', $message);
+
+        return redirect('/record_form_template/index');
+    }
+
     private function findTemplate(): TemplateModel
     {
         $id = trim((string)$this->request->param('id', ''));
@@ -250,6 +352,94 @@ class RecordFormTemplate extends BaseController
         }
 
         return $record;
+    }
+
+    private function reviewStatusOptions(): array
+    {
+        $options = [];
+        foreach (self::REVIEW_STATUSES as $value => $label) {
+            $options[] = [
+                'value' => $value,
+                'label' => $label,
+            ];
+        }
+
+        return $options;
+    }
+
+    private function decorateReviewRows(iterable $items): void
+    {
+        foreach ($items as $item) {
+            $stats = $this->templateFieldStats((string)$item->field_schema);
+            $reviewStatus = (string)($item->review_status ?: 'pending');
+            $item->setAttr('field_count', $stats['field_count']);
+            $item->setAttr('repeatable_count', $stats['repeatable_count']);
+            $item->setAttr('schema_issue', $stats['schema_issue']);
+            $item->setAttr('review_status_value', array_key_exists($reviewStatus, self::REVIEW_STATUSES) ? $reviewStatus : 'pending');
+            $item->setAttr('review_status_label', self::REVIEW_STATUSES[$item->review_status_value] ?? self::REVIEW_STATUSES['pending']);
+            $item->setAttr('fillable', $this->isTemplateFillable($item));
+        }
+    }
+
+    private function decorateTemplateRows(iterable $items): void
+    {
+        foreach ($items as $item) {
+            $item->setAttr('fillable', $this->isTemplateFillable($item));
+        }
+    }
+
+    private function isTemplateFillable(TemplateModel $template): bool
+    {
+        $printTemplateKey = trim((string)$template->print_template_key);
+
+        return $template->status === 'published'
+            && (string)($template->review_status ?? '') === 'completed'
+            && $printTemplateKey !== ''
+            && $printTemplateKey !== 'generic_record_form'
+            && $this->printTemplateExists($printTemplateKey);
+    }
+
+    private function templateFieldStats(string $fieldSchema): array
+    {
+        try {
+            $schema = RecordFormSchemaService::decode($fieldSchema);
+        } catch (InvalidArgumentException $exception) {
+            return [
+                'field_count' => 0,
+                'repeatable_count' => 0,
+                'schema_issue' => $exception->getMessage(),
+            ];
+        }
+
+        $fieldCount = 0;
+        $repeatableCount = 0;
+        foreach ($schema as $field) {
+            $fieldCount++;
+            if (($field['type'] ?? '') === 'repeatable_table') {
+                $repeatableCount++;
+                $fieldCount += count($field['columns'] ?? []);
+            }
+        }
+
+        return [
+            'field_count' => $fieldCount,
+            'repeatable_count' => $repeatableCount,
+            'schema_issue' => '',
+        ];
+    }
+
+    private function reviewSummary(): array
+    {
+        $summary = [];
+        foreach (self::REVIEW_STATUSES as $value => $label) {
+            $summary[] = [
+                'value' => $value,
+                'label' => $label,
+                'count' => TemplateModel::where('soft_delete', 0)->where('review_status', $value)->count(),
+            ];
+        }
+
+        return $summary;
     }
 
     private function validateTemplateInput(array $data): array

@@ -25,6 +25,18 @@ class RecordFormPrintService
         return (string)ob_get_clean();
     }
 
+    public static function tablePaginationCss(): string
+    {
+        return <<<'CSS'
+        table { page-break-inside: auto; }
+        thead { display: table-header-group; }
+        tr, th, td {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+CSS;
+    }
+
     public static function value(array $values, string $key, string $default = ''): string
     {
         $value = $values[$key] ?? $default;

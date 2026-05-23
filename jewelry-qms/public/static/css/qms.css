@@ -29,3 +29,22 @@ body {
 .badge-status-obsolete {
     background: #dc3545;
 }
+
+.record-form-employee-picker {
+    background: #f8f9fb;
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    padding: .75rem;
+}
+
+.record-form-employee-option {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: .375rem;
+    height: 100%;
+    padding: .5rem .75rem;
+}
+
+.record-form-row-action {
+    width: 88px;
+}

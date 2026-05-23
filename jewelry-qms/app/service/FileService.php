@@ -45,14 +45,43 @@ class FileService
 
     public static function download(string $filePath, string $displayName): void
     {
+        self::stream($filePath, $displayName, 'attachment');
+    }
+
+    public static function preview(string $filePath, string $displayName): void
+    {
+        self::stream($filePath, $displayName, 'inline');
+    }
+
+    private static function stream(string $filePath, string $displayName, string $disposition): void
+    {
         $fullPath = public_path() . $filePath;
         if (!file_exists($fullPath)) {
             throw new HttpException(404, '文件未找到');
         }
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . $displayName . '"');
+        header('Content-Type: ' . self::contentType($fullPath));
+        header('Content-Disposition: ' . $disposition . '; filename="' . $displayName . '"');
         header('Content-Length: ' . filesize($fullPath));
         readfile($fullPath);
         exit;
+    }
+
+    private static function contentType(string $fullPath): string
+    {
+        $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        return match ($ext) {
+            'pdf' => 'application/pdf',
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'txt' => 'text/plain; charset=utf-8',
+            'html', 'htm' => 'text/html; charset=utf-8',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            default => 'application/octet-stream',
+        };
     }
 }

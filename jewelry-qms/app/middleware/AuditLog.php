@@ -26,8 +26,10 @@ class AuditLog
                 'exportpdf',
                 'restore',
                 'revise',
+                'seedbatch',
                 'seedsamples',
                 'submitreview',
+                'updatereview',
             ];
             if (in_array(strtolower($action), $logActions, true)) {
                 try {

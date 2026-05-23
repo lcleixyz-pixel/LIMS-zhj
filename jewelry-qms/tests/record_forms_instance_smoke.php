@@ -237,6 +237,17 @@ assert_same('1', $values['accepted'], 'Checkbox array input is normalized to che
 assert_same('', $values['title'], 'Scalar field array input is not persisted as an array');
 assert_same([['name' => '有效行']], $values['rows'], 'Repeatable table still filters empty rows');
 
+$sevenPostedRows = [];
+for ($i = 1; $i <= 7; $i++) {
+    $sevenPostedRows[] = ['name' => '参训人员' . $i];
+}
+$sevenValues = invoke_private(make_controller(['rows' => $sevenPostedRows]), 'collectValues', [$schema]);
+assert_same(7, count($sevenValues['rows']), 'Repeatable table accepts more than five submitted rows');
+assert_same('参训人员7', $sevenValues['rows'][6]['name'], 'Repeatable table preserves the seventh row');
+
+$preparedRows = invoke_private($controller, 'prepareFormValues', [$schema, ['rows' => $sevenValues['rows']]]);
+assert_same(7, count($preparedRows['rows']), 'Repeatable table editor renders all saved rows instead of capping at five');
+
 $exportPdfSource = method_source(RecordFormInstance::class, 'exportPdf');
 assert_contains('consumePdfActionToken', $exportPdfSource, 'PDF export requires a one-time action token');
 assert_contains('canExportPdf($record)', $exportPdfSource, 'PDF export checks lifecycle status');
@@ -246,13 +257,33 @@ assert_not_contains('internalPrint', $exportPdfSource, 'PDF export avoids nested
 assert_not_contains('PdfRenderService::renderUrl', $exportPdfSource, 'PDF export avoids URL rendering under the built-in server');
 
 $createSource = method_source(RecordFormInstance::class, 'create');
-assert_contains('findTemplate(true)', $createSource, 'Record creation requires a published template');
+assert_contains('isTemplateFillable($template)', $createSource, 'Record creation requires a fillable template');
+assert_contains('/record_form_template/view?id=', $createSource, 'Unfillable templates redirect back to the template detail page');
 assert_contains('template_field_schema', $createSource, 'Record creation stores a template schema snapshot');
 assert_contains('template_print_template_key', $createSource, 'Record creation stores a print template snapshot');
+assert_contains('assignRecordFormEditorContext', $createSource, 'Record creation exposes shared editor context');
+
+$findTemplateSource = method_source(RecordFormInstance::class, 'findTemplateById');
+assert_contains('isTemplateFillable', $findTemplateSource, 'Template lookup gates creation on high-fidelity completion');
+assert_contains('只有已完成高保真复核', $findTemplateSource, 'Draft high-fidelity templates receive a clear creation block message');
 
 $editSource = method_source(RecordFormInstance::class, 'edit');
 assert_contains("'generated_pdf_path' => null", $editSource, 'Editing a generated record clears stale PDF path');
 assert_contains("'generated_pdf_name' => null", $editSource, 'Editing a generated record clears stale PDF name');
+assert_contains('assignRecordFormEditorContext', $editSource, 'Record editing exposes shared editor context');
+
+$controllerSource = file_get_contents(dirname(__DIR__) . '/app/controller/RecordFormInstance.php');
+assert_contains('employeeOptions', $controllerSource ?: '', 'Record form editor loads employee options for participant picking');
+assert_contains('DepartmentModel::where', $controllerSource ?: '', 'Employee picker resolves department names from the department ledger');
+
+$createViewSource = file_get_contents(dirname(__DIR__) . '/app/view/record_form_instance/create.html');
+$editViewSource = file_get_contents(dirname(__DIR__) . '/app/view/record_form_instance/edit.html');
+foreach (['create' => $createViewSource ?: '', 'edit' => $editViewSource ?: ''] as $viewName => $viewSource) {
+    assert_contains('data-repeatable-table', $viewSource, $viewName . ' view marks repeatable table editors for dynamic rows');
+    assert_contains('data-add-repeatable-row', $viewSource, $viewName . ' view provides an add-row control');
+    assert_contains('data-remove-repeatable-row', $viewSource, $viewName . ' view provides row removal controls');
+    assert_contains('data-employee-picker', $viewSource, $viewName . ' view provides employee picker controls for attendee tables');
+}
 
 $routeSource = file_get_contents(dirname(__DIR__) . '/route/app.php');
 assert_contains("Route::post('record_form_instance/exportPdf'", $routeSource ?: '', 'PDF export route is POST-only');

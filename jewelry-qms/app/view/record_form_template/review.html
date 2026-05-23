@@ -1,0 +1,112 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">模板复核清单</h5>
+        <div class="d-flex gap-2">
+            <a href="/record_form_template/index" class="btn btn-sm btn-outline-secondary">返回模板列表</a>
+            <a href="/record_form_instance/index" class="btn btn-sm btn-outline-primary">填写记录</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row g-2 mb-3">
+            {volist name="reviewSummary" id="summary"}
+            <div class="col-sm-6 col-lg">
+                <div class="border rounded-2 p-2 h-100">
+                    <div class="small text-muted">{$summary.label}</div>
+                    <div class="fs-5 fw-semibold">{$summary.count}</div>
+                </div>
+            </div>
+            {/volist}
+        </div>
+
+        <form method="get" action="/record_form_template/review" class="row g-2 mb-3">
+            <div class="col-md-4">
+                <input type="text" name="keyword" value="{$filter.keyword|default=''}" class="form-control form-control-sm" placeholder="编号、名称、模块、附件">
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">全部发布状态</option>
+                    <option value="draft" {if $filter.status == 'draft'}selected{/if}>草稿</option>
+                    <option value="published" {if $filter.status == 'published'}selected{/if}>已发布</option>
+                    <option value="obsolete" {if $filter.status == 'obsolete'}selected{/if}>已作废</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="review_status" class="form-select form-select-sm">
+                    <option value="">全部复核状态</option>
+                    {volist name="reviewStatusOptions" id="option"}
+                    <option value="{$option.value}" {if $filter.review_status == $option.value}selected{/if}>{$option.label}</option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-sm btn-outline-primary w-100" type="submit">筛选</button>
+            </div>
+            <div class="col-md-1">
+                <a href="/record_form_template/review" class="btn btn-sm btn-outline-secondary w-100">重置</a>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>编号</th>
+                        <th>名称</th>
+                        <th>模块</th>
+                        <th>字段数</th>
+                        <th>动态明细</th>
+                        <th>原始附件</th>
+                        <th>复核状态</th>
+                        <th width="300">复核备注</th>
+                        <th width="170">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td>{$item.doc_number}</td>
+                        <td>
+                            <a href="/record_form_template/view?id={$item.id}">{$item.name}</a>
+                            {if $item.schema_issue}<div class="text-danger small">字段配置：{$item.schema_issue}</div>{/if}
+                        </td>
+                        <td>{$item.module|default='-'}</td>
+                        <td>{$item.field_count}</td>
+                        <td>{$item.repeatable_count}</td>
+                        <td>
+                            {if $item.source_file_path}
+                            <a href="/record_form_template/sourcePreview?id={$item.id}" target="_blank">原始预览</a>
+                            <span class="text-muted">/</span>
+                            <a href="/record_form_template/source?id={$item.id}">{$item.source_file_name|default='下载'}</a>
+                            {else}
+                            <span class="text-muted">-</span>
+                            {/if}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary mb-1">{$item.review_status_label}</span>
+                            <select name="review_status" class="form-select form-select-sm" data-review-status form="review_{$item.id}">
+                                {volist name="reviewStatusOptions" id="option"}
+                                <option value="{$option.value}" {if $item.review_status_value == $option.value}selected{/if}>{$option.label}</option>
+                                {/volist}
+                            </select>
+                        </td>
+                        <td>
+                            <textarea name="review_note" class="form-control form-control-sm" rows="2" placeholder="字段调整、需高保真、暂缓原因等" form="review_{$item.id}">{$item.review_note|default=''}</textarea>
+                        </td>
+                        <td>
+                            <form id="review_{$item.id}" method="post" action="/record_form_template/updateReview?id={$item.id}" class="d-inline"></form>
+                            <button type="submit" form="review_{$item.id}" class="btn btn-sm btn-primary mb-1">保存复核</button>
+                            {if $item.fillable}
+                            <a href="/record_form_instance/create?template_id={$item.id}" class="btn btn-sm btn-outline-success">试填</a>
+                            {else}
+                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="待完成高保真复核后可试填">试填</button>
+                            {/if}
+                            <a href="/record_form_template/preview?id={$item.id}" target="_blank" class="btn btn-sm btn-outline-secondary">预览</a>
+                        </td>
+                    </tr>
+                    {/volist}
+                </tbody>
+            </table>
+        </div>
+        {$pages|raw}
+    </div>
+</div>

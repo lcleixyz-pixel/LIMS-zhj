@@ -26,9 +26,13 @@ Route::group(function () {
     Route::rule('record_form_template/edit', 'RecordFormTemplate/edit');
     Route::rule('record_form_template/view', 'RecordFormTemplate/view');
     Route::rule('record_form_template/delete', 'RecordFormTemplate/delete');
+    Route::get('record_form_template/review', 'RecordFormTemplate/review');
+    Route::post('record_form_template/updateReview', 'RecordFormTemplate/updateReview');
     Route::get('record_form_template/source', 'RecordFormTemplate/source');
+    Route::get('record_form_template/sourcePreview', 'RecordFormTemplate/sourcePreview');
     Route::get('record_form_template/preview', 'RecordFormTemplate/preview');
     Route::post('record_form_template/seedSamples', 'RecordFormTemplate/seedSamples');
+    Route::post('record_form_template/seedBatch', 'RecordFormTemplate/seedBatch');
 
     Route::rule('record_form_instance/index', 'RecordFormInstance/index');
     Route::rule('record_form_instance/create', 'RecordFormInstance/create');

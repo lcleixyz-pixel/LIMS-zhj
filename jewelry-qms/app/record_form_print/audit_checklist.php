@@ -20,6 +20,7 @@ $version = P::cell($template, 'version');
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th, td { border: 1px solid #111; padding: 7px 8px; vertical-align: middle; word-break: break-word; }
         th { background: #f5f5f5; font-weight: 700; }
+        <?= P::tablePaginationCss() ?>
     </style>
 </head>
 <body>

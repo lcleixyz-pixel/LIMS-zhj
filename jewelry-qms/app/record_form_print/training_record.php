@@ -22,6 +22,7 @@ if ($attendees === []) {
         .label { width: 18%; }
         .signature { height: 46px; }
         .footer { display: flex; justify-content: space-between; margin-top: 10px; font-size: 11px; }
+        <?= P::tablePaginationCss() ?>
     </style>
 </head>
 <body>
@@ -46,7 +47,8 @@ if ($attendees === []) {
             <td colspan="3" style="height:80px"><?= nl2br(P::value($values, 'training_content')) ?></td>
         </tr>
     </table>
-    <table style="margin-top:10px">
+    <div style="font-weight:700;margin:10px 0 5px">参训人员</div>
+    <table>
         <tr>
             <th style="width:10%">序号</th>
             <th>姓名</th>
