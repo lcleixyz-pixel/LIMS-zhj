@@ -36,7 +36,11 @@ class Rbac
             return redirect('/dashboard/index');
         }
 
-        $writeActions = ['add', 'edit', 'delete', 'create', 'seedsamples', 'seedbatch', 'updatereview', 'exportpdf'];
+        $writeActions = [
+            'add', 'edit', 'delete', 'create', 'seedsamples', 'seedbatch', 'updatereview', 'exportpdf',
+            'seedsources', 'createclausecandidates', 'createmanualcandidates', 'createtraceabilitysample',
+            'publishcandidate', 'rejectcandidate', 'obsoletecandidate', 'createpolicy', 'createobjective',
+        ];
         if (in_array($action, $writeActions, true) && !RbacService::canWrite($controller)) {
             Session::flash('error', '您没有编辑权限');
 

@@ -1,0 +1,361 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">外部依据管理台</h4>
+        <div class="text-muted small">登记体系建立所依据的正式文件，清洗编号、名称、版本和附件定位，复核后进入当前正式依据。</div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="qms-section-title">登记依据候选</div>
+        <div class="qms-method-panel mb-3">
+            <div>
+                <div class="fw-semibold">优先上传正式文件自动预填</div>
+                <div class="small text-muted">手工补录只用于暂无附件、文件名无法识别或需要先登记查新信息的情况；两种方式都会进入同一待复核列表。</div>
+            </div>
+        </div>
+        <form method="post" action="/planning/uploadSourceCandidate" enctype="multipart/form-data" class="row g-3 mb-3">
+            <div class="col-md-7">
+                <label class="form-label required">本地文件</label>
+                <input name="source_file" type="file" class="form-control form-control-sm" accept=".pdf,.doc,.docx" data-source-upload-preview>
+                <div class="form-text">支持 PDF、DOC、DOCX。上传后按文件名自动预填编号、名称和版本。</div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">预填预览</label>
+                <div class="form-control form-control-sm qms-upload-preview" data-source-upload-preview-output>选择文件后显示</div>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-sm btn-primary w-100">上传并生成候选</button>
+            </div>
+        </form>
+
+        <details class="qms-manual-entry mb-4">
+            <summary>手工补录依据候选</summary>
+            <div class="small text-muted mt-2 mb-3">适用于无附件、附件路径已知但暂不上传，或需要人工填写官方来源和查新结论的依据。</div>
+            <form method="post" action="/planning/createSourceCandidate" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label required">编号</label>
+                    <input name="source_code" class="form-control form-control-sm" placeholder="如 CNAS-CL01:2018">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label required">正式名称</label>
+                    <input name="name" class="form-control form-control-sm" placeholder="与官方文件名称一致">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">版本</label>
+                    <input name="version" class="form-control form-control-sm" placeholder="2018">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">生效/实施日期</label>
+                    <input name="effective_date" type="date" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">类型</label>
+                    <select name="source_type" class="form-select form-select-sm">
+                        {foreach $sourceTypes as $typeKey=>$typeLabel}
+                        <option value="{$typeKey}">{$typeLabel}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">本地文件路径</label>
+                    <input name="attachment_file_path" class="form-control form-control-sm" placeholder="现用文件/外部依据/...pdf">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">附件显示名</label>
+                    <input name="attachment_file_name" class="form-control form-control-sm" placeholder="用于页面显示">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">官方来源链接</label>
+                    <input name="official_url" class="form-control form-control-sm" placeholder="CNAS、国家标准平台或监管部门页面">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">查新结论</label>
+                    <input name="check_result" class="form-control form-control-sm" placeholder="如：2026-05-24 查无更新，可作为正式依据">
+                </div>
+                <div class="col-md-10">
+                    <label class="form-label">复核备注</label>
+                    <textarea name="review_note" rows="2" class="form-control form-control-sm" placeholder="记录编号清洗、版本判断、附件来源等人工复核信息"></textarea>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-sm btn-outline-primary w-100">登记手工候选</button>
+                </div>
+            </form>
+        </details>
+
+        <div class="qms-section-title">待复核依据候选</div>
+        <div class="table-responsive mb-4">
+            <table class="table table-sm table-bordered align-middle qms-review-table">
+                <thead>
+                    <tr>
+                        <th class="qms-col-code">编号</th>
+                        <th>名称/版本</th>
+                        <th class="qms-col-type">类型</th>
+                        <th>附件/定位</th>
+                        <th>查新结论/备注</th>
+                        <th class="qms-col-status">状态</th>
+                        <th class="qms-col-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="candidates" id="candidate"}
+                    <tr>
+                        <td class="fw-semibold">{$candidate.source_code}</td>
+                        <td>
+                            {$candidate.name}
+                            <div class="small text-muted">版本：{$candidate.version|default='-'}</div>
+                        </td>
+                        <td>{$candidate.source_type_label}</td>
+                        <td>
+                            {$candidate.attachment_file_name|default='-'}
+                            {if $candidate.attachment_file_path}<details class="small text-muted qms-review-note"><summary>本地路径</summary>{$candidate.attachment_file_path}</details>{/if}
+                        </td>
+                        <td>
+                            {if $candidate.review_note}
+                            <details class="qms-review-note"><summary>查看查新记录</summary><small>{$candidate.review_note}</small></details>
+                            {else /}
+                            <span class="text-muted">-</span>
+                            {/if}
+                        </td>
+                        <td><span class="badge bg-warning text-dark">{$candidate.status_label}</span></td>
+                        <td>
+                            <div class="qms-actions">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-qms-source-check-toggle="{$candidate.id}">查新/补齐</button>
+                            <form method="post" action="/planning/createSourceClauseCandidates?id={$candidate.id}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-info">模型标题/结构化条款</button>
+                            </form>
+                            <form method="post" action="/planning/publishSourceCandidate?id={$candidate.id}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-primary">发布</button>
+                            </form>
+                            <form method="post" action="/planning/obsoleteSource?id={$candidate.id}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认废止该候选？')">废止</button>
+                            </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="qms-source-check-row" id="source-check-{$candidate.id}" hidden>
+                        <td colspan="7">
+                            <form method="post" action="/planning/checkSourceCandidate?id={$candidate.id}" class="qms-source-check-form">
+                                <div class="small text-muted mb-2">查新用于发布前确认版本状态和官方来源；后续接入智能体时，将由模型预填这些字段，仍需人工复核保存。</div>
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <label class="form-label required">编号</label>
+                                        <input name="source_code" class="form-control form-control-sm" value="{$candidate.source_code}">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label required">正式名称</label>
+                                        <input name="name" class="form-control form-control-sm" value="{$candidate.name}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">版本</label>
+                                        <input name="version" class="form-control form-control-sm" value="{$candidate.version|default=''}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">生效/实施日期</label>
+                                        <input name="effective_date" type="date" class="form-control form-control-sm" value="{$candidate.effective_date|default=''}">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">类型</label>
+                                        <select name="source_type" class="form-select form-select-sm">
+                                            {foreach $sourceTypes as $typeKey=>$typeLabel}
+                                            <option value="{$typeKey}" {if $candidate.source_type == $typeKey}selected{/if}>{$typeLabel}</option>
+                                            {/foreach}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label">本地文件路径</label>
+                                        <input name="attachment_file_path" class="form-control form-control-sm" value="{$candidate.attachment_file_path|default=''}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">附件显示名</label>
+                                        <input name="attachment_file_name" class="form-control form-control-sm" value="{$candidate.attachment_file_name|default=''}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">查新日期</label>
+                                        <input name="check_date" type="date" class="form-control form-control-sm" value="{if $candidate.source_check_date}{$candidate.source_check_date}{else}{:date('Y-m-d')}{/if}">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label">官方来源链接</label>
+                                        <input name="official_url" class="form-control form-control-sm" value="{$candidate.source_official_url|default=''}" placeholder="CNAS、国家标准平台或监管部门页面">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label">查新结论</label>
+                                        <input name="check_result" class="form-control form-control-sm" value="{$candidate.source_check_result|default=''}" placeholder="如：官网仍列示该版本，未发现替代新版">
+                                    </div>
+                                    <div class="col-md-10">
+                                        <label class="form-label">复核备注</label>
+                                        <textarea name="review_note" rows="2" class="form-control form-control-sm" placeholder="保留原上传记录、补充判断依据或待确认事项">{$candidate.source_review_comment|default=''}</textarea>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-sm btn-primary w-100">保存查新</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="candidates"}
+                    <tr><td colspan="7" class="text-center text-muted">暂无待复核依据候选，可先在上方登记新依据。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="qms-section-title">当前正式依据</div>
+        <div class="table-responsive mb-4">
+            <table class="table table-sm table-striped align-middle qms-review-table">
+                <thead>
+                    <tr>
+                        <th class="qms-col-code">编号</th>
+                        <th>名称/版本</th>
+                        <th class="qms-col-type">类型</th>
+                        <th>附件/定位</th>
+                        <th>查新结论/备注</th>
+                        <th class="qms-col-status">状态</th>
+                        <th class="qms-col-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td class="fw-semibold">{$item.source_code}</td>
+                        <td>
+                            {$item.name}
+                            <div class="small text-muted">版本：{$item.version|default='-'}</div>
+                            <div class="small text-muted">生效：{$item.effective_date|default='-'}</div>
+                        </td>
+                        <td>{$item.source_type_label}</td>
+                        <td>
+                            {$item.attachment_file_name|default='-'}
+                            {if $item.attachment_file_path}<details class="small text-muted qms-review-note"><summary>本地路径</summary>{$item.attachment_file_path}</details>{/if}
+                        </td>
+                        <td>
+                            {if $item.review_note}
+                            <details class="qms-review-note"><summary>查看查新记录</summary><small>{$item.review_note}</small></details>
+                            {else /}
+                            <span class="text-muted">-</span>
+                            {/if}
+                        </td>
+                        <td><span class="badge bg-success">{$item.status_label}</span></td>
+                        <td>
+                            <div class="qms-actions">
+                            <form method="post" action="/planning/createSourceClauseCandidates?id={$item.id}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">模型标题/结构化条款</button>
+                            </form>
+                            <a href="/planning/clauses?source_id={$item.id}" class="btn btn-sm btn-outline-info">查看条款</a>
+                            <form method="post" action="/planning/obsoleteSource?id={$item.id}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认废止该正式依据？')">废止</button>
+                            </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}
+                    <tr><td colspan="7" class="text-center text-muted">暂无当前正式依据，可先上传或登记候选，复核后发布。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="qms-section-title">内置正式依据清单</div>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle">
+                <thead><tr><th>编号</th><th>名称</th><th>版本</th><th>本地文件</th></tr></thead>
+                <tbody>
+                    {volist name="manifest" id="source"}
+                    <tr>
+                        <td class="fw-semibold">{$source.source_code}</td>
+                        <td>{$source.name}</td>
+                        <td>{$source.version|default='-'}</td>
+                        <td>{$source.file_name}</td>
+                    </tr>
+                    {/volist}
+                </tbody>
+            </table>
+        </div>
+        <details class="mt-3">
+            <summary class="text-muted small">维护工具</summary>
+            <div class="border rounded-2 p-3 mt-2 bg-light">
+                <div class="small text-muted mb-2">仅用于初始化或修复缺失依据；日常新增依据请使用上传或候选登记流程。</div>
+                <form method="post" action="/planning/seedSources">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary" onclick="return confirm('仅用于初始化或修复缺失依据。确认继续？')">补齐内置正式依据</button>
+                </form>
+            </div>
+        </details>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>
+
+<script>
+(function () {
+    var input = document.querySelector('[data-source-upload-preview]');
+    var output = document.querySelector('[data-source-upload-preview-output]');
+    if (!input || !output) {
+        return;
+    }
+
+    function normalizeTitle(title) {
+        if (title.indexOf('珠宝玉石') !== -1 && title.indexOf('贵金属') !== -1 && title.indexOf('应用说明') !== -1) {
+            return '检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明';
+        }
+        if (title.indexOf('检测和校准实验室能力认可准则的应用要求') !== -1) {
+            return '检测和校准实验室能力认可准则的应用要求';
+        }
+        if (title.indexOf('检测和校准实验室能力认可准则') !== -1) {
+            return '检测和校准实验室能力认可准则';
+        }
+        if (title.indexOf('检测和校准实验室能力的通用要求') !== -1) {
+            return '检测和校准实验室能力的通用要求';
+        }
+        if (title.indexOf('检验检测机构资质认定评审准则') !== -1) {
+            return '检验检测机构资质认定评审准则';
+        }
+        return title.replace(/\.(pdf|docx?|PDF|DOCX?)$/, '');
+    }
+
+    function previewSource(fileName) {
+        var name = fileName.replace(/\.(pdf|docx?)$/i, '').replace(/^\s*\d+\s*[-_、.+]*/u, '').replace(/[《》]/g, '');
+        var code = '';
+        var version = '';
+        var match = name.match(/CNAS[-\s]*CL01[-\s]*G001\s*[:：]?\s*(20\d{2})/i);
+        if (match) {
+            version = match[1];
+            code = 'CNAS-CL01-G001:' + version;
+        } else if ((match = name.match(/CNAS[-\s]*CL01[-_\s]*(A\d{3})\s*[:：_\-\s]?\s*(20\d{2})/i))) {
+            version = match[2];
+            code = 'CNAS-CL01-' + match[1].toUpperCase() + ':' + version;
+        } else if ((match = name.match(/CNAS[-\s]*CL01(?![-\s]*G001).*?(20\d{2})?/i))) {
+            version = match[1] || ((name.match(/20\d{2}/) || [''])[0]);
+            code = version ? 'CNAS-CL01:' + version : 'CNAS-CL01';
+        } else if ((match = name.match(/GB\s*[\/-]?\s*T?\s*27025\s*[- ]\s*(20\d{2})/i))) {
+            version = match[1];
+            code = 'GB/T 27025-' + version;
+        } else if (name.indexOf('检验检测机构资质认定评审准则') !== -1 && name.indexOf('2023') !== -1) {
+            version = '2023年第21号公告';
+            code = '市场监管总局公告2023年第21号';
+        }
+
+        output.textContent = (code || '编号待确认') + ' / ' + normalizeTitle(name) + (version ? ' / ' + version : '');
+    }
+
+    input.addEventListener('change', function () {
+        var file = input.files && input.files[0];
+        if (!file) {
+            output.textContent = '选择文件后显示';
+            return;
+        }
+        previewSource(file.name);
+    });
+
+    document.querySelectorAll('[data-qms-source-check-toggle]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var row = document.getElementById('source-check-' + button.getAttribute('data-qms-source-check-toggle'));
+            if (!row) {
+                return;
+            }
+            row.hidden = !row.hidden;
+            button.textContent = row.hidden ? '查新/补齐' : '收起查新';
+        });
+    });
+})();
+</script>

@@ -1,0 +1,28 @@
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">质量手册章节</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead><tr><th>章节号</th><th>标题</th><th>层级关系</th><th>受控文件</th><th>层级</th><th>状态</th></tr></thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td class="qms-clause-tree-cell" style="padding-left: {$item.clause_tree_indent|default=0}px;"><strong>{$item.section_number}</strong></td>
+                        <td>{$item.title}</td>
+                        <td class="small text-muted">{$item.section_hierarchy_label|default='-'}</td>
+                        <td>{$item.document_title|default='待关联'}</td>
+                        <td>{$item.level}</td>
+                        <td><span class="badge bg-secondary">{$item.review_status}</span></td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}
+                    <tr><td colspan="6" class="text-center text-muted">暂无质量手册章节节点</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>

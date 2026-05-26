@@ -1,0 +1,135 @@
+<div class="card mb-3">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+                <h5 class="mb-1">导入复核</h5>
+                <div class="small text-muted">条款候选请从具体依据文件发起；本页仅复核已生成的结构化候选，未发布候选不会进入正式条款库或追溯矩阵。同一依据重新生成会覆盖旧候选。</div>
+            </div>
+            <a href="/planning/sources" class="btn btn-sm btn-outline-primary">去外部依据管理台</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="get" action="/planning/import-batches" class="row g-2 align-items-end mb-3">
+            <div class="col-md-4">
+                <label class="form-label small mb-1">批次类型</label>
+                <select name="batch_type" class="form-select form-select-sm">
+                    <option value="">全部结构化复核批次</option>
+                    {foreach $batchTypeOptions as $key=>$label}
+                    <option value="{$key}" {if condition="$batchType == $key"}selected{/if}>{$label}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-sm btn-outline-primary">筛选</button>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead><tr><th>批次</th><th>类型</th><th>候选数</th><th>已发布</th><th>退回</th><th>废止</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody>
+                    {volist name="batches" id="batch"}
+                    <tr>
+                        <td>
+                            {$batch.name}
+                            {if $batch.note}<div class="small text-muted">{$batch.note}</div>{/if}
+                        </td>
+                        <td><strong>{$batch.batch_type_label|default=$batch.batch_type}</strong><div class="small text-muted">{$batch.batch_type}</div></td>
+                        <td>{$batch.total_candidates}</td>
+                        <td>{$batch.published_count}</td>
+                        <td>{$batch.rejected_count}</td>
+                        <td>{$batch.obsolete_count}</td>
+                        <td><span class="badge bg-secondary">{$batch.status_label|default=$batch.status}</span><div class="small text-muted">{$batch.status}</div></td>
+                        <td><a href="/planning/import-batches?batch_type={$batchType}&batch_id={$batch.id}" class="btn btn-sm btn-outline-info">查看候选</a></td>
+                    </tr>
+                    {/volist}
+                    {empty name="batches"}
+                    <tr><td colspan="8" class="text-center text-muted">暂无结构化复核批次；条款候选请从具体依据文件发起，手册基线候选可从体系要素库生成。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>
+{if condition="$batchId != ''"}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+                <h5 class="mb-0">候选项{if condition="$selectedBatch"}：{$selectedBatch.name}{/if}</h5>
+                {if condition="$selectedBatch"}
+                <small class="text-muted">共 {$selectedBatch.total_candidates} 条候选，当前页最多显示 50 条。</small>
+                {/if}
+            </div>
+            {if condition="$selectedBatch"}
+            <form method="post" action="/planning/publishCandidateBatch?batch_id={$selectedBatch.id}" onsubmit="return confirm('确认批量发布当前批次中仍为待复核的候选？已发布、退回、废止的候选会自动跳过。');" class="text-end">
+                <button type="submit" class="btn btn-sm btn-success">批量发布待复核候选</button>
+                <div class="small text-muted mt-1">仅发布仍为待复核的候选；请先逐条展开修正候选并保存。</div>
+            </form>
+            {/if}
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead><tr><th>类型</th><th>摘要</th><th>来源</th><th>目标</th><th>关系</th><th>说明</th><th>状态</th><th>复核</th></tr></thead>
+                <tbody>
+                    {volist name="candidates" id="candidate"}
+                    <tr>
+                        <td>
+                            <strong>{$candidate.candidate_type_label|default=$candidate.candidate_type}</strong>
+                            <div class="small text-muted">{$candidate.candidate_type}</div>
+                        </td>
+                        <td>
+                            <strong>{$candidate.payload_summary|default='-'}</strong>
+                            {if condition="$candidate.payload_original_text != ''"}
+                            <details class="mt-1">
+                                <summary class="small text-primary">查看逐字原文</summary>
+                                <div class="small bg-white border rounded p-2 mt-1 qms-clause-original-text">{$candidate.payload_original_text|nl2br|raw}</div>
+                            </details>
+                            {/if}
+                            <details class="mt-1">
+                                <summary class="small text-muted">原始数据</summary>
+                                <pre class="small bg-light border rounded p-2 mt-1 mb-0 text-break">{$candidate.payload_pretty|default=$candidate.payload}</pre>
+                            </details>
+                            {if condition="$candidate.candidate_type == 'clause' and $candidate.status != 'published'"}
+                            <details class="mt-1">
+                                <summary class="small text-warning">修正候选</summary>
+                                <form method="post" action="/planning/updateClauseCandidate?id={$candidate.id}" class="border rounded p-2 mt-1 bg-white">
+                                    <label class="form-label small mb-1">标题</label>
+                                    <input type="text" name="title" value="{$candidate.payload_title|default=''}" class="form-control form-control-sm mb-2">
+                                    <label class="form-label small mb-1">定位</label>
+                                    <input type="text" name="locator" value="{$candidate.payload_locator_value|default=''}" class="form-control form-control-sm mb-2">
+                                    <label class="form-label small mb-1">逐字原文</label>
+                                    <textarea name="original_text" rows="4" class="form-control form-control-sm mb-2">{$candidate.payload_original_text|default=''}</textarea>
+                                    <label class="form-label small mb-1">修正说明</label>
+                                    <input type="text" name="review_note" value="{$candidate.payload_review_note|default=''}" class="form-control form-control-sm mb-2" placeholder="例如：删除 PDF 页脚">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">保存修正</button>
+                                </form>
+                            </details>
+                            {/if}
+                        </td>
+                        <td>{$candidate.payload_from|default='-'}</td>
+                        <td>{$candidate.payload_to|default='-'}</td>
+                        <td>{$candidate.payload_relation|default='-'}</td>
+                        <td>{$candidate.payload_note|default='-'}</td>
+                        <td><span class="badge bg-secondary">{$candidate.status_label|default=$candidate.status}</span><div class="small text-muted">{$candidate.status}</div></td>
+                        <td>
+                            {if $candidate.status != 'published'}
+                            <form method="post" action="/planning/publishCandidate?id={$candidate.id}" class="d-inline"><button type="submit" class="btn btn-sm btn-success">发布</button></form>
+                            <form method="post" action="/planning/rejectCandidate?id={$candidate.id}" class="d-inline"><button type="submit" class="btn btn-sm btn-outline-warning">退回</button></form>
+                            <form method="post" action="/planning/obsoleteCandidate?id={$candidate.id}" class="d-inline"><button type="submit" class="btn btn-sm btn-outline-secondary">废止</button></form>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="candidates"}
+                    <tr><td colspan="8" class="text-center text-muted">该批次暂无候选项</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$candidatePages|raw}</ul></nav>
+    </div>
+</div>
+{/if}

@@ -1,0 +1,27 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">岗位职责矩阵</h5>
+        <a href="/planning/import-batches" class="btn btn-sm btn-outline-primary">从手册附录生成候选</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead><tr><th>岗位编码</th><th>岗位名称</th><th>来源</th><th>状态</th></tr></thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td>{$item.code}</td>
+                        <td>{$item.name}</td>
+                        <td>{$item.source|default='-'}</td>
+                        <td><span class="badge bg-secondary">{$item.review_status}</span></td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}
+                    <tr><td colspan="4" class="text-center text-muted">暂无岗位目录</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>
