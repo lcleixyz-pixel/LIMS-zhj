@@ -1,0 +1,88 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">记录表格模板</h5>
+        <div class="d-flex gap-2">
+            <a href="/record_form_template/review" class="btn btn-sm btn-outline-primary">复核清单</a>
+            <form method="post" action="/record_form_template/seedBatch">
+                <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('确认按导入预览清单批量建立记录表格模板？')">批量建立模板</button>
+            </form>
+            <form method="post" action="/record_form_template/seedSamples">
+                <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('确认写入已完成的正式样板模板？')">写入正式样板</button>
+            </form>
+            <a href="/record_form_template/add" class="btn btn-sm btn-primary">新增模板</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="get" action="/record_form_template/index" class="row g-2 mb-3">
+            <div class="col-md-5">
+                <input type="text" name="keyword" value="{$filter.keyword|default=''}" class="form-control form-control-sm" placeholder="编号、名称、模块">
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">全部状态</option>
+                    <option value="draft" {if $filter.status == 'draft'}selected{/if}>草稿</option>
+                    <option value="published" {if $filter.status == 'published'}selected{/if}>已发布</option>
+                    <option value="obsolete" {if $filter.status == 'obsolete'}selected{/if}>已作废</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-sm btn-outline-primary w-100" type="submit">筛选</button>
+            </div>
+            <div class="col-md-2">
+                <a href="/record_form_template/index" class="btn btn-sm btn-outline-secondary w-100">重置</a>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>编号</th>
+                        <th>名称</th>
+                        <th>模块</th>
+                        <th>版本</th>
+                        <th>状态</th>
+                        <th>打印模板</th>
+                        <th width="260">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td>{$item.doc_number}</td>
+                        <td><a href="/record_form_template/view?id={$item.id}">{$item.name}</a></td>
+                        <td>{$item.module|default='-'}</td>
+                        <td>{$item.version|default='A/0'}</td>
+                        <td>
+                            {if $item.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
+                            {elseif $item.status == 'published'}<span class="badge badge-status-effective">已发布</span>
+                            {elseif $item.status == 'obsolete'}<span class="badge badge-status-obsolete">已作废</span>
+                            {else}<span class="badge bg-secondary">{$item.status}</span>{/if}
+                        </td>
+                        <td>{$item.print_template_key}</td>
+                        <td>
+                            <a href="/record_form_template/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
+                            <a href="/record_form_template/edit?id={$item.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+                            {if $canCreateInstances && $item.fillable}
+                            <a href="/record_form_instance/create?template_id={$item.id}" class="btn btn-sm btn-outline-success">填写</a>
+                            {else}
+                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="待完成高保真复核后可填写记录">填写</button>
+                            {/if}
+                            <form method="post" action="/record_form_template/delete?id={$item.id}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除？')">删除</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}
+                    <tr><td colspan="7" class="text-center text-muted">暂无记录表格模板</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav>
+            <ul class="pagination pagination-sm justify-content-center">
+                {$pages|raw}
+            </ul>
+        </nav>
+    </div>
+</div>

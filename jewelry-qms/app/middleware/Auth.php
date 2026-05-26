@@ -38,6 +38,7 @@ class Auth
             ->where('status', 0)
             ->count();
 
+        View::layout('layout/main');
         View::assign([
             'docLevels' => $qmsConfig['docLevels'] ?? [],
             'roles' => $qmsConfig['roles'] ?? [],

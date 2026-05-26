@@ -1,0 +1,11 @@
+{
+  "name": "jewelry-qms-record-forms",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "pdf:render": "node scripts/render-record-pdf.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.53.0"
+  }
+}

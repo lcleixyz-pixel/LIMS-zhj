@@ -19,6 +19,13 @@ class CrudBase extends BaseController
     {
     }
 
+    protected function assignDefaultFormContext(): void
+    {
+        View::assign('departments', \app\model\Department::where('soft_delete', 0)->where('publish', 1)->select());
+        View::assign('employees', \app\model\Employee::where('soft_delete', 0)->where('publish', 1)->select());
+        View::assign('users', \app\model\User::where('soft_delete', 0)->where('publish', 1)->select());
+    }
+
     protected function getModel()
     {
         if ($this->modelClass === '') {
@@ -68,6 +75,7 @@ class CrudBase extends BaseController
             return redirect($this->listRedirectUrl());
         }
         View::assign('pageTitle', $this->pageTitle . ' - 新增');
+        $this->assignDefaultFormContext();
         $this->assignFormContext();
 
         return View::fetch($this->viewPrefix . '/add');
@@ -92,6 +100,7 @@ class CrudBase extends BaseController
 
         View::assign('record', $record);
         View::assign('pageTitle', $this->pageTitle . ' - 编辑');
+        $this->assignDefaultFormContext();
         $this->assignFormContext();
 
         return View::fetch($this->viewPrefix . '/edit');

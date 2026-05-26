@@ -11,7 +11,7 @@ class Document extends BaseModel
 
     public function docCategory()
     {
-        return $this->belongsTo(DocCategory::class);
+        return $this->belongsTo(DocCategory::class, 'category_id');
     }
 
     public function department()
@@ -21,7 +21,7 @@ class Document extends BaseModel
 
     public function docTemplate()
     {
-        return $this->belongsTo(DocTemplate::class);
+        return $this->belongsTo(DocTemplate::class, 'template_id');
     }
 
     public function documentRevisions()

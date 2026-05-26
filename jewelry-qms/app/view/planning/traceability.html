@@ -1,0 +1,47 @@
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">追溯矩阵与缺口视图</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info small">
+            当前按“外部条款 → 体系要素 → 质量手册章节 → 程序文件 → 记录表格 → 运行模块”的链式追溯查看缺口；6.2 人员链路作为样板链路优先验收。
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>外部条款</th>
+                        <th>体系要素</th>
+                        <th>要素名称</th>
+                        <th>质量手册章节</th>
+                        <th>程序文件</th>
+                        <th>记录表格</th>
+                        <th>运行模块</th>
+                        <th>责任岗位</th>
+                        <th>目标指标</th>
+                        <th>链路</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="rows" id="row"}
+                    <tr>
+                        <td>{if $row.source_mappings > 0}<span class="badge bg-success">{$row.source_mappings}</span>{else}<span class="badge bg-warning text-dark">缺口</span>{/if}</td>
+                        <td><strong>{$row.element.element_code}</strong></td>
+                        <td>{$row.element.name}</td>
+                        <td>{if $row.manual_sections > 0}<span class="badge bg-success">{$row.manual_sections}</span>{else}<span class="badge bg-warning text-dark">缺口</span>{/if}</td>
+                        <td>{if $row.program_documents > 0}<span class="badge bg-success">{$row.program_documents}</span>{else}<span class="badge bg-warning text-dark">缺口</span>{/if}</td>
+                        <td>{if $row.record_forms > 0}<span class="badge bg-success">{$row.record_forms}</span>{else}<span class="badge bg-warning text-dark">缺口</span>{/if}</td>
+                        <td>{if $row.business_modules > 0}<span class="badge bg-success">{$row.business_modules}</span>{else}<span class="badge bg-secondary">-</span>{/if}</td>
+                        <td>{if $row.positions > 0}<span class="badge bg-success">{$row.positions}</span>{else}<span class="badge bg-warning text-dark">缺口</span>{/if}</td>
+                        <td>{if $row.objectives > 0}<span class="badge bg-success">{$row.objectives}</span>{else}<span class="badge bg-secondary">-</span>{/if}</td>
+                        <td class="small text-muted">{$row.traceability_chain}</td>
+                    </tr>
+                    {/volist}
+                    {empty name="rows"}
+                    <tr><td colspan="10" class="text-center text-muted">暂无已发布体系要素；请先发布现用质量手册附录候选</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -14,6 +14,10 @@ return [
     'view_suffix'   => 'html',
     // 模板文件名分隔符
     'view_depr'     => DIRECTORY_SEPARATOR,
+    // 后台默认布局，登录页通过 {__NOLAYOUT__} 单独关闭
+    'layout_on'     => true,
+    'layout_name'   => 'layout/main',
+    'layout_item'   => '{__CONTENT__}',
     // 模板引擎普通标签开始标记
     'tpl_begin'     => '{',
     // 模板引擎普通标签结束标记

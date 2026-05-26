@@ -12,7 +12,7 @@ use think\facade\View;
 
 class Login extends BaseController
 {
-    protected array $middleware = [];
+    protected $middleware = [];
 
     protected function initialize()
     {

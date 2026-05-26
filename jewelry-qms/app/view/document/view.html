@@ -51,9 +51,9 @@
             </tr>
             <tr>
                 <th>归口部门</th>
-                <td>{$doc.department.name|default='-'}</td>
+                <td>{$departmentName|default='-'}</td>
                 <th>文件分类</th>
-                <td>{$doc.doc_category.name|default='-'}</td>
+                <td>{$categoryName|default='-'}</td>
             </tr>
             <tr>
                 <th>复审日期</th>
@@ -138,7 +138,7 @@
                 </tr>
             </thead>
             <tbody>
-                {volist name="doc.document_revisions" id="rev"}
+                {volist name="revisions" id="rev"}
                 <tr>
                     <td>{$rev.version|default=''}</td>
                     <td>{$rev.revision|default=''}</td>
@@ -147,7 +147,7 @@
                     <td>{$rev.created|default=''}</td>
                 </tr>
                 {/volist}
-                {empty name="doc.document_revisions"}
+                {empty name="revisions"}
                 <tr><td colspan="5" class="text-center text-muted">暂无修订记录</td></tr>
                 {/empty}
             </tbody>

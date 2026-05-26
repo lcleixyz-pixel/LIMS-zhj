@@ -53,6 +53,7 @@ class SupplierEvaluation extends BusinessBase
             return redirect($this->listRedirectUrl());
         }
         View::assign('pageTitle', $this->pageTitle . ' - 新增');
+        $this->assignDefaultFormContext();
         $this->assignFormContext();
 
         return View::fetch($this->viewPrefix . '/add');

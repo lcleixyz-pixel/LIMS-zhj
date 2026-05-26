@@ -1,0 +1,61 @@
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">记录表格模板 - {$record.doc_number}</h5>
+        <div class="d-flex gap-1">
+            {if $canCreateInstances && $record.fillable}
+            <a href="/record_form_instance/create?template_id={$record.id}" class="btn btn-sm btn-outline-success">填写记录</a>
+            {else}
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="待完成高保真复核后可填写记录">填写记录</button>
+            {/if}
+            <a href="/record_form_template/preview?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-info">打印预览</a>
+            {if $record.source_file_path}
+            <a href="/record_form_template/sourcePreview?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-secondary">原始预览</a>
+            <a href="/record_form_template/source?id={$record.id}" class="btn btn-sm btn-outline-secondary">下载原始附件</a>
+            {/if}
+            <a href="/record_form_template/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            <form method="post" action="/record_form_template/delete?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除？')">删除</button>
+            </form>
+            <a href="/record_form_template/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="150">编号</th><td>{$record.doc_number}</td><th width="150">名称</th><td>{$record.name}</td></tr>
+            <tr><th>模块</th><td>{$record.module|default='-'}</td><th>版本</th><td>{$record.version|default='A/0'}</td></tr>
+            <tr>
+                <th>状态</th>
+                <td>
+                    {if $record.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
+                    {elseif $record.status == 'published'}<span class="badge badge-status-effective">已发布</span>
+                    {elseif $record.status == 'obsolete'}<span class="badge badge-status-obsolete">已作废</span>
+                    {else}<span class="badge bg-secondary">{$record.status}</span>{/if}
+                </td>
+                <th>打印模板</th><td>{$record.print_template_key}</td>
+            </tr>
+            <tr><th>原始附件</th><td colspan="3">{$record.source_file_name|default='-'}</td></tr>
+        </table>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header"><h6 class="mb-0">字段配置</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped">
+            <thead><tr><th>字段键</th><th>标签</th><th>类型</th><th>必填</th><th>打印绑定</th></tr></thead>
+            <tbody>
+                {volist name="schema" id="field"}
+                <tr>
+                    <td>{$field.key}</td>
+                    <td>{$field.label}</td>
+                    <td>{$field.type}</td>
+                    <td>{if $field.required}是{else}否{/if}</td>
+                    <td>{$field.print_bind}</td>
+                </tr>
+                {/volist}
+                {empty name="schema"}
+                <tr><td colspan="5" class="text-center text-muted">暂无字段配置</td></tr>
+                {/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

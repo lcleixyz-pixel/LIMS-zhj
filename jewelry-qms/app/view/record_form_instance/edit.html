@@ -1,0 +1,172 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑记录 - {$record.record_title}</h5></div>
+    <div class="card-body">
+        <form method="post" action="/record_form_instance/edit?id={$record.id}">
+            <div class="mb-3">
+                <label class="form-label required">记录标题</label>
+                <input type="text" name="record_title" class="form-control" value="{$record.record_title}" required>
+            </div>
+            {volist name="schema" id="field"}
+            <div class="mb-3">
+                <label class="form-label {if $field.required}required{/if}">{$field.label}</label>
+                {if $field.help_text}<div class="form-text mb-1">{$field.help_text}</div>{/if}
+                {if $field.type == 'textarea'}
+                <textarea name="fields[{$field.key}]" class="form-control" rows="4">{$values[$field.key]|default=$field.default}</textarea>
+                {elseif $field.type == 'date'}
+                <input type="date" name="fields[{$field.key}]" class="form-control" value="{$values[$field.key]|default=$field.default}">
+                {elseif $field.type == 'number'}
+                <input type="number" step="0.01" name="fields[{$field.key}]" class="form-control" value="{$values[$field.key]|default=$field.default}">
+                {elseif $field.type == 'select'}
+                <select name="fields[{$field.key}]" class="form-select">
+                    <option value="">请选择</option>
+                    {volist name="field.options" id="option"}
+                    <option value="{$option}" {if isset($values[$field.key]) && $values[$field.key] == $option}selected{/if}>{$option}</option>
+                    {/volist}
+                </select>
+                {elseif $field.type == 'checkbox'}
+                <div class="form-check">
+                    <input type="checkbox" name="fields[{$field.key}]" value="1" class="form-check-input" id="field_{$field.key}" {if isset($values[$field.key]) && ($values[$field.key] == '1' || $values[$field.key] == 1)}checked{/if}>
+                    <label class="form-check-label" for="field_{$field.key}">是</label>
+                </div>
+                {elseif $field.type == 'person'}
+                <select name="fields[{$field.key}]" class="form-select">
+                    <option value="">请选择人员</option>
+                    {volist name="employeeOptions" id="employee"}
+                    <option value="{$employee.name}" {if isset($values[$field.key]) && $values[$field.key] == $employee.name}selected{/if}>{$employee.name}{if $employee.department_name}（{$employee.department_name}）{/if}</option>
+                    {/volist}
+                </select>
+                {elseif $field.type == 'department'}
+                <select name="fields[{$field.key}]" class="form-select">
+                    <option value="">请选择部门</option>
+                    {volist name="departmentOptions" id="department"}
+                    <option value="{$department.name}" {if isset($values[$field.key]) && $values[$field.key] == $department.name}selected{/if}>{$department.name}</option>
+                    {/volist}
+                </select>
+                {elseif $field.type == 'repeatable_table'}
+                {if isset($field['employee_picker']) && $field.employee_picker && !empty($employeeOptions)}
+                <div class="record-form-employee-picker mb-2" data-employee-picker="{$field.key}" data-name-column="{$field.employee_name_column}" data-department-column="{$field.employee_department_column}">
+                    <div class="small fw-semibold mb-2">从人员台账勾选添加</div>
+                    <div class="row g-2">
+                        {volist name="employeeOptions" id="employee"}
+                        <div class="col-sm-6 col-lg-4 col-xl-3">
+                            <label class="form-check record-form-employee-option">
+                                <input type="checkbox" class="form-check-input" data-employee-option data-employee-name="{$employee.name}" data-employee-department="{$employee.department_name}">
+                                <span class="form-check-label">
+                                    <span class="fw-semibold">{$employee.name}</span>
+                                    {if $employee.department_name}<span class="text-muted small d-block">{$employee.department_name}</span>{/if}
+                                </span>
+                            </label>
+                        </div>
+                        {/volist}
+                    </div>
+                </div>
+                {/if}
+                <div class="record-form-repeatable" data-repeatable-table="{$field.key}">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle">
+                            <thead>
+                                <tr>
+                                    {volist name="field.columns" id="column"}<th>{$column.label}{if $column.required}<span class="text-danger">*</span>{/if}</th>{/volist}
+                                    <th class="text-center record-form-row-action">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {foreach $values[$field.key] as $rowIndex=>$row}
+                                <tr data-repeatable-row>
+                                    {volist name="field.columns" id="column"}
+                                    <td>
+                                        {if $column.type == 'textarea'}
+                                        <textarea name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" rows="2">{$row[$column.key]|default=''}</textarea>
+                                        {elseif $column.type == 'date'}
+                                        <input type="date" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}">
+                                        {elseif $column.type == 'number'}
+                                        <input type="number" step="0.01" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}">
+                                        {elseif $column.type == 'select'}
+                                        <select name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
+                                            <option value=""></option>
+                                            {volist name="column.options" id="option"}
+                                            <option value="{$option}" {if isset($row[$column.key]) && $row[$column.key] == $option}selected{/if}>{$option}</option>
+                                            {/volist}
+                                        </select>
+                                        {elseif $column.type == 'checkbox'}
+                                        <input type="checkbox" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" value="1" class="form-check-input" {if isset($row[$column.key]) && ($row[$column.key] == '1' || $row[$column.key] == 1)}checked{/if}>
+                                        {elseif $column.type == 'person'}
+                                        <select name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
+                                            <option value=""></option>
+                                            {volist name="employeeOptions" id="employee"}
+                                            <option value="{$employee.name}" {if isset($row[$column.key]) && $row[$column.key] == $employee.name}selected{/if}>{$employee.name}{if $employee.department_name}（{$employee.department_name}）{/if}</option>
+                                            {/volist}
+                                        </select>
+                                        {elseif $column.type == 'department'}
+                                        <select name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
+                                            <option value=""></option>
+                                            {volist name="departmentOptions" id="department"}
+                                            <option value="{$department.name}" {if isset($row[$column.key]) && $row[$column.key] == $department.name}selected{/if}>{$department.name}</option>
+                                            {/volist}
+                                        </select>
+                                        {else}
+                                        <input type="text" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}">
+                                        {/if}
+                                    </td>
+                                    {/volist}
+                                    <td class="text-center record-form-row-action">
+                                        <button type="button" class="btn btn-outline-danger btn-sm" data-remove-repeatable-row>删除</button>
+                                    </td>
+                                </tr>
+                                {/foreach}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-add-repeatable-row>增加一行</button>
+                    <template data-repeatable-row-template>
+                        <tr data-repeatable-row>
+                            {volist name="field.columns" id="column"}
+                            <td>
+                                {if $column.type == 'textarea'}
+                                <textarea name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" rows="2"></textarea>
+                                {elseif $column.type == 'date'}
+                                <input type="date" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="">
+                                {elseif $column.type == 'number'}
+                                <input type="number" step="0.01" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="">
+                                {elseif $column.type == 'select'}
+                                <select name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
+                                    <option value=""></option>
+                                    {volist name="column.options" id="option"}<option value="{$option}">{$option}</option>{/volist}
+                                </select>
+                                {elseif $column.type == 'checkbox'}
+                                <input type="checkbox" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" value="1" class="form-check-input">
+                                {elseif $column.type == 'person'}
+                                <select name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
+                                    <option value=""></option>
+                                    {volist name="employeeOptions" id="employee"}<option value="{$employee.name}">{$employee.name}{if $employee.department_name}（{$employee.department_name}）{/if}</option>{/volist}
+                                </select>
+                                {elseif $column.type == 'department'}
+                                <select name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
+                                    <option value=""></option>
+                                    {volist name="departmentOptions" id="department"}<option value="{$department.name}">{$department.name}</option>{/volist}
+                                </select>
+                                {else}
+                                <input type="text" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="">
+                                {/if}
+                            </td>
+                            {/volist}
+                            <td class="text-center record-form-row-action">
+                                <button type="button" class="btn btn-outline-danger btn-sm" data-remove-repeatable-row>删除</button>
+                            </td>
+                        </tr>
+                    </template>
+                </div>
+                {else}
+                <input type="text" name="fields[{$field.key}]" class="form-control" value="{$values[$field.key]|default=$field.default}">
+                {/if}
+                {if isset($errors[$field.key])}<div class="text-danger small mt-1">{$errors[$field.key]}</div>{/if}
+            </div>
+            {/volist}
+            <div class="text-end">
+                <a href="/record_form_instance/view?id={$record.id}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">保存草稿</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script src="/static/js/record-form-editor.js"></script>

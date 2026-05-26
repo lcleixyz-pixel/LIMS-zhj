@@ -19,7 +19,9 @@ class ReviewAction extends BusinessBase
     {
         $this->assignUsers();
         $this->assignStatusLabels('review_action');
-        View::assign('managementReviews', ManagementReview::where('soft_delete', 0)->select());
+        $reviews = ManagementReview::where('soft_delete', 0)->select();
+        View::assign('managementReviews', $reviews);
+        View::assign('reviews', $reviews);
     }
 
     public function verify()

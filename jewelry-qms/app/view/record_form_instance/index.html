@@ -1,0 +1,71 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">记录填写记录</h5>
+        <a href="/record_form_template/index" class="btn btn-sm btn-primary">选择模板填写</a>
+    </div>
+    <div class="card-body">
+        <form method="get" action="/record_form_instance/index" class="row g-2 mb-3">
+            <div class="col-md-6">
+                <input type="text" name="keyword" value="{$filter.keyword|default=''}" class="form-control form-control-sm" placeholder="记录标题或编号">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-sm btn-outline-primary w-100" type="submit">筛选</button>
+            </div>
+            <div class="col-md-2">
+                <a href="/record_form_instance/index" class="btn btn-sm btn-outline-secondary w-100">重置</a>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>记录标题</th>
+                        <th>编号</th>
+                        <th>模板</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th width="300">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td><a href="/record_form_instance/view?id={$item.id}">{$item.record_title}</a></td>
+                        <td>{$item.doc_number}</td>
+                        <td>{if $item.template_name}{$item.template_name}{else}{$item.template.name|default=$item.template_id}{/if}</td>
+                        <td>
+                            {if $item.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
+                            {elseif $item.status == 'generated'}<span class="badge bg-info">已生成</span>
+                            {elseif $item.status == 'locked'}<span class="badge bg-secondary">已归档</span>
+                            {elseif $item.status == 'voided'}<span class="badge badge-status-obsolete">已作废</span>
+                            {else}<span class="badge bg-secondary">{$item.status}</span>{/if}
+                        </td>
+                        <td>{$item.created|default='-'}</td>
+                        <td>
+                            <a href="/record_form_instance/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
+                            <a href="/record_form_instance/edit?id={$item.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+                            <a href="/record_form_instance/print?id={$item.id}" target="_blank" class="btn btn-sm btn-outline-secondary">打印预览</a>
+                            {if $item.pdf_token}
+                            <form method="post" action="/record_form_instance/exportPdf?id={$item.id}" class="d-inline">
+                                <input type="hidden" name="pdf_token" value="{$item.pdf_token}">
+                                <button type="submit" class="btn btn-sm btn-outline-success">生成PDF</button>
+                            </form>
+                            {else}
+                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已归档或已作废记录不能重新生成 PDF">生成PDF</button>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}
+                    <tr><td colspan="6" class="text-center text-muted">暂无填写记录</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav>
+            <ul class="pagination pagination-sm justify-content-center">
+                {$pages|raw}
+            </ul>
+        </nav>
+    </div>
+</div>
