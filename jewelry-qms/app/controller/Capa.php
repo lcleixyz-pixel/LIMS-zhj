@@ -6,7 +6,9 @@ namespace app\controller;
 use app\model\Capa as CapaModel;
 use app\model\CapaSource;
 use app\model\User;
+use app\service\FieldAuditService;
 use app\service\WorkflowService;
+use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
 
@@ -77,6 +79,7 @@ class Capa extends BusinessBase
         View::assign('record', $record);
         View::assign('assignee', $record->assigned_to ? User::find($record->assigned_to) : null);
         View::assign('verifier', $record->verified_by ? User::find($record->verified_by) : null);
+        View::assign('fieldChangeLogs', FieldAuditService::logsFor('Capa', (string)$id));
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 
         return View::fetch($this->viewPrefix . '/view');
@@ -92,7 +95,10 @@ class Capa extends BusinessBase
         if ($this->request->isPost()) {
             $action = $this->request->post('action', 'advance');
             $data = $this->request->post();
-            if (WorkflowService::advanceCapaStatus($record, $action, $data)) {
+            $advanced = Db::transaction(function () use ($record, $action, $data) {
+                return WorkflowService::advanceCapaStatus($record, $action, $data);
+            });
+            if ($advanced) {
                 Session::flash('success', '状态已更新');
             } else {
                 Session::flash('error', '状态更新失败');

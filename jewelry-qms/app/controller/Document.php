@@ -12,10 +12,12 @@ use app\model\DocumentRevision;
 use app\model\DocTemplate;
 use app\model\User;
 use app\service\ApprovalService;
+use app\service\FieldAuditService;
 use app\service\FileService;
 use app\service\QmsDocumentStructureService;
 use think\exception\ValidateException;
 use think\exception\HttpException;
+use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
 
@@ -82,26 +84,28 @@ class Document extends BaseController
                 }
             }
 
-            $document->save($data);
+            Db::transaction(function () use ($document, $data, $id) {
+                $document->save($data);
 
-            $reviewedBy = null;
-            $approvedBy = null;
-            if (!empty($data['reviewed_by'])) {
-                $reviewedBy = $this->_employeeToUser($data['reviewed_by']);
-            }
-            if (!empty($data['approved_by'])) {
-                $approvedBy = $this->_employeeToUser($data['approved_by']);
-            }
+                $reviewedBy = null;
+                $approvedBy = null;
+                if (!empty($data['reviewed_by'])) {
+                    $reviewedBy = $this->_employeeToUser($data['reviewed_by']);
+                }
+                if (!empty($data['approved_by'])) {
+                    $approvedBy = $this->_employeeToUser($data['approved_by']);
+                }
 
-            ApprovalService::createWorkflow(
-                'document',
-                'Document',
-                $id,
-                (int) $data['level'],
-                Session::get('user.id'),
-                $reviewedBy,
-                $approvedBy
-            );
+                ApprovalService::createWorkflow(
+                    'document',
+                    'Document',
+                    $id,
+                    (int) $data['level'],
+                    Session::get('user.id'),
+                    $reviewedBy,
+                    $approvedBy
+                );
+            });
 
             Session::flash('success', '文件已创建');
 
@@ -150,7 +154,9 @@ class Document extends BaseController
                     $data['file_type'] = $upload['file_type'];
                 }
             }
-            $document->save($data);
+            Db::transaction(function () use ($document, $data) {
+                $document->save($data);
+            });
             Session::flash('success', '已保存');
 
             return redirect('/document/view?id=' . $id);
@@ -199,6 +205,7 @@ class Document extends BaseController
         View::assign('departmentName', $departmentName);
         View::assign('revisions', $revisions);
         View::assign('approvals', $approvals);
+        View::assign('fieldChangeLogs', FieldAuditService::logsFor('Document', (string)$id));
         View::assign('structureSummary', QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id));
 
         return View::fetch('document/view');
@@ -218,18 +225,6 @@ class Document extends BaseController
             $minorNum = ($rev - 1) % 10;
             $newVersion = $majorLetter . '/' . $minorNum;
 
-            DocumentRevision::create([
-                'id' => qms_uuid(),
-                'document_id' => $id,
-                'version' => $doc->version,
-                'revision' => $doc->revision,
-                'file_path' => $doc->file_path,
-                'file_name' => $doc->file_name,
-                'change_reason' => $this->request->post('change_reason', ''),
-                'created_by' => Session::get('user.id'),
-                'created' => date('Y-m-d H:i:s'),
-            ]);
-
             $update = [
                 'version' => $newVersion,
                 'revision' => $rev,
@@ -247,7 +242,20 @@ class Document extends BaseController
                 }
             }
 
-            $doc->save($update);
+            Db::transaction(function () use ($doc, $update, $id) {
+                DocumentRevision::create([
+                    'id' => qms_uuid(),
+                    'document_id' => $id,
+                    'version' => $doc->version,
+                    'revision' => $doc->revision,
+                    'file_path' => $doc->file_path,
+                    'file_name' => $doc->file_name,
+                    'change_reason' => $this->request->post('change_reason', ''),
+                    'created_by' => Session::get('user.id'),
+                    'created' => date('Y-m-d H:i:s'),
+                ]);
+                $doc->save($update);
+            });
             $message = '已生成修订版本 ' . $newVersion;
             try {
                 $structure = QmsDocumentStructureService::refreshControlledDocumentStructure(
@@ -274,8 +282,10 @@ class Document extends BaseController
         $id = $this->request->param('id');
         $doc = DocumentModel::find($id);
         if ($doc) {
-            $doc->status = 'reviewing';
-            $doc->save();
+            Db::transaction(function () use ($doc) {
+                $doc->status = 'reviewing';
+                $doc->save();
+            });
             if ($doc->reviewed_by) {
                 \app\service\NotificationService::notifyApprovalPending($doc->reviewed_by, $doc->title, $doc->id);
             }

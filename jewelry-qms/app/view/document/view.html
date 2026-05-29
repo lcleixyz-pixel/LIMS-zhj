@@ -154,6 +154,27 @@
     </div>
 </div>
 
+<div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0">变更历史</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>时间</th><th>字段</th><th>原值</th><th>新值</th><th>操作人</th></tr></thead>
+            <tbody>
+                {volist name="fieldChangeLogs" id="log"}
+                <tr>
+                    <td>{$log.changed_at|default='-'}</td>
+                    <td>{$log.field_name|default='-'}</td>
+                    <td>{$log.old_value|default='-'}</td>
+                    <td>{$log.new_value|default='-'}</td>
+                    <td>{$log.changed_by|default='-'}</td>
+                </tr>
+                {/volist}
+                {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <div class="card">
     <div class="card-header"><h6 class="mb-0">修订历史</h6></div>
     <div class="card-body table-responsive">

@@ -8,6 +8,7 @@ use app\model\Equipment as EquipmentModel;
 use app\model\EquipmentMaintenance;
 use app\model\EquipmentTransfer;
 use app\model\Site;
+use app\service\FieldAuditService;
 use think\facade\View;
 
 class Equipment extends BusinessBase
@@ -88,6 +89,7 @@ class Equipment extends BusinessBase
         View::assign('site', $record->site_id ? Site::find($record->site_id) : null);
         View::assign('siteMap', Site::where('soft_delete', 0)->column('name', 'id'));
         View::assign('daysUntil', $daysUntil);
+        View::assign('fieldChangeLogs', FieldAuditService::logsFor('Equipment', (string)$id));
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 
         return View::fetch($this->viewPrefix . '/view');

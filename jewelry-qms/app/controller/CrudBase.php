@@ -6,6 +6,7 @@ namespace app\controller;
 use app\BaseController;
 use think\exception\HttpException;
 use think\exception\ValidateException;
+use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
 
@@ -197,7 +198,9 @@ class CrudBase extends BaseController
 
                 return View::fetch($this->viewPrefix . '/edit');
             }
-            $record->save($data);
+            Db::transaction(function () use ($record, $data) {
+                $record->save($data);
+            });
             Session::flash('success', '已更新');
 
             return redirect($this->listRedirectUrl());

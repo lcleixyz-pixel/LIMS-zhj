@@ -61,12 +61,16 @@ class WorkflowService
 
     public static function linkCapaToSource(string $sourceType, string $sourceRecordId, string $capaId): void
     {
-        match ($sourceType) {
-            'audit' => AuditFinding::where('id', $sourceRecordId)->update(['capa_id' => $capaId]),
-            'complaint' => CustomerComplaint::where('id', $sourceRecordId)->update(['capa_id' => $capaId]),
-            'nc' => Nonconformity::where('id', $sourceRecordId)->update(['capa_id' => $capaId]),
+        $source = match ($sourceType) {
+            'audit' => AuditFinding::find($sourceRecordId),
+            'complaint' => CustomerComplaint::find($sourceRecordId),
+            'nc' => Nonconformity::find($sourceRecordId),
             default => null,
         };
+
+        if ($source && $source->hasColumn('capa_id')) {
+            $source->save(['capa_id' => $capaId]);
+        }
     }
 
     public static function resolveCapaSourceId(string $sourceType): ?string
