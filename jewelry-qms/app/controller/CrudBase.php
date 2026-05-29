@@ -139,4 +139,43 @@ class CrudBase extends BaseController
 
         return redirect($this->listRedirectUrl());
     }
+
+    public function exportCsv(): void
+    {
+        $class = $this->modelClass;
+        $prototype = $this->getModel();
+        $fields = array_keys($prototype->db()->getFields());
+        $fields = array_values(array_filter($fields, static function (string $field): bool {
+            return !in_array($field, ['password', 'soft_delete'], true);
+        }));
+        $orderField = $prototype->hasColumn('created') ? 'created' : 'id';
+
+        if ($prototype->hasColumn('soft_delete')) {
+            $query = $class::where('soft_delete', 0);
+        } else {
+            $query = $class::whereRaw('1=1');
+        }
+
+        $rows = $query->order($orderField, 'desc')->select();
+        $filename = qms_controller_url($this->request->controller()) . '_' . date('Ymd_His') . '.csv';
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        $output = fopen('php://output', 'w');
+        fwrite($output, "\xEF\xBB\xBF");
+        fputcsv($output, $fields, ',', '"', '');
+        foreach ($rows as $row) {
+            $line = [];
+            foreach ($fields as $field) {
+                $value = $row->{$field} ?? '';
+                if (is_array($value) || is_object($value)) {
+                    $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+                }
+                $line[] = (string)$value;
+            }
+            fputcsv($output, $line, ',', '"', '');
+        }
+        fclose($output);
+        exit;
+    }
 }

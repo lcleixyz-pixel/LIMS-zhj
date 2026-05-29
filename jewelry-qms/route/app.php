@@ -138,6 +138,7 @@ Route::group(function () {
         Route::rule("$path/edit", "$ctrl/edit");
         Route::rule("$path/view", "$ctrl/view");
         Route::rule("$path/delete", "$ctrl/delete");
+        Route::get("$path/exportCsv", "$ctrl/exportCsv");
     }
 })->middleware([
     \app\middleware\Auth::class,
