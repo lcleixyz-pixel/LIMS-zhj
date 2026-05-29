@@ -124,7 +124,7 @@ class RecordFormTemplate extends BaseController
             $id = qms_uuid();
             $errors = $this->validateTemplateInput($data);
             if ($errors !== []) {
-                Session::flash('warning', implode('；', $errors));
+                $this->flashValidationErrors($errors);
                 View::assign('form', $data);
 
                 return View::fetch('record_form_template/add');
@@ -133,7 +133,7 @@ class RecordFormTemplate extends BaseController
             try {
                 $schema = RecordFormSchemaService::decode((string)($data['field_schema'] ?? '[]'));
             } catch (InvalidArgumentException $exception) {
-                Session::flash('warning', $exception->getMessage());
+                $this->flashValidationErrors([$exception->getMessage()]);
                 View::assign('form', $data);
 
                 return View::fetch('record_form_template/add');
@@ -190,7 +190,7 @@ class RecordFormTemplate extends BaseController
             $data = $this->request->post();
             $errors = $this->validateTemplateInput($data);
             if ($errors !== []) {
-                Session::flash('warning', implode('；', $errors));
+                $this->flashValidationErrors($errors);
                 $record->setAttrs($data);
                 View::assign('record', $record);
 
@@ -200,7 +200,7 @@ class RecordFormTemplate extends BaseController
             try {
                 $schema = RecordFormSchemaService::decode((string)($data['field_schema'] ?? '[]'));
             } catch (InvalidArgumentException $exception) {
-                Session::flash('warning', $exception->getMessage());
+                $this->flashValidationErrors([$exception->getMessage()]);
                 $record->setAttrs($data);
                 View::assign('record', $record);
 
@@ -525,6 +525,11 @@ class RecordFormTemplate extends BaseController
         }
 
         return $errors;
+    }
+
+    private function flashValidationErrors(array $errors): void
+    {
+        Session::flash('validation_errors', $errors);
     }
 
     private function printTemplateExists(string $printTemplateKey): bool

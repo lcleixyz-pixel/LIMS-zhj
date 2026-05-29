@@ -8,36 +8,25 @@
             <table class="table table-striped table-hover table-sm">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>名称</th>
-                        <th>状态</th>
-                        <th>创建时间</th>
+                        <th>设备ID</th>
+                        <th>校准日期</th>
+                        <th>下次到期</th>
+                        <th>结果</th>
                         <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     {volist name="items" id="item"}
                     <tr>
-                        <td>{$item.id}</td>
-                        <td>{$item.name|default=$item.title|default=''}</td>
+                        <td>{$item.equipment_id}</td>
+                        <td>{$item.calibration_date|default='-'}</td>
+                        <td>{$item.next_due_date|default='-'}</td>
                         <td>
-                            {if isset($item.status)}
-                            {if $item.status == 'active' || $item.status == 'effective'}
-                            <span class="badge bg-success">正常</span>
-                            {elseif $item.status == 'draft'}
-                            <span class="badge bg-secondary">草稿</span>
-                            {elseif $item.status == 'review'}
-                            <span class="badge bg-warning text-dark">审核中</span>
-                            {elseif $item.status == 'closed' || $item.status == 'completed'}
-                            <span class="badge bg-info">已关闭</span>
-                            {elseif $item.status == 'overdue'}
-                            <span class="badge bg-danger">逾期</span>
-                            {else}
-                            <span class="badge bg-secondary">{$item.status}</span>
-                            {/if}
-                            {/if}
+                            {if $item.result == 'pass'}<span class="badge bg-success">合格</span>
+                            {elseif $item.result == 'fail'}<span class="badge bg-danger">不合格</span>
+                            {elseif $item.result == 'limited'}<span class="badge bg-warning text-dark">限用</span>
+                            {else}<span class="badge bg-secondary">{$item.result|default='-'}</span>{/if}
                         </td>
-                        <td>{$item.create_time|default='-'}</td>
                         <td>
                             <a href="/calibration/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
                             <a href="/calibration/edit?id={$item.id}" class="btn btn-sm btn-outline-primary">编辑</a>

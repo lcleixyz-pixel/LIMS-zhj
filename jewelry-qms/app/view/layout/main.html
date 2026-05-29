@@ -119,6 +119,18 @@
     {if session('error')}
     <div class="alert alert-danger alert-dismissible fade show">{:session('error')}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
     {/if}
+    {php}$validationErrors = session('validation_errors') ?: [];{/php}
+    {if !empty($validationErrors)}
+    <div class="alert alert-danger alert-dismissible fade show">
+        <div class="fw-semibold mb-1">请修正以下表单错误</div>
+        <ul class="mb-0 ps-3">
+            {foreach $validationErrors as $validationError}
+            <li>{$validationError}</li>
+            {/foreach}
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {/if}
     {__CONTENT__}
 </div>
 <div class="container mt-4">

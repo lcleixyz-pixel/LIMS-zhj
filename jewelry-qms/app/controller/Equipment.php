@@ -13,6 +13,21 @@ class Equipment extends BusinessBase
     protected string $modelClass = EquipmentModel::class;
     protected string $viewPrefix = 'equipment';
     protected string $pageTitle = '设备台账';
+    protected array $validateMessages = [
+        'equipment_number.require' => '设备编号不能为空',
+        'name.require' => '设备名称不能为空',
+    ];
+
+    protected function validationRules(array $data, ?string $recordId = null): array
+    {
+        return [
+            'equipment_number' => [
+                'require',
+                $this->uniqueModelFieldRule(EquipmentModel::class, 'equipment_number', $recordId, '设备编号已存在'),
+            ],
+            'name' => 'require',
+        ];
+    }
 
     protected function assignFormContext(): void
     {
