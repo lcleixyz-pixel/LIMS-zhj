@@ -16,6 +16,11 @@ LIMS-zhj/
 │   ├── DEPLOYMENT.md
 │   ├── VERSIONING.md
 │   ├── JEWELRY_QMS_GUIDE.md
+│   ├── QMS_PLANNING_CENTER_GUIDE.md
+│   ├── QMS_TRACEABILITY_DATA_MODEL.md
+│   ├── QMS_DOCUMENT_STRUCTURING_GUIDE.md
+│   ├── QMS_RECORD_FORMS_GUIDE.md
+│   ├── QMS_OPERATIONS_RUNBOOK.md
 │   └── REMOTE_UPLOAD.md
 ├── flinkiso/                          # 参考项目 A：FlinkISO On-Premise 2.2.42
 │   └── flinkiso-ver-2x-on-premise/
@@ -47,11 +52,17 @@ LIMS-zhj/
 
 | 文档 | 内容 |
 |------|------|
+| [docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) | 全部说明文档入口和推荐阅读顺序 |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 系统边界、技术架构、模块与审批实现 |
 | [docs/PROJECT_COMPARISON.md](docs/PROJECT_COMPARISON.md) | FlinkISO 与 FlinkISO Lite 功能对比 |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | ThinkPHP 8 主项目部署指南 |
 | [docs/VERSIONING.md](docs/VERSIONING.md) | Git 分支、标签、提交规范 |
 | [docs/JEWELRY_QMS_GUIDE.md](docs/JEWELRY_QMS_GUIDE.md) | 体系文件适配、模板、审批流与模块使用 |
+| [docs/QMS_PLANNING_CENTER_GUIDE.md](docs/QMS_PLANNING_CENTER_GUIDE.md) | 体系策划中心、无编号要素、条款库与追溯矩阵 |
+| [docs/QMS_TRACEABILITY_DATA_MODEL.md](docs/QMS_TRACEABILITY_DATA_MODEL.md) | 体系策划数据模型和追溯关系 |
+| [docs/QMS_DOCUMENT_STRUCTURING_GUIDE.md](docs/QMS_DOCUMENT_STRUCTURING_GUIDE.md) | 文件 Markdown 结构化、块级追溯与系统包输出 |
+| [docs/QMS_RECORD_FORMS_GUIDE.md](docs/QMS_RECORD_FORMS_GUIDE.md) | 记录表格 schema、程序记录要求和运行证据 |
+| [docs/QMS_OPERATIONS_RUNBOOK.md](docs/QMS_OPERATIONS_RUNBOOK.md) | 本机运行、初始化、验证和运行产物清理 |
 | [docs/REMOTE_UPLOAD.md](docs/REMOTE_UPLOAD.md) | 远程仓库与协作说明 |
 
 ## 版权与参考项目声明

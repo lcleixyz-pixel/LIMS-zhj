@@ -73,6 +73,9 @@ php think run
 | 模块 | 当前状态 |
 |------|----------|
 | 文件控制 | 四层级、模板、Word/PDF 等附件上传、提交审核、批准、发布、修订 |
+| 体系策划 | 外部依据、条款库、无编号要素、质量手册章节、文件结构化、追溯矩阵 |
+| 文件结构化 | 外部依据、质量手册、程序文件、记录表格 Markdown 化和块级追溯 |
+| 记录表格 | 模板 schema、来源预览、字段复核、运行填写和证据输出 |
 | 审批 | 按文件层级差异化审批，审批待办通知 |
 | 内审 | 计划批准、日程、检查表、发现，发现可触发 CAPA |
 | 管理评审 | 评审输入自动汇总，决议事项跟踪与验证 |
@@ -106,7 +109,34 @@ php think run
 
 主要实现位于 `ApprovalService`、`WorkflowService`、`NotificationService`。路由层统一绑定 `Auth`、`Rbac`、`AuditLog` 中间件。
 
-## 6. 安全与部署边界
+## 6. 体系策划与追溯架构
+
+体系策划中心建立从外部依据到运行证据的追溯骨架：
+
+```text
+外部依据 -> 条款库 -> 无编号体系要素 -> 手册章节 / 程序文件
+        -> 记录表格 / 运行模块 -> 岗位职责 / 运行证据
+```
+
+关键建模边界：
+
+- `qms_sources` 登记外部依据和查新信息。
+- `qms_clauses` 承载条款编号，`qms_clause_texts` 保存条款原文。
+- `qms_elements` 只保存无编号要素，用户界面显示中文名称，不显示系统 key。
+- `qms_element_clause_links` 映射要素与条款，并通过 `is_primary` 标记主 27025 条款。
+- `qms_manual_sections` 独立承载质量手册章节编号和标题。
+- `qms_document_assets`、`qms_structured_documents`、`qms_document_blocks` 和 `qms_document_block_links` 承载文件 Markdown 结构化和块级追溯。
+- `record_form_templates` 和 `record_form_instances` 分别承载记录表格 schema 和运行证据。
+- `qms_agent_suggestions` 只保存建议和缺口，不自动修改正式体系数据。
+
+详细说明见：
+
+- [QMS_PLANNING_CENTER_GUIDE.md](QMS_PLANNING_CENTER_GUIDE.md)
+- [QMS_TRACEABILITY_DATA_MODEL.md](QMS_TRACEABILITY_DATA_MODEL.md)
+- [QMS_DOCUMENT_STRUCTURING_GUIDE.md](QMS_DOCUMENT_STRUCTURING_GUIDE.md)
+- [QMS_RECORD_FORMS_GUIDE.md](QMS_RECORD_FORMS_GUIDE.md)
+
+## 7. 安全与部署边界
 
 - 当前面向单实验室部署，默认 `company_id` 配置在 `config/qms.php`。
 - 用户密码使用 bcrypt 哈希，初始化账号为 `admin` / `password`，生产首次登录后必须修改。
@@ -114,7 +144,7 @@ php think run
 - 上传文件位于 `public/uploads/`，需配合 Web 服务器限制脚本执行。
 - `.env`、`.git`、源码目录、备份文件不得对外暴露。
 
-## 7. 参考项目在架构中的位置
+## 8. 参考项目在架构中的位置
 
 | 项目 | 位置 | 用途 |
 |------|------|------|
@@ -124,11 +154,12 @@ php think run
 
 参考项目不直接作为生产 QMS 运行，避免维护多套框架和数据库结构。
 
-## 8. 扩展路线图
+## 9. 扩展路线图
 
 | 阶段 | 内容 |
 |------|------|
 | P0 | 文件控制与九模块基础能力 |
 | P1（当前） | CAPA、内审、管评、通知、导入、仪表盘等业务深化 |
-| P2 | LIMS 主数据同步 API 或只读视图 |
-| P3 | ONLYOFFICE 在线编辑、PDF 受控打印、记录锁定 |
+| P2（当前扩展） | 体系策划中心、条款库、无编号要素、结构化文件、记录表格 schema 和追溯矩阵 |
+| P3 | LIMS 主数据同步 API 或只读视图 |
+| P4 | ONLYOFFICE 在线编辑、PDF 受控打印、记录锁定 |
