@@ -28,7 +28,17 @@ abstract class BusinessBase extends CrudBase
 
     protected function assignStatusLabels(string $module): void
     {
-        View::assign('statusLabels', Config::get('qms.statusLabels.' . $module, []));
+        $labels = Config::get('qms.statusLabels.' . $module, []);
+        $options = [];
+        foreach ($labels as $value => $label) {
+            $options[] = [
+                'value' => $value,
+                'label' => $label,
+            ];
+        }
+
+        View::assign('statusLabels', $labels);
+        View::assign('statusOptions', $options);
     }
 
     protected function assignCommonForm(): void

@@ -72,6 +72,8 @@ class QmsElementService
             ['code' => 'equipment', 'name' => '设备台账', 'controller_name' => 'Equipment', 'url' => '/equipment/index', 'element_key' => 'equipment'],
             ['code' => 'calibrations', 'name' => '校准记录', 'controller_name' => 'Calibration', 'url' => '/calibration/index', 'element_key' => 'metrological_traceability'],
             ['code' => 'equipment_maintenances', 'name' => '设备维护', 'controller_name' => 'EquipmentMaintenance', 'url' => '/equipment_maintenance/index', 'element_key' => 'equipment'],
+            ['code' => 'equipment_authorizations', 'name' => '设备授权使用人', 'controller_name' => 'EquipmentAuthorization', 'url' => '/equipment_authorization/index', 'element_key' => 'equipment'],
+            ['code' => 'reference_materials', 'name' => '标准物质台账', 'controller_name' => 'ReferenceMaterial', 'url' => '/reference_material/index', 'element_key' => 'metrological_traceability'],
             ['code' => 'audit_plans', 'name' => '内审计划', 'controller_name' => 'AuditPlan', 'url' => '/audit_plan/index', 'element_key' => 'internal_audit'],
             ['code' => 'audit_findings', 'name' => '审核发现', 'controller_name' => 'AuditFinding', 'url' => '/audit_finding/index', 'element_key' => 'internal_audit'],
             ['code' => 'management_reviews', 'name' => '管理评审', 'controller_name' => 'ManagementReview', 'url' => '/management_review/index', 'element_key' => 'management_review'],

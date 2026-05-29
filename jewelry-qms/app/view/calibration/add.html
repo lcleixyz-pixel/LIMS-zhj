@@ -1,55 +1,25 @@
 <div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">新增校准记录</h5>
-    </div>
+    <div class="card-header"><h5 class="mb-0">新增校准记录</h5></div>
     <div class="card-body">
-        <form method="post" action="/calibration/add" enctype="multipart/form-data">
+        <form method="post" action="/calibration/add">
             <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="name" class="form-label required">名称</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="code" class="form-label">编号</label>
-                        <input type="text" class="form-control" id="code" name="code" placeholder="系统自动生成">
-                    </div>
-                    <div class="mb-3">
-                        <label for="status" class="form-label">状态</label>
-                        <select name="status" id="status" class="form-select">
-                            <option value="draft">草稿</option>
-                            <option value="active">启用</option>
-                        </select>
-                    </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">设备</label>
+                    <select name="equipment_id" class="form-select" required>
+                        <option value="">请选择</option>
+                        {volist name="equipments" id="eq"}<option value="{$eq.id}" {if $currentEquipmentId == $eq.id}selected{/if}>{$eq.equipment_number} {$eq.name}</option>{/volist}
+                    </select>
                 </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="department_id" class="form-label">所属部门</label>
-                        <select name="department_id" id="department_id" class="form-select">
-                            <option value="">请选择</option>
-                            {volist name="departments" id="dept"}
-                            <option value={$dept.id}>{$dept.name}</option>
-                            {/volist}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="responsible_person" class="form-label">负责人</label>
-                        <input type="text" class="form-control" id="responsible_person" name="responsible_person">
-                    </div>
-                    <div class="mb-3">
-                        <label for="remark" class="form-label">备注</label>
-                        <input type="text" class="form-control" id="remark" name="remark">
-                    </div>
-                </div>
+                <div class="col-md-6 mb-3"><label class="form-label required">校准日期</label><input type="date" name="calibration_date" class="form-control" value="{$today}" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">下次到期</label><input type="date" name="next_due_date" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">校准机构</label><input name="calibration_org" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">证书编号</label><input name="certificate_number" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">结果</label><select name="result" class="form-select">{volist name="resultOptions" id="option"}<option value="{$option.value}">{$option.label}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label class="form-label">测量不确定度</label><input name="uncertainty" class="form-control"></div>
+                <div class="col-12 mb-3"><label class="form-label">备注</label><textarea name="remarks" class="form-control" rows="3"></textarea></div>
             </div>
-            <div class="mb-3">
-                <label for="description" class="form-label">描述</label>
-                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-            </div>
-            <div class="text-end">
-                <a href="/calibration/index" class="btn btn-secondary">取消</a>
-                <button type="submit" class="btn btn-primary">保存</button>
-            </div>
+            <a href="/calibration/index" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">保存</button>
         </form>
     </div>
 </div>

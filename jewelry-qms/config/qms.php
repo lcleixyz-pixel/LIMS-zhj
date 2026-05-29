@@ -33,7 +33,7 @@ return [
             'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningobjective',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
-            'equipment', 'equipment_maintenance', 'calibration',
+            'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',
             'training', 'training_record', 'competency_record',
             'supplier', 'supplier_evaluation', 'import', 'notification',
             'department', 'employee', 'user',
@@ -44,7 +44,7 @@ return [
         ],
         'department_head' => [
             'dashboard', 'document', 'record_form_template', 'record_form_instance', 'capa', 'nonconformity', 'complaint',
-            'equipment', 'equipment_maintenance', 'calibration',
+            'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',
             'training', 'training_record', 'competency_record', 'notification',
         ],
         'staff' => [
@@ -107,6 +107,17 @@ return [
             'calibrating' => '校准中',
             'maintenance' => '限用',
             'decommissioned' => '报废',
+        ],
+        'reference_material' => [
+            'active' => '在用',
+            'expired' => '已过期',
+            'depleted' => '已用尽',
+            'discarded' => '已报废',
+        ],
+        'equipment_authorization' => [
+            'active' => '有效',
+            'revoked' => '已撤销',
+            'expired' => '已过期',
         ],
         'supplier' => [
             'pending' => '待评价',
