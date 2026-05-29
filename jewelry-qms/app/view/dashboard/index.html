@@ -74,6 +74,32 @@
         </div>
     </div>
 </div>
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header"><h6 class="mb-0">CAPA 趋势</h6></div>
+            <div class="card-body"><div id="capaTrendChart" class="qms-dashboard-chart"></div></div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header"><h6 class="mb-0">校准结果分布</h6></div>
+            <div class="card-body"><div id="calibrationResultChart" class="qms-dashboard-chart"></div></div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header"><h6 class="mb-0">培训覆盖率</h6></div>
+            <div class="card-body"><div id="trainingCoverageChart" class="qms-dashboard-chart"></div></div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header"><h6 class="mb-0">内审发现分布</h6></div>
+            <div class="card-body"><div id="auditFindingChart" class="qms-dashboard-chart"></div></div>
+        </div>
+    </div>
+</div>
 
 <div class="row">
     <div class="col-md-5">
@@ -124,3 +150,49 @@
         </div>
     </div>
 </div>
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0">数据导出</h6></div>
+    <div class="card-body d-flex flex-wrap gap-2">
+        <a href="/equipment/exportCsv" class="btn btn-sm btn-outline-primary">设备台账导出CSV</a>
+        <a href="/capa/exportCsv" class="btn btn-sm btn-outline-primary">CAPA导出CSV</a>
+        <a href="/training/exportCsv" class="btn btn-sm btn-outline-primary">培训活动导出CSV</a>
+        <a href="/audit_finding/exportCsv" class="btn btn-sm btn-outline-primary">审核发现导出CSV</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script>
+const qmsChartData = {$chartDataJson|raw};
+function qmsChart(id, options) {
+    const node = document.getElementById(id);
+    if (!node || typeof echarts === 'undefined') return;
+    const chart = echarts.init(node);
+    chart.setOption(options);
+    window.addEventListener('resize', function () { chart.resize(); });
+}
+qmsChart('capaTrendChart', {
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['新建', '关闭'] },
+    xAxis: { type: 'category', data: qmsChartData.capaTrend.labels },
+    yAxis: { type: 'value', minInterval: 1 },
+    series: [
+        { name: '新建', type: 'line', smooth: true, data: qmsChartData.capaTrend.opened },
+        { name: '关闭', type: 'line', smooth: true, data: qmsChartData.capaTrend.closed }
+    ]
+});
+qmsChart('calibrationResultChart', {
+    tooltip: { trigger: 'item' },
+    series: [{ type: 'pie', radius: ['45%', '70%'], data: qmsChartData.calibrationResults.labels.map(function (label, index) { return { name: label, value: qmsChartData.calibrationResults.values[index] }; }) }]
+});
+qmsChart('trainingCoverageChart', {
+    title: { text: qmsChartData.trainingCoverage.rate + '%', left: 'center', top: '42%', textStyle: { fontSize: 22 } },
+    tooltip: { trigger: 'item' },
+    series: [{ type: 'pie', radius: ['55%', '75%'], data: qmsChartData.trainingCoverage.labels.map(function (label, index) { return { name: label, value: qmsChartData.trainingCoverage.values[index] }; }) }]
+});
+qmsChart('auditFindingChart', {
+    tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: qmsChartData.auditFindings.labels },
+    yAxis: { type: 'value', minInterval: 1 },
+    series: [{ type: 'bar', data: qmsChartData.auditFindings.values }]
+});
+</script>

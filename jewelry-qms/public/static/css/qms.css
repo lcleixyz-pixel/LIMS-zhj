@@ -164,6 +164,11 @@ body {
     padding: 10px 12px;
 }
 
+.qms-dashboard-chart {
+    height: 260px;
+    width: 100%;
+}
+
 .qms-manual-entry {
     border-top: 1px solid #e5e5ea;
     padding-top: 12px;
