@@ -15,6 +15,16 @@ class Capa extends BusinessBase
     protected string $modelClass = CapaModel::class;
     protected string $viewPrefix = 'capa';
     protected string $pageTitle = 'CAPA';
+    protected array $validateRules = [
+        'capa_number' => 'require',
+        'description' => 'require',
+        'due_date' => 'date',
+    ];
+    protected array $validateMessages = [
+        'capa_number.require' => 'CAPA编号不能为空',
+        'description.require' => '问题描述不能为空',
+        'due_date.date' => '计划完成日期格式不正确',
+    ];
 
     protected function assignFormContext(): void
     {
@@ -39,6 +49,10 @@ class Capa extends BusinessBase
             }
             if (empty($data['source_id']) && !empty($data['source_type'])) {
                 $data['source_id'] = WorkflowService::resolveCapaSourceId($data['source_type']);
+            }
+            $errors = $this->validateFormData($data);
+            if ($errors !== []) {
+                return $this->renderFormValidationFailure($data, $this->viewPrefix . '/add');
             }
             $model = $this->getModel();
             $model->save($data);

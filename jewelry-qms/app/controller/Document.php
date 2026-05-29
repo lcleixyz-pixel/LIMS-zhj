@@ -14,6 +14,7 @@ use app\model\User;
 use app\service\ApprovalService;
 use app\service\FileService;
 use app\service\QmsDocumentStructureService;
+use think\exception\ValidateException;
 use think\exception\HttpException;
 use think\facade\Session;
 use think\facade\View;
@@ -56,6 +57,15 @@ class Document extends BaseController
     {
         if ($this->request->isPost()) {
             $data = $this->request->post();
+            $errors = $this->validateDocumentInput($data);
+            if ($errors !== []) {
+                $this->flashValidationErrors($errors);
+                View::assign('form', $data);
+                $this->_setFormLists();
+
+                return View::fetch('document/add');
+            }
+
             $id = qms_uuid();
 
             $document = new DocumentModel();
@@ -99,6 +109,9 @@ class Document extends BaseController
         }
 
         $this->_setFormLists();
+        View::assign('form', [
+            'version' => '1.0',
+        ]);
 
         return View::fetch('document/add');
     }
@@ -118,6 +131,17 @@ class Document extends BaseController
 
         if ($this->request->isPost()) {
             $data = $this->request->post();
+            $errors = $this->validateDocumentInput($data, (string)$id);
+            if ($errors !== []) {
+                $this->flashValidationErrors($errors);
+                $document->setAttrs($data);
+                View::assign('doc', $document);
+                View::assign('record', $document);
+                $this->_setFormLists();
+
+                return View::fetch('document/edit');
+            }
+
             if (!empty($_FILES['document_file']['name'])) {
                 $upload = FileService::upload($_FILES['document_file'], 'documents', $id);
                 if ($upload) {
@@ -297,5 +321,50 @@ class Document extends BaseController
         $user = User::where('employee_id', $employeeId)->find();
 
         return $user ? $user->id : null;
+    }
+
+    private function validateDocumentInput(array $data, ?string $recordId = null): array
+    {
+        try {
+            $this->validate($data, [
+                'doc_number' => [
+                    'require',
+                    $this->uniqueDocumentNumberRule($recordId),
+                ],
+                'title' => 'require',
+                'level' => 'require',
+            ], [
+                'doc_number.require' => '文件编号不能为空',
+                'title.require' => '文件标题不能为空',
+                'level.require' => '请选择文件层级',
+            ], true);
+        } catch (ValidateException $exception) {
+            $error = $exception->getError();
+            return is_array($error) ? array_values($error) : [(string)$error];
+        }
+
+        return [];
+    }
+
+    private function uniqueDocumentNumberRule(?string $recordId): \Closure
+    {
+        return function ($value) use ($recordId) {
+            $value = trim((string)$value);
+            if ($value === '') {
+                return true;
+            }
+
+            $query = DocumentModel::where('doc_number', $value)->where('soft_delete', 0);
+            if ($recordId !== null && $recordId !== '') {
+                $query->where('id', '<>', $recordId);
+            }
+
+            return $query->count() === 0 ? true : '文件编号已存在';
+        };
+    }
+
+    private function flashValidationErrors(array $errors): void
+    {
+        Session::flash('validation_errors', $errors);
     }
 }

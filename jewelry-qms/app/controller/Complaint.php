@@ -14,6 +14,21 @@ class Complaint extends BusinessBase
     protected string $modelClass = CustomerComplaint::class;
     protected string $viewPrefix = 'complaint';
     protected string $pageTitle = '客户投诉';
+    protected array $validateRules = [
+        'complaint_number' => 'require',
+        'customer_name' => 'require',
+        'description' => 'require',
+        'received_date' => 'require|date',
+        'due_date' => 'date',
+    ];
+    protected array $validateMessages = [
+        'complaint_number.require' => '投诉编号不能为空',
+        'customer_name.require' => '客户名称不能为空',
+        'description.require' => '投诉内容不能为空',
+        'received_date.require' => '受理日期不能为空',
+        'received_date.date' => '受理日期格式不正确',
+        'due_date.date' => '处理期限格式不正确',
+    ];
 
     protected function assignFormContext(): void
     {
@@ -30,6 +45,10 @@ class Complaint extends BusinessBase
             }
             if (empty($data['received_date'])) {
                 $data['received_date'] = date('Y-m-d');
+            }
+            $errors = $this->validateFormData($data);
+            if ($errors !== []) {
+                return $this->renderFormValidationFailure($data, $this->viewPrefix . '/add');
             }
             $model = $this->getModel();
             $model->save($data);

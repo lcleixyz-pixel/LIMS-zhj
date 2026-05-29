@@ -5,6 +5,7 @@ namespace app\controller;
 
 use app\BaseController;
 use think\exception\HttpException;
+use think\exception\ValidateException;
 use think\facade\Session;
 use think\facade\View;
 
@@ -13,6 +14,8 @@ class CrudBase extends BaseController
     protected string $modelClass = '';
     protected string $viewPrefix = '';
     protected string $pageTitle = '';
+    protected array $validateRules = [];
+    protected array $validateMessages = [];
 
     /** 表单页（add/edit GET）追加模板变量 */
     protected function assignFormContext(): void
@@ -43,6 +46,82 @@ class CrudBase extends BaseController
         return '/' . $path . '/index';
     }
 
+    protected function validationRules(array $data, ?string $recordId = null): array
+    {
+        return $this->validateRules;
+    }
+
+    protected function validationMessages(array $data, ?string $recordId = null): array
+    {
+        return $this->validateMessages;
+    }
+
+    protected function validateFormData(array $data, ?string $recordId = null): array
+    {
+        $rules = $this->validationRules($data, $recordId);
+        if ($rules === []) {
+            return [];
+        }
+
+        try {
+            $this->validate($data, $rules, $this->validationMessages($data, $recordId), true);
+        } catch (ValidateException $exception) {
+            $error = $exception->getError();
+            if (is_array($error)) {
+                return array_values($error);
+            }
+
+            return [(string)$error];
+        }
+
+        return [];
+    }
+
+    protected function uniqueModelFieldRule(string $modelClass, string $field, ?string $recordId, string $message): \Closure
+    {
+        return function ($value) use ($modelClass, $field, $recordId, $message) {
+            $value = trim((string)$value);
+            if ($value === '') {
+                return true;
+            }
+
+            $query = $modelClass::where($field, $value);
+            $prototype = new $modelClass();
+            if (method_exists($prototype, 'hasColumn') && $prototype->hasColumn('soft_delete')) {
+                $query->where('soft_delete', 0);
+            }
+            if ($recordId !== null && $recordId !== '') {
+                $query->where('id', '<>', $recordId);
+            }
+
+            return $query->count() === 0 ? true : $message;
+        };
+    }
+
+    protected function renderFormValidationFailure(array $data, string $template, ?object $record = null): string
+    {
+        $this->flashValidationErrors($this->validateFormData($data, $record ? (string)$record->id : null));
+        View::assign('form', $data);
+        if ($record !== null) {
+            if (method_exists($record, 'setAttrs')) {
+                $record->setAttrs($data);
+            }
+            View::assign('record', $record);
+        } else {
+            View::assign('record', (object)$data);
+        }
+        View::assign('pageTitle', str_contains($template, '/edit') ? $this->pageTitle . ' - 编辑' : $this->pageTitle . ' - 新增');
+        $this->assignDefaultFormContext();
+        $this->assignFormContext();
+
+        return View::fetch($template);
+    }
+
+    protected function flashValidationErrors(array $errors): void
+    {
+        Session::flash('validation_errors', $errors);
+    }
+
     public function index()
     {
         $class = $this->modelClass;
@@ -68,6 +147,17 @@ class CrudBase extends BaseController
     {
         if ($this->request->isPost()) {
             $data = $this->request->post();
+            $errors = $this->validateFormData($data, null);
+            if ($errors !== []) {
+                $this->flashValidationErrors($errors);
+                View::assign('form', $data);
+                View::assign('record', (object)$data);
+                View::assign('pageTitle', $this->pageTitle . ' - 新增');
+                $this->assignDefaultFormContext();
+                $this->assignFormContext();
+
+                return View::fetch($this->viewPrefix . '/add');
+            }
             $model = $this->getModel();
             $model->save($data);
             Session::flash('success', '保存成功');
@@ -75,6 +165,7 @@ class CrudBase extends BaseController
             return redirect($this->listRedirectUrl());
         }
         View::assign('pageTitle', $this->pageTitle . ' - 新增');
+        View::assign('form', []);
         $this->assignDefaultFormContext();
         $this->assignFormContext();
 
@@ -92,6 +183,20 @@ class CrudBase extends BaseController
 
         if ($this->request->isPost()) {
             $data = $this->request->post();
+            $errors = $this->validateFormData($data, (string)$id);
+            if ($errors !== []) {
+                $this->flashValidationErrors($errors);
+                if (method_exists($record, 'setAttrs')) {
+                    $record->setAttrs($data);
+                }
+                View::assign('record', $record);
+                View::assign('form', $data);
+                View::assign('pageTitle', $this->pageTitle . ' - 编辑');
+                $this->assignDefaultFormContext();
+                $this->assignFormContext();
+
+                return View::fetch($this->viewPrefix . '/edit');
+            }
             $record->save($data);
             Session::flash('success', '已更新');
 

@@ -15,6 +15,16 @@ class AuditFinding extends BusinessBase
     protected string $modelClass = AuditFindingModel::class;
     protected string $viewPrefix = 'audit_finding';
     protected string $pageTitle = '审核发现';
+    protected array $validateRules = [
+        'audit_schedule_id' => 'require',
+        'description' => 'require',
+        'due_date' => 'date',
+    ];
+    protected array $validateMessages = [
+        'audit_schedule_id.require' => '请选择审核日程',
+        'description.require' => '发现描述不能为空',
+        'due_date.date' => '截止日期格式不正确',
+    ];
 
     protected function assignFormContext(): void
     {
@@ -30,6 +40,10 @@ class AuditFinding extends BusinessBase
             $data = $this->request->post();
             if (empty($data['finding_number'])) {
                 $data['finding_number'] = qms_next_number('AF', AuditFindingModel::class, 'finding_number');
+            }
+            $errors = $this->validateFormData($data);
+            if ($errors !== []) {
+                return $this->renderFormValidationFailure($data, $this->viewPrefix . '/add');
             }
             $model = $this->getModel();
             $model->save($data);
