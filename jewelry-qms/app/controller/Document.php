@@ -8,10 +8,13 @@ use app\model\Approval;
 use app\model\Department;
 use app\model\DocCategory;
 use app\model\Document as DocumentModel;
+use app\model\DocumentDistribution;
 use app\model\DocumentRevision;
+use app\model\DocumentReview;
 use app\model\DocTemplate;
 use app\model\User;
 use app\service\ApprovalService;
+use app\service\DocumentControlService;
 use app\service\FieldAuditService;
 use app\service\FileService;
 use app\service\QmsDocumentStructureService;
@@ -200,15 +203,96 @@ class Document extends BaseController
             ->order('approval_level', 'asc')
             ->select();
 
+        $distributions = DocumentDistribution::with('user')
+            ->where('document_id', $id)
+            ->where('soft_delete', 0)
+            ->order('distributed_at', 'desc')
+            ->select();
+
+        $reviews = DocumentReview::with('reviewer')
+            ->where('document_id', $id)
+            ->where('soft_delete', 0)
+            ->order('review_date', 'desc')
+            ->order('created', 'desc')
+            ->select();
+
         View::assign('doc', $doc);
         View::assign('categoryName', $categoryName);
         View::assign('departmentName', $departmentName);
         View::assign('revisions', $revisions);
         View::assign('approvals', $approvals);
         View::assign('fieldChangeLogs', FieldAuditService::logsFor('Document', (string)$id));
+        View::assign('distributions', $distributions);
+        View::assign('reviews', $reviews);
+        View::assign('distributionUsers', User::where('soft_delete', 0)->where('publish', 1)->order('name', 'asc')->select());
         View::assign('structureSummary', QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id));
 
         return View::fetch('document/view');
+    }
+
+    public function distribute()
+    {
+        $id = (string)$this->request->post('id', '');
+        $userIds = (array)$this->request->post('user_ids', []);
+        $remarks = (string)$this->request->post('remarks', '');
+        $count = DocumentControlService::distribute($id, $userIds, null, $remarks);
+        Session::flash('success', $count > 0 ? "已分发给 {$count} 位接收人" : '没有新增分发记录');
+
+        return redirect('/document/view?id=' . $id);
+    }
+
+    public function confirmReceipt()
+    {
+        $distributionId = (string)$this->request->post('distribution_id', '');
+        $documentId = (string)$this->request->post('document_id', '');
+        $ok = DocumentControlService::confirmReceipt($distributionId, Session::get('user.id'));
+        Session::flash($ok ? 'success' : 'error', $ok ? '已确认接收' : '无法确认该分发记录');
+
+        return redirect('/document/view?id=' . $documentId);
+    }
+
+    public function confirmRecall()
+    {
+        $distributionId = (string)$this->request->post('distribution_id', '');
+        $documentId = (string)$this->request->post('document_id', '');
+        $ok = DocumentControlService::confirmRecall($distributionId, Session::get('user.id'));
+        Session::flash($ok ? 'success' : 'error', $ok ? '已确认回收' : '无法确认该分发记录');
+
+        return redirect('/document/view?id=' . $documentId);
+    }
+
+    public function review()
+    {
+        $id = (string)$this->request->param('id', '');
+        $doc = DocumentModel::find($id);
+        if (!$doc) {
+            throw new HttpException(404, '文件不存在');
+        }
+
+        if ($this->request->isPost()) {
+            $result = (string)$this->request->post('result', '');
+            $note = trim((string)$this->request->post('review_note', ''));
+            $nextReviewDate = (string)$this->request->post('next_review_date', '');
+            $review = DocumentControlService::recordReview($id, $result, $note, $nextReviewDate !== '' ? $nextReviewDate : null, Session::get('user.id'));
+            Session::flash($review ? 'success' : 'error', $review ? '评审记录已保存' : '评审记录保存失败');
+
+            return redirect('/document/view?id=' . $id);
+        }
+
+        View::assign('doc', $doc);
+        View::assign('record', $doc);
+
+        return View::fetch('document/review');
+    }
+
+    public function obsolete()
+    {
+        $id = (string)$this->request->post('id', '');
+        $note = trim((string)$this->request->post('review_note', ''));
+        $review = DocumentControlService::recordReview($id, 'obsolete', $note !== '' ? $note : '文件作废并发起回收确认', null, Session::get('user.id'));
+        Session::flash($review ? 'success' : 'error', $review ? '文件已作废，回收确认通知已发出' : '文件作废失败');
+
+        return redirect('/document/view?id=' . $id);
     }
 
     public function revise()

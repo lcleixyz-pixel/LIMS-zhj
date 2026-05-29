@@ -18,6 +18,11 @@ Route::group(function () {
     Route::rule('document/edit', 'Document/edit');
     Route::rule('document/view', 'Document/view');
     Route::rule('document/revise', 'Document/revise');
+    Route::rule('document/review', 'Document/review');
+    Route::post('document/distribute', 'Document/distribute');
+    Route::post('document/confirmReceipt', 'Document/confirmReceipt');
+    Route::post('document/confirmRecall', 'Document/confirmRecall');
+    Route::post('document/obsolete', 'Document/obsolete');
     Route::rule('document/submitReview', 'Document/submitReview');
     Route::get('document/download', 'Document/download');
 
