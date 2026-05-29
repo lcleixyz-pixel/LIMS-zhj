@@ -131,6 +131,7 @@ jewelry-qms/public
 - 部署指南：`../docs/DEPLOYMENT.md`
 - 使用与体系文件适配：`../docs/JEWELRY_QMS_GUIDE.md`
 - 文档总览：`../docs/DOCUMENTATION_INDEX.md`
+- v2.2 开发路线图：`../docs/QMS_V2_2_ROADMAP.md`
 - 体系策划中心：`../docs/QMS_PLANNING_CENTER_GUIDE.md`
 - 追溯数据模型：`../docs/QMS_TRACEABILITY_DATA_MODEL.md`
 - 文件结构化：`../docs/QMS_DOCUMENT_STRUCTURING_GUIDE.md`

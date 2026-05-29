@@ -16,6 +16,7 @@ LIMS-zhj/
 │   ├── DEPLOYMENT.md
 │   ├── VERSIONING.md
 │   ├── JEWELRY_QMS_GUIDE.md
+│   ├── QMS_V2_2_ROADMAP.md
 │   ├── QMS_PLANNING_CENTER_GUIDE.md
 │   ├── QMS_TRACEABILITY_DATA_MODEL.md
 │   ├── QMS_DOCUMENT_STRUCTURING_GUIDE.md
@@ -58,6 +59,7 @@ LIMS-zhj/
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | ThinkPHP 8 主项目部署指南 |
 | [docs/VERSIONING.md](docs/VERSIONING.md) | Git 分支、标签、提交规范 |
 | [docs/JEWELRY_QMS_GUIDE.md](docs/JEWELRY_QMS_GUIDE.md) | 体系文件适配、模板、审批流与模块使用 |
+| [docs/QMS_V2_2_ROADMAP.md](docs/QMS_V2_2_ROADMAP.md) | Jewelry QMS v2.2 分阶段开发路线图 |
 | [docs/QMS_PLANNING_CENTER_GUIDE.md](docs/QMS_PLANNING_CENTER_GUIDE.md) | 体系策划中心、无编号要素、条款库与追溯矩阵 |
 | [docs/QMS_TRACEABILITY_DATA_MODEL.md](docs/QMS_TRACEABILITY_DATA_MODEL.md) | 体系策划数据模型和追溯关系 |
 | [docs/QMS_DOCUMENT_STRUCTURING_GUIDE.md](docs/QMS_DOCUMENT_STRUCTURING_GUIDE.md) | 文件 Markdown 结构化、块级追溯与系统包输出 |
