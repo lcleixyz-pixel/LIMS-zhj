@@ -17,3 +17,41 @@
         </table>
     </div>
 </div>
+
+<div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">整改证据附件</h5></div>
+    <div class="card-body">
+        <form method="post" action="/audit_finding/uploadEvidence" enctype="multipart/form-data" class="row g-3 align-items-end mb-3">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="col-md-5">
+                <label class="form-label required">证据文件</label>
+                <input type="file" name="evidence_file" class="form-control" required>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">说明</label>
+                <input type="text" name="comment" class="form-control" placeholder="整改照片、记录表、复核说明等">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">上传证据</button>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead><tr><th>文件名</th><th>说明</th><th>上传时间</th><th>操作</th></tr></thead>
+                <tbody>
+                    {volist name="evidenceFiles" id="file"}
+                    <tr>
+                        <td>{$file.file_details|default='-'}</td>
+                        <td>{$file.comment|default='-'}</td>
+                        <td>{$file.created|default='-'}</td>
+                        <td><a href="/audit_finding/downloadEvidence?id={$record.id}&file_id={$file.id}">下载</a></td>
+                    </tr>
+                    {/volist}
+                    {empty name="evidenceFiles"}
+                    <tr><td colspan="4" class="text-center text-muted">暂无整改证据附件</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
