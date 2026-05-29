@@ -1138,11 +1138,13 @@ CREATE TABLE `notifications` (
   `link_action` varchar(50) DEFAULT NULL,
   `link_id` varchar(36) DEFAULT NULL,
   `due_date` date DEFAULT NULL,
+  `notification_key` varchar(200) DEFAULT NULL,
   `publish` tinyint(1) DEFAULT 1,
   `soft_delete` tinyint(1) DEFAULT 0,
   `created` datetime DEFAULT NULL,
   `created_by` varchar(36) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `company_notification_key` (`company_id`,`notification_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `notification_users` (
@@ -1151,7 +1153,8 @@ CREATE TABLE `notification_users` (
   `user_id` varchar(36) NOT NULL,
   `status` tinyint(1) DEFAULT 0 COMMENT '0未读1已读',
   `read_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `notification_user` (`notification_id`,`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `histories` (
