@@ -6,6 +6,7 @@ namespace app\controller;
 use app\model\Calibration;
 use app\model\Equipment as EquipmentModel;
 use app\model\EquipmentMaintenance;
+use app\service\FieldAuditService;
 use think\facade\View;
 
 class Equipment extends BusinessBase
@@ -57,6 +58,7 @@ class Equipment extends BusinessBase
         View::assign('calibrations', $calibrations);
         View::assign('maintenances', $maintenances);
         View::assign('daysUntil', $daysUntil);
+        View::assign('fieldChangeLogs', FieldAuditService::logsFor('Equipment', (string)$id));
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 
         return View::fetch($this->viewPrefix . '/view');

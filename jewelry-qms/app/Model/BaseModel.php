@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace app\model;
 
+use app\service\FieldAuditService;
 use think\Model;
 use think\facade\Config;
 use think\facade\Session;
@@ -40,6 +41,9 @@ class BaseModel extends Model
     {
         if (Session::has('user.id') && $model->hasColumn('modified_by')) {
             $model->modified_by = Session::get('user.id');
+        }
+        if (FieldAuditService::shouldAuditModel($model)) {
+            FieldAuditService::capture($model);
         }
     }
 

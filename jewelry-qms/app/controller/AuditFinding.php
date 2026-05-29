@@ -6,7 +6,9 @@ namespace app\controller;
 use app\model\AuditFinding as AuditFindingModel;
 use app\model\AuditSchedule;
 use app\model\Capa;
+use app\service\FieldAuditService;
 use app\service\WorkflowService;
+use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
 
@@ -54,6 +56,7 @@ class AuditFinding extends BusinessBase
         View::assign('record', $record);
         View::assign('capa', $record->capa_id ? Capa::find($record->capa_id) : null);
         View::assign('schedule', AuditSchedule::find($record->audit_schedule_id));
+        View::assign('fieldChangeLogs', FieldAuditService::logsFor('AuditFinding', (string)$id));
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 
         return View::fetch($this->viewPrefix . '/view');
@@ -68,14 +71,16 @@ class AuditFinding extends BusinessBase
 
             return redirect('/audit_finding/view?id=' . $id);
         }
-        $capa = WorkflowService::createCapaFromSource(
-            'audit',
-            $record->id,
-            $record->description,
-            WorkflowService::resolveCapaSourceId('audit'),
-            $record->responsible_id,
-            $record->due_date
-        );
+        $capa = Db::transaction(function () use ($record) {
+            return WorkflowService::createCapaFromSource(
+                'audit',
+                $record->id,
+                $record->description,
+                WorkflowService::resolveCapaSourceId('audit'),
+                $record->responsible_id,
+                $record->due_date
+            );
+        });
         Session::flash('success', "已创建 CAPA {$capa->capa_number}");
 
         return redirect('/capa/view?id=' . $capa->id);
