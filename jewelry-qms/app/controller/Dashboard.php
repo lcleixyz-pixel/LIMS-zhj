@@ -14,6 +14,7 @@ use app\model\Equipment;
 use app\model\ManagementReview;
 use app\model\Nonconformity;
 use app\model\ReviewAction;
+use app\model\Site;
 use app\model\Training;
 use think\facade\Session;
 use think\facade\View;
@@ -61,12 +62,14 @@ class Dashboard extends BaseController
             ->select();
 
         foreach ($equipments as $eq) {
+            $site = $eq->site_id ? Site::find($eq->site_id) : null;
             $daysUntil = $eq->next_calibration_date
                 ? (int) ((strtotime($eq->next_calibration_date) - time()) / 86400)
                 : 999;
             $upcomingCalibrations[] = [
                 'equipment_name' => $eq->name,
                 'equipment_code' => $eq->equipment_number,
+                'site_name' => $site ? $site->name : '未指定',
                 'last_calibration' => $eq->last_calibration_date,
                 'next_calibration' => $eq->next_calibration_date,
                 'days_until' => $daysUntil,

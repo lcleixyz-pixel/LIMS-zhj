@@ -12,6 +12,11 @@ class AuditSchedule extends BaseModel
         return $this->belongsTo(AuditPlan::class);
     }
 
+    public function site()
+    {
+        return $this->belongsTo(Site::class);
+    }
+
     public function auditFindings()
     {
         return $this->hasMany(AuditFinding::class);

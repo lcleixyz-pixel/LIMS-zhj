@@ -1,0 +1,17 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">设备调拨详情</h5>
+        <a href="/equipment_transfer/index" class="btn btn-sm btn-outline-secondary">返回</a>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="140">设备</th><td>{$equipment.name|default=$record.equipment_id}</td></tr>
+            <tr><th>调出场所</th><td>{$fromSite.name|default='未指定'}</td></tr>
+            <tr><th>调入场所</th><td>{$toSite.name|default=$record.to_site_id}</td></tr>
+            <tr><th>调拨日期</th><td>{$record.transfer_date}</td></tr>
+            <tr><th>经办人</th><td>{$record.transferred_by|default='-'}</td></tr>
+            <tr><th>原因</th><td>{$record.reason|default='-'}</td></tr>
+            <tr><th>备注</th><td>{$record.remarks|default='-'}</td></tr>
+        </table>
+    </div>
+</div>

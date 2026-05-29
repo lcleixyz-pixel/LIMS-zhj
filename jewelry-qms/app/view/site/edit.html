@@ -1,0 +1,22 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑场所</h5></div>
+    <div class="card-body">
+        <form method="post" action="/site/edit">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="row">
+                <div class="col-md-4 mb-3"><label class="form-label required">场所代码</label><input name="code" value="{$record.code}" class="form-control" required></div>
+                <div class="col-md-8 mb-3"><label class="form-label required">场所名称</label><input name="name" value="{$record.name}" class="form-control" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">类型</label><select name="site_type" class="form-select">{foreach $siteTypes as $key=>$label}<option value="{$key}" {if $record.site_type == $key}selected{/if}>{$label}</option>{/foreach}</select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">状态</label><select name="status" class="form-select">{foreach $siteStatuses as $key=>$label}<option value="{$key}" {if $record.status == $key}selected{/if}>{$label}</option>{/foreach}</select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">排序</label><input type="number" name="sort_order" value="{$record.sort_order|default=0}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">联系人</label><input name="contact_person" value="{$record.contact_person|default=''}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">电话</label><input name="phone" value="{$record.phone|default=''}" class="form-control"></div>
+                <div class="col-12 mb-3"><label class="form-label">地址</label><textarea name="address" rows="3" class="form-control">{$record.address|default=''}</textarea></div>
+            </div>
+            <div class="text-end">
+                <a href="/site/index" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">更新</button>
+            </div>
+        </form>
+    </div>
+</div>
