@@ -130,4 +130,14 @@ return [
         'calibration_days' => 30,
         'capa_overdue_days' => 0,
     ],
+
+    'integration' => [
+        'api_token' => env('QMS_API_TOKEN', ''),
+    ],
+
+    'onlyoffice' => [
+        'enabled' => env('ONLYOFFICE_ENABLED', false),
+        'server_url' => env('ONLYOFFICE_SERVER_URL', ''),
+        'jwt_secret' => env('ONLYOFFICE_JWT_SECRET', ''),
+    ],
 ];

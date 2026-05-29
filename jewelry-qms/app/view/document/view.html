@@ -13,7 +13,9 @@
             {/if}
             {if $doc.file_path}
             <a href="/document/download?id={$doc.id}" class="btn btn-sm btn-outline-info">下载附件</a>
+            <a href="/document/onlyoffice?id={$doc.id}" class="btn btn-sm btn-outline-primary">ONLYOFFICE</a>
             {/if}
+            <a href="/document/controlledPrint?id={$doc.id}" class="btn btn-sm btn-outline-dark">受控打印</a>
             <a href="/document/index" class="btn btn-sm btn-outline-secondary">返回列表</a>
         </div>
     </div>
@@ -104,6 +106,40 @@
         {else}
         <div class="text-muted small">暂无结构化文件。可在“体系策划 / 文件结构化”中生成结构化骨架后再进行追溯复核。</div>
         {/notempty}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">受控打印记录</h6>
+        <a href="/document/controlledPrint?id={$doc.id}" class="btn btn-sm btn-outline-dark">生成打印页</a>
+    </div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>打印编号</th>
+                    <th>份数</th>
+                    <th>用途</th>
+                    <th>水印</th>
+                    <th>打印时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="printLogs" id="log"}
+                <tr>
+                    <td>{$log.print_number|default=''}</td>
+                    <td>{$log.copy_count|default='1'}</td>
+                    <td>{$log.purpose|default='-'}</td>
+                    <td>{$log.watermark_text|default=''}</td>
+                    <td>{$log.printed_at|default=''}</td>
+                </tr>
+                {/volist}
+                {empty name="printLogs"}
+                <tr><td colspan="5" class="text-center text-muted">暂无受控打印记录</td></tr>
+                {/empty}
+            </tbody>
+        </table>
     </div>
 </div>
 
