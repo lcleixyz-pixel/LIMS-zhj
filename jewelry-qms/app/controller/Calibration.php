@@ -5,6 +5,8 @@ namespace app\controller;
 
 use app\model\Calibration as CalibrationModel;
 use app\model\Equipment;
+use app\service\EquipmentEvidenceService;
+use app\service\FileService;
 use think\facade\Session;
 use think\facade\View;
 
@@ -14,10 +16,32 @@ class Calibration extends BusinessBase
     protected string $viewPrefix = 'calibration';
     protected string $pageTitle = '校准记录';
 
+    protected function resultLabels(): array
+    {
+        return ['pass' => '合格', 'fail' => '不合格', 'limited' => '限用'];
+    }
+
+    protected function assignResultOptions(): void
+    {
+        $labels = $this->resultLabels();
+        $options = [];
+        foreach ($labels as $value => $label) {
+            $options[] = [
+                'value' => $value,
+                'label' => $label,
+            ];
+        }
+
+        View::assign('resultLabels', $labels);
+        View::assign('resultOptions', $options);
+    }
+
     protected function assignFormContext(): void
     {
         View::assign('equipments', Equipment::where('soft_delete', 0)->select());
-        View::assign('resultOptions', ['pass' => '合格', 'fail' => '不合格', 'limited' => '限用']);
+        View::assign('currentEquipmentId', (string)$this->request->param('equipment_id', ''));
+        View::assign('today', date('Y-m-d'));
+        $this->assignResultOptions();
     }
 
     public function add()
@@ -48,5 +72,49 @@ class Calibration extends BusinessBase
         $this->assignFormContext();
 
         return View::fetch($this->viewPrefix . '/add');
+    }
+
+    public function view()
+    {
+        $id = (string)$this->request->param('id', '');
+        $record = CalibrationModel::find($id);
+        if (!$record) {
+            abort(404, '记录不存在');
+        }
+
+        View::assign('record', $record);
+        View::assign('equipment', $record->equipment_id ? Equipment::find($record->equipment_id) : null);
+        View::assign('certificateFiles', EquipmentEvidenceService::calibrationCertificateAttachments($id));
+        $this->assignResultOptions();
+        View::assign('pageTitle', $this->pageTitle . ' - 详情');
+
+        return View::fetch($this->viewPrefix . '/view');
+    }
+
+    public function uploadCertificate()
+    {
+        $id = (string)$this->request->post('id', '');
+        $record = CalibrationModel::find($id);
+        if (!$record) {
+            abort(404, '记录不存在');
+        }
+
+        $comment = trim((string)$this->request->post('comment', ''));
+        $attachment = EquipmentEvidenceService::uploadCalibrationCertificate($_FILES['certificate_file'] ?? [], $id, $comment);
+        Session::flash($attachment ? 'success' : 'error', $attachment ? '校准证书附件已上传' : '证书附件上传失败，请检查格式和大小');
+
+        return redirect('/calibration/view?id=' . $id);
+    }
+
+    public function downloadCertificate()
+    {
+        $id = (string)$this->request->param('id', '');
+        $fileId = (string)$this->request->param('file_id', '');
+        $attachment = EquipmentEvidenceService::findCalibrationCertificate($id, $fileId);
+        if (!$attachment) {
+            abort(404, '附件不存在');
+        }
+
+        FileService::download((string)$attachment->file_dir, (string)$attachment->file_details);
     }
 }
