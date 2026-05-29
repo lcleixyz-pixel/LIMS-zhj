@@ -15,6 +15,7 @@ use app\model\ManagementReview;
 use app\model\Nonconformity;
 use app\model\ReviewAction;
 use app\model\Training;
+use app\service\DashboardMetricService;
 use app\service\NotificationService;
 use think\facade\Session;
 use think\facade\View;
@@ -97,6 +98,7 @@ class Dashboard extends BaseController
         View::assign('stats', $stats);
         View::assign('upcomingCalibrations', $upcomingCalibrations);
         View::assign('todos', $todos);
+        View::assign('chartDataJson', json_encode(DashboardMetricService::chartData(), JSON_UNESCAPED_UNICODE));
 
         return View::fetch('dashboard/index');
     }
