@@ -11,6 +11,7 @@
             {if $doc.status == 'published'}
             <a href="/document/revise?id={$doc.id}" class="btn btn-sm btn-outline-warning">发起修订</a>
             {/if}
+            <a href="/document/review?id={$doc.id}" class="btn btn-sm btn-outline-primary">定期评审</a>
             {if $doc.file_path}
             <a href="/document/download?id={$doc.id}" class="btn btn-sm btn-outline-info">下载附件</a>
             {/if}
@@ -73,6 +74,100 @@
                     {else}无{/if}
                 </td>
             </tr>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0">分发记录</h6></div>
+    <div class="card-body">
+        <form method="post" action="/document/distribute" class="row g-2 align-items-end mb-3">
+            <input type="hidden" name="id" value="{$doc.id}">
+            <div class="col-md-5">
+                <label class="form-label">接收人</label>
+                <select name="user_ids[]" class="form-select" multiple required>
+                    {volist name="distributionUsers" id="u"}
+                    <option value="{$u.id}">{$u.name|default=$u.username}</option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">分发说明</label>
+                <input type="text" name="remarks" class="form-control" placeholder="受控副本、电子版、培训用等">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">分发</button>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead><tr><th>接收人</th><th>分发时间</th><th>接收确认</th><th>回收确认</th><th>说明</th><th>操作</th></tr></thead>
+                <tbody>
+                    {volist name="distributions" id="dist"}
+                    <tr>
+                        <td>{$dist.user.name|default=$dist.user_id}</td>
+                        <td>{$dist.distributed_at|default='-'}</td>
+                        <td>{$dist.confirmed_at|default='未确认'}</td>
+                        <td>{$dist.recalled_at|default='未回收'}</td>
+                        <td>{$dist.remarks|default='-'}</td>
+                        <td class="d-flex flex-wrap gap-1">
+                            {if !$dist.confirmed_at && isset($user.id) && $dist.user_id == $user.id}
+                            <form method="post" action="/document/confirmReceipt" class="d-inline">
+                                <input type="hidden" name="document_id" value="{$doc.id}">
+                                <input type="hidden" name="distribution_id" value="{$dist.id}">
+                                <button type="submit" class="btn btn-sm btn-outline-success">确认接收</button>
+                            </form>
+                            {/if}
+                            {if $doc.status == 'obsolete' && !$dist.recalled_at && isset($user.id) && $dist.user_id == $user.id}
+                            <form method="post" action="/document/confirmRecall" class="d-inline">
+                                <input type="hidden" name="document_id" value="{$doc.id}">
+                                <input type="hidden" name="distribution_id" value="{$dist.id}">
+                                <button type="submit" class="btn btn-sm btn-outline-warning">确认回收</button>
+                            </form>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="distributions"}
+                    <tr><td colspan="6" class="text-center text-muted">暂无分发记录</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">评审记录</h6>
+        <form method="post" action="/document/obsolete" class="d-flex gap-2" onsubmit="return confirm('确认作废该文件并发起回收确认？');">
+            <input type="hidden" name="id" value="{$doc.id}">
+            <input type="hidden" name="review_note" value="文件作废并发起回收确认">
+            {if $doc.status != 'obsolete'}<button type="submit" class="btn btn-sm btn-outline-danger">作废并回收</button>{/if}
+        </form>
+    </div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>评审日期</th><th>结论</th><th>说明</th><th>下次评审</th><th>评审人</th></tr></thead>
+            <tbody>
+                {volist name="reviews" id="review"}
+                <tr>
+                    <td>{$review.review_date|default='-'}</td>
+                    <td>
+                        {if $review.result == 'continue'}继续使用
+                        {elseif $review.result == 'revise'}需要修订
+                        {elseif $review.result == 'obsolete'}作废并回收
+                        {else}{$review.result|default='-'}{/if}
+                    </td>
+                    <td>{$review.review_note|default='-'}</td>
+                    <td>{$review.next_review_date|default='-'}</td>
+                    <td>{$review.reviewer.name|default=$review.reviewed_by|default='-'}</td>
+                </tr>
+                {/volist}
+                {empty name="reviews"}
+                <tr><td colspan="5" class="text-center text-muted">暂无评审记录</td></tr>
+                {/empty}
+            </tbody>
         </table>
     </div>
 </div>
