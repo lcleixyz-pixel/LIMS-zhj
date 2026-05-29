@@ -129,5 +129,6 @@ return [
     'notification' => [
         'calibration_days' => 30,
         'capa_overdue_days' => 0,
+        'capa_effectiveness_days' => 30,
     ],
 ];

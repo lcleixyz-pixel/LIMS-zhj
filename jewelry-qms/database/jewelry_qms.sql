@@ -411,6 +411,8 @@ CREATE TABLE `capas` (
   `verification` text,
   `verified_by` varchar(36) DEFAULT NULL,
   `verified_date` date DEFAULT NULL,
+  `effectiveness_review_date` date DEFAULT NULL,
+  `effectiveness_result` text,
   `status` enum('open','analyzing','implementing','verifying','closed') DEFAULT 'open',
   `publish` tinyint(1) DEFAULT 1,
   `soft_delete` tinyint(1) DEFAULT 0,
