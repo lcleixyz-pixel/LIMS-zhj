@@ -153,4 +153,14 @@ return [
         'capa_overdue_days' => 0,
         'capa_effectiveness_days' => 30,
     ],
+
+    'integration' => [
+        'api_token' => env('QMS_API_TOKEN', ''),
+    ],
+
+    'onlyoffice' => [
+        'enabled' => env('ONLYOFFICE_ENABLED', false),
+        'server_url' => env('ONLYOFFICE_SERVER_URL', ''),
+        'jwt_secret' => env('ONLYOFFICE_JWT_SECRET', ''),
+    ],
 ];

@@ -240,6 +240,27 @@ CREATE TABLE `document_reviews` (
   KEY `review_date` (`review_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `controlled_print_logs` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `document_id` varchar(36) NOT NULL,
+  `print_number` varchar(80) NOT NULL,
+  `copy_count` int DEFAULT 1,
+  `purpose` varchar(200) DEFAULT NULL,
+  `watermark_text` varchar(200) NOT NULL,
+  `printed_by` varchar(36) DEFAULT NULL,
+  `printed_at` datetime NOT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `publish` tinyint(1) DEFAULT 1,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `print_number` (`print_number`),
+  KEY `document_id` (`document_id`),
+  KEY `printed_at` (`printed_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `approvals` (
   `id` varchar(36) NOT NULL,
   `company_id` varchar(36) NOT NULL,

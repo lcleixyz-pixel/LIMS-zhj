@@ -8,6 +8,9 @@ Route::rule('login', 'Login/index');
 Route::get('logout', 'Login/logout');
 Route::get('login/logout', 'Login/logout');
 Route::rule('login/changePassword', 'Login/changePassword');
+Route::get('api/v1/employees', 'Api/employees');
+Route::get('api/v1/equipments', 'Api/equipments');
+Route::get('api/v1/customers', 'Api/customers');
 
 Route::group(function () {
     Route::get('/', 'Dashboard/index');
@@ -24,6 +27,8 @@ Route::group(function () {
     Route::post('document/confirmRecall', 'Document/confirmRecall');
     Route::post('document/obsolete', 'Document/obsolete');
     Route::rule('document/submitReview', 'Document/submitReview');
+    Route::get('document/onlyoffice', 'Document/onlyoffice');
+    Route::get('document/controlledPrint', 'Document/controlledPrint');
     Route::get('document/download', 'Document/download');
 
     Route::rule('record_form_template/index', 'RecordFormTemplate/index');
