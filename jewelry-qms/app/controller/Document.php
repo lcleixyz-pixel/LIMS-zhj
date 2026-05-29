@@ -12,9 +12,11 @@ use app\model\DocumentRevision;
 use app\model\DocTemplate;
 use app\model\User;
 use app\service\ApprovalService;
+use app\service\ControlledPrintService;
 use app\service\FileService;
 use app\service\QmsDocumentStructureService;
 use think\exception\HttpException;
+use think\facade\Config;
 use think\facade\Session;
 use think\facade\View;
 
@@ -176,8 +178,66 @@ class Document extends BaseController
         View::assign('revisions', $revisions);
         View::assign('approvals', $approvals);
         View::assign('structureSummary', QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id));
+        View::assign('printLogs', ControlledPrintService::recentLogs((string)$doc->id, 5));
 
         return View::fetch('document/view');
+    }
+
+    public function onlyoffice()
+    {
+        $doc = $this->loadDocument((string)$this->request->param('id', ''));
+        $serverUrl = rtrim((string)Config::get('qms.onlyoffice.server_url', ''), '/');
+        $enabledConfig = Config::get('qms.onlyoffice.enabled', false);
+        $enabled = filter_var($enabledConfig, FILTER_VALIDATE_BOOL) && $serverUrl !== '' && !empty($doc->file_path);
+        $fileType = strtolower(pathinfo((string)$doc->file_name, PATHINFO_EXTENSION));
+        if ($fileType === '') {
+            $fileType = strtolower((string)$doc->file_type) ?: 'docx';
+        }
+
+        $downloadUrl = $this->request->domain() . '/document/download?id=' . $doc->id;
+        $editorConfig = [
+            'documentType' => $this->documentTypeFor($fileType),
+            'document' => [
+                'fileType' => $fileType,
+                'key' => md5((string)$doc->id . '|' . (string)$doc->version . '|' . (string)$doc->modified),
+                'title' => (string)$doc->title,
+                'url' => $downloadUrl,
+            ],
+            'editorConfig' => [
+                'lang' => 'zh-CN',
+                'mode' => 'edit',
+                'user' => [
+                    'id' => (string)Session::get('user.id', 'local-user'),
+                    'name' => (string)Session::get('user.name', 'QMS用户'),
+                ],
+            ],
+        ];
+
+        View::assign('doc', $doc);
+        View::assign('onlyofficeReady', $enabled);
+        View::assign('onlyofficeServerUrl', $serverUrl);
+        View::assign('downloadUrl', $downloadUrl);
+        View::assign('editorConfigJson', json_encode($editorConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        return View::fetch('document/onlyoffice');
+    }
+
+    public function controlledPrint()
+    {
+        $doc = $this->loadDocument((string)$this->request->param('id', ''));
+        $copyCount = (int)$this->request->param('copy_count', 1);
+        $purpose = trim((string)$this->request->param('purpose', '受控打印'));
+        if ($purpose === '') {
+            $purpose = '受控打印';
+        }
+
+        $printLog = ControlledPrintService::createLog($doc, $copyCount, $purpose, $this->request->ip());
+
+        View::assign('doc', $doc);
+        View::assign('printLog', $printLog);
+        View::assign('downloadUrl', '/document/download?id=' . $doc->id);
+
+        return View::fetch('document/controlled_print');
     }
 
     public function revise()
@@ -269,6 +329,25 @@ class Document extends BaseController
             throw new HttpException(404, '附件不存在');
         }
         FileService::download($doc->file_path, $doc->file_name);
+    }
+
+    private function loadDocument(string $id): DocumentModel
+    {
+        $doc = DocumentModel::find($id);
+        if (!$doc) {
+            throw new HttpException(404, '文件不存在');
+        }
+
+        return $doc;
+    }
+
+    private function documentTypeFor(string $fileType): string
+    {
+        return match ($fileType) {
+            'xls', 'xlsx', 'csv' => 'cell',
+            'ppt', 'pptx' => 'slide',
+            default => 'word',
+        };
     }
 
     protected function _setFormLists()
