@@ -21,8 +21,65 @@
         <h6>校准记录</h6>
         <table class="table table-sm mb-4">
             <thead><tr><th>日期</th><th>机构</th><th>证书号</th><th>结果</th></tr></thead>
-            <tbody>{volist name="calibrations" id="c"}<tr><td>{$c.calibration_date}</td><td>{$c.calibration_org}</td><td>{$c.certificate_number}</td><td>{$c.result}</td></tr>{/volist}</tbody>
+            <tbody>
+                {volist name="calibrations" id="c"}
+                <tr><td><a href="/calibration/view?id={$c.id}">{$c.calibration_date}</a></td><td>{$c.calibration_org}</td><td>{$c.certificate_number}</td><td>{$c.result}</td></tr>
+                {/volist}
+                {empty name="calibrations"}<tr><td colspan="4" class="text-center text-muted">暂无校准记录</td></tr>{/empty}
+            </tbody>
         </table>
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">期间核查记录表格</h6>
+            <a href="/record_form_instance/index?keyword={$record.equipment_number}" class="btn btn-sm btn-outline-secondary">查看记录填写</a>
+        </div>
+        <table class="table table-sm mb-4">
+            <thead><tr><th>记录标题</th><th>表格编号</th><th>模板</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+                {volist name="periodicCheckInstances" id="instance"}
+                <tr>
+                    <td>{$instance.record_title|default='-'}</td>
+                    <td>{$instance.doc_number|default='-'}</td>
+                    <td>{$instance.template_name|default='-'}</td>
+                    <td>{$instance.status|default='-'}</td>
+                    <td><a href="/record_form_instance/view?id={$instance.id}">查看</a></td>
+                </tr>
+                {/volist}
+                {empty name="periodicCheckInstances"}<tr><td colspan="5" class="text-center text-muted">暂无匹配的期间核查记录表格</td></tr>{/empty}
+            </tbody>
+        </table>
+
+        <h6>期间核查维护记录</h6>
+        <table class="table table-sm mb-4">
+            <thead><tr><th>日期</th><th>说明</th><th>执行人</th><th>下次到期</th></tr></thead>
+            <tbody>
+                {volist name="verificationMaintenances" id="m"}
+                <tr><td>{$m.maintenance_date}</td><td>{$m.description|default='-'}</td><td>{$m.performed_by|default='-'}</td><td>{$m.next_due_date|default='-'}</td></tr>
+                {/volist}
+                {empty name="verificationMaintenances"}<tr><td colspan="4" class="text-center text-muted">暂无期间核查维护记录</td></tr>{/empty}
+            </tbody>
+        </table>
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">授权使用人</h6>
+            <a href="/equipment_authorization/add?equipment_id={$record.id}" class="btn btn-sm btn-outline-primary">新增授权</a>
+        </div>
+        <table class="table table-sm mb-4">
+            <thead><tr><th>人员</th><th>授权日期</th><th>有效期至</th><th>授权范围</th><th>状态</th></tr></thead>
+            <tbody>
+                {volist name="equipmentAuthorizations" id="auth"}
+                <tr>
+                    <td>{$auth.employee_name|default=$auth.employee_id}</td>
+                    <td>{$auth.authorized_date|default='-'}</td>
+                    <td>{$auth.valid_until|default='-'}</td>
+                    <td>{$auth.authorization_scope|default='-'}</td>
+                    <td>{$auth.status|default='-'}</td>
+                </tr>
+                {/volist}
+                {empty name="equipmentAuthorizations"}<tr><td colspan="5" class="text-center text-muted">暂无授权使用人</td></tr>{/empty}
+            </tbody>
+        </table>
+
         <h6>维护保养</h6>
         <table class="table table-sm">
             <thead><tr><th>日期</th><th>类型</th><th>说明</th></tr></thead>

@@ -1,7 +1,5 @@
 <div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">新增校准记录</h5>
-    </div>
+    <div class="card-header"><h5 class="mb-0">新增校准记录</h5></div>
     <div class="card-body">
         <form method="post" action="/calibration/add">
             <div class="row">
@@ -10,13 +8,13 @@
                     <select name="equipment_id" class="form-select" required>
                         <option value="">请选择</option>
                         {volist name="equipments" id="eq"}
-                        <option value="{$eq.id}">{$eq.equipment_number} - {$eq.name}</option>
+                        <option value="{$eq.id}" {if $currentEquipmentId == $eq.id || $form.equipment_id == $eq.id}selected{/if}>{$eq.equipment_number} - {$eq.name}</option>
                         {/volist}
                     </select>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label required">校准日期</label>
-                    <input type="date" name="calibration_date" value="{$form.calibration_date|default=''}" class="form-control" required>
+                    <input type="date" name="calibration_date" value="{$form.calibration_date|default=$today}" class="form-control" required>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label">下次到期日期</label>
@@ -33,9 +31,9 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label">校准结果</label>
                     <select name="result" class="form-select">
-                        {foreach $resultOptions as $key=>$label}
-                        <option value="{$key}">{$label}</option>
-                        {/foreach}
+                        {volist name="resultOptions" id="option"}
+                        <option value="{$option.value}" {if $form.result|default='pass' == $option.value}selected{/if}>{$option.label}</option>
+                        {/volist}
                     </select>
                 </div>
                 <div class="col-md-6 mb-3">

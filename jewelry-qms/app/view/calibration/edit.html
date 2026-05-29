@@ -1,7 +1,5 @@
 <div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">编辑校准记录</h5>
-    </div>
+    <div class="card-header"><h5 class="mb-0">编辑校准记录</h5></div>
     <div class="card-body">
         <form method="post" action="/calibration/edit">
             <input type="hidden" name="id" value="{$record.id}">
@@ -34,9 +32,9 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label">校准结果</label>
                     <select name="result" class="form-select">
-                        {foreach $resultOptions as $key=>$label}
-                        <option value="{$key}" {if $record.result == $key}selected{/if}>{$label}</option>
-                        {/foreach}
+                        {volist name="resultOptions" id="option"}
+                        <option value="{$option.value}" {if $record.result == $option.value}selected{/if}>{$option.label}</option>
+                        {/volist}
                     </select>
                 </div>
                 <div class="col-md-6 mb-3">
@@ -49,7 +47,7 @@
                 </div>
             </div>
             <div class="text-end">
-                <a href="/calibration/index" class="btn btn-secondary">取消</a>
+                <a href="/calibration/view?id={$record.id}" class="btn btn-secondary">取消</a>
                 <button type="submit" class="btn btn-primary">更新</button>
             </div>
         </form>

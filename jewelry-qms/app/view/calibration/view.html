@@ -1,21 +1,55 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">查看校准记录</h5>
+        <h5 class="mb-0">校准记录 {$record.certificate_number|default=''}</h5>
         <div>
             <a href="/calibration/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
             <a href="/calibration/index" class="btn btn-sm btn-outline-secondary">返回列表</a>
         </div>
     </div>
     <div class="card-body">
-        <table class="table table-bordered">
-            <tr><th width="160">设备ID</th><td>{$record.equipment_id}</td></tr>
+        <table class="table table-bordered mb-4">
+            <tr><th width="150">设备</th><td>{if $equipment}<a href="/equipment/view?id={$equipment.id}">{$equipment.equipment_number} {$equipment.name}</a>{else}{$record.equipment_id}{/if}</td></tr>
             <tr><th>校准日期</th><td>{$record.calibration_date|default='-'}</td></tr>
-            <tr><th>下次到期日期</th><td>{$record.next_due_date|default='-'}</td></tr>
+            <tr><th>下次到期</th><td>{$record.next_due_date|default='-'}</td></tr>
             <tr><th>校准机构</th><td>{$record.calibration_org|default='-'}</td></tr>
             <tr><th>证书编号</th><td>{$record.certificate_number|default='-'}</td></tr>
-            <tr><th>校准结果</th><td>{$record.result|default='-'}</td></tr>
+            <tr><th>结果</th><td>{$resultLabels[$record.result]|default=$record.result|default='-'}</td></tr>
             <tr><th>测量不确定度</th><td>{$record.uncertainty|default='-'}</td></tr>
             <tr><th>备注</th><td>{$record.remarks|default='-'}</td></tr>
         </table>
+
+        <h6>校准证书附件</h6>
+        <form method="post" action="/calibration/uploadCertificate" enctype="multipart/form-data" class="row g-3 align-items-end mb-3">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="col-md-5">
+                <label class="form-label required">证书文件</label>
+                <input type="file" name="certificate_file" class="form-control" required>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">说明</label>
+                <input type="text" name="comment" class="form-control" placeholder="校准证书、原始记录、确认说明等">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">上传证书</button>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead><tr><th>文件名</th><th>说明</th><th>上传时间</th><th>操作</th></tr></thead>
+                <tbody>
+                    {volist name="certificateFiles" id="file"}
+                    <tr>
+                        <td>{$file.file_details|default='-'}</td>
+                        <td>{$file.comment|default='-'}</td>
+                        <td>{$file.created|default='-'}</td>
+                        <td><a href="/calibration/downloadCertificate?id={$record.id}&file_id={$file.id}">下载</a></td>
+                    </tr>
+                    {/volist}
+                    {empty name="certificateFiles"}
+                    <tr><td colspan="4" class="text-center text-muted">暂无校准证书附件</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>

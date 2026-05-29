@@ -42,6 +42,7 @@ class Rbac
             'updateblock', 'publishdocument', 'savelink', 'deletelink', 'map', 'localelement',
             'distribute', 'confirmreceipt', 'confirmrecall', 'review',
             'uploadevidence', 'revieweffectiveness',
+            'uploadcertificate',
         ];
         if (in_array($action, $writeActions, true) && !RbacService::canWrite($controller)) {
             Session::flash('error', '您没有编辑权限');

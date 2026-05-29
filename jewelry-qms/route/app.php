@@ -96,6 +96,8 @@ Route::group(function () {
 
     Route::get('capa/advance', 'Capa/advance');
     Route::rule('capa/advance', 'Capa/advance');
+    Route::post('calibration/uploadCertificate', 'Calibration/uploadCertificate');
+    Route::get('calibration/downloadCertificate', 'Calibration/downloadCertificate');
     Route::get('audit_plan/approve', 'AuditPlan/approve');
     Route::get('audit_finding/createCapa', 'AuditFinding/createCapa');
     Route::post('audit_finding/uploadEvidence', 'AuditFinding/uploadEvidence');
@@ -127,7 +129,9 @@ Route::group(function () {
         'capa',
         'equipment',
         'equipment_maintenance' => 'EquipmentMaintenance',
+        'equipment_authorization' => 'EquipmentAuthorization',
         'calibration',
+        'reference_material' => 'ReferenceMaterial',
         'training',
         'training_record' => 'TrainingRecord',
         'competency_record' => 'CompetencyRecord',

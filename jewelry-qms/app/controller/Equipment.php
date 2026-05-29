@@ -8,6 +8,7 @@ use app\model\Equipment as EquipmentModel;
 use app\model\EquipmentMaintenance;
 use app\model\EquipmentTransfer;
 use app\model\Site;
+use app\service\EquipmentEvidenceService;
 use app\service\FieldAuditService;
 use think\facade\View;
 
@@ -77,6 +78,12 @@ class Equipment extends BusinessBase
         $calibrations = Calibration::where('equipment_id', $id)->where('soft_delete', 0)->order('calibration_date', 'desc')->limit(10)->select();
         $maintenances = EquipmentMaintenance::where('equipment_id', $id)->where('soft_delete', 0)->order('maintenance_date', 'desc')->limit(5)->select();
         $transfers = EquipmentTransfer::where('equipment_id', $id)->where('soft_delete', 0)->order('transfer_date', 'desc')->limit(5)->select();
+        $verificationMaintenances = EquipmentMaintenance::where('equipment_id', $id)
+            ->where('maintenance_type', 'verification')
+            ->where('soft_delete', 0)
+            ->order('maintenance_date', 'desc')
+            ->limit(10)
+            ->select();
         $daysUntil = null;
         if ($record->next_calibration_date) {
             $daysUntil = (int) ((strtotime($record->next_calibration_date) - time()) / 86400);
@@ -88,6 +95,9 @@ class Equipment extends BusinessBase
         View::assign('transfers', $transfers);
         View::assign('site', $record->site_id ? Site::find($record->site_id) : null);
         View::assign('siteMap', Site::where('soft_delete', 0)->column('name', 'id'));
+        View::assign('verificationMaintenances', $verificationMaintenances);
+        View::assign('periodicCheckInstances', EquipmentEvidenceService::periodicCheckInstances((string)$record->id));
+        View::assign('equipmentAuthorizations', EquipmentEvidenceService::equipmentAuthorizationRows((string)$record->id));
         View::assign('daysUntil', $daysUntil);
         View::assign('fieldChangeLogs', FieldAuditService::logsFor('Equipment', (string)$id));
         View::assign('pageTitle', $this->pageTitle . ' - 详情');

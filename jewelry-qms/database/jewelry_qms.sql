@@ -573,6 +573,52 @@ CREATE TABLE `equipment_transfers` (
   KEY `to_site_id` (`to_site_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `reference_materials` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `code` varchar(50) NOT NULL,
+  `name` varchar(200) NOT NULL,
+  `lot_number` varchar(100) DEFAULT NULL,
+  `manufacturer` varchar(200) DEFAULT NULL,
+  `traceability_certificate_number` varchar(100) DEFAULT NULL,
+  `valid_until` date DEFAULT NULL,
+  `storage_location` varchar(200) DEFAULT NULL,
+  `status` enum('active','expired','depleted','discarded') DEFAULT 'active',
+  `remarks` text,
+  `publish` tinyint(1) DEFAULT 1,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `reference_material_code` (`code`),
+  KEY `valid_until` (`valid_until`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `equipment_authorizations` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `equipment_id` varchar(36) NOT NULL,
+  `employee_id` varchar(36) NOT NULL,
+  `authorized_date` date NOT NULL,
+  `valid_until` date DEFAULT NULL,
+  `authorization_scope` text,
+  `authorized_by` varchar(36) DEFAULT NULL,
+  `status` enum('active','revoked','expired') DEFAULT 'active',
+  `remarks` text,
+  `publish` tinyint(1) DEFAULT 1,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `equipment_id` (`equipment_id`),
+  KEY `employee_id` (`employee_id`),
+  KEY `valid_until` (`valid_until`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ========== 培训与能力 ==========
 CREATE TABLE `training_plans` (
   `id` varchar(36) NOT NULL,
