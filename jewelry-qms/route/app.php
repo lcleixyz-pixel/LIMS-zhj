@@ -101,9 +101,13 @@ Route::group(function () {
     Route::get('review_action/createCapa', 'ReviewAction/createCapa');
     Route::get('training/complete', 'Training/complete');
     Route::get('supplier/qualified', 'Supplier/qualified');
+    Route::rule('equipment_transfer/index', 'EquipmentTransfer/index');
+    Route::rule('equipment_transfer/add', 'EquipmentTransfer/add');
+    Route::rule('equipment_transfer/view', 'EquipmentTransfer/view');
 
     $crudModules = [
         'user', 'department', 'employee',
+        'site',
         'doc_category' => 'DocCategory',
         'doc_template' => 'DocTemplate',
         'audit_plan' => 'AuditPlan',

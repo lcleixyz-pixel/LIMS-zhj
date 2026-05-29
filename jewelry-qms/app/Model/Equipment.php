@@ -14,6 +14,11 @@ class Equipment extends BaseModel
         return $this->belongsTo(Department::class);
     }
 
+    public function site()
+    {
+        return $this->belongsTo(Site::class);
+    }
+
     public function calibrations()
     {
         return $this->hasMany(Calibration::class);
@@ -22,5 +27,10 @@ class Equipment extends BaseModel
     public function equipmentMaintenances()
     {
         return $this->hasMany(EquipmentMaintenance::class);
+    }
+
+    public function equipmentTransfers()
+    {
+        return $this->hasMany(EquipmentTransfer::class);
     }
 }

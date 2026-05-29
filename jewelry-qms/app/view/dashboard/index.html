@@ -100,12 +100,13 @@
             </div>
             <div class="card-body p-0">
                 <table class="table table-striped table-sm mb-0">
-                    <thead><tr><th>设备</th><th>编号</th><th>下次校准</th><th>状态</th></tr></thead>
+                    <thead><tr><th>设备</th><th>编号</th><th>场所</th><th>下次校准</th><th>状态</th></tr></thead>
                     <tbody>
                         {volist name="upcomingCalibrations" id="cal"}
                         <tr>
                             <td>{$cal.equipment_name}</td>
                             <td>{$cal.equipment_code}</td>
+                            <td>{$cal.site_name|default='未指定'}</td>
                             <td>{$cal.next_calibration}</td>
                             <td>
                                 {if $cal.days_until <= 0}<span class="badge bg-danger">已过期</span>
@@ -115,7 +116,7 @@
                         </tr>
                         {/volist}
                         {empty name="upcomingCalibrations"}
-                        <tr><td colspan="4" class="text-center text-muted">暂无到期设备</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted">暂无到期设备</td></tr>
                         {/empty}
                     </tbody>
                 </table>

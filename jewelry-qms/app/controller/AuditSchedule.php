@@ -7,6 +7,7 @@ use app\model\AuditChecklist;
 use app\model\AuditFinding;
 use app\model\AuditPlan;
 use app\model\AuditSchedule as AuditScheduleModel;
+use app\model\Site;
 use app\model\User;
 use app\service\WorkflowService;
 use think\facade\Session;
@@ -23,6 +24,7 @@ class AuditSchedule extends BusinessBase
         $this->assignCommonForm();
         $this->assignStatusLabels('audit_schedule');
         View::assign('auditPlans', AuditPlan::where('soft_delete', 0)->whereIn('status', ['approved', 'in_progress'])->select());
+        View::assign('sites', Site::where('soft_delete', 0)->where('status', 'active')->order('sort_order', 'asc')->select());
     }
 
     public function add()

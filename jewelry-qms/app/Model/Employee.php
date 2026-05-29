@@ -12,6 +12,11 @@ class Employee extends BaseModel
         return $this->belongsTo(Department::class);
     }
 
+    public function primarySite()
+    {
+        return $this->belongsTo(Site::class, 'primary_site_id');
+    }
+
     public function designation()
     {
         return $this->belongsTo(Designation::class);

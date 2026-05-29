@@ -36,7 +36,7 @@ return [
             'equipment', 'equipment_maintenance', 'calibration',
             'training', 'training_record', 'competency_record',
             'supplier', 'supplier_evaluation', 'import', 'notification',
-            'department', 'employee', 'user',
+            'department', 'employee', 'site', 'equipment_transfer', 'user',
         ],
         'auditor' => [
             'dashboard', 'document', 'record_form_template', 'record_form_instance', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
@@ -44,7 +44,7 @@ return [
         ],
         'department_head' => [
             'dashboard', 'document', 'record_form_template', 'record_form_instance', 'capa', 'nonconformity', 'complaint',
-            'equipment', 'equipment_maintenance', 'calibration',
+            'equipment', 'equipment_maintenance', 'equipment_transfer', 'calibration',
             'training', 'training_record', 'competency_record', 'notification',
         ],
         'staff' => [
