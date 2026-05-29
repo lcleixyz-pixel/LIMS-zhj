@@ -100,6 +100,10 @@ Route::group(function () {
     Route::rule('review_action/verify', 'ReviewAction/verify');
     Route::get('review_action/createCapa', 'ReviewAction/createCapa');
     Route::get('training/complete', 'Training/complete');
+    Route::get('training_plan/approve', 'TrainingPlan/approve');
+    Route::get('training_plan/complete', 'TrainingPlan/complete');
+    Route::post('employee_certificate/uploadAttachment', 'EmployeeCertificate/uploadAttachment');
+    Route::get('employee_certificate/downloadAttachment', 'EmployeeCertificate/downloadAttachment');
     Route::get('supplier/qualified', 'Supplier/qualified');
 
     $crudModules = [
@@ -117,8 +121,10 @@ Route::group(function () {
         'equipment_maintenance' => 'EquipmentMaintenance',
         'calibration',
         'training',
+        'training_plan' => 'TrainingPlan',
         'training_record' => 'TrainingRecord',
         'competency_record' => 'CompetencyRecord',
+        'employee_certificate' => 'EmployeeCertificate',
         'supplier',
         'supplier_evaluation' => 'SupplierEvaluation',
         'complaint',

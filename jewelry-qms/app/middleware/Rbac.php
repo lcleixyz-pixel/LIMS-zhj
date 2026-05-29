@@ -40,6 +40,7 @@ class Rbac
             'add', 'edit', 'delete', 'create', 'seedsamples', 'seedbatch', 'updatereview', 'exportpdf',
             'seed', 'upload', 'renderpackage', 'extractclauses', 'obsolete', 'createpolicy', 'createobjective',
             'updateblock', 'publishdocument', 'savelink', 'deletelink', 'map', 'localelement',
+            'approve', 'complete', 'uploadattachment',
         ];
         if (in_array($action, $writeActions, true) && !RbacService::canWrite($controller)) {
             Session::flash('error', '您没有编辑权限');
