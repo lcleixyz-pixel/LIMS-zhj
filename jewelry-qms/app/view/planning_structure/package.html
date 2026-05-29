@@ -1,0 +1,252 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">体系文件组合包</h4>
+        <div class="text-muted small">将当前结构化外部依据、质量手册、程序文件、作业指导书和记录表格组合为一份可归档 Markdown。</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/planning/structures" class="btn btn-sm btn-outline-secondary">返回列表</a>
+        <form method="post" action="/planning/structures/render-package" class="m-0">
+            <button type="submit" class="btn btn-primary btn-sm">生成组合包</button>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-2">
+                <div class="text-muted small">外部依据</div>
+                <div class="fs-5 fw-semibold">{$summary.document_count_by_role.external_basis|default=0}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">质量手册</div>
+                <div class="fs-5 fw-semibold">{$summary.document_count_by_role.quality_manual|default=0}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">程序文件</div>
+                <div class="fs-5 fw-semibold">{$summary.document_count_by_role.procedure|default=0}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">作业指导书</div>
+                <div class="fs-5 fw-semibold">{$summary.document_count_by_role.work_instruction|default=0}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">记录表格</div>
+                <div class="fs-5 fw-semibold">{$summary.document_count_by_role.record_form|default=0}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">总文档数</div>
+                <div class="fs-5 fw-semibold">{$summary.total_documents|default=0}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">条款级追溯索引</h5></div>
+    <div class="card-body">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-9">
+                <div class="fw-semibold mb-1">组合包首页包含无编号要素追溯总览</div>
+                <div class="text-muted small">索引按“无编号要素、主外部条款、手册章节、程序文件、记录表格、运行模块、岗位职责、缺口”汇总，条款编号和手册章节编号作为关联信息出现，不作为要素标题。</div>
+            </div>
+            <div class="col-md-3 text-md-end">
+                <a href="/planning/traceability" class="btn btn-sm btn-outline-primary">查看追溯矩阵</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h5 class="mb-0">内容块级追溯索引</h5>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="text-muted small">组合包 manifest 保存每个结构化内容块的稳定键、关联对象和复核入口，支持条款级修改后的影响定位。</div>
+            <div class="text-nowrap small">内容块 {$summary.latest_block_trace_count|default=0}</div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>文件</th>
+                        <th>内容块</th>
+                        <th>追溯对象</th>
+                        <th>复核状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="blockTraceRows" id="row" length="20"}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{$row.doc_number|default='-'} {$row.document_title|default=''}</div>
+                            <div class="text-muted small">{$row.document_role|default='-'} · {$row.document_version|default='-'}</div>
+                        </td>
+                        <td>
+                            <div>{$row.block_section_number|default=''} {$row.block_title|default='-'}</div>
+                            <div class="text-muted small">{$row.block_stable_key|default=''}</div>
+                        </td>
+                        <td>
+                            <details>
+                                <summary>{$row.trace_summary|default='查看追溯对象'}</summary>
+                                <div class="small text-muted mt-2">
+                                    <div>要素：{if empty($row.trace_targets.elements)}-{else}{:implode('、', $row['trace_targets']['elements'])}{/if}</div>
+                                    <div>条款：{if empty($row.trace_targets.clauses)}-{else}{:implode('、', $row['trace_targets']['clauses'])}{/if}</div>
+                                    <div>手册章节：{if empty($row.trace_targets.manual_sections)}-{else}{:implode('、', $row['trace_targets']['manual_sections'])}{/if}</div>
+                                    <div>程序文件：{if empty($row.trace_targets.procedures)}-{else}{:implode('、', $row['trace_targets']['procedures'])}{/if}</div>
+                                    <div>记录表格：{if empty($row.trace_targets.record_forms)}-{else}{:implode('、', $row['trace_targets']['record_forms'])}{/if}</div>
+                                    <div>运行模块：{if empty($row.trace_targets.modules)}-{else}{:implode('、', $row['trace_targets']['modules'])}{/if}</div>
+                                    <div>岗位：{if empty($row.trace_targets.positions)}-{else}{:implode('、', $row['trace_targets']['positions'])}{/if}</div>
+                                </div>
+                            </details>
+                        </td>
+                        <td>{$row.review_status|default='-'}</td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                {if $row.document_url}
+                                <a href="{$row.document_url}" class="btn btn-sm btn-outline-primary">查看结构化文件</a>
+                                {/if}
+                                {if $row.block_edit_url}
+                                <a href="{$row.block_edit_url}" class="btn btn-sm btn-outline-secondary">编辑内容块</a>
+                                {/if}
+                                {if $row.trace_review_url}
+                                <a href="{$row.trace_review_url}" class="btn btn-sm btn-outline-secondary">复核追溯</a>
+                                {/if}
+                            </div>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="blockTraceRows"}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">暂无内容块追溯索引。</td>
+                    </tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h5 class="mb-0">变更影响明细</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>文件</th>
+                        <th>内容块</th>
+                        <th>修订说明</th>
+                        <th>受影响追溯</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="impactRows" id="row"}
+                    <tr>
+                        <td class="text-nowrap">{$row.created|default='-'}</td>
+                        <td>
+                            <div class="fw-semibold">{$row.doc_number|default='-'} {$row.document_title|default=''}</div>
+                            <div class="text-muted small">{$row.document_role|default='-'} · {$row.document_version|default='-'}</div>
+                            {if $row.document_url}
+                            <a href="{$row.document_url}" class="btn btn-sm btn-outline-primary mt-2">查看结构化文件</a>
+                            {/if}
+                        </td>
+                        <td>
+                            {$row.block_title|default='-'}
+                            <div class="text-muted small">{$row.block_stable_key|default=''}</div>
+                            <div class="d-flex gap-2 mt-2">
+                                {if $row.block_edit_url}
+                                <a href="{$row.block_edit_url}" class="btn btn-sm btn-outline-secondary">编辑内容块</a>
+                                {/if}
+                                {if $row.trace_review_url}
+                                <a href="{$row.trace_review_url}" class="btn btn-sm btn-outline-secondary">复核追溯</a>
+                                {/if}
+                            </div>
+                        </td>
+                        <td>
+                            {$row.revision_note|default='-'}
+                            <div class="text-muted small">{$row.change_type|default='-'} · {$row.status_from|default='-'} -> {$row.status_to|default='-'}</div>
+                        </td>
+                        <td>
+                            <details>
+                                <summary>{$row.trace_summary|default='查看受影响追溯'}</summary>
+                                <div class="small text-muted mt-2">
+                                    <div>要素：{if empty($row.trace_targets.elements)}-{else}{:implode('、', $row['trace_targets']['elements'])}{/if}</div>
+                                    <div>条款：{if empty($row.trace_targets.clauses)}-{else}{:implode('、', $row['trace_targets']['clauses'])}{/if}</div>
+                                    <div>手册章节：{if empty($row.trace_targets.manual_sections)}-{else}{:implode('、', $row['trace_targets']['manual_sections'])}{/if}</div>
+                                    <div>程序文件：{if empty($row.trace_targets.procedures)}-{else}{:implode('、', $row['trace_targets']['procedures'])}{/if}</div>
+                                    <div>记录表格：{if empty($row.trace_targets.record_forms)}-{else}{:implode('、', $row['trace_targets']['record_forms'])}{/if}</div>
+                                    <div>运行模块：{if empty($row.trace_targets.modules)}-{else}{:implode('、', $row['trace_targets']['modules'])}{/if}</div>
+                                    <div>岗位：{if empty($row.trace_targets.positions)}-{else}{:implode('、', $row['trace_targets']['positions'])}{/if}</div>
+                                </div>
+                            </details>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="impactRows"}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">暂无本版变更影响。</td>
+                    </tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">输出状态</h5></div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="text-muted small">输出路径</div>
+                <div class="font-monospace">{$summary.output_path|default='-'}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">状态</div>
+                {if $summary.exists}
+                <span class="badge badge-status-effective">已生成</span>
+                {else}
+                <span class="badge bg-secondary">未生成</span>
+                {/if}
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">更新时间</div>
+                <div>{$summary.updated_at|default='-'}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">存档次数</div>
+                <div>{$summary.archive_count|default=0}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">最新包版本</div>
+                <div>v{$summary.latest_package_version|default=0}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">本版变更影响</div>
+                <div>{$summary.latest_change_impact_count|default=0}</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">内容块追溯</div>
+                <div>{$summary.latest_block_trace_count|default=0}</div>
+            </div>
+            <div class="col-12">
+                <div class="text-muted small">最新存档</div>
+                <div class="font-monospace">{$summary.latest_archive_path|default='-'}</div>
+            </div>
+            <div class="col-12">
+                <div class="text-muted small">内容哈希</div>
+                <div class="font-monospace text-break">{$summary.latest_content_sha256|default='-'}</div>
+            </div>
+            <div class="col-12">
+                <div class="text-muted small">存档清单</div>
+                <div class="font-monospace">{$summary.manifest_path|default='-'}</div>
+            </div>
+        </div>
+    </div>
+</div>

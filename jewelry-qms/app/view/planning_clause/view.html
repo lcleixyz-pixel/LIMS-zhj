@@ -1,0 +1,169 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">{$clause.clause_number} {$clause.title}</h4>
+        <div class="text-muted small">{$source.source_code|default=''} {$source.name|default=''}</div>
+    </div>
+    <a href="/planning/clauses" class="btn btn-sm btn-outline-secondary">返回条款库</a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">条款原文</h5></div>
+    <div class="card-body">
+        <div class="row g-3 mb-3">
+            <div class="col-md-3"><div class="text-muted small">适用性</div><div>{$clause.applicability}</div></div>
+            <div class="col-md-3"><div class="text-muted small">复核状态</div><div>{$clause.review_status}</div></div>
+            <div class="col-md-3"><div class="text-muted small">定位</div><div>{$clause.locator|default='-'}</div></div>
+            <div class="col-md-3"><div class="text-muted small">抽取方法</div><div>{$text.extraction_method|default='-'}</div></div>
+        </div>
+        <div class="qms-clause-original-text">{$text.original_text|default='暂无原文'}</div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">关联要素</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead><tr><th>要素名称</th><th>类型</th><th>映射类型</th><th>主映射</th><th>说明</th></tr></thead>
+                <tbody>
+                    {volist name="elements" id="element"}
+                    <tr>
+                        <td><a href="/planning/elements/view?id={$element.id}">{$element.name}</a></td>
+                        <td>{if $element.element_type == 'technical'}技术{else}管理{/if}</td>
+                        <td>{$element.mapping_type}</td>
+                        <td>{if $element.is_primary}是{else}否{/if}</td>
+                        <td>{$element.note|default='-'}</td>
+                    </tr>
+                    {/volist}
+                    {empty name="elements"}
+                    <tr><td colspan="5" class="text-center text-muted">暂无要素映射</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">人工映射</h5></div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <h6 class="mb-3">映射到已有要素</h6>
+                <form method="post" action="/planning/clauses/map">
+                    <input type="hidden" name="clause_id" value="{$clause.id}">
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">目标要素</label>
+                        <select name="element_id" class="form-select form-select-sm" required>
+                            <option value="">请选择无编号要素</option>
+                            {volist name="availableElements" id="candidate"}
+                            <option value="{$candidate.id}">{$candidate.name}（{if $candidate.element_type == 'technical'}技术{else}管理{/if}）</option>
+                            {/volist}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">映射类型</label>
+                        <select name="mapping_type" class="form-select form-select-sm">
+                            <option value="supplement">补充要求</option>
+                            <option value="partial">部分覆盖</option>
+                            <option value="reference">参考关联</option>
+                            <option value="equivalent">等同覆盖</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">人工说明</label>
+                        <textarea name="note" class="form-control form-control-sm" rows="3" required placeholder="说明为什么归入该要素"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">保存映射</button>
+                </form>
+            </div>
+            <div class="col-lg-6">
+                <h6 class="mb-3">创建本地补充要素</h6>
+                <form method="post" action="/planning/clauses/local-element">
+                    <input type="hidden" name="clause_id" value="{$clause.id}">
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">要素名称</label>
+                        <input type="text" name="name" class="form-control form-control-sm" required placeholder="例如：珠宝检测特殊控制">
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">类型</label>
+                            <select name="element_type" class="form-select form-select-sm">
+                                <option value="management">管理</option>
+                                <option value="technical">技术</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">排序</label>
+                            <input type="number" name="sort_order" class="form-control form-control-sm" value="9900">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">摘要</label>
+                        <textarea name="summary" class="form-control form-control-sm" rows="2" placeholder="简要描述该补充要素的管理对象"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">人工说明</label>
+                        <textarea name="note" class="form-control form-control-sm" rows="3" required placeholder="说明为什么不归入现有要素"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">创建本地补充要素</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">结构块证据</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>来源文件</th>
+                        <th>内容块</th>
+                        <th>追溯路径</th>
+                        <th>关系</th>
+                        <th>关联对象</th>
+                        <th>说明</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="structuredBlockEvidence" id="evidence"}
+                    <tr>
+                        <td>
+                            <a href="{$evidence.document_url}" class="fw-semibold">{$evidence.doc_number}</a>
+                            <div class="text-muted small">{$evidence.document_title}</div>
+                        </td>
+                        <td>
+                            {$evidence.block_title}
+                            <div class="text-muted small">{$evidence.block_section_number|default='-'} · {$evidence.block_type}</div>
+                        </td>
+                        <td>{$evidence.evidence_path|default='直接条款映射'}</td>
+                        <td>
+                            {$evidence.relation_type}
+                            <div class="text-muted small">{$evidence.confidence}</div>
+                        </td>
+                        <td>
+                            {if $evidence.element_name}<div>{$evidence.element_name}</div>{/if}
+                            {if $evidence.manual_section_number}<div>{$evidence.manual_section_number} {$evidence.manual_title}</div>{/if}
+                            {if $evidence.procedure_number}<div>{$evidence.procedure_number} {$evidence.procedure_title}</div>{/if}
+                            {if $evidence.record_number}<div>{$evidence.record_number} {$evidence.record_name}</div>{/if}
+                            {if $evidence.module_name}<div>{$evidence.module_code} {$evidence.module_name}</div>{/if}
+                            {if $evidence.position_name}<div>{$evidence.position_name}</div>{/if}
+                        </td>
+                        <td>{$evidence.note|default='-'}</td>
+                        <td class="text-end">
+                            <a href="{$evidence.review_url}" class="btn btn-sm btn-outline-primary">复核追溯</a>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="structuredBlockEvidence"}
+                    <tr><td colspan="7" class="text-center text-muted">暂无结构块证据。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -15,7 +15,6 @@ use app\model\ManagementReview;
 use app\model\Nonconformity;
 use app\model\ReviewAction;
 use app\model\Training;
-use app\service\NotificationService;
 use think\facade\Session;
 use think\facade\View;
 
@@ -29,9 +28,6 @@ class Dashboard extends BaseController
 
     public function index()
     {
-        NotificationService::checkCalibrationDue();
-        NotificationService::checkCapaOverdue();
-
         $userId = Session::get('user.id');
         $stats = [
             'docCount' => Document::where('soft_delete', 0)->count(),

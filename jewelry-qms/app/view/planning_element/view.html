@@ -1,0 +1,305 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">{$detail.element.name}</h4>
+        <div class="text-muted small">要素详情仅展示中文名称；相关编号来自条款库和质量手册章节。</div>
+    </div>
+    <div>
+        <a href="/planning/elements" class="btn btn-sm btn-outline-secondary">返回列表</a>
+        <a href="/planning/elements/edit?id={$detail.element.id}" class="btn btn-sm btn-primary">编辑要素</a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">类型</div>
+                <div>{if $detail.element.element_type == 'technical'}技术{else}管理{/if}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">适用性</div>
+                <div>{$detail.element.applicability}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">状态</div>
+                <div>{$detail.element.status}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">智能体建议</div>
+                <div>{$detail.coverage.suggestion_count}</div>
+            </div>
+            <div class="col-12">
+                <div class="text-muted small">概要</div>
+                <div>{$detail.element.summary|default='-'}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">外部条款</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead><tr><th>来源</th><th>条款</th><th>标题</th><th>映射</th><th>主映射</th></tr></thead>
+                <tbody>
+                    {volist name="detail.clauses" id="clause"}
+                    <tr>
+                        <td>{$clause.source_code}</td>
+                        <td><a href="/planning/clauses/view?id={$clause.id}">{$clause.clause_number}</a></td>
+                        <td>{$clause.title}</td>
+                        <td>{$clause.mapping_type}</td>
+                        <td>{if $clause.is_primary}是{else}否{/if}</td>
+                    </tr>
+                    {/volist}
+                    {empty name="detail.clauses"}
+                    <tr><td colspan="5" class="text-center text-muted">暂无外部条款映射</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="mb-0">手册章节</h5></div>
+            <div class="card-body">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>章节编号</th><th>标题</th><th>状态</th></tr></thead>
+                    <tbody>
+                        {volist name="detail.manual_sections" id="section"}
+                        <tr><td>{$section.section_number}</td><td>{$section.title}</td><td>{$section.status}</td></tr>
+                        {/volist}
+                        {empty name="detail.manual_sections"}
+                        <tr><td colspan="3" class="text-center text-muted">暂无手册章节</td></tr>
+                        {/empty}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="mb-0">程序文件</h5></div>
+            <div class="card-body">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>文件编号</th><th>标题</th><th>关系</th></tr></thead>
+                    <tbody>
+                        {volist name="detail.documents" id="doc"}
+                        <tr><td>{$doc.doc_number}</td><td>{$doc.title}</td><td>{$doc.relation_type}</td></tr>
+                        {/volist}
+                        {empty name="detail.documents"}
+                        <tr><td colspan="3" class="text-center text-muted">暂无程序文件</td></tr>
+                        {/empty}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="mb-0">记录表格</h5></div>
+            <div class="card-body">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>表格编号</th><th>名称</th><th>模块</th></tr></thead>
+                    <tbody>
+                        {volist name="detail.record_forms" id="form"}
+                        <tr><td>{$form.doc_number}</td><td>{$form.name}</td><td>{$form.module}</td></tr>
+                        {/volist}
+                        {empty name="detail.record_forms"}
+                        <tr><td colspan="3" class="text-center text-muted">暂无记录表格</td></tr>
+                        {/empty}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="mb-0">运行模块</h5></div>
+            <div class="card-body">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>模块</th><th>入口</th><th>关系</th></tr></thead>
+                    <tbody>
+                        {volist name="detail.business_modules" id="module"}
+                        <tr><td>{$module.name}</td><td><a href="{$module.url}">进入</a></td><td>{if $module.relation_label}{$module.relation_label}{else}{$module.relation_type}{/if}</td></tr>
+                        {/volist}
+                        {empty name="detail.business_modules"}
+                        <tr><td colspan="3" class="text-center text-muted">暂无运行模块</td></tr>
+                        {/empty}
+                    </tbody>
+                </table>
+                <form method="post" action="/planning/elements/modules/map" class="row g-2 align-items-end mt-3">
+                    <input type="hidden" name="element_id" value="{$detail.element.id}">
+                    <input type="hidden" name="relation_type" value="supporting">
+                    <div class="col-md-5">
+                        <label class="form-label small text-muted" for="module_id">补充运行模块</label>
+                        <select id="module_id" name="module_id" class="form-select form-select-sm">
+                            {volist name="businessModuleOptions" id="option"}
+                            <option value="{$option.id}" {if $option.mapped}disabled{/if}>{$option.name}{if $option.relation_label}（{$option.relation_label}）{/if}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small text-muted" for="module_note">复核说明</label>
+                        <input id="module_note" name="note" type="text" class="form-control form-control-sm" value="人工复核后建立的运行模块要素映射。">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="mb-0">岗位职责</h5></div>
+            <div class="card-body">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>岗位</th><th>职责类型</th><th>说明</th></tr></thead>
+                    <tbody>
+                        {volist name="detail.responsibilities" id="role"}
+                        <tr><td>{$role.name}</td><td>{$role.responsibility_type}</td><td>{$role.note}</td></tr>
+                        {/volist}
+                        {empty name="detail.responsibilities"}
+                        <tr><td colspan="3" class="text-center text-muted">暂无岗位职责</td></tr>
+                        {/empty}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="mb-0">运行证据</h5></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>记录标题</th>
+                                <th>记录表格</th>
+                                <th>程序文件</th>
+                                <th>状态</th>
+                                <th>形成时间</th>
+                                <th class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {volist name="detail.runtime_evidence" id="evidence"}
+                            <tr>
+                                <td><a href="{$evidence.instance_url}" class="fw-semibold">{$evidence.record_title}</a></td>
+                                <td>
+                                    <a href="{$evidence.template_url}">{$evidence.template_number}</a>
+                                    <div class="text-muted small">{$evidence.template_name}</div>
+                                </td>
+                                <td>
+                                    {if $evidence.procedure_number}{$evidence.procedure_number} {$evidence.procedure_title}{else}-{/if}
+                                </td>
+                                <td>{$evidence.status}</td>
+                                <td>{$evidence.created|default='-'}</td>
+                                <td class="text-end">
+                                    <a href="{$evidence.instance_url}" class="btn btn-sm btn-outline-primary">查看记录</a>
+                                </td>
+                            </tr>
+                            {/volist}
+                            {empty name="detail.runtime_evidence"}
+                            <tr><td colspan="6" class="text-center text-muted">暂无运行证据。</td></tr>
+                            {/empty}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="mb-0">结构块证据</h5></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>来源文件</th>
+                                <th>内容块</th>
+                                <th>关系</th>
+                                <th>关联对象</th>
+                                <th>说明</th>
+                                <th class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {volist name="detail.structured_block_evidence" id="evidence"}
+                            <tr>
+                                <td>
+                                    <a href="{$evidence.document_url}" class="fw-semibold">{$evidence.doc_number}</a>
+                                    <div class="text-muted small">{$evidence.document_title}</div>
+                                </td>
+                                <td>
+                                    {$evidence.block_title}
+                                    <div class="text-muted small">{$evidence.block_section_number|default='-'} · {$evidence.block_type}</div>
+                                </td>
+                                <td>
+                                    {$evidence.relation_type}
+                                    <div class="text-muted small">{$evidence.confidence}</div>
+                                </td>
+                                <td>
+                                    {if $evidence.clause_number}<div>{$evidence.source_code} {$evidence.clause_number}</div>{/if}
+                                    {if $evidence.manual_section_number}<div>{$evidence.manual_section_number} {$evidence.manual_title}</div>{/if}
+                                    {if $evidence.procedure_number}<div>{$evidence.procedure_number} {$evidence.procedure_title}</div>{/if}
+                                    {if $evidence.record_number}<div>{$evidence.record_number} {$evidence.record_name}</div>{/if}
+                                    {if $evidence.module_name}<div>{$evidence.module_code} {$evidence.module_name}</div>{/if}
+                                    {if $evidence.position_name}<div>{$evidence.position_name}</div>{/if}
+                                </td>
+                                <td>{$evidence.note|default='-'}</td>
+                                <td class="text-end">
+                                    <a href="{$evidence.review_url}" class="btn btn-sm btn-outline-primary">复核追溯</a>
+                                </td>
+                            </tr>
+                            {/volist}
+                            {empty name="detail.structured_block_evidence"}
+                            <tr><td colspan="6" class="text-center text-muted">暂无结构块证据。</td></tr>
+                            {/empty}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="mb-0">智能体建议</h5></div>
+            <div class="card-body">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>标题</th><th>内容</th><th>证据</th><th>状态</th><th class="text-end">人工处理</th></tr></thead>
+                    <tbody>
+                        {volist name="detail.suggestions" id="suggestion"}
+                        <tr>
+                            <td>{$suggestion.title}</td>
+                            <td>{$suggestion.content}</td>
+                            <td>{$suggestion.evidence}</td>
+                            <td>{$suggestion.status}</td>
+                            <td class="text-end">
+                                <form method="post" action="/planning/suggestions/review" class="d-flex gap-2 justify-content-end align-items-start">
+                                    <input type="hidden" name="suggestion_id" value="{$suggestion.id}">
+                                    <input type="hidden" name="redirect_to" value="/planning/elements/view?id={$detail.element.id}">
+                                    <textarea name="review_note" class="form-control form-control-sm" rows="2" placeholder="人工复核说明" required></textarea>
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="智能体建议处理">
+                                        <button type="submit" name="status" value="accepted" class="btn btn-outline-success">采纳建议</button>
+                                        <button type="submit" name="status" value="rejected" class="btn btn-outline-danger">驳回建议</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                        {/volist}
+                        {empty name="detail.suggestions"}
+                        <tr><td colspan="5" class="text-center text-muted">暂无智能体建议</td></tr>
+                        {/empty}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

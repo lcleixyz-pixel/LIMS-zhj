@@ -78,6 +78,36 @@
 </div>
 
 <div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0">结构化文件</h6></div>
+    <div class="card-body">
+        {notempty name="structureSummary"}
+        <div class="row g-3 align-items-center">
+            <div class="col-md-3">
+                <div class="text-muted small">结构状态</div>
+                <div>{$structureSummary.status} / {$structureSummary.render_status}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">内容块</div>
+                <div>{$structureSummary.block_count} 个</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">块级追溯</div>
+                <div>{$structureSummary.link_count} 条</div>
+            </div>
+            <div class="col-md-3 text-md-end">
+                <a href="/planning/structures/view?id={$structureSummary.structured_document_id}" class="btn btn-sm btn-outline-primary">查看结构化文件</a>
+            </div>
+            <div class="col-12">
+                <div class="text-muted small">同步结构化：文件修订保存后会从受控附件重新抽取 Markdown 内容块，生成草稿并等待复核发布。</div>
+            </div>
+        </div>
+        {else}
+        <div class="text-muted small">暂无结构化文件。可在“体系策划 / 文件结构化”中生成结构化骨架后再进行追溯复核。</div>
+        {/notempty}
+    </div>
+</div>
+
+<div class="card mb-3">
     <div class="card-header"><h6 class="mb-0">审批流程</h6></div>
     <div class="card-body">
         {volist name="approvals" id="row"}

@@ -1,0 +1,230 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">策划中心</h4>
+        <div class="text-muted small">从外部依据到条款库、无编号要素、体系文件和运行证据的追溯骨架。</div>
+    </div>
+    <form method="post" action="/planning/elements/seed" class="m-0">
+        <button type="submit" class="btn btn-primary btn-sm">初始化策划骨架</button>
+    </form>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">正式外部依据</div>
+            <div class="fs-4 fw-semibold">{$stats.source_count|default=0}</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">正式条款</div>
+            <div class="fs-4 fw-semibold">{$stats.clause_count|default=0}</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">无编号要素</div>
+            <div class="fs-4 fw-semibold">{$stats.element_count|default=0}</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">智能体建议</div>
+            <div class="fs-4 fw-semibold">{$stats.open_suggestion_count|default=0}</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">近期追溯缺口</h5>
+        <a href="/planning/traceability" class="btn btn-sm btn-outline-primary">查看追溯矩阵</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>要素名称</th>
+                        <th>外部条款</th>
+                        <th>手册章节</th>
+                        <th>程序文件</th>
+                        <th>记录表格</th>
+                        <th>运行模块</th>
+                        <th>岗位职责</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="rows" id="row"}
+                    <tr>
+                        <td><a href="/planning/elements/view?id={$row.element.id}">{$row.element.name}</a></td>
+                        <td>{$row.clause_count}</td>
+                        <td>{$row.manual_section_count}</td>
+                        <td>{$row.document_count}</td>
+                        <td>{$row.record_form_count}</td>
+                        <td>{$row.module_count}</td>
+                        <td>{$row.responsibility_count}</td>
+                        <td>
+                            {if $row.gap_count == 0}
+                            <span class="badge badge-status-effective">已覆盖</span>
+                            {else}
+                            <span class="badge bg-warning text-dark">缺口 {$row.gap_count}</span>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="rows"}
+                    <tr><td colspan="8" class="text-center text-muted">暂无要素数据，请先初始化策划骨架。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">未匹配条款建议</h5>
+        <span class="text-muted small">仅供人工处理，不自动修改正式体系数据</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>建议标题</th>
+                        <th>建议内容</th>
+                        <th>证据</th>
+                        <th>状态</th>
+                        <th class="text-end">人工处理</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="clauseMappingSuggestions" id="suggestion"}
+                    <tr>
+                        <td>{$suggestion.title}</td>
+                        <td>{$suggestion.content}</td>
+                        <td>{$suggestion.evidence}</td>
+                        <td>{$suggestion.status}</td>
+                        <td class="text-end">
+                            <form method="post" action="/planning/suggestions/review" class="d-flex gap-2 justify-content-end align-items-start">
+                                <input type="hidden" name="suggestion_id" value="{$suggestion.id}">
+                                <input type="hidden" name="redirect_to" value="/planning/index">
+                                <textarea name="review_note" class="form-control form-control-sm" rows="2" placeholder="人工复核说明" required></textarea>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="智能体建议处理">
+                                    <button type="submit" name="status" value="accepted" class="btn btn-outline-success">采纳建议</button>
+                                    <button type="submit" name="status" value="rejected" class="btn btn-outline-danger">驳回建议</button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="clauseMappingSuggestions"}
+                    <tr><td colspan="5" class="text-center text-muted">暂无未匹配条款建议。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">程序记录要求建议</h5>
+        <span class="text-muted small">从程序文件记录要求覆盖缺口生成</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>建议标题</th>
+                        <th>建议内容</th>
+                        <th>证据</th>
+                        <th>状态</th>
+                        <th class="text-end">人工处理</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="procedureRecordSuggestions" id="suggestion"}
+                    <tr>
+                        <td>{$suggestion.title}</td>
+                        <td>{$suggestion.content}</td>
+                        <td>{$suggestion.evidence}</td>
+                        <td>{$suggestion.status}</td>
+                        <td class="text-end">
+                            <form method="post" action="/planning/suggestions/review" class="d-flex gap-2 justify-content-end align-items-start">
+                                <input type="hidden" name="suggestion_id" value="{$suggestion.id}">
+                                <input type="hidden" name="redirect_to" value="/planning/index">
+                                <textarea name="review_note" class="form-control form-control-sm" rows="2" placeholder="人工复核说明" required></textarea>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="程序记录要求建议处理">
+                                    <button type="submit" name="status" value="accepted" class="btn btn-outline-success">采纳建议</button>
+                                    <button type="submit" name="status" value="rejected" class="btn btn-outline-danger">驳回建议</button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="procedureRecordSuggestions"}
+                    <tr><td colspan="5" class="text-center text-muted">暂无程序记录要求建议。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">记录表格schema建议</h5>
+        <span class="text-muted small">从记录要求块与字段schema缺口生成</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>建议标题</th>
+                        <th>建议内容</th>
+                        <th>证据</th>
+                        <th>状态</th>
+                        <th>处理入口</th>
+                        <th class="text-end">人工处理</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="recordSchemaSuggestions" id="suggestion"}
+                    <tr>
+                        <td>{$suggestion.title}</td>
+                        <td>{$suggestion.content}</td>
+                        <td>{$suggestion.evidence}</td>
+                        <td>{$suggestion.status}</td>
+                        <td>
+                            {if $suggestion.record_form_edit_url != ''}
+                            <a href="{$suggestion.record_form_edit_url}" class="btn btn-sm btn-outline-primary">编辑记录表格</a>
+                            {else}
+                            <span class="text-muted small">需先关联表格</span>
+                            {/if}
+                        </td>
+                        <td class="text-end">
+                            <form method="post" action="/planning/suggestions/review" class="d-flex gap-2 justify-content-end align-items-start">
+                                <input type="hidden" name="suggestion_id" value="{$suggestion.id}">
+                                <input type="hidden" name="redirect_to" value="/planning/index">
+                                <textarea name="review_note" class="form-control form-control-sm" rows="2" placeholder="人工复核说明" required></textarea>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="记录表格schema建议处理">
+                                    <button type="submit" name="status" value="accepted" class="btn btn-outline-success">采纳建议</button>
+                                    <button type="submit" name="status" value="rejected" class="btn btn-outline-danger">驳回建议</button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="recordSchemaSuggestions"}
+                    <tr><td colspan="6" class="text-center text-muted">暂无记录表格schema建议。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

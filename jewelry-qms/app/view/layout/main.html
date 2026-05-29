@@ -48,19 +48,17 @@
                         <li><a class="dropdown-item" href="/doc_category/index">文件分类</a></li>
                     </ul>
                 </li>
-                {if condition="qms_can('planning')"}
+                {if condition="qms_can('planningdashboard')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">体系策划</a>
                     <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/planning/index">策划中心</a></li>
+                        <li><a class="dropdown-item" href="/planning/elements">要素管理</a></li>
                         <li><a class="dropdown-item" href="/planning/sources">外部依据</a></li>
                         <li><a class="dropdown-item" href="/planning/clauses">条款库</a></li>
-                        <li><a class="dropdown-item" href="/planning/elements">体系要素</a></li>
-                        <li><a class="dropdown-item" href="/planning/positions">岗位职责矩阵</a></li>
-                        <li><a class="dropdown-item" href="/planning/responsibility-matrix">责任分配表</a></li>
-                        <li><a class="dropdown-item" href="/planning/objectives">质量方针目标</a></li>
-                        <li><a class="dropdown-item" href="/planning/document-sections">文件章节</a></li>
+                        <li><a class="dropdown-item" href="/planning/structures">文件结构化</a></li>
                         <li><a class="dropdown-item" href="/planning/traceability">追溯矩阵</a></li>
-                        <li><a class="dropdown-item" href="/planning/import-batches">导入复核</a></li>
+                        <li><a class="dropdown-item" href="/planning/objectives">质量方针目标</a></li>
                     </ul>
                 </li>
                 {/if}

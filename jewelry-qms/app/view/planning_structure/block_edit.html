@@ -1,0 +1,50 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">编辑内容块</h4>
+        <div class="text-muted small">{$detail.document.doc_number} {$detail.document.title} · {$detail.block.title}</div>
+    </div>
+    <a href="/planning/structures/view?id={$detail.document.id}" class="btn btn-sm btn-outline-secondary">返回文件</a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">内容块类型</div>
+                <div>{$detail.block.block_type}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">稳定键</div>
+                <div class="font-monospace text-break">{$detail.block.stable_key}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">来源定位</div>
+                <div class="text-break">{$detail.block.source_locator|default='-'}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">当前追溯</div>
+                <div>{$detail.links|count} 条</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post" action="/planning/structures/blocks/update" class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Markdown 内容</h5>
+    </div>
+    <div class="card-body">
+        <input type="hidden" name="id" value="{$detail.block.id}">
+        <div class="mb-3">
+            <label for="revision_note" class="form-label">修订说明</label>
+            <textarea id="revision_note" name="revision_note" class="form-control" rows="3" required placeholder="说明本次修改原因、依据或影响范围"></textarea>
+        </div>
+        <label for="markdown" class="form-label">内容块正文</label>
+        <textarea id="markdown" name="markdown" class="form-control font-monospace" rows="18" required>{$detail.block.markdown}</textarea>
+        <div class="form-text">保存后将更新该内容块，并重新渲染当前结构化文件，生成新的渲染存档。</div>
+    </div>
+    <div class="card-footer d-flex justify-content-end gap-2">
+        <a href="/planning/structures/view?id={$detail.document.id}" class="btn btn-outline-secondary">取消</a>
+        <button type="submit" class="btn btn-primary">保存并渲染</button>
+    </div>
+</form>

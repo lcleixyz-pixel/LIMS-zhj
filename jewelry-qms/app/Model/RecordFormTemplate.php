@@ -14,6 +14,16 @@ class RecordFormTemplate extends BaseModel
         return $this->belongsTo(Document::class, 'document_id');
     }
 
+    public function element()
+    {
+        return $this->belongsTo(QmsElement::class, 'element_id');
+    }
+
+    public function procedureDocument()
+    {
+        return $this->belongsTo(Document::class, 'procedure_doc_id');
+    }
+
     public function instances()
     {
         return $this->hasMany(RecordFormInstance::class, 'template_id');
