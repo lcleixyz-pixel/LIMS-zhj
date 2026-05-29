@@ -483,10 +483,15 @@ CREATE TABLE `training_plans` (
   `company_id` varchar(36) NOT NULL,
   `plan_year` year NOT NULL,
   `title` varchar(200) NOT NULL,
+  `description` text,
   `status` enum('draft','approved','completed') DEFAULT 'draft',
+  `approved_by` varchar(36) DEFAULT NULL,
+  `approved_at` datetime DEFAULT NULL,
+  `completed_at` datetime DEFAULT NULL,
   `publish` tinyint(1) DEFAULT 1,
   `soft_delete` tinyint(1) DEFAULT 0,
   `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
   `created_by` varchar(36) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -541,6 +546,29 @@ CREATE TABLE `competency_records` (
   `created` datetime DEFAULT NULL,
   `modified` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `employee_certificates` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `employee_id` varchar(36) NOT NULL,
+  `certificate_type` varchar(100) NOT NULL,
+  `certificate_number` varchar(100) DEFAULT NULL,
+  `issuing_authority` varchar(200) DEFAULT NULL,
+  `issue_date` date DEFAULT NULL,
+  `valid_until` date DEFAULT NULL,
+  `review_date` date DEFAULT NULL,
+  `status` enum('active','expired','revoked','archived') DEFAULT 'active',
+  `remarks` text,
+  `publish` tinyint(1) DEFAULT 1,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `employee_id` (`employee_id`),
+  KEY `valid_until` (`valid_until`),
+  KEY `status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== 供应商 ==========

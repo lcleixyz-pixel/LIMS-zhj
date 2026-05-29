@@ -34,7 +34,7 @@ return [
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
             'equipment', 'equipment_maintenance', 'calibration',
-            'training', 'training_record', 'competency_record',
+            'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate',
             'supplier', 'supplier_evaluation', 'import', 'notification',
             'department', 'employee', 'user',
         ],
@@ -45,7 +45,7 @@ return [
         'department_head' => [
             'dashboard', 'document', 'record_form_template', 'record_form_instance', 'capa', 'nonconformity', 'complaint',
             'equipment', 'equipment_maintenance', 'calibration',
-            'training', 'training_record', 'competency_record', 'notification',
+            'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate', 'notification',
         ],
         'staff' => [
             'dashboard', 'document', 'record_form_template', 'record_form_instance', 'complaint', 'notification',
@@ -118,6 +118,17 @@ return [
             'planned' => '计划中',
             'completed' => '已完成',
             'cancelled' => '已取消',
+        ],
+        'training_plan' => [
+            'draft' => '草稿',
+            'approved' => '已批准',
+            'completed' => '已完成',
+        ],
+        'employee_certificate' => [
+            'active' => '有效',
+            'expired' => '已过期',
+            'revoked' => '已撤销',
+            'archived' => '已归档',
         ],
     ],
 

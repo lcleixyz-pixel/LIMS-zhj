@@ -1,0 +1,47 @@
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">培训计划详情</h5>
+        <div>
+            {if $record.status == 'draft'}<a href="/training_plan/approve?id={$record.id}" class="btn btn-sm btn-primary">批准计划</a>{/if}
+            {if $record.status != 'completed'}<a href="/training_plan/complete?id={$record.id}" class="btn btn-sm btn-outline-success">标记完成</a>{/if}
+            <a href="/training/add?training_plan_id={$record.id}" class="btn btn-sm btn-outline-primary">添加培训活动</a>
+            <a href="/training_plan/edit?id={$record.id}" class="btn btn-sm btn-outline-secondary">编辑</a>
+            <a href="/training_plan/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered mb-0">
+            <tr><th width="160">计划年度</th><td>{$record.plan_year}</td></tr>
+            <tr><th>计划名称</th><td>{$record.title}</td></tr>
+            <tr><th>状态</th><td>{$statusLabels[$record.status]|default=$record.status}</td></tr>
+            <tr><th>进度</th><td>{$planProgress.completed}/{$planProgress.total} 已完成（{$planProgress.rate}%）</td></tr>
+            <tr><th>批准时间</th><td>{$record.approved_at|default='-'}</td></tr>
+            <tr><th>完成时间</th><td>{$record.completed_at|default='-'}</td></tr>
+            <tr><th>计划说明</th><td>{$record.description|default='-'}</td></tr>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">计划培训活动</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-sm align-middle">
+                <thead><tr><th>日期</th><th>主题</th><th>类型</th><th>讲师</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody>
+                    {volist name="trainingRows" id="training"}
+                    <tr>
+                        <td>{$training.training_date|default='-'}</td>
+                        <td>{$training.title}</td>
+                        <td>{$typeLabels[$training.training_type]|default=$training.training_type}</td>
+                        <td>{$training.trainer|default='-'}</td>
+                        <td>{$statusLabels[$training.status]|default=$training.status}</td>
+                        <td><a href="/training/view?id={$training.id}" class="btn btn-sm btn-outline-info">查看</a></td>
+                    </tr>
+                    {/volist}
+                    {empty name="trainingRows"}<tr><td colspan="6" class="text-center text-muted">暂无关联培训活动</td></tr>{/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

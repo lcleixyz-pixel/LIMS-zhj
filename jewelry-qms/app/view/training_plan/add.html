@@ -1,0 +1,31 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">新建培训计划</h5></div>
+    <div class="card-body">
+        <form method="post" action="/training_plan/add">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label required">计划年度</label>
+                    <select name="plan_year" class="form-select" required>
+                        {volist name="yearOptions" id="year"}<option value="{$year}" {if $year == $currentYear}selected{/if}>{$year}</option>{/volist}
+                    </select>
+                </div>
+                <div class="col-md-8 mb-3">
+                    <label class="form-label required">计划名称</label>
+                    <input name="title" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">状态</label>
+                    <select name="status" class="form-select">
+                        {volist name="statusOptions" id="option"}<option value="{$option.value}">{$option.label}</option>{/volist}
+                    </select>
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="form-label">计划说明</label>
+                    <textarea name="description" class="form-control" rows="4"></textarea>
+                </div>
+            </div>
+            <a href="/training_plan/index" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>

@@ -7,7 +7,7 @@
                 <select name="training_id" class="form-select" required>
                     <option value="">请选择</option>
                     {volist name="trainings" id="t"}
-                    <option value="{$t.id}">{$t.training_date|default=''} {$t.title}</option>
+                    <option value="{$t.id}" {if $currentTrainingId == $t.id}selected{/if}>{$t.training_date|default=''} {$t.title}</option>
                     {/volist}
                 </select>
             </div>

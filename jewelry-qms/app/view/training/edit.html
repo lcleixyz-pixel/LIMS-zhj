@@ -1,57 +1,20 @@
 <div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">编辑培训记录</h5>
-    </div>
+    <div class="card-header"><h5 class="mb-0">编辑培训活动</h5></div>
     <div class="card-body">
-        <form method="post" action="/training/edit" enctype="multipart/form-data">
-            <input type="hidden" name="id" value="{$record.id}">
+        <form method="post" action="/training/edit?id={$record.id}">
             <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="name" class="form-label required">名称</label>
-                        <input type="text" class="form-control" id="name" name="name" required value="{$record.name|default=''}">
-                    </div>
-                    <div class="mb-3">
-                        <label for="code" class="form-label">编号</label>
-                        <input type="text" class="form-control" id="code" name="code" value="{$record.code|default=''}">
-                    </div>
-                    <div class="mb-3">
-                        <label for="status" class="form-label">状态</label>
-                        <select name="status" id="status" class="form-select">
-                            <option value="draft" {if $record.status == 'draft'}selected{/if}>草稿</option>
-                            <option value="active" {if $record.status == 'active'}selected{/if}>启用</option>
-                            <option value="inactive" {if $record.status == 'inactive'}selected{/if}>停用</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="department_id" class="form-label">所属部门</label>
-                        <select name="department_id" id="department_id" class="form-select">
-                            <option value="">请选择</option>
-                            {volist name="departments" id="dept"}
-                            <option value={$dept.id} {if $record.department_id == $dept.id}selected{/if}>{$dept.name}</option>
-                            {/volist}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="responsible_person" class="form-label">负责人</label>
-                        <input type="text" class="form-control" id="responsible_person" name="responsible_person" value="{$record.responsible_person|default=''}">
-                    </div>
-                    <div class="mb-3">
-                        <label for="remark" class="form-label">备注</label>
-                        <input type="text" class="form-control" id="remark" name="remark" value="{$record.remark|default=''}">
-                    </div>
-                </div>
+                <div class="col-md-6 mb-3"><label class="form-label">所属培训计划</label><select name="training_plan_id" class="form-select"><option value="">不关联计划</option>{volist name="trainingPlans" id="plan"}<option value="{$plan.id}" {if $record.training_plan_id == $plan.id}selected{/if}>{$plan.plan_year} {$plan.title}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label class="form-label required">培训主题</label><input name="title" class="form-control" value="{$record.title}" required></div>
+                <div class="col-md-4 mb-3"><label class="form-label">培训类型</label><select name="training_type" class="form-select">{volist name="typeOptions" id="option"}<option value="{$option.value}" {if $record.training_type == $option.value}selected{/if}>{$option.label}</option>{/volist}</select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">培训日期</label><input type="date" name="training_date" class="form-control" value="{$record.training_date|default=''}"></div>
+                <div class="col-md-4 mb-3"><label class="form-label">学时</label><input type="number" step="0.5" name="duration_hours" class="form-control" value="{$record.duration_hours|default=''}"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">讲师/培训机构</label><input name="trainer" class="form-control" value="{$record.trainer|default=''}"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">部门</label><select name="department_id" class="form-select"><option value="">请选择</option>{volist name="departments" id="dept"}<option value="{$dept.id}" {if $record.department_id == $dept.id}selected{/if}>{$dept.name}</option>{/volist}</select></div>
+                <div class="col-md-4 mb-3"><label class="form-label">状态</label><select name="status" class="form-select">{volist name="statusOptions" id="option"}<option value="{$option.value}" {if $record.status == $option.value}selected{/if}>{$option.label}</option>{/volist}</select></div>
+                <div class="col-12 mb-3"><label class="form-label">培训内容</label><textarea name="content" class="form-control" rows="4">{$record.content|default=''}</textarea></div>
             </div>
-            <div class="mb-3">
-                <label for="description" class="form-label">描述</label>
-                <textarea class="form-control" id="description" name="description" rows="3">{$record.description|default=''}</textarea>
-            </div>
-            <div class="text-end">
-                <a href="/training/index" class="btn btn-secondary">取消</a>
-                <button type="submit" class="btn btn-primary">更新</button>
-            </div>
+            <a href="/training/view?id={$record.id}" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">保存</button>
         </form>
     </div>
 </div>
