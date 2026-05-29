@@ -6,6 +6,8 @@ namespace app\controller;
 use app\BaseController;
 use app\model\RecordFormTemplate as TemplateModel;
 use app\service\FileService;
+use app\service\QmsDocumentStructureService;
+use app\service\QmsElementService;
 use app\service\RecordFormBatchTemplateService;
 use app\service\RecordFormFixtureService;
 use app\service\RecordFormPrintService;
@@ -178,6 +180,12 @@ class RecordFormTemplate extends BaseController
     public function edit()
     {
         $record = $this->findTemplate();
+        $schemaDraftBlockId = trim((string)$this->request->param('schema_draft_block_id', ''));
+        $schemaSuggestionId = trim((string)$this->request->param('schema_suggestion_id', ''));
+        View::assign('schemaDraftNotice', '');
+        View::assign('schemaDraftChecklist', []);
+        View::assign('schemaDraftBlockId', $schemaDraftBlockId);
+        View::assign('schemaSuggestionId', $schemaSuggestionId);
         if ($this->request->isPost()) {
             $data = $this->request->post();
             $errors = $this->validateTemplateInput($data);
@@ -224,14 +232,67 @@ class RecordFormTemplate extends BaseController
             }
 
             $record->save($update);
-            Session::flash('success', '记录表格模板已更新');
+            $traceMessage = '';
+            if ($schemaDraftBlockId !== '') {
+                try {
+                    QmsElementService::recordSchemaDraftSaved((string)$record->id, $schemaDraftBlockId, $schemaSuggestionId);
+                    $traceMessage = '，已记录schema来源追溯';
+                } catch (RuntimeException $exception) {
+                    Session::flash('warning', '记录表格模板已更新，但schema来源追溯记录失败：' . $exception->getMessage());
+
+                    return redirect('/record_form_template/view?id=' . $record->id);
+                }
+            }
+
+            Session::flash('success', '记录表格模板已更新' . $traceMessage);
 
             return redirect('/record_form_template/view?id=' . $record->id);
+        }
+
+        if ($schemaDraftBlockId !== '') {
+            $draft = QmsDocumentStructureService::recordRequirementSchemaDraftForBlock($schemaDraftBlockId);
+            if ($draft !== []) {
+                $record->setAttr('field_schema', RecordFormSchemaService::encode($draft));
+                View::assign('schemaDraftChecklist', QmsDocumentStructureService::recordRequirementSchemaFieldChecklistForBlock($schemaDraftBlockId));
+                View::assign('schemaDraftNotice', '已根据程序记录要求生成候选schema草稿。请人工复核字段、类型、责任和保存期限；未点击保存前不会修改正式记录表格模板。');
+            } else {
+                View::assign('schemaDraftNotice', '未能从当前记录要求块生成候选schema草稿，请先复核结构化文件和记录表格关联。');
+            }
         }
 
         View::assign('record', $record);
 
         return View::fetch('record_form_template/edit');
+    }
+
+    public function reviewSchemaDraftFields()
+    {
+        if (!$this->request->isPost()) {
+            Session::flash('warning', '请从记录表格编辑页提交字段复核意见。');
+
+            return redirect('/record_form_template/index');
+        }
+
+        $record = $this->findTemplate();
+        $schemaDraftBlockId = trim((string)$this->request->post('schema_draft_block_id', ''));
+        $schemaSuggestionId = trim((string)$this->request->post('schema_suggestion_id', ''));
+        $fieldReviews = $this->request->post('field_reviews/a', []);
+        $redirectUrl = '/record_form_template/edit?id=' . rawurlencode((string)$record->id);
+        if ($schemaDraftBlockId !== '') {
+            $redirectUrl .= '&schema_draft_block_id=' . rawurlencode($schemaDraftBlockId);
+        }
+        if ($schemaSuggestionId !== '') {
+            $redirectUrl .= '&schema_suggestion_id=' . rawurlencode($schemaSuggestionId);
+        }
+
+        try {
+            $summary = QmsElementService::reviewRecordSchemaDraftFields((string)$record->id, $schemaDraftBlockId, $fieldReviews, $schemaSuggestionId);
+            Session::flash('success', '字段复核意见已记录 ' . (int)($summary['reviewed_fields'] ?? 0) . ' 项，正式字段配置未修改。');
+        } catch (RuntimeException $exception) {
+            Session::flash('warning', '字段复核记录失败：' . $exception->getMessage());
+        }
+
+        return redirect($redirectUrl);
     }
 
     public function view()
@@ -240,6 +301,7 @@ class RecordFormTemplate extends BaseController
         $record->setAttr('fillable', $this->isTemplateFillable($record));
         View::assign('record', $record);
         View::assign('schema', RecordFormSchemaService::decode($record->field_schema));
+        View::assign('requirementEvidence', QmsDocumentStructureService::recordFormRequirementEvidence((string)$record->id));
         View::assign('canCreateInstances', $this->canCreateInstances());
 
         return View::fetch('record_form_template/view');

@@ -13,6 +13,7 @@ use app\model\DocTemplate;
 use app\model\User;
 use app\service\ApprovalService;
 use app\service\FileService;
+use app\service\QmsDocumentStructureService;
 use think\exception\HttpException;
 use think\facade\Session;
 use think\facade\View;
@@ -174,6 +175,7 @@ class Document extends BaseController
         View::assign('departmentName', $departmentName);
         View::assign('revisions', $revisions);
         View::assign('approvals', $approvals);
+        View::assign('structureSummary', QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id));
 
         return View::fetch('document/view');
     }
@@ -222,12 +224,23 @@ class Document extends BaseController
             }
 
             $doc->save($update);
-            Session::flash('success', '已生成修订版本 ' . $newVersion);
+            $message = '已生成修订版本 ' . $newVersion;
+            try {
+                $structure = QmsDocumentStructureService::refreshControlledDocumentStructure(
+                    (string)$doc->id,
+                    '文件控制修订同步：' . (string)$this->request->post('change_reason', '')
+                );
+                $message .= '，结构化文件已同步为草稿：' . (string)($structure['structured_document']['rendered_file_path'] ?? '');
+            } catch (\Throwable $exception) {
+                $message .= '；结构化同步待处理：' . $exception->getMessage();
+            }
+            Session::flash('success', $message);
 
             return redirect('/document/view?id=' . $id);
         }
 
         View::assign('doc', $doc);
+        View::assign('record', $doc);
 
         return View::fetch('document/revise');
     }

@@ -118,14 +118,14 @@ class WorkflowService
 
     public static function buildManagementReviewInputs(): array
     {
-        return [
+        return array_merge([
             'open_capa' => Capa::where('status', '<>', 'closed')->where('soft_delete', 0)->count(),
             'open_complaints' => CustomerComplaint::where('status', '<>', 'closed')->where('soft_delete', 0)->count(),
             'open_nc' => Nonconformity::where('status', '<>', 'closed')->where('soft_delete', 0)->count(),
             'open_findings' => AuditFinding::where('status', '<>', 'closed')->where('soft_delete', 0)->count(),
             'overdue_actions' => ReviewAction::where('status', 'overdue')->where('soft_delete', 0)->count(),
             'pending_reviews' => ManagementReview::where('status', 'planned')->where('soft_delete', 0)->count(),
-        ];
+        ], QmsElementService::managementReviewMetrics());
     }
 
     public static function auditorConflict(string $auditorId, ?string $departmentId): bool

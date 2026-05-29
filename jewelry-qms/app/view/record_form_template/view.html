@@ -37,6 +37,63 @@
         </table>
     </div>
 </div>
+
+<div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0">程序要求追溯</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>程序文件</th>
+                    <th>内容块</th>
+                    <th>关系</th>
+                    <th>关联对象</th>
+                    <th>说明</th>
+                    <th class="text-end">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="requirementEvidence" id="evidence"}
+                <tr>
+                    <td>
+                        <a href="{$evidence.document_url}" class="fw-semibold">{$evidence.doc_number}</a>
+                        <div class="text-muted small">{$evidence.document_title}</div>
+                    </td>
+                    <td>
+                        {$evidence.block_title}
+                        <div class="text-muted small">{$evidence.block_section_number|default='-'} · {$evidence.block_type}</div>
+                    </td>
+                    <td>
+                        {$evidence.relation_type}
+                        <div class="text-muted small">{$evidence.confidence}</div>
+                    </td>
+                    <td>
+                        {if $evidence.element_name}<div>{$evidence.element_name}</div>{/if}
+                        {if $evidence.procedure_number}<div>{$evidence.procedure_number} {$evidence.procedure_title}</div>{/if}
+                        {if $evidence.module_name}<div>{$evidence.module_code} {$evidence.module_name}</div>{/if}
+                    </td>
+                    <td>
+                        {$evidence.note|default='-'}
+                        {if $evidence.schema_source_note != ''}
+                        <div class="mt-1 small text-primary">
+                            <span class="fw-semibold">字段schema来源</span>
+                            <div>{$evidence.schema_source_note}</div>
+                        </div>
+                        {/if}
+                    </td>
+                    <td class="text-end">
+                        <a href="{$evidence.review_url}" class="btn btn-sm btn-outline-primary">复核追溯</a>
+                    </td>
+                </tr>
+                {/volist}
+                {empty name="requirementEvidence"}
+                <tr><td colspan="6" class="text-center text-muted">暂无程序要求追溯。</td></tr>
+                {/empty}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <div class="card">
     <div class="card-header"><h6 class="mb-0">字段配置</h6></div>
     <div class="card-body table-responsive">

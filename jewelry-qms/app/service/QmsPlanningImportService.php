@@ -29,6 +29,14 @@ class QmsPlanningImportService
             'source_type' => 'external_guidance',
         ],
         [
+            'source_code' => 'CNAS-CL01-A015:2018',
+            'name' => '检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明',
+            'version' => '2018',
+            'effective_date' => '2018-09-01',
+            'relative_path' => '参考/2025年最新版CMA和CNAS质量体系/07-CNAS-CL01-A015：2018 检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明.pdf',
+            'source_type' => 'external_guidance',
+        ],
+        [
             'source_code' => 'GB/T 27025-2019',
             'name' => '检测和校准实验室能力的通用要求',
             'version' => '2019',
@@ -48,6 +56,7 @@ class QmsPlanningImportService
 
     private const CURRENT_MANUAL_PATH = '现用文件/质量手册（第四版）.docx';
     private const REFERENCE_2025_MANUAL_PATH = '参考/2025年最新版CMA和CNAS质量体系/01-2025年质量手册（CMA和CNAS）(1).docx';
+    private const REFERENCE_2025_PROCEDURE_PATH = '参考/2025年最新版CMA和CNAS质量体系/02-2025年程序文件（CMA和CNAS）(1).docx';
     private const CURRENT_PROCEDURE_DIRS = [
         '现用文件/程序文件/程序文件2022',
         '现用文件/程序文件/程序文件2018',
@@ -156,8 +165,8 @@ class QmsPlanningImportService
             'positions' => self::positionsFromResponsibilityTable($responsibilityTable),
             'responsibility_matrix' => self::matrixFromResponsibilityTable($responsibilityTable),
             'manual_clause_mappings' => $manualMappings,
-            'requirement_elements' => self::requirementElementsFromManualMappings($manualMappings),
-            'element_clause_mappings' => self::elementClauseMappingsFromManualMappings($manualMappings),
+            'manual_sections' => self::manualSectionsFromManualMappings($manualMappings),
+            'manual_section_clause_mappings' => self::manualSectionClauseMappingsFromManualMappings($manualMappings),
         ];
     }
 
@@ -196,15 +205,42 @@ class QmsPlanningImportService
             'source_note' => '现用质量手册，直接作为体系要素和手册章节的内部文件基线。',
         ]];
 
-        return array_values(array_merge($documents, self::currentProcedureDocumentBaselines()));
+        return array_values(array_merge(
+            $documents,
+            self::currentProcedureDocumentBaselines(),
+            self::currentWorkInstructionDocumentBaselines()
+        ));
+    }
+
+    public static function referenceProcedureDocumentBaselines(): array
+    {
+        $path = self::workspacePath(self::REFERENCE_2025_PROCEDURE_PATH);
+
+        return [[
+            'document_level' => 2,
+            'document_role' => 'procedure',
+            'doc_number' => 'REF-2025-PROCEDURES',
+            'title' => '2025年程序文件（CMA和CNAS）参考稿',
+            'version' => '2025参考版',
+            'version_year' => '2025',
+            'file_path' => self::REFERENCE_2025_PROCEDURE_PATH,
+            'file_name' => basename(self::REFERENCE_2025_PROCEDURE_PATH),
+            'file_type' => 'docx',
+            'source_kind' => 'reference_file',
+            'source_status' => 'reference',
+            'structured_status' => 'draft',
+            'match_confidence' => is_file($path) ? 'high' : 'missing_file',
+            'source_note' => '2025年CMA/CNAS程序文件参考汇编，仅用于结构化比对、缺口建议和人工修订参考。',
+            'review_note' => '参考程序文件仅作为修订输入；不得直接替代现用受控程序文件。',
+        ]];
     }
 
     public static function trainingTraceabilitySample(): array
     {
         return [
-            'element_code' => '6.2',
+            'element_key' => 'personnel',
             'element_name' => '人员',
-            'clause_number' => '6.2',
+            'primary_clause_number' => '6.2',
             'clause_title' => '人员',
             'manual_section' => [
                 'section_number' => '6.2',
@@ -292,6 +328,27 @@ class QmsPlanningImportService
         $rows = self::applyModelSummariesToExtractedRows(self::sortClauseRows($rows), $sourceCode);
 
         return self::clauseCandidatesFromRows($rows, $source, 'registered_source_text');
+    }
+
+    public static function buildRegisteredSourceClauseRows(array $source): array
+    {
+        $rows = [];
+        foreach (self::buildRegisteredSourceClauseCandidates($source) as $candidate) {
+            if (($candidate['candidate_type'] ?? '') !== 'clause') {
+                continue;
+            }
+            $payload = (array)($candidate['payload'] ?? []);
+            if ($payload !== []) {
+                foreach (['source_code', 'clause_number', 'title', 'raw_heading', 'locator', 'original_text', 'extraction_method', 'manual_review_note'] as $field) {
+                    if (isset($payload[$field])) {
+                        $payload[$field] = self::sanitizeUtf8((string)$payload[$field]);
+                    }
+                }
+                $rows[] = $payload;
+            }
+        }
+
+        return $rows;
     }
 
     public static function applyPublishedReviewTitleBaseline(array $candidates, array $publishedTitles, string $baselineSourceCode = 'CNAS-CL01-A015:2018'): array
@@ -749,9 +806,12 @@ class QmsPlanningImportService
         $sourceCode = (string)($source['source_code'] ?? '');
         $candidates = [];
         foreach (self::sortClauseRows($rows) as $row) {
-            $originalText = trim((string)($row['original_text'] ?? ''));
+            $clauseNumber = self::sanitizeUtf8((string)($row['clause_number'] ?? ''));
+            $title = self::sanitizeUtf8((string)($row['title'] ?? ''));
+            $rawHeading = self::sanitizeUtf8((string)($row['raw_heading'] ?? $title));
+            $originalText = trim(self::sanitizeUtf8((string)($row['original_text'] ?? '')));
             if ($originalText === '') {
-                $originalText = (string)$row['clause_number'] . ' ' . (string)$row['title'];
+                $originalText = $clauseNumber . ' ' . $title;
             }
             $candidates[] = [
                 'candidate_type' => 'clause',
@@ -760,13 +820,13 @@ class QmsPlanningImportService
                     'source_code' => $sourceCode,
                     'source_id' => (string)($source['id'] ?? ''),
                     'source_status' => (string)($source['status'] ?? ''),
-                    'clause_number' => $row['clause_number'],
-                    'title' => $row['title'],
-                    'raw_heading' => $row['raw_heading'] ?? $row['title'] ?? '',
+                    'clause_number' => $clauseNumber,
+                    'title' => $title,
+                    'raw_heading' => $rawHeading,
                     'title_source' => $row['title_source'] ?? 'original_heading',
-                    'level' => (int)($row['level'] ?? self::clauseLevel((string)$row['clause_number'])),
-                    'locator' => $row['locator'] ?? ($extractionMethod . ':' . $sourceCode . ':' . (string)$row['clause_number']),
-                    'sort_key' => $row['sort_key'] ?? self::clauseSortToken((string)$row['clause_number']),
+                    'level' => (int)($row['level'] ?? self::clauseLevel($clauseNumber)),
+                    'locator' => self::sanitizeUtf8((string)($row['locator'] ?? ($extractionMethod . ':' . $sourceCode . ':' . $clauseNumber))),
+                    'sort_key' => $row['sort_key'] ?? self::clauseSortToken($clauseNumber),
                     'original_text' => $originalText,
                     'extraction_method' => $extractionMethod,
                     'is_key_item' => (bool)($row['is_key_item'] ?? false),
@@ -776,7 +836,7 @@ class QmsPlanningImportService
                         'model_outline_match' => false,
                         'warnings' => [],
                     ],
-                    'manual_review_note' => $row['manual_review_note'] ?? '',
+                    'manual_review_note' => self::sanitizeUtf8((string)($row['manual_review_note'] ?? '')),
                     'review_status' => 'pending_review',
                 ],
             ];
@@ -1182,17 +1242,17 @@ TEXT);
             ];
         }
 
-        foreach ($manual['requirement_elements'] as $element) {
+        foreach ($manual['manual_sections'] as $section) {
             $candidates[] = [
-                'candidate_type' => 'requirement_element',
+                'candidate_type' => 'manual_section',
                 'source_code' => 'CURRENT-MANUAL',
-                'payload' => $element + ['review_status' => 'pending_review'],
+                'payload' => $section + ['review_status' => 'pending_review'],
             ];
         }
 
-        foreach ($manual['element_clause_mappings'] as $mapping) {
+        foreach ($manual['manual_section_clause_mappings'] as $mapping) {
             $candidates[] = [
-                'candidate_type' => 'element_clause_mapping',
+                'candidate_type' => 'manual_section_clause_mapping',
                 'source_code' => 'CURRENT-MANUAL',
                 'payload' => $mapping + ['review_status' => 'pending_review'],
             ];
@@ -1207,7 +1267,7 @@ TEXT);
         }
 
         foreach (self::extractReferenceManualSupplements()['procedure_mappings'] as $mapping) {
-            if (($mapping['element_code'] ?? '') === '' || ($mapping['document_title'] ?? '') === '') {
+            if (($mapping['section_number'] ?? '') === '' || ($mapping['document_title'] ?? '') === '') {
                 continue;
             }
 
@@ -1215,8 +1275,8 @@ TEXT);
                 'candidate_type' => 'trace_link',
                 'source_code' => 'REFERENCE-2025-MANUAL',
                 'payload' => [
-                    'source_type' => 'requirement_element',
-                    'source_key' => $mapping['element_code'],
+                    'source_type' => 'manual_section',
+                    'source_key' => 'manual:' . $mapping['section_number'],
                     'target_type' => 'document',
                     'target_key' => $mapping['document_title'],
                     'target_title' => trim(($mapping['document_number'] ?? '') . ' ' . $mapping['document_title']),
@@ -1239,8 +1299,8 @@ TEXT);
             'candidate_type' => 'trace_link',
             'source_code' => 'SAMPLE-6.2',
             'payload' => [
-                'source_type' => 'requirement_element',
-                'source_key' => $sample['element_code'],
+                'source_type' => 'qms_element',
+                'source_key' => $sample['element_key'],
                 'target_type' => 'document_section',
                 'target_key' => 'manual:6.2',
                 'relation_type' => 'implemented_by',
@@ -1459,8 +1519,8 @@ TEXT);
             }
 
             $rows[] = [
-                'manual_section' => $manualSection,
-                'element_name' => trim((string)($row[1] ?? '')),
+                'section_number' => $manualSection,
+                'title' => trim((string)($row[1] ?? '')),
                 'cnas_clause' => trim((string)($row[2] ?? '')),
                 'cma_clause' => trim((string)($row[3] ?? '')),
                 'source' => 'current_quality_manual_clause_mapping',
@@ -1470,46 +1530,44 @@ TEXT);
         return $rows;
     }
 
-    private static function requirementElementsFromManualMappings(array $manualMappings): array
+    private static function manualSectionsFromManualMappings(array $manualMappings): array
     {
-        $elements = [];
+        $sections = [];
         foreach ($manualMappings as $mapping) {
-            $code = trim((string)($mapping['manual_section'] ?? ''));
-            if ($code === '' || isset($elements[$code])) {
+            $sectionNumber = trim((string)($mapping['section_number'] ?? ''));
+            if ($sectionNumber === '' || isset($sections[$sectionNumber])) {
                 continue;
             }
 
-            $elements[$code] = [
-                'element_code' => $code,
-                'name' => trim((string)($mapping['element_name'] ?? $code)),
-                'manual_section' => $code,
+            $sections[$sectionNumber] = [
+                'section_number' => $sectionNumber,
+                'title' => trim((string)($mapping['title'] ?? $sectionNumber)),
                 'source_basis' => 'current_quality_manual_appendix16',
             ];
         }
 
-        return array_values($elements);
+        return array_values($sections);
     }
 
-    private static function elementClauseMappingsFromManualMappings(array $manualMappings): array
+    private static function manualSectionClauseMappingsFromManualMappings(array $manualMappings): array
     {
         $rows = [];
         $seen = [];
         foreach ($manualMappings as $mapping) {
-            $elementCode = trim((string)($mapping['manual_section'] ?? ''));
-            if ($elementCode === '') {
+            $sectionNumber = trim((string)($mapping['section_number'] ?? ''));
+            if ($sectionNumber === '') {
                 continue;
             }
 
             foreach (self::sourceClausesForManualMapping($mapping) as $sourceClause) {
-                $key = $elementCode . '|' . $sourceClause['source_code'] . '|' . $sourceClause['clause_number'];
+                $key = $sectionNumber . '|' . $sourceClause['source_code'] . '|' . $sourceClause['clause_number'];
                 if (isset($seen[$key])) {
                     continue;
                 }
                 $seen[$key] = true;
                 $rows[] = [
-                    'element_code' => $elementCode,
-                    'element_name' => trim((string)($mapping['element_name'] ?? '')),
-                    'manual_section' => $elementCode,
+                    'section_number' => $sectionNumber,
+                    'section_title' => trim((string)($mapping['title'] ?? '')),
                     'source_code' => $sourceClause['source_code'],
                     'clause_number' => $sourceClause['clause_number'],
                     'clause_title' => $sourceClause['clause_title'],
@@ -1525,27 +1583,27 @@ TEXT);
     private static function sourceClausesForManualMapping(array $mapping): array
     {
         $rows = [];
-        $elementName = trim((string)($mapping['element_name'] ?? ''));
+        $sectionTitle = trim((string)($mapping['title'] ?? ''));
         $cnasClause = trim((string)($mapping['cnas_clause'] ?? ''));
         foreach (self::splitNumericClauseNumbers($cnasClause) as $number) {
             $rows[] = [
                 'source_code' => 'CNAS-CL01:2018',
                 'clause_number' => $number,
-                'clause_title' => $elementName,
+                'clause_title' => $sectionTitle,
                 'mapping_basis' => 'equivalent',
                 'mapping_source' => 'current_quality_manual_appendix16',
             ];
             $rows[] = [
                 'source_code' => 'GB/T 27025-2019',
                 'clause_number' => $number,
-                'clause_title' => $elementName,
+                'clause_title' => $sectionTitle,
                 'mapping_basis' => 'equivalent',
                 'mapping_source' => 'current_quality_manual_appendix16',
             ];
             $rows[] = [
                 'source_code' => 'CNAS-CL01-A015:2018',
                 'clause_number' => $number,
-                'clause_title' => $elementName,
+                'clause_title' => $sectionTitle,
                 'mapping_basis' => 'supplement',
                 'mapping_source' => 'current_quality_manual_appendix16_jewelry_supplement',
             ];
@@ -1555,7 +1613,7 @@ TEXT);
             $rows[] = [
                 'source_code' => '市场监管总局公告2023年第21号',
                 'clause_number' => $number,
-                'clause_title' => $elementName,
+                'clause_title' => $sectionTitle,
                 'mapping_basis' => 'equivalent',
                 'mapping_source' => 'current_quality_manual_appendix16',
             ];
@@ -1622,6 +1680,38 @@ TEXT);
         return $rows;
     }
 
+    private static function currentWorkInstructionDocumentBaselines(): array
+    {
+        $rows = [];
+        foreach (\think\facade\Db::name('documents')
+            ->where('level', 3)
+            ->where('soft_delete', 0)
+            ->order('doc_number', 'asc')
+            ->select() as $document) {
+            $docNumber = trim((string)($document['doc_number'] ?? ''));
+            if ($docNumber === '') {
+                continue;
+            }
+            $filePath = (string)($document['file_path'] ?? '');
+            $fileName = (string)($document['file_name'] ?? basename($filePath));
+            $absolutePath = $filePath !== '' ? self::workspacePath($filePath) : '';
+            $rows[] = [
+                'document_level' => 3,
+                'doc_number' => $docNumber,
+                'title' => (string)($document['title'] ?? $docNumber),
+                'version' => (string)($document['version'] ?? 'A/0'),
+                'version_year' => '',
+                'file_path' => $filePath,
+                'file_name' => $fileName,
+                'file_type' => strtolower((string)pathinfo($fileName !== '' ? $fileName : $filePath, PATHINFO_EXTENSION)),
+                'match_confidence' => $absolutePath !== '' && is_file($absolutePath) ? 'high' : 'missing_file',
+                'source_note' => '系统内三级作业指导书，进入体系文件结构化与组合包。',
+            ];
+        }
+
+        return $rows;
+    }
+
     private static function procedureDocumentBaselineFromPath(string $path, string $relativeDir): ?array
     {
         $fileName = basename($path);
@@ -1662,12 +1752,12 @@ TEXT);
                 continue;
             }
             foreach (array_slice($table, 1) as $row) {
-                $manualSection = self::firstNumericClause((string)($row[0] ?? ''));
-                if ($manualSection === '') {
+                $sectionNumber = self::firstNumericClause((string)($row[0] ?? ''));
+                if ($sectionNumber === '') {
                     continue;
                 }
                 $rows[] = [
-                    'manual_section' => $manualSection,
+                    'section_number' => $sectionNumber,
                     'title' => trim((string)($row[0] ?? '')),
                     'cnas_clause' => trim((string)($row[1] ?? '')),
                     'cma_clause' => trim((string)($row[2] ?? '')),
@@ -1695,9 +1785,9 @@ TEXT);
                 }
 
                 $cnasClause = trim((string)($row[3] ?? ''));
-                foreach (self::splitNumericClauseNumbers($cnasClause) as $elementCode) {
+                foreach (self::splitNumericClauseNumbers($cnasClause) as $sectionNumber) {
                     $rows[] = [
-                        'element_code' => $elementCode,
+                        'section_number' => $sectionNumber,
                         'document_number' => $documentNumber,
                         'document_title' => $documentTitle,
                         'cnas_clause' => $cnasClause,

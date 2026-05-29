@@ -1,0 +1,214 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">外部依据</h4>
+        <div class="text-muted small">登记正式依据并直接抽取到条款库，同时保留查新日期、结论和证据来源。</div>
+    </div>
+    <form method="post" action="/planning/sources/seed" class="m-0">
+        <button type="submit" class="btn btn-primary btn-sm">登记内置依据并抽条款</button>
+    </form>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">上传依据文件</h5></div>
+    <div class="card-body">
+        <form method="post" action="/planning/sources/upload" enctype="multipart/form-data" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small text-muted">选择 PDF 或 Word 文件</label>
+                <input type="file" name="source_file" class="form-control form-control-sm" accept=".pdf,.doc,.docx">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">查新日期</label>
+                <input type="date" name="freshness_checked_at" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted">查新结论</label>
+                <input type="text" name="freshness_result" class="form-control form-control-sm" placeholder="例如：现行有效" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted">证据来源</label>
+                <input type="text" name="freshness_evidence" class="form-control form-control-sm" placeholder="官网清单、公告或查新记录" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">下次查新</label>
+                <input type="date" name="next_freshness_due" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">查新状态</label>
+                <select name="freshness_status" class="form-select form-select-sm">
+                    <option value="current">现行</option>
+                    <option value="due">待查新</option>
+                    <option value="unknown">未知</option>
+                    <option value="obsolete">废止</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-sm btn-outline-primary w-100">上传并抽取条款</button>
+            </div>
+        </form>
+        <div class="text-muted small mt-2">系统将根据文件名识别依据编号，规范化归档到固定位置，并直接抽取到正式条款库。</div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">处理进度</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>依据编号</th>
+                        <th>归档文件</th>
+                        <th>抽取状态</th>
+                        <th>Markdown结构</th>
+                        <th>条款数</th>
+                        <th>匹配要素</th>
+                        <th>未匹配条款</th>
+                        <th>查新证据</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="processingRows" id="row"}
+                    <tr>
+                        <td>{$row.source.source_code}</td>
+                        <td>
+                            {if $row.archive_status == 'archived'}
+                            <span class="badge badge-status-effective">已归档</span>
+                            {else}
+                            <span class="badge badge-status-draft">缺失</span>
+                            {/if}
+                            <div class="text-muted small">{$row.archive_path|default='-'}</div>
+                        </td>
+                        <td>
+                            {if $row.extraction_status == 'extracted'}
+                            <span class="badge badge-status-effective">已抽取</span>
+                            {else}
+                            <span class="badge bg-secondary">待抽取</span>
+                            {/if}
+                        </td>
+                        <td>
+                            {if $row.structure_status == 'rendered'}
+                            <a href="{$row.structured_document_url}" class="badge badge-status-effective text-decoration-none">已结构化</a>
+                            {else}
+                            <span class="badge bg-secondary">待结构化</span>
+                            {/if}
+                            <div class="text-muted small">{$row.markdown_path|default='-'}</div>
+                        </td>
+                        <td>{$row.clause_count}</td>
+                        <td>{$row.matched_element_count}</td>
+                        <td>{$row.unmatched_clause_count}</td>
+                        <td>{$row.freshness_evidence|default='-'}</td>
+                    </tr>
+                    {/volist}
+                    {empty name="processingRows"}
+                    <tr><td colspan="8" class="text-center text-muted">暂无处理进度，请先登记外部依据。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">内置依据清单</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead><tr><th>依据编号</th><th>名称</th><th>版本</th><th>本地文件</th></tr></thead>
+                <tbody>
+                    {volist name="manifest" id="source"}
+                    <tr>
+                        <td>{$source.source_code}</td>
+                        <td>{$source.name}</td>
+                        <td>{$source.version|default='-'}</td>
+                        <td>{$source.relative_path}</td>
+                    </tr>
+                    {/volist}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">正式依据登记</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>依据编号</th>
+                        <th>名称</th>
+                        <th>类型</th>
+                        <th>查新日期</th>
+                        <th>查新结论</th>
+                        <th>下次查新</th>
+                        <th>状态</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td>{$item.source_code}</td>
+                        <td>{$item.name}</td>
+                        <td>{$item.source_type}</td>
+                        <td>{$item.freshness_checked_at|default='-'}</td>
+                        <td>{$item.freshness_result|default='-'}</td>
+                        <td>{$item.next_freshness_due|default='-'}</td>
+                        <td>
+                            {if $item.status == 'published'}<span class="badge badge-status-effective">已发布</span>
+                            {elseif $item.status == 'obsolete'}<span class="badge badge-status-obsolete">已废止</span>
+                            {else}<span class="badge badge-status-draft">草稿</span>{/if}
+                        </td>
+                        <td class="text-end">
+                            <form method="post" action="/planning/sources/extract-clauses?id={$item.id}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">更新条款</button>
+                            </form>
+                            {if $item.status != 'obsolete'}
+                            <form method="post" action="/planning/sources/obsolete?id={$item.id}" class="d-inline" onsubmit="return confirm('确认标记该依据废止？');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">废止</button>
+                            </form>
+                            {/if}
+                            <details class="mt-2 text-start">
+                                <summary class="text-primary small" role="button">更新查新</summary>
+                                <form method="post" action="/planning/sources/freshness?id={$item.id}" class="mt-2">
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新日期</label>
+                                        <input type="date" name="freshness_checked_at" class="form-control form-control-sm" value="{$item.freshness_checked_at|default=''}" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新结论</label>
+                                        <input type="text" name="freshness_result" class="form-control form-control-sm" value="{$item.freshness_result|default=''}" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">证据来源</label>
+                                        <input type="text" name="freshness_evidence" class="form-control form-control-sm" value="{$item.freshness_evidence|default=''}" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">下次查新</label>
+                                        <input type="date" name="next_freshness_due" class="form-control form-control-sm" value="{$item.next_freshness_due|default=''}">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新状态</label>
+                                        <select name="freshness_status" class="form-select form-select-sm">
+                                            <option value="current" {if $item.freshness_status == 'current'}selected{/if}>现行</option>
+                                            <option value="due" {if $item.freshness_status == 'due'}selected{/if}>待查新</option>
+                                            <option value="unknown" {if $item.freshness_status == 'unknown'}selected{/if}>未知</option>
+                                            <option value="obsolete" {if $item.freshness_status == 'obsolete'}selected{/if}>废止</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">保存查新</button>
+                                </form>
+                            </details>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}
+                    <tr><td colspan="8" class="text-center text-muted">暂无外部依据登记。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>

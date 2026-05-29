@@ -1,0 +1,61 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">条款库</h4>
+        <div class="text-muted small">条款编号只属于外部依据条款；要素页面通过映射引用这些编号。</div>
+    </div>
+    <a href="/planning/sources" class="btn btn-sm btn-outline-primary">维护外部依据</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" action="/planning/clauses" class="row g-2 mb-3">
+            <div class="col-md-4">
+                <select name="source_id" class="form-select form-select-sm">
+                    <option value="">全部依据</option>
+                    {volist name="sources" id="source"}
+                    <option value="{$source.id}" {if $filter.source_id == $source.id}selected{/if}>{$source.source_code} {$source.name}</option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="text" name="keyword" class="form-control form-control-sm" placeholder="搜索条款编号/标题/原文" value="{$filter.keyword|default=''}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-sm btn-outline-primary">筛选</button>
+                <a href="/planning/clauses" class="btn btn-sm btn-outline-secondary">重置</a>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>来源</th>
+                        <th>条款编号</th>
+                        <th>标题</th>
+                        <th>层级</th>
+                        <th>适用性</th>
+                        <th>状态</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td>{$item.source_code}</td>
+                        <td>{$item.clause_number}</td>
+                        <td>{$item.title}</td>
+                        <td>{$item.level}</td>
+                        <td>{$item.applicability}</td>
+                        <td>{$item.review_status}</td>
+                        <td class="text-end"><a href="/planning/clauses/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a></td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}
+                    <tr><td colspan="7" class="text-center text-muted">暂无条款，请先从外部依据抽取。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>

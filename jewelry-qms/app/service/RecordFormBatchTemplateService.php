@@ -652,6 +652,36 @@ class RecordFormBatchTemplateService
     {
         $text = $docNumber . ' ' . $name . ' ' . $module . ' ' . $matchConclusion . ' ' . $suggestion;
 
+        if ($docNumber === 'XZTC/BG-34-01' && str_contains($name, '监控维护管理')) {
+            return self::monitorMaintenanceSchema();
+        }
+        if ($docNumber === 'XZTC/BG-34-02' && str_contains($name, '监控信息图像查看')) {
+            return self::monitorImageViewSchema();
+        }
+        if ($docNumber === 'XZTC/BG-21-01' && str_contains($name, '管理评审计划')) {
+            return self::managementReviewPlanSchema();
+        }
+        if ($docNumber === 'XZTC/BG-21-02' && str_contains($name, '管理评审报告')) {
+            return self::managementReviewReportSchema();
+        }
+        if ($docNumber === 'XZTC/BG-21-03' && str_contains($name, '管理评审')) {
+            return self::managementReviewMeetingRecordSchema();
+        }
+        if ($docNumber === 'XZTC/BG-26-01' && str_contains($name, '计算机软件登记')) {
+            return self::computerSoftwareRegisterSchema();
+        }
+        if ($docNumber === 'XZTC/BG-26-02' && str_contains($name, '计算机内容变更')) {
+            return self::computerContentChangeRequestSchema();
+        }
+        if ($docNumber === 'XZTC/BG-20-04' && str_contains($name, '授权签字人审核')) {
+            return self::authorizedSignerReviewSchema();
+        }
+        if ($docNumber === '待定-20-04' && str_contains($name, '内部审核资料封皮目录')) {
+            return self::internalAuditArchiveCatalogSchema();
+        }
+        if ($docNumber === 'XZTC/BG-28-02' && str_contains($name, '样品标识卡')) {
+            return self::sampleIdentificationCardSchema();
+        }
         if (str_contains($module, '人员') || str_contains($text, '培训') || str_contains($text, '人员')) {
             return self::personnelSchema();
         }
@@ -921,6 +951,153 @@ class RecordFormBatchTemplateService
         ];
     }
 
+    private static function managementReviewPlanSchema(): array
+    {
+        return [
+            ['key' => 'review_time', 'label' => '评审时间', 'type' => 'text', 'required' => true],
+            ['key' => 'review_place', 'label' => '评审地点', 'type' => 'text', 'required' => false],
+            ['key' => 'host', 'label' => '主持人', 'type' => 'person', 'required' => true],
+            ['key' => 'review_method', 'label' => '评审方式', 'type' => 'text', 'required' => false],
+            ['key' => 'participants', 'label' => '参加评审人员名单', 'type' => 'repeatable_table', 'columns' => [
+                ['key' => 'department_and_position', 'label' => '部门和职务', 'type' => 'text', 'required' => false],
+                ['key' => 'name', 'label' => '姓名', 'type' => 'person', 'required' => false],
+            ]],
+            ['key' => 'input_materials', 'label' => '管理评审输入文件准备明细', 'type' => 'repeatable_table', 'columns' => [
+                ['key' => 'file_name', 'label' => '输入文件名称', 'type' => 'text', 'required' => true],
+                ['key' => 'preparing_department', 'label' => '准备部门', 'type' => 'department', 'required' => false],
+                ['key' => 'writer', 'label' => '编写人员', 'type' => 'person', 'required' => false],
+                ['key' => 'remarks', 'label' => '备注', 'type' => 'text', 'required' => false],
+            ]],
+            ['key' => 'prepared_by', 'label' => '编制人（质量负责人）', 'type' => 'person', 'required' => false],
+            ['key' => 'prepared_date', 'label' => '编制日期', 'type' => 'date', 'required' => false],
+            ['key' => 'approved_by', 'label' => '批准人（实验室主任）', 'type' => 'person', 'required' => false],
+            ['key' => 'approved_date', 'label' => '批准日期', 'type' => 'date', 'required' => false],
+        ];
+    }
+
+    private static function managementReviewReportSchema(): array
+    {
+        return [
+            ['key' => 'review_purpose', 'label' => '评审目的', 'type' => 'textarea', 'required' => true],
+            ['key' => 'review_basis', 'label' => '评审依据', 'type' => 'textarea', 'required' => true],
+            ['key' => 'review_time', 'label' => '评审时间', 'type' => 'text', 'required' => false],
+            ['key' => 'review_form', 'label' => '评审形式', 'type' => 'text', 'required' => false],
+            ['key' => 'host', 'label' => '评审主持人', 'type' => 'person', 'required' => true],
+            ['key' => 'participants', 'label' => '参加部门及人员', 'type' => 'textarea', 'required' => false],
+            ['key' => 'input_summary', 'label' => '管理评审综述（输入信息摘要）', 'type' => 'textarea', 'required' => true],
+            ['key' => 'output_conclusion', 'label' => '管理评审结论（输出信息）', 'type' => 'textarea', 'required' => true],
+            ['key' => 'prepared_by', 'label' => '编制人（质量负责人）', 'type' => 'person', 'required' => false],
+            ['key' => 'prepared_date', 'label' => '编制日期', 'type' => 'date', 'required' => false],
+            ['key' => 'approved_by', 'label' => '批准人（实验室主任）', 'type' => 'person', 'required' => false],
+            ['key' => 'approved_date', 'label' => '批准日期', 'type' => 'date', 'required' => false],
+        ];
+    }
+
+    private static function managementReviewMeetingRecordSchema(): array
+    {
+        return [
+            ['key' => 'host', 'label' => '主持人', 'type' => 'person', 'required' => true],
+            ['key' => 'recorder_role', 'label' => '记录及汇总', 'type' => 'person', 'required' => false],
+            ['key' => 'meeting_time', 'label' => '时间', 'type' => 'text', 'required' => true],
+            ['key' => 'meeting_place', 'label' => '地点', 'type' => 'text', 'required' => false],
+            ['key' => 'attendees', 'label' => '参加人员签到', 'type' => 'repeatable_table', 'columns' => [
+                ['key' => 'name', 'label' => '姓名', 'type' => 'person', 'required' => false],
+                ['key' => 'signature', 'label' => '签名', 'type' => 'signature', 'required' => false],
+            ]],
+            ['key' => 'meeting_record', 'label' => '会议记录', 'type' => 'textarea', 'required' => true],
+            ['key' => 'recorded_by', 'label' => '记录人', 'type' => 'person', 'required' => false],
+            ['key' => 'record_date', 'label' => '记录日期', 'type' => 'date', 'required' => false],
+        ];
+    }
+
+    private static function computerSoftwareRegisterSchema(): array
+    {
+        return [
+            ['key' => 'software_items', 'label' => '计算机软件登记明细', 'type' => 'repeatable_table', 'columns' => [
+                ['key' => 'software_code', 'label' => '软件编号', 'type' => 'text', 'required' => true],
+                ['key' => 'software_name', 'label' => '软件名称', 'type' => 'text', 'required' => true],
+                ['key' => 'purchase_date', 'label' => '购置日期', 'type' => 'date', 'required' => false],
+                ['key' => 'custodian', 'label' => '保管人', 'type' => 'person', 'required' => false],
+                ['key' => 'remarks', 'label' => '备注', 'type' => 'text', 'required' => false],
+            ]],
+        ];
+    }
+
+    private static function computerContentChangeRequestSchema(): array
+    {
+        return [
+            ['key' => 'item_name', 'label' => '名称', 'type' => 'text', 'required' => true],
+            ['key' => 'item_number', 'label' => '编号', 'type' => 'text', 'required' => false],
+            ['key' => 'applicant', 'label' => '申请人', 'type' => 'person', 'required' => true],
+            ['key' => 'application_time', 'label' => '申请时间', 'type' => 'date', 'required' => false],
+            ['key' => 'content_to_change', 'label' => '需变更的内容', 'type' => 'textarea', 'required' => true],
+            ['key' => 'change_reason', 'label' => '变更理由', 'type' => 'textarea', 'required' => true],
+            ['key' => 'changed_content', 'label' => '变更后内容', 'type' => 'textarea', 'required' => true],
+            ['key' => 'evaluation_or_verification', 'label' => '评价或验证结论', 'type' => 'textarea', 'required' => false],
+            ['key' => 'office_director', 'label' => '办公室主任', 'type' => 'person', 'required' => false],
+            ['key' => 'office_director_date', 'label' => '办公室主任日期', 'type' => 'date', 'required' => false],
+            ['key' => 'approved_by', 'label' => '批准人（技术负责人）', 'type' => 'person', 'required' => false],
+            ['key' => 'approval_date', 'label' => '批准日期', 'type' => 'date', 'required' => false],
+        ];
+    }
+
+    private static function authorizedSignerReviewSchema(): array
+    {
+        $yesNo = ['是', '否'];
+
+        return [
+            ['key' => 'record_number', 'label' => '编号', 'type' => 'text', 'required' => false],
+            ['key' => 'person_name', 'label' => '姓名', 'type' => 'person', 'required' => true],
+            ['key' => 'position', 'label' => '职务', 'type' => 'text', 'required' => false],
+            ['key' => 'professional_title', 'label' => '职称', 'type' => 'text', 'required' => false],
+            ['key' => 'authorization_scope', 'label' => '授权签字的范围', 'type' => 'textarea', 'required' => true],
+            ['key' => 'responsibility_authority', 'label' => '具有相应职责和权利，对检测结果完整性和准确性负责', 'type' => 'select', 'options' => $yesNo, 'required' => true],
+            ['key' => 'technical_contact', 'label' => '与检测技术接触紧密，掌握检测项目限制范围', 'type' => 'select', 'options' => $yesNo, 'required' => true],
+            ['key' => 'standards_methods', 'label' => '熟悉检测标准、测试方法及测试规程', 'type' => 'select', 'options' => $yesNo, 'required' => true],
+            ['key' => 'result_evaluation', 'label' => '有能力对相关检测结果进行评定并了解不确定度', 'type' => 'select', 'options' => $yesNo, 'required' => true],
+            ['key' => 'equipment_status', 'label' => '了解设备维护保养及定期检定规定并掌握设备状态', 'type' => 'select', 'options' => $yesNo, 'required' => true],
+            ['key' => 'records_reports', 'label' => '十分熟悉记录、报告及其核查程序', 'type' => 'select', 'options' => $yesNo, 'required' => true],
+            ['key' => 'criteria_and_mark_use', 'label' => '了解评审准则、实验室义务及标识标志使用规定', 'type' => 'select', 'options' => $yesNo, 'required' => true],
+            ['key' => 'review_result', 'label' => '评审意见', 'type' => 'select', 'options' => ['授权签字人评审合格', '授权签字人评审不合格'], 'required' => true],
+            ['key' => 'auditor', 'label' => '内审员签名', 'type' => 'person', 'required' => false],
+            ['key' => 'audit_leader', 'label' => '内审组长签名', 'type' => 'person', 'required' => false],
+            ['key' => 'review_date', 'label' => '日期', 'type' => 'date', 'required' => false],
+        ];
+    }
+
+    private static function internalAuditArchiveCatalogSchema(): array
+    {
+        return [
+            ['key' => 'audit_year', 'label' => '内部审核年度', 'type' => 'text', 'required' => true],
+            ['key' => 'archive_date', 'label' => '资料日期', 'type' => 'date', 'required' => false],
+            ['key' => 'catalog_items', 'label' => '内部审核资料目录', 'type' => 'repeatable_table', 'columns' => [
+                ['key' => 'sequence', 'label' => '序号', 'type' => 'number', 'required' => false],
+                ['key' => 'document_name', 'label' => '资料名称', 'type' => 'text', 'required' => true],
+                ['key' => 'included', 'label' => '是否归档', 'type' => 'checkbox', 'required' => false],
+                ['key' => 'remarks', 'label' => '备注', 'type' => 'text', 'required' => false],
+            ]],
+        ];
+    }
+
+    private static function sampleIdentificationCardSchema(): array
+    {
+        return [
+            ['key' => 'sample_name', 'label' => '样品名称', 'type' => 'text', 'required' => true],
+            ['key' => 'sample_number', 'label' => '样品编号', 'type' => 'text', 'required' => true],
+            ['key' => 'sample_quantity', 'label' => '样品数量', 'type' => 'text', 'required' => false],
+            ['key' => 'received_date', 'label' => '来样日期', 'type' => 'date', 'required' => false],
+            ['key' => 'detection_status', 'label' => '检测状态', 'type' => 'select', 'options' => ['待检', '在检', '已检', '留样'], 'required' => true],
+            ['key' => 'inspector', 'label' => '检测员（签名）', 'type' => 'person', 'required' => false],
+            ['key' => 'inspector_time', 'label' => '检测员时间', 'type' => 'text', 'required' => false],
+            ['key' => 'photographer', 'label' => '拍照员（签名）', 'type' => 'person', 'required' => false],
+            ['key' => 'photographer_time', 'label' => '拍照员时间', 'type' => 'text', 'required' => false],
+            ['key' => 'data_entry_person', 'label' => '录入员（签名）', 'type' => 'person', 'required' => false],
+            ['key' => 'data_entry_time', 'label' => '录入员时间', 'type' => 'text', 'required' => false],
+            ['key' => 'packer', 'label' => '打包员（签名）', 'type' => 'person', 'required' => false],
+            ['key' => 'packer_time', 'label' => '打包员时间', 'type' => 'text', 'required' => false],
+        ];
+    }
+
     private static function qualityControlSchema(): array
     {
         return [
@@ -986,6 +1163,35 @@ class RecordFormBatchTemplateService
                 ['key' => 'result', 'label' => '结果/结论', 'type' => 'text', 'required' => false],
                 ['key' => 'signature', 'label' => '签名', 'type' => 'signature', 'required' => false],
             ]],
+            ['key' => 'remarks', 'label' => '备注', 'type' => 'textarea', 'required' => false],
+        ];
+    }
+
+    private static function monitorMaintenanceSchema(): array
+    {
+        return [
+            ['key' => 'maintenance_items', 'label' => '监控维护管理明细', 'type' => 'repeatable_table', 'columns' => [
+                ['key' => 'sequence', 'label' => '序号', 'type' => 'number', 'required' => false],
+                ['key' => 'maintenance_time', 'label' => '维护管理时间', 'type' => 'date', 'required' => true],
+                ['key' => 'monitor_host', 'label' => '监控主机', 'type' => 'select', 'options' => ['正常', '异常'], 'required' => false],
+                ['key' => 'monitor_display', 'label' => '监控显示器', 'type' => 'select', 'options' => ['正常', '异常'], 'required' => false],
+                ['key' => 'monitor_camera', 'label' => '监控摄像头', 'type' => 'select', 'options' => ['正常', '异常'], 'required' => false],
+                ['key' => 'software_system', 'label' => '软件系统', 'type' => 'select', 'options' => ['正常', '异常'], 'required' => false],
+                ['key' => 'maintained_by', 'label' => '维护管理人', 'type' => 'person', 'required' => false],
+                ['key' => 'remarks', 'label' => '备注', 'type' => 'textarea', 'required' => false],
+            ]],
+        ];
+    }
+
+    private static function monitorImageViewSchema(): array
+    {
+        return [
+            ['key' => 'request_unit', 'label' => '申请查看单位', 'type' => 'text', 'required' => true],
+            ['key' => 'request_person', 'label' => '申请查看人员', 'type' => 'person', 'required' => true],
+            ['key' => 'view_time', 'label' => '调取时间', 'type' => 'date', 'required' => true],
+            ['key' => 'view_purpose', 'label' => '调取用途', 'type' => 'textarea', 'required' => true],
+            ['key' => 'approved_by', 'label' => '批准人', 'type' => 'signature', 'required' => true],
+            ['key' => 'accompanied_by', 'label' => '陪同人', 'type' => 'signature', 'required' => false],
             ['key' => 'remarks', 'label' => '备注', 'type' => 'textarea', 'required' => false],
         ];
     }

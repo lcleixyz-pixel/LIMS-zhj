@@ -145,6 +145,133 @@ assert_same(
     'Formal training record keeps its adjusted production schema'
 );
 
+$monitorMaintenanceRows = array_values(array_filter(
+    $manifest,
+    fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-34-01' && str_contains($row['name'], '监控维护管理记录')
+));
+assert_same(1, count($monitorMaintenanceRows), 'Monitoring maintenance record is present once in the batch manifest');
+assert_same(
+    ['maintenance_items'],
+    array_column($monitorMaintenanceRows[0]['field_schema'], 'key'),
+    'Monitoring maintenance record schema is driven by the source table requirement'
+);
+assert_same(
+    ['sequence', 'maintenance_time', 'monitor_host', 'monitor_display', 'monitor_camera', 'software_system', 'maintained_by', 'remarks'],
+    array_column($monitorMaintenanceRows[0]['field_schema'][0]['columns'], 'key'),
+    'Monitoring maintenance record keeps procedure-required columns'
+);
+
+$monitorImageRows = array_values(array_filter(
+    $manifest,
+    fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-34-02' && str_contains($row['name'], '监控信息图像查看记录表')
+));
+assert_same(1, count($monitorImageRows), 'Monitoring image view record is present once in the batch manifest');
+assert_same(
+    ['request_unit', 'request_person', 'view_time', 'view_purpose', 'approved_by', 'accompanied_by', 'remarks'],
+    array_column($monitorImageRows[0]['field_schema'], 'key'),
+    'Monitoring image view schema follows the source table and procedure approval requirement'
+);
+
+$managementReviewPlanRows = array_values(array_filter(
+    $manifest,
+    fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-21-01' && str_contains($row['name'], '管理评审计划表')
+));
+assert_same(1, count($managementReviewPlanRows), 'Management review plan is present once in the batch manifest');
+assert_same(
+    ['review_time', 'review_place', 'host', 'review_method', 'participants', 'input_materials', 'prepared_by', 'prepared_date', 'approved_by', 'approved_date'],
+    array_column($managementReviewPlanRows[0]['field_schema'], 'key'),
+    'Management review plan schema follows source table fields instead of file-control generic fields'
+);
+
+$managementReviewReportRows = array_values(array_filter(
+    $manifest,
+    fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-21-02' && str_contains($row['name'], '管理评审报告')
+));
+assert_same(1, count($managementReviewReportRows), 'Management review report is present once in the batch manifest');
+assert_same(
+    ['review_purpose', 'review_basis', 'review_time', 'review_form', 'host', 'participants', 'input_summary', 'output_conclusion', 'prepared_by', 'prepared_date', 'approved_by', 'approved_date'],
+    array_column($managementReviewReportRows[0]['field_schema'], 'key'),
+    'Management review report schema follows source report sections'
+);
+
+$managementReviewMeetingRows = array_values(array_filter(
+    $manifest,
+    fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-21-03' && str_contains($row['name'], '管理评审')
+));
+assert_same(1, count($managementReviewMeetingRows), 'Management review meeting record is present once in the batch manifest');
+assert_same(
+    ['host', 'recorder_role', 'meeting_time', 'meeting_place', 'attendees', 'meeting_record', 'recorded_by', 'record_date'],
+    array_column($managementReviewMeetingRows[0]['field_schema'], 'key'),
+    'Management review meeting record schema follows sign-in and meeting-record source fields'
+);
+
+$computerSoftwareRows = array_values(array_filter(
+    $manifest,
+    fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-26-01' && str_contains($row['name'], '计算机软件登记表')
+));
+assert_same(1, count($computerSoftwareRows), 'Computer software register is present once in the batch manifest');
+assert_same(
+    ['software_items'],
+    array_column($computerSoftwareRows[0]['field_schema'], 'key'),
+    'Computer software register schema follows source table columns'
+);
+assert_same(
+    ['software_code', 'software_name', 'purchase_date', 'custodian', 'remarks'],
+    array_column($computerSoftwareRows[0]['field_schema'][0]['columns'], 'key'),
+    'Computer software register keeps source columns'
+);
+
+$computerChangeRows = array_values(array_filter(
+    $manifest,
+    fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-26-02' && str_contains($row['name'], '计算机内容变更申请表')
+));
+assert_same(1, count($computerChangeRows), 'Computer content change request is present once in the batch manifest');
+assert_same(
+    ['item_name', 'item_number', 'applicant', 'application_time', 'content_to_change', 'change_reason', 'changed_content', 'evaluation_or_verification', 'office_director', 'office_director_date', 'approved_by', 'approval_date'],
+    array_column($computerChangeRows[0]['field_schema'], 'key'),
+    'Computer content change request schema follows source application fields'
+);
+
+$authorizedSignerReviewRows = array_values(array_filter(
+    $manifest,
+    fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-20-04' && str_contains($row['name'], '授权签字人审核记录表')
+));
+assert_same(1, count($authorizedSignerReviewRows), 'Authorized signer review record is present once in the batch manifest');
+assert_same(
+    ['record_number', 'person_name', 'position', 'professional_title', 'authorization_scope', 'responsibility_authority', 'technical_contact', 'standards_methods', 'result_evaluation', 'equipment_status', 'records_reports', 'criteria_and_mark_use', 'review_result', 'auditor', 'audit_leader', 'review_date'],
+    array_column($authorizedSignerReviewRows[0]['field_schema'], 'key'),
+    'Authorized signer review schema follows source yes/no review items'
+);
+
+$internalAuditCatalogRows = array_values(array_filter(
+    $manifest,
+    fn (array $row): bool => $row['doc_number'] === '待定-20-04' && str_contains($row['name'], '内部审核资料封皮目录')
+));
+assert_same(1, count($internalAuditCatalogRows), 'Internal audit archive catalog is present once in the batch manifest');
+assert_same(
+    ['audit_year', 'archive_date', 'catalog_items'],
+    array_column($internalAuditCatalogRows[0]['field_schema'], 'key'),
+    'Internal audit archive catalog schema follows the cover directory source'
+);
+assert_same(
+    ['sequence', 'document_name', 'included', 'remarks'],
+    array_column($internalAuditCatalogRows[0]['field_schema'][2]['columns'], 'key'),
+    'Internal audit archive catalog keeps source directory item columns'
+);
+
+$sampleLabelCardRows = array_values(array_filter(
+    $manifest,
+    fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-28-02' && str_contains($row['name'], '样品标识卡')
+));
+assert_same(2, count($sampleLabelCardRows), 'Both sample label card source variants are present in the batch manifest');
+foreach ($sampleLabelCardRows as $sampleLabelCardRow) {
+    assert_same(
+        ['sample_name', 'sample_number', 'sample_quantity', 'received_date', 'detection_status', 'inspector', 'inspector_time', 'photographer', 'photographer_time', 'data_entry_person', 'data_entry_time', 'packer', 'packer_time'],
+        array_column($sampleLabelCardRow['field_schema'], 'key'),
+        'Sample label card schema follows source card fields for ' . $sampleLabelCardRow['source_file_name']
+    );
+}
+
 $draftTemplate = array_values(array_filter(
     $manifest,
     fn (array $row): bool => !$isFormalBatchTemplate($row)

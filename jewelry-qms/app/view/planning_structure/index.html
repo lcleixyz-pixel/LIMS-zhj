@@ -1,0 +1,331 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">文件结构化</h4>
+        <div class="text-muted small">将外部依据、质量手册、程序文件、作业指导书和记录表格拆为可追溯的 Markdown 内容块。</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/planning/structures/package" class="btn btn-outline-primary btn-sm">体系文件组合包</a>
+        <form method="post" action="/planning/structures/seed" class="m-0">
+            <button type="submit" class="btn btn-primary btn-sm">生成结构化骨架</button>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>层级</th>
+                        <th>处理流程</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="layers" id="layer"}
+                    <tr>
+                        <td class="fw-semibold">{$layer.name}</td>
+                        <td>{$layer.workflow}</td>
+                    </tr>
+                    {/volist}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">受控文件结构覆盖</h5>
+        <div class="text-muted small">现用质量手册、程序文件、作业指导书进入 Markdown 结构的覆盖情况</div>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="text-muted small">受控文件</div>
+                <div class="h5 mb-0">{$coverage.total_documents|default=0}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">已结构化</div>
+                <div class="h5 mb-0">{$coverage.structured_documents|default=0}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">缺口文件</div>
+                <div class="h5 mb-0">{$coverage.missing_documents|default=0}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">覆盖率</div>
+                <div class="h5 mb-0">{$coverage.coverage_percent|default=0}%</div>
+            </div>
+        </div>
+        <div class="table-responsive mb-3">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>文件层级</th>
+                        <th>受控文件</th>
+                        <th>已结构化</th>
+                        <th>缺口文件</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="coverage.by_level" id="level"}
+                    <tr>
+                        <td>{$level.label}</td>
+                        <td>{$level.total_documents}</td>
+                        <td>{$level.structured_documents}</td>
+                        <td>{$level.missing_documents}</td>
+                    </tr>
+                    {/volist}
+                </tbody>
+            </table>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>缺口文件</th>
+                        <th>层级</th>
+                        <th>版本</th>
+                        <th>源文件</th>
+                        <th class="text-end">处理</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="coverage.missing_rows" id="missing"}
+                    <tr>
+                        <td>
+                            <a href="{$missing.document_url}" class="fw-semibold">{$missing.doc_number}</a>
+                            <div class="text-muted small">{$missing.title}</div>
+                        </td>
+                        <td>{$missing.level_label}</td>
+                        <td>{$missing.version|default='-'}</td>
+                        <td>
+                            {if $missing.source_file_status == 'available'}
+                            <span class="badge badge-status-effective">源文件可用</span>
+                            {elseif $missing.source_file_status == 'missing'}
+                            <span class="badge badge-status-obsolete">源文件缺失</span>
+                            {else}
+                            <span class="badge bg-secondary">未设置</span>
+                            {/if}
+                            <div class="text-muted small text-break">{$missing.source_file_path|default='-'}</div>
+                        </td>
+                        <td class="text-end">
+                            <form method="post" action="{$missing.seed_url}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">生成结构化骨架</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="coverage.missing_rows"}
+                    <tr><td colspan="5" class="text-center text-muted">受控文件均已进入 Markdown 结构。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">记录要求 schema 复核</h5>
+        <div class="text-muted small">逐条检查程序记录要求块是否已落到记录表格 schema</div>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="text-muted small">记录要求块</div>
+                <div class="h5 mb-0">{$recordSchemaCoverage.total_requirement_blocks|default=0}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">已关联表格</div>
+                <div class="h5 mb-0">{$recordSchemaCoverage.linked_requirement_blocks|default=0}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">schema已覆盖</div>
+                <div class="h5 mb-0">{$recordSchemaCoverage.schema_covered_blocks|default=0}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">schema缺口</div>
+                <div class="h5 mb-0">{$recordSchemaCoverage.gap_blocks|default=0}</div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>程序记录要求块</th>
+                        <th>记录表格</th>
+                        <th>schema文档</th>
+                        <th>字段schema</th>
+                        <th>状态</th>
+                        <th class="text-end">处理</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="recordSchemaCoverage.gap_rows" id="gap"}
+                    <tr>
+                        <td>
+                            <span class="fw-semibold">{$gap.doc_number}</span>
+                            <div class="text-muted small">{$gap.block_section_number} {$gap.block_title}</div>
+                        </td>
+                        <td>
+                            <span>{$gap.linked_record_forms}</span>
+                            <div class="text-muted small">{$gap.record_form_labels}</div>
+                        </td>
+                        <td>{$gap.schema_documents}</td>
+                        <td>{$gap.schema_field_count}</td>
+                        <td>
+                            <span class="badge bg-warning text-dark">需复核</span>
+                            <div class="text-muted small">{$gap.gap_text}</div>
+                        </td>
+                        <td class="text-end">
+                            <a href="{$gap.structure_url}" class="btn btn-sm btn-outline-primary">查看结构化文件</a>
+                            <a href="{$gap.trace_review_url}" class="btn btn-sm btn-outline-secondary">复核追溯</a>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="recordSchemaCoverage.gap_rows"}
+                    <tr><td colspan="6" class="text-center text-muted">记录要求块均已落到记录表格 schema。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">程序记录要求覆盖</h5>
+        <div class="text-muted small">程序文件记录要求、记录表格关联和 schema文档覆盖情况</div>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="text-muted small">程序文件</div>
+                <div class="h5 mb-0">{$recordCoverage.total_procedures|default=0}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">记录要求已覆盖</div>
+                <div class="h5 mb-0">{$recordCoverage.covered_procedures|default=0}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">记录要求缺口</div>
+                <div class="h5 mb-0">{$recordCoverage.gap_procedures|default=0}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">覆盖率</div>
+                <div class="h5 mb-0">{$recordCoverage.coverage_percent|default=0}%</div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>程序文件</th>
+                        <th>记录要求块</th>
+                        <th>记录表格</th>
+                        <th>schema文档</th>
+                        <th>状态</th>
+                        <th class="text-end">处理</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="recordCoverage.gap_rows" id="gap"}
+                    <tr>
+                        <td>
+                            <span class="fw-semibold">{$gap.doc_number}</span>
+                            <div class="text-muted small">{$gap.title}</div>
+                        </td>
+                        <td>{$gap.record_requirement_blocks}</td>
+                        <td>{$gap.linked_record_forms}</td>
+                        <td>{$gap.record_form_schema_documents}</td>
+                        <td>
+                            <span class="badge bg-warning text-dark">需复核</span>
+                            <div class="text-muted small">{$gap.gap_text}</div>
+                        </td>
+                        <td class="text-end">
+                            {if $gap.structure_url != ''}
+                            <a href="{$gap.structure_url}" class="btn btn-sm btn-outline-primary">查看结构化文件</a>
+                            {else}
+                            <form method="post" action="/planning/structures/seed" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">生成结构化骨架</button>
+                            </form>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="recordCoverage.gap_rows"}
+                    <tr><td colspan="6" class="text-center text-muted">程序记录要求均已关联记录表格和 schema 文档。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">结构化文档</h5>
+        <div class="text-muted small">原始文件 -> Markdown结构 -> 内容块 -> 块级追溯 -> 渲染输出</div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>文件</th>
+                        <th>类型</th>
+                        <th>版本</th>
+                        <th>原始文件</th>
+                        <th>Markdown结构</th>
+                        <th>内容块</th>
+                        <th>块级追溯</th>
+                        <th>渲染输出</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="rows" id="row"}
+                    <tr>
+                        <td>
+                            <a href="/planning/structures/view?id={$row.document.id}" class="fw-semibold">{$row.document.doc_number}</a>
+                            <div class="text-muted small">{$row.document.title}</div>
+                        </td>
+                        <td>
+                            {if $row.document.document_role == 'quality_manual'}质量手册
+                            {elseif $row.document.document_role == 'procedure'}程序文件
+                            {elseif $row.document.document_role == 'work_instruction'}作业指导书
+                            {elseif $row.document.document_role == 'record_form'}记录表格
+                            {else}外部依据{/if}
+                        </td>
+                        <td>{$row.document.version|default='-'}</td>
+                        <td>
+                            {if $row.asset}
+                            {$row.asset.archive_status}
+                            <div class="text-muted small">{$row.asset.normalized_name}</div>
+                            {else}-{/if}
+                        </td>
+                        <td>{$row.document.status}</td>
+                        <td>{$row.block_count}</td>
+                        <td>{$row.link_count}</td>
+                        <td>
+                            {if $row.document.render_status == 'rendered'}
+                            <span class="badge badge-status-effective">已渲染</span>
+                            {else}
+                            <span class="badge bg-secondary">未渲染</span>
+                            {/if}
+                        </td>
+                        <td class="text-end">
+                            <a href="/planning/structures/view?id={$row.document.id}" class="btn btn-sm btn-outline-info">查看</a>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="rows"}
+                    <tr><td colspan="9" class="text-center text-muted">暂无结构化文件，请先生成结构化骨架。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

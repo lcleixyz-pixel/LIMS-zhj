@@ -7,16 +7,16 @@
             <strong>当前文件信息：</strong><br>
             编号: {$record.doc_number|default=''} | 标题: {$record.title|default=''} | 当前版本: {$record.version|default='1.0'}
         </div>
-        <form method="post" action="/document/saveRevise" enctype="multipart/form-data">
+        <form method="post" action="/document/revise?id={$record.id}" enctype="multipart/form-data">
             <input type="hidden" name="id" value="{$record.id}">
             <div class="mb-3">
                 <label for="change_reason" class="form-label required">修订原因</label>
                 <textarea class="form-control" id="change_reason" name="change_reason" rows="4" required placeholder="请详细说明修订原因和变更内容"></textarea>
             </div>
             <div class="mb-3">
-                <label for="file" class="form-label">上传新版本附件</label>
-                <input type="file" class="form-control" id="file" name="file">
-                <small class="text-muted">如不上传新附件，将保留原附件</small>
+                <label for="document_file" class="form-label">上传新版本附件</label>
+                <input type="file" class="form-control" id="document_file" name="document_file">
+                <small class="text-muted">如不上传新附件，将保留原附件；修订后将同步结构化文件并进入草稿复核。</small>
             </div>
             <div class="text-end">
                 <a href="/document/view?id={$record.id}" class="btn btn-secondary">取消</a>

@@ -1,0 +1,182 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">复核追溯</h4>
+        <div class="text-muted small">{$detail.document.doc_number} {$detail.document.title} · {$detail.block.title}</div>
+    </div>
+    <a href="/planning/structures/view?id={$detail.document.id}" class="btn btn-sm btn-outline-secondary">返回文件</a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">内容块类型</div>
+                <div>{$detail.block.block_type}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">稳定键</div>
+                <div class="font-monospace text-break">{$detail.block.stable_key}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">当前关系</div>
+                <div>{$detail.links|count} 条</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">文件状态</div>
+                <div>{$detail.document.status}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">新增追溯关系</h5></div>
+    <div class="card-body">
+        <form method="post" action="/planning/structures/links/save">
+            <input type="hidden" name="block_id" value="{$detail.block.id}">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label" for="relation_type">关系类型</label>
+                    <select id="relation_type" name="relation_type" class="form-select">
+                        <option value="implements">落实</option>
+                        <option value="basis">依据</option>
+                        <option value="mentions">提及</option>
+                        <option value="responsible">职责</option>
+                        <option value="requires_record">要求记录</option>
+                        <option value="renders_to">渲染到</option>
+                        <option value="supporting">支撑</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="confidence">置信度</label>
+                    <select id="confidence" name="confidence" class="form-select">
+                        <option value="review_required">需复核</option>
+                        <option value="high">高</option>
+                        <option value="medium">中</option>
+                        <option value="low">低</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="note">复核说明</label>
+                    <input id="note" name="note" class="form-control" required placeholder="说明映射依据、来源句或人工判断理由">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="element_id">要素</label>
+                    <select id="element_id" name="element_id" class="form-select">
+                        <option value="">不关联</option>
+                        {volist name="detail.options.elements" id="option"}
+                        <option value="{$option.id}">{$option.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="clause_id">外部条款</label>
+                    <select id="clause_id" name="clause_id" class="form-select">
+                        <option value="">不关联</option>
+                        {volist name="detail.options.clauses" id="option"}
+                        <option value="{$option.id}">{$option.source_code} {$option.clause_number} {$option.title}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="manual_section_id">手册章节</label>
+                    <select id="manual_section_id" name="manual_section_id" class="form-select">
+                        <option value="">不关联</option>
+                        {volist name="detail.options.manual_sections" id="option"}
+                        <option value="{$option.id}">{$option.section_number} {$option.title}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="procedure_document_id">程序文件</label>
+                    <select id="procedure_document_id" name="procedure_document_id" class="form-select">
+                        <option value="">不关联</option>
+                        {volist name="detail.options.procedure_documents" id="option"}
+                        <option value="{$option.id}">{$option.doc_number} {$option.title}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="record_form_template_id">记录表格</label>
+                    <select id="record_form_template_id" name="record_form_template_id" class="form-select">
+                        <option value="">不关联</option>
+                        {volist name="detail.options.record_forms" id="option"}
+                        <option value="{$option.id}">{$option.doc_number} {$option.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="position_id">岗位</label>
+                    <select id="position_id" name="position_id" class="form-select">
+                        <option value="">不关联</option>
+                        {volist name="detail.options.positions" id="option"}
+                        <option value="{$option.id}">{$option.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="business_module_id">运行模块</label>
+                    <select id="business_module_id" name="business_module_id" class="form-select">
+                        <option value="">不关联</option>
+                        {volist name="detail.options.modules" id="option"}
+                        <option value="{$option.id}">{$option.code} {$option.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+                <button type="submit" class="btn btn-primary">保存追溯关系</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">当前追溯关系</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>关系</th>
+                        <th>要素</th>
+                        <th>条款</th>
+                        <th>手册章节</th>
+                        <th>程序文件</th>
+                        <th>记录表格</th>
+                        <th>运行模块</th>
+                        <th>岗位</th>
+                        <th>说明</th>
+                        <th class="text-end">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="detail.links" id="link"}
+                    <tr>
+                        <td>{$link.relation_type}</td>
+                        <td>{$link.element_name|default='-'}</td>
+                        <td>{if $link.clause_number}{$link.source_code} {$link.clause_number}{else}-{/if}</td>
+                        <td>{if $link.section_number}{$link.section_number} {$link.manual_title}{else}-{/if}</td>
+                        <td>{if $link.procedure_number}{$link.procedure_number} {$link.procedure_title}{else}-{/if}</td>
+                        <td>{if $link.record_number}{$link.record_number} {$link.record_name}{else}-{/if}</td>
+                        <td>{if $link.module_name}{$link.module_code} {$link.module_name}{else}-{/if}</td>
+                        <td>{$link.position_name|default='-'}</td>
+                        <td>{$link.note|default='-'}</td>
+                        <td class="text-end">
+                            <form method="post" action="/planning/structures/links/delete" class="d-flex gap-2 justify-content-end">
+                                <input type="hidden" name="block_id" value="{$detail.block.id}">
+                                <input type="hidden" name="link_id" value="{$link.id}">
+                                <input type="text" name="review_note" class="form-control form-control-sm" required placeholder="删除说明">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">删除</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="detail.links"}
+                    <tr><td colspan="10" class="text-center text-muted">暂无追溯关系。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

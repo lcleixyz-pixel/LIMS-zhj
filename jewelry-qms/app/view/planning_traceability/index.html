@@ -1,0 +1,63 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">追溯矩阵</h4>
+        <div class="text-muted small">{$chainLabel}</div>
+    </div>
+    <a href="/planning/elements" class="btn btn-sm btn-outline-primary">查看要素</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>要素名称</th>
+                        <th>外部条款</th>
+                        <th>手册章节</th>
+                        <th>程序文件</th>
+                        <th>记录表格</th>
+                        <th>运行模块</th>
+                        <th>运行证据</th>
+                        <th>岗位职责</th>
+                        <th>结构块证据</th>
+                        <th>schema来源</th>
+                        <th>智能体建议</th>
+                        <th>缺口</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="rows" id="row"}
+                    <tr>
+                        <td>
+                            <a href="/planning/elements/view?id={$row.element.id}" class="fw-semibold">{$row.element.name}</a>
+                            {if $row.primary_clause != ''}<div class="text-muted small">{$row.primary_clause}</div>{/if}
+                        </td>
+                        <td>{$row.clause_count}</td>
+                        <td>{$row.manual_section_count}</td>
+                        <td>{$row.document_count}</td>
+                        <td>{$row.record_form_count}</td>
+                        <td>{$row.module_count}</td>
+                        <td>{$row.runtime_evidence_count}</td>
+                        <td>{$row.responsibility_count}</td>
+                        <td>{$row.block_trace_count}</td>
+                        <td>{$row.record_schema_source_count}</td>
+                        <td>{$row.suggestion_count}</td>
+                        <td>
+                            {if $row.gap_count == 0}
+                            <span class="badge badge-status-effective">完整</span>
+                            {else}
+                            <span class="badge bg-warning text-dark">{$row.gap_count}</span>
+                            <div class="text-muted small">{$row.gap_text}</div>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="rows"}
+                    <tr><td colspan="12" class="text-center text-muted">暂无追溯数据。</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
