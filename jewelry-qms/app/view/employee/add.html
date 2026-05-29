@@ -1,50 +1,17 @@
 <div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">新增员工管理</h5>
-    </div>
+    <div class="card-header"><h5 class="mb-0">新增员工</h5></div>
     <div class="card-body">
-        <form method="post" action="/employee/add" enctype="multipart/form-data">
+        <form method="post" action="/employee/add">
             <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="name" class="form-label required">名称</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="code" class="form-label">编号</label>
-                        <input type="text" class="form-control" id="code" name="code" placeholder="系统自动生成">
-                    </div>
-                    <div class="mb-3">
-                        <label for="status" class="form-label">状态</label>
-                        <select name="status" id="status" class="form-select">
-                            <option value="draft">草稿</option>
-                            <option value="active">启用</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="department_id" class="form-label">所属部门</label>
-                        <select name="department_id" id="department_id" class="form-select">
-                            <option value="">请选择</option>
-                            {volist name="departments" id="dept"}
-                            <option value={$dept.id}>{$dept.name}</option>
-                            {/volist}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="responsible_person" class="form-label">负责人</label>
-                        <input type="text" class="form-control" id="responsible_person" name="responsible_person">
-                    </div>
-                    <div class="mb-3">
-                        <label for="remark" class="form-label">备注</label>
-                        <input type="text" class="form-control" id="remark" name="remark">
-                    </div>
-                </div>
-            </div>
-            <div class="mb-3">
-                <label for="description" class="form-label">描述</label>
-                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                <div class="col-md-6 mb-3"><label class="form-label">员工编号</label><input name="employee_number" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label required">姓名</label><input name="name" class="form-control" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">部门</label><select name="department_id" class="form-select"><option value="">请选择</option>{volist name="departments" id="dept"}<option value="{$dept.id}">{$dept.name}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label class="form-label">主归属场所</label><select name="primary_site_id" class="form-select"><option value="">未指定</option>{volist name="sites" id="site"}<option value="{$site.id}">{$site.name}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label class="form-label">职务</label><select name="designation_id" class="form-select"><option value="">请选择</option>{volist name="designations" id="des"}<option value="{$des.id}">{$des.name}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label class="form-label">学历/资历</label><input name="education" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">邮箱</label><input type="email" name="email" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">电话</label><input name="phone" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">入职日期</label><input type="date" name="entry_date" class="form-control"></div>
             </div>
             <div class="text-end">
                 <a href="/employee/index" class="btn btn-secondary">取消</a>

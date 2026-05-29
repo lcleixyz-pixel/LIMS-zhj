@@ -7,8 +7,9 @@
                 <div class="col-md-6 mb-3"><label class="required">设备名称</label><input name="name" class="form-control" required></div>
                 <div class="col-md-6 mb-3"><label>型号</label><input name="model" class="form-control"></div>
                 <div class="col-md-6 mb-3"><label>制造商</label><input name="manufacturer" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label>场所</label><select name="site_id" class="form-select"><option value="">未指定</option>{volist name="sites" id="site"}<option value="{$site.id}">{$site.name}</option>{/volist}</select></div>
                 <div class="col-md-6 mb-3"><label>位置</label><input name="location" class="form-control"></div>
-                <div class="col-md-6 mb-3"><label>状态</label><select name="status" class="form-select">{volist name="statusLabels" id="l" key="k"}<option value="{$k}">{$l}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label>状态</label><select name="status" class="form-select">{foreach $statusLabels as $key=>$label}<option value="{$key}">{$label}</option>{/foreach}</select></div>
                 <div class="col-md-6 mb-3"><label>校准周期(月)</label><input type="number" name="calibration_cycle_months" class="form-control" value="12"></div>
                 <div class="col-md-6 mb-3 form-check mt-4"><input type="checkbox" name="calibration_required" value="1" class="form-check-input" checked id="cal_req"><label for="cal_req">需要校准</label></div>
             </div>

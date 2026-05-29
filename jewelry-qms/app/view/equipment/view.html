@@ -11,6 +11,8 @@
         {/if}
         <table class="table table-bordered mb-4">
             <tr><th width="120">名称</th><td>{$record.name}</td></tr>
+            <tr><th>场所</th><td>{$site.name|default='未指定'}</td></tr>
+            <tr><th>位置</th><td>{$record.location|default='-'}</td></tr>
             <tr><th>状态</th><td>{:qms_status_label('equipment', $record.status)}</td></tr>
             <tr><th>型号</th><td>{$record.model|default='-'}</td></tr>
             <tr><th>上次校准</th><td>{$record.last_calibration_date|default='-'}</td></tr>
@@ -25,6 +27,14 @@
         <table class="table table-sm">
             <thead><tr><th>日期</th><th>类型</th><th>说明</th></tr></thead>
             <tbody>{volist name="maintenances" id="m"}<tr><td>{$m.maintenance_date}</td><td>{$m.maintenance_type}</td><td>{$m.description|default='-'}</td></tr>{/volist}</tbody>
+        </table>
+        <h6>调拨记录</h6>
+        <table class="table table-sm">
+            <thead><tr><th>日期</th><th>调出</th><th>调入</th><th>原因</th></tr></thead>
+            <tbody>
+                {volist name="transfers" id="t"}<tr><td>{$t.transfer_date}</td><td>{$siteMap[$t.from_site_id]|default='未指定'}</td><td>{$siteMap[$t.to_site_id]|default=$t.to_site_id}</td><td>{$t.reason|default='-'}</td></tr>{/volist}
+                {empty name="transfers"}<tr><td colspan="4" class="text-muted">暂无调拨记录</td></tr>{/empty}
+            </tbody>
         </table>
     </div>
 </div>

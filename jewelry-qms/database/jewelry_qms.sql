@@ -39,6 +39,26 @@ CREATE TABLE `departments` (
   KEY `company_id` (`company_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `sites` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `code` varchar(20) NOT NULL,
+  `name` varchar(200) NOT NULL,
+  `address` text,
+  `site_type` enum('main','branch') DEFAULT 'branch',
+  `contact_person` varchar(100) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `sort_order` int DEFAULT 0,
+  `publish` tinyint(1) DEFAULT 1,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `site_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `designations` (
   `id` varchar(36) NOT NULL,
   `company_id` varchar(36) NOT NULL,
@@ -54,6 +74,7 @@ CREATE TABLE `employees` (
   `id` varchar(36) NOT NULL,
   `company_id` varchar(36) NOT NULL,
   `department_id` varchar(36) DEFAULT NULL,
+  `primary_site_id` varchar(36) DEFAULT NULL,
   `designation_id` varchar(36) DEFAULT NULL,
   `employee_number` varchar(50) DEFAULT NULL,
   `name` varchar(100) NOT NULL,
@@ -304,6 +325,7 @@ CREATE TABLE `audit_schedules` (
   `audit_plan_id` varchar(36) NOT NULL,
   `audit_date` date NOT NULL,
   `department_id` varchar(36) DEFAULT NULL,
+  `site_id` varchar(36) DEFAULT NULL,
   `clause` varchar(100) DEFAULT NULL COMMENT '17025条款',
   `auditor_id` varchar(36) DEFAULT NULL,
   `auditee_id` varchar(36) DEFAULT NULL,
@@ -431,6 +453,7 @@ CREATE TABLE `equipments` (
   `manufacturer` varchar(200) DEFAULT NULL,
   `serial_number` varchar(100) DEFAULT NULL,
   `department_id` varchar(36) DEFAULT NULL,
+  `site_id` varchar(36) DEFAULT NULL,
   `location` varchar(200) DEFAULT NULL,
   `purchase_date` date DEFAULT NULL,
   `calibration_required` tinyint(1) DEFAULT 1,
@@ -475,6 +498,25 @@ CREATE TABLE `equipment_maintenances` (
   `soft_delete` tinyint(1) DEFAULT 0,
   `created` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `equipment_transfers` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `equipment_id` varchar(36) NOT NULL,
+  `from_site_id` varchar(36) DEFAULT NULL,
+  `to_site_id` varchar(36) NOT NULL,
+  `transfer_date` date NOT NULL,
+  `reason` text,
+  `transferred_by` varchar(36) DEFAULT NULL,
+  `remarks` text,
+  `publish` tinyint(1) DEFAULT 1,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `equipment_id` (`equipment_id`),
+  KEY `to_site_id` (`to_site_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== 培训与能力 ==========
@@ -1176,6 +1218,9 @@ INSERT INTO `departments` (`id`,`company_id`,`name`,`code`,`publish`,`soft_delet
 ('00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000001','质量管理部','QM','1','0',NOW(),NOW()),
 ('00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000001','检测部','TEST','1','0',NOW(),NOW()),
 ('00000000-0000-0000-0000-000000000012','00000000-0000-0000-0000-000000000001','综合管理部','ADMIN','1','0',NOW(),NOW());
+
+INSERT IGNORE INTO `sites` (`id`,`company_id`,`code`,`name`,`site_type`,`status`,`sort_order`,`publish`,`soft_delete`,`created`) VALUES
+('00000000-0000-0000-0000-000000000070','00000000-0000-0000-0000-000000000001','MAIN','主场所','main','active','0','1','0',NOW());
 
 INSERT INTO `designations` (`id`,`company_id`,`name`,`publish`,`soft_delete`,`created`) VALUES
 ('00000000-0000-0000-0000-000000000020','00000000-0000-0000-0000-000000000001','质量负责人','1','0',NOW()),
