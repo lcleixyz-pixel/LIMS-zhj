@@ -146,5 +146,6 @@ Route::group(function () {
 })->middleware([
     \app\middleware\Auth::class,
     \app\middleware\Rbac::class,
+    \think\middleware\FormTokenCheck::class,
     \app\middleware\AuditLog::class,
 ]);
