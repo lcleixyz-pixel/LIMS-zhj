@@ -13,6 +13,17 @@ class Calibration extends BusinessBase
     protected string $modelClass = CalibrationModel::class;
     protected string $viewPrefix = 'calibration';
     protected string $pageTitle = '校准记录';
+    protected array $validateRules = [
+        'equipment_id' => 'require',
+        'calibration_date' => 'require|date',
+        'next_due_date' => 'date',
+    ];
+    protected array $validateMessages = [
+        'equipment_id.require' => '请选择校准设备',
+        'calibration_date.require' => '校准日期不能为空',
+        'calibration_date.date' => '校准日期格式不正确',
+        'next_due_date.date' => '下次到期日期格式不正确',
+    ];
 
     protected function assignFormContext(): void
     {
@@ -24,6 +35,10 @@ class Calibration extends BusinessBase
     {
         if ($this->request->isPost()) {
             $data = $this->request->post();
+            $errors = $this->validateFormData($data);
+            if ($errors !== []) {
+                return $this->renderFormValidationFailure($data, $this->viewPrefix . '/add');
+            }
             $model = $this->getModel();
             $model->save($data);
             $equipment = Equipment::find($data['equipment_id'] ?? '');
@@ -44,6 +59,9 @@ class Calibration extends BusinessBase
             return redirect($this->listRedirectUrl());
         }
         View::assign('pageTitle', $this->pageTitle . ' - 新增');
+        View::assign('form', [
+            'result' => 'pass',
+        ]);
         $this->assignDefaultFormContext();
         $this->assignFormContext();
 

@@ -10,26 +10,26 @@
                         <label for="level" class="form-label required">文件层级</label>
                         <select name="level" id="level" class="form-select" required>
                             <option value="">请选择</option>
-                            <option value="1">一级 - 质量手册</option>
-                            <option value="2">二级 - 程序文件</option>
-                            <option value="3">三级 - 作业指导书</option>
-                            <option value="4">四级 - 记录表单</option>
+                            <option value="1" {if isset($form.level) && $form.level == '1'}selected{/if}>一级 - 质量手册</option>
+                            <option value="2" {if isset($form.level) && $form.level == '2'}selected{/if}>二级 - 程序文件</option>
+                            <option value="3" {if isset($form.level) && $form.level == '3'}selected{/if}>三级 - 作业指导书</option>
+                            <option value="4" {if isset($form.level) && $form.level == '4'}selected{/if}>四级 - 记录表单</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label for="doc_number" class="form-label required">文件编号</label>
-                        <input type="text" class="form-control" id="doc_number" name="doc_number" required placeholder="例: QP-01-001">
+                        <input type="text" class="form-control" id="doc_number" name="doc_number" value="{$form.doc_number|default=''}" required placeholder="例: QP-01-001">
                     </div>
                     <div class="mb-3">
                         <label for="title" class="form-label required">文件标题</label>
-                        <input type="text" class="form-control" id="title" name="title" required placeholder="例: 文件控制程序">
+                        <input type="text" class="form-control" id="title" name="title" value="{$form.title|default=''}" required placeholder="例: 文件控制程序">
                     </div>
                     <div class="mb-3">
                         <label for="category_id" class="form-label">文件分类</label>
                         <select name="category_id" id="category_id" class="form-select">
                             <option value="">请选择</option>
                             {volist name="categories" id="cat"}
-                            <option value="{$cat.id}">{$cat.name}</option>
+                            <option value="{$cat.id}" {if isset($form.category_id) && $form.category_id == $cat.id}selected{/if}>{$cat.name}</option>
                             {/volist}
                         </select>
                     </div>
@@ -38,7 +38,7 @@
                         <select name="department_id" id="department_id" class="form-select">
                             <option value="">请选择</option>
                             {volist name="departments" id="dept"}
-                            <option value="{$dept.id}">{$dept.name}</option>
+                            <option value="{$dept.id}" {if isset($form.department_id) && $form.department_id == $dept.id}selected{/if}>{$dept.name}</option>
                             {/volist}
                         </select>
                     </div>
@@ -49,24 +49,24 @@
                         <select name="template_id" id="template_id" class="form-select">
                             <option value="">无模板</option>
                             {volist name="templates" id="tpl"}
-                            <option value="{$tpl.id}">{$tpl.name}</option>
+                            <option value="{$tpl.id}" {if isset($form.template_id) && $form.template_id == $tpl.id}selected{/if}>{$tpl.name}</option>
                             {/volist}
                         </select>
                     </div>
                     <div class="mb-3">
                         <label for="version" class="form-label">版本号</label>
-                        <input type="text" class="form-control" id="version" name="version" value="1.0" placeholder="例: 1.0">
+                        <input type="text" class="form-control" id="version" name="version" value="{$form.version|default='1.0'}" placeholder="例: 1.0">
                     </div>
                     <div class="mb-3">
                         <label for="effective_date" class="form-label">生效日期</label>
-                        <input type="date" class="form-control" id="effective_date" name="effective_date">
+                        <input type="date" class="form-control" id="effective_date" name="effective_date" value="{$form.effective_date|default=''}">
                     </div>
                     <div class="mb-3" id="reviewer-group">
                         <label for="reviewed_by" class="form-label">审核人</label>
                         <select name="reviewed_by" id="reviewed_by" class="form-select">
                             <option value="">请选择</option>
                             {volist name="reviewers" id="rev"}
-                            <option value="{$rev.id}">{$rev.name}</option>
+                            <option value="{$rev.id}" {if isset($form.reviewed_by) && $form.reviewed_by == $rev.id}selected{/if}>{$rev.name}</option>
                             {/volist}
                         </select>
                     </div>
@@ -75,7 +75,7 @@
                         <select name="approved_by" id="approved_by" class="form-select">
                             <option value="">请选择</option>
                             {volist name="approvers" id="appr"}
-                            <option value="{$appr.id}">{$appr.name}</option>
+                            <option value="{$appr.id}" {if isset($form.approved_by) && $form.approved_by == $appr.id}selected{/if}>{$appr.name}</option>
                             {/volist}
                         </select>
                     </div>
@@ -87,7 +87,7 @@
             </div>
             <div class="mb-3">
                 <label for="description" class="form-label">文件说明</label>
-                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                <textarea class="form-control" id="description" name="description" rows="3">{$form.description|default=''}</textarea>
             </div>
             <div class="text-end">
                 <a href="/document/index" class="btn btn-secondary">取消</a>
