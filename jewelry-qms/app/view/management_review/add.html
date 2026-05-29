@@ -1,8 +1,15 @@
 <div class="card">
     <div class="card-header"><h5 class="mb-0">新建管理评审</h5></div>
     <div class="card-body">
-        <div class="alert alert-info">
-            系统自动汇总：CAPA {$reviewInputs.open_capa} | 投诉 {$reviewInputs.open_complaints} | 不符合 {$reviewInputs.open_nc} | 审核发现 {$reviewInputs.open_findings} | 逾期决议 {$reviewInputs.overdue_actions}
+        <div class="alert alert-info mb-3">
+            <strong>系统自动汇总</strong><br>
+            CAPA：未关闭 {$reviewInputs.open_capa}，待有效性复查 {$reviewInputs.capa_effectiveness_due|default=0}；
+            投诉：未关闭 {$reviewInputs.open_complaints}；
+            不符合：未关闭 {$reviewInputs.open_nc}；
+            校准合格率 {$reviewInputs.calibration_pass_rate|default=0}%；
+            培训完成率 {$reviewInputs.training_completion_rate|default=0}%；
+            内审发现未关闭 {$reviewInputs.open_findings}；
+            逾期决议 {$reviewInputs.overdue_actions}
         </div>
         <form method="post" action="/management_review/add">
             <div class="row">

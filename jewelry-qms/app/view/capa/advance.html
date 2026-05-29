@@ -14,6 +14,7 @@
             {elseif $record.status == 'verifying'}
             <div class="mb-3"><label>效果验证说明</label><textarea name="verification" class="form-control" rows="3" required></textarea></div>
             <div class="mb-3"><label>验证日期</label><input type="date" name="verified_date" class="form-control" value="{:date('Y-m-d')}"></div>
+            <div class="mb-3"><label>有效性复查日期</label><input type="date" name="effectiveness_review_date" class="form-control" value="{:date('Y-m-d', strtotime('+30 days'))}"></div>
             {/if}
             <button type="submit" class="btn btn-primary">{if $record.status=='verifying'}关闭CAPA{else}推进到下一阶段{/if}</button>
             <a href="/capa/view?id={$record.id}" class="btn btn-secondary">取消</a>

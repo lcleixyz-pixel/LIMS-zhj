@@ -98,9 +98,12 @@ Route::group(function () {
     Route::rule('capa/advance', 'Capa/advance');
     Route::get('audit_plan/approve', 'AuditPlan/approve');
     Route::get('audit_finding/createCapa', 'AuditFinding/createCapa');
+    Route::post('audit_finding/uploadEvidence', 'AuditFinding/uploadEvidence');
+    Route::get('audit_finding/downloadEvidence', 'AuditFinding/downloadEvidence');
     Route::get('nonconformity/createCapa', 'Nonconformity/createCapa');
     Route::get('complaint/createCapa', 'Complaint/createCapa');
     Route::rule('complaint/advance', 'Complaint/advance');
+    Route::post('capa/reviewEffectiveness', 'Capa/reviewEffectiveness');
     Route::get('management_review/complete', 'ManagementReview/complete');
     Route::rule('review_action/verify', 'ReviewAction/verify');
     Route::get('review_action/createCapa', 'ReviewAction/createCapa');

@@ -22,7 +22,27 @@
             <tr><th>效果验证</th><td>{$record.verification|default='-'}</td></tr>
             <tr><th>验证人</th><td>{$verifier.name|default='-'}</td></tr>
             <tr><th>验证日期</th><td>{$record.verified_date|default='-'}</td></tr>
+            <tr><th>有效性复查日期</th><td>{$record.effectiveness_review_date|default='-'}</td></tr>
+            <tr><th>有效性复查结果</th><td>{$record.effectiveness_result|default='-'}</td></tr>
         </table>
+        {if $record.status == 'closed' && !$record.effectiveness_result}
+        <form method="post" action="/capa/reviewEffectiveness" class="border rounded p-3 bg-light">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">有效性复查日期</label>
+                    <input type="date" name="effectiveness_review_date" class="form-control" value="{:date('Y-m-d')}">
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label required">有效性复查结果</label>
+                    <textarea name="effectiveness_result" class="form-control" rows="2" required placeholder="说明措施是否有效、是否再发生同类问题"></textarea>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-primary w-100">保存复查</button>
+                </div>
+            </div>
+        </form>
+        {/if}
     </div>
 </div>
 

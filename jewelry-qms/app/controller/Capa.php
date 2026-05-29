@@ -111,4 +111,15 @@ class Capa extends BusinessBase
 
         return View::fetch($this->viewPrefix . '/advance');
     }
+
+    public function reviewEffectiveness()
+    {
+        $id = (string)$this->request->post('id', '');
+        $result = trim((string)$this->request->post('effectiveness_result', ''));
+        $reviewDate = (string)$this->request->post('effectiveness_review_date', '');
+        $ok = $result !== '' && WorkflowService::recordCapaEffectiveness($id, $result, $reviewDate !== '' ? $reviewDate : null);
+        Session::flash($ok ? 'success' : 'error', $ok ? '有效性复查结果已保存' : '有效性复查结果保存失败');
+
+        return redirect('/capa/view?id=' . $id);
+    }
 }

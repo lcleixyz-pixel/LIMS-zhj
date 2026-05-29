@@ -29,12 +29,8 @@ class ManagementReview extends BusinessBase
                 $data['review_number'] = qms_next_number('MR', ManagementReviewModel::class, 'review_number');
             }
             $inputs = WorkflowService::buildManagementReviewInputs();
-            $data['inputs'] = ($data['inputs'] ?? '') . "\n\n【系统自动汇总】\n"
-                . "未关闭CAPA: {$inputs['open_capa']}\n"
-                . "未关闭投诉: {$inputs['open_complaints']}\n"
-                . "未关闭不符合: {$inputs['open_nc']}\n"
-                . "未关闭审核发现: {$inputs['open_findings']}\n"
-                . "逾期决议: {$inputs['overdue_actions']}";
+            $data['inputs'] = trim((string)($data['inputs'] ?? '')) . "\n\n【系统自动汇总】\n"
+                . WorkflowService::formatManagementReviewInputs($inputs);
             $model = $this->getModel();
             $model->save($data);
             Session::flash('success', '管理评审已创建');
