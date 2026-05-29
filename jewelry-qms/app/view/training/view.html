@@ -1,35 +1,35 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">查看培训记录</h5>
+        <h5 class="mb-0">培训活动详情</h5>
         <div>
+            {if $record.status != 'completed'}<a href="/training/complete?id={$record.id}" class="btn btn-sm btn-primary">标记完成</a>{/if}
+            <a href="/training_record/add?training_id={$record.id}" class="btn btn-sm btn-outline-success">添加参训记录</a>
             <a href="/training/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
             <a href="/training/index" class="btn btn-sm btn-outline-secondary">返回列表</a>
         </div>
     </div>
     <div class="card-body">
-        <table class="table table-bordered">
-            {volist name="fields" id="field"}
-            <tr>
-                <th width="150">{$field.label}</th>
-                <td>{$field.value|default='-'}</td>
-            </tr>
-            {/volist}
-            {empty name="fields"}
-            <tr><th>名称</th><td>{$record.name|default='-'}</td></tr>
-            <tr><th>编号</th><td>{$record.code|default='-'}</td></tr>
-            <tr><th>状态</th><td>
-                {if $record.status == 'active'}<span class="badge bg-success">启用</span>
-                {elseif $record.status == 'draft'}<span class="badge bg-secondary">草稿</span>
-                {elseif $record.status == 'inactive'}<span class="badge bg-warning text-dark">停用</span>
-                {else}<span class="badge bg-secondary">{$record.status|default='-'}</span>{/if}
-            </td></tr>
-            <tr><th>所属部门</th><td>{$record.department_name|default='-'}</td></tr>
-            <tr><th>负责人</th><td>{$record.responsible_person|default='-'}</td></tr>
-            <tr><th>描述</th><td>{$record.description|default='-'}</td></tr>
-            <tr><th>备注</th><td>{$record.remark|default='-'}</td></tr>
-            <tr><th>创建时间</th><td>{$record.create_time|default='-'}</td></tr>
-            <tr><th>更新时间</th><td>{$record.update_time|default='-'}</td></tr>
-            {/empty}
+        <table class="table table-bordered mb-4">
+            <tr><th width="160">培训主题</th><td>{$record.title}</td></tr>
+            <tr><th>所属计划</th><td>{if $trainingPlan}<a href="/training_plan/view?id={$trainingPlan.id}">{$trainingPlan.plan_year} {$trainingPlan.title}</a>{else}-{/if}</td></tr>
+            <tr><th>培训类型</th><td>{$typeLabels[$record.training_type]|default=$record.training_type}</td></tr>
+            <tr><th>培训日期</th><td>{$record.training_date|default='-'}</td></tr>
+            <tr><th>讲师/机构</th><td>{$record.trainer|default='-'}</td></tr>
+            <tr><th>学时</th><td>{$record.duration_hours|default='-'}</td></tr>
+            <tr><th>状态</th><td>{$statusLabels[$record.status]|default=$record.status}</td></tr>
+            <tr><th>培训内容</th><td>{$record.content|default='-'}</td></tr>
         </table>
+        <h6>参训记录</h6>
+        <div class="table-responsive">
+            <table class="table table-striped table-sm">
+                <thead><tr><th>员工</th><th>出勤</th><th>成绩</th><th>结果</th><th>备注</th></tr></thead>
+                <tbody>
+                    {volist name="trainingRecords" id="row"}
+                    <tr><td>{$row.employee.name|default=$row.employee_id}</td><td>{$row.attendance}</td><td>{$row.evaluation_score|default='-'}</td><td>{$row.evaluation_result}</td><td>{$row.remarks|default='-'}</td></tr>
+                    {/volist}
+                    {empty name="trainingRecords"}<tr><td colspan="5" class="text-center text-muted">暂无参训记录</td></tr>{/empty}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>

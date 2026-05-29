@@ -43,6 +43,7 @@ class Rbac
             'distribute', 'confirmreceipt', 'confirmrecall', 'review',
             'uploadevidence', 'revieweffectiveness',
             'uploadcertificate',
+            'approve', 'complete', 'uploadattachment',
         ];
         if (in_array($action, $writeActions, true) && !RbacService::canWrite($controller)) {
             Session::flash('error', '您没有编辑权限');

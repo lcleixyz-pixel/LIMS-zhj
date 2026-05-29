@@ -19,5 +19,6 @@ class TrainingRecord extends BusinessBase
         View::assign('trainings', Training::where('soft_delete', 0)->select());
         View::assign('employees', Employee::where('soft_delete', 0)->select());
         View::assign('resultOptions', ['pass' => '合格', 'fail' => '不合格', 'pending' => '待评价']);
+        View::assign('currentTrainingId', (string)$this->request->param('training_id', ''));
     }
 }
