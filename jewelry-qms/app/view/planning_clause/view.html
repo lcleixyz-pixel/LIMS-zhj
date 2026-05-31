@@ -9,11 +9,26 @@
 <div class="card mb-3">
     <div class="card-header"><h5 class="mb-0">条款原文</h5></div>
     <div class="card-body">
-        <div class="row g-3 mb-3">
-            <div class="col-md-3"><div class="text-muted small">适用性</div><div>{$clause.applicability}</div></div>
-            <div class="col-md-3"><div class="text-muted small">复核状态</div><div>{$clause.review_status}</div></div>
-            <div class="col-md-3"><div class="text-muted small">定位</div><div>{$clause.locator|default='-'}</div></div>
-            <div class="col-md-3"><div class="text-muted small">抽取方法</div><div>{$text.extraction_method|default='-'}</div></div>
+        <div class="row qms-info-grid mb-3">
+            <div class="col-md-3">
+                <div class="qms-info-label">适用性</div>
+                <div class="qms-info-value">
+                    {if $clause.applicability == 'applicable'}适用
+                    {elseif $clause.applicability == 'conditional'}条件适用
+                    {elseif $clause.applicability == 'not_applicable'}不适用
+                    {else}{$clause.applicability|default='-'}{/if}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="qms-info-label">复核状态</div>
+                <div class="qms-info-value">
+                    {if $clause.review_status == 'published'}<span class="badge badge-status-effective">已发布</span>
+                    {elseif $clause.review_status == 'pending_review'}<span class="badge badge-status-pending">待复核</span>
+                    {else}<span class="badge bg-secondary">{$clause.review_status|default='-'}</span>{/if}
+                </div>
+            </div>
+            <div class="col-md-3"><div class="qms-info-label">定位</div><div class="qms-info-value">{$clause.locator|default='-'}</div></div>
+            <div class="col-md-3"><div class="qms-info-label">抽取方法</div><div class="qms-info-value">{$text.extraction_method|default='-'}</div></div>
         </div>
         <div class="qms-clause-original-text">{$text.original_text|default='暂无原文'}</div>
     </div>
@@ -36,7 +51,7 @@
                     </tr>
                     {/volist}
                     {empty name="elements"}
-                    <tr><td colspan="5" class="text-center text-muted">暂无要素映射</td></tr>
+                    <tr><td colspan="5"><div class="qms-empty-state">暂无要素映射，请在下方选择体系要素后保存。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>
@@ -55,7 +70,7 @@
                     <div class="mb-2">
                         <label class="form-label small text-muted">目标要素</label>
                         <select name="element_id" class="form-select form-select-sm" required>
-                            <option value="">请选择无编号要素</option>
+                            <option value="">请选择体系要素</option>
                             {volist name="availableElements" id="candidate"}
                             <option value="{$candidate.id}">{$candidate.name}（{if $candidate.element_type == 'technical'}技术{else}管理{/if}）</option>
                             {/volist}
@@ -126,7 +141,7 @@
                         <th>关系</th>
                         <th>关联对象</th>
                         <th>说明</th>
-                        <th class="text-end">操作</th>
+                        <th class="qms-action-cell">入口</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -142,8 +157,12 @@
                         </td>
                         <td>{$evidence.evidence_path|default='直接条款映射'}</td>
                         <td>
-                            {$evidence.relation_type}
-                            <div class="text-muted small">{$evidence.confidence}</div>
+                            {if $evidence.relation_type == 'supporting'}支撑
+                            {elseif $evidence.relation_type == 'implemented_by'}落实于
+                            {elseif $evidence.relation_type == 'basis'}作为依据
+                            {elseif $evidence.relation_type == 'mentions'}提及
+                            {else}{$evidence.relation_type|default='待确认'}{/if}
+                            <div class="text-muted small">置信度：{$evidence.confidence|default='-'}</div>
                         </td>
                         <td>
                             {if $evidence.element_name}<div>{$evidence.element_name}</div>{/if}
@@ -154,13 +173,13 @@
                             {if $evidence.position_name}<div>{$evidence.position_name}</div>{/if}
                         </td>
                         <td>{$evidence.note|default='-'}</td>
-                        <td class="text-end">
+                        <td class="qms-action-cell">
                             <a href="{$evidence.review_url}" class="btn btn-sm btn-outline-primary">复核追溯</a>
                         </td>
                     </tr>
                     {/volist}
                     {empty name="structuredBlockEvidence"}
-                    <tr><td colspan="7" class="text-center text-muted">暂无结构块证据。</td></tr>
+                    <tr><td colspan="7"><div class="qms-empty-state">暂无结构块证据。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>

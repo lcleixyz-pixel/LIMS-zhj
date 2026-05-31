@@ -8,9 +8,10 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="get" action="/planning/clauses" class="row g-2 mb-3">
+        <form method="get" action="/planning/clauses" class="row g-2 qms-filter-form">
             <div class="col-md-4">
-                <select name="source_id" class="form-select form-select-sm">
+                <label class="form-label" for="source_id">正式依据</label>
+                <select id="source_id" name="source_id" class="form-select form-select-sm">
                     <option value="">全部依据</option>
                     {volist name="sources" id="source"}
                     <option value="{$source.id}" {if $filter.source_id == $source.id}selected{/if}>{$source.source_code} {$source.name}</option>
@@ -18,7 +19,8 @@
                 </select>
             </div>
             <div class="col-md-4">
-                <input type="text" name="keyword" class="form-control form-control-sm" placeholder="搜索条款编号/标题/原文" value="{$filter.keyword|default=''}">
+                <label class="form-label" for="keyword">条款检索</label>
+                <input id="keyword" type="text" name="keyword" class="form-control form-control-sm" placeholder="搜索条款编号/标题/原文" value="{$filter.keyword|default=''}">
             </div>
             <div class="col-md-4">
                 <button type="submit" class="btn btn-sm btn-outline-primary">筛选</button>
@@ -35,7 +37,7 @@
                         <th>层级</th>
                         <th>适用性</th>
                         <th>状态</th>
-                        <th class="text-end">操作</th>
+                        <th class="qms-action-cell">入口</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,13 +47,22 @@
                         <td>{$item.clause_number}</td>
                         <td>{$item.title}</td>
                         <td>{$item.level}</td>
-                        <td>{$item.applicability}</td>
-                        <td>{$item.review_status}</td>
-                        <td class="text-end"><a href="/planning/clauses/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a></td>
+                        <td>
+                            {if $item.applicability == 'applicable'}适用
+                            {elseif $item.applicability == 'conditional'}条件适用
+                            {elseif $item.applicability == 'not_applicable'}不适用
+                            {else}{$item.applicability|default='-'}{/if}
+                        </td>
+                        <td>
+                            {if $item.review_status == 'published'}<span class="badge badge-status-effective">已发布</span>
+                            {elseif $item.review_status == 'pending_review'}<span class="badge badge-status-pending">待复核</span>
+                            {else}<span class="badge bg-secondary">{$item.review_status|default='-'}</span>{/if}
+                        </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id={$item.id}" class="btn btn-sm btn-outline-primary">查看详情</a></td>
                     </tr>
                     {/volist}
                     {empty name="items"}
-                    <tr><td colspan="7" class="text-center text-muted">暂无条款，请先从外部依据抽取。</td></tr>
+                    <tr><td colspan="7" class="qms-empty-state">暂无条款，请先在外部依据页面上传或登记依据并抽取条款。</td></tr>
                     {/empty}
                 </tbody>
             </table>

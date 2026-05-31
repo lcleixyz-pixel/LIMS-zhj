@@ -15,6 +15,10 @@
             <tr><th>位置</th><td>{$record.location|default='-'}</td></tr>
             <tr><th>状态</th><td>{:qms_status_label('equipment', $record.status)}</td></tr>
             <tr><th>型号</th><td>{$record.model|default='-'}</td></tr>
+            <tr><th>测量范围</th><td>{$record.measurement_range|default='-'}</td></tr>
+            <tr><th>溯源方式</th><td>{$record.traceability_method|default='-'}</td></tr>
+            <tr><th>溯源有效期</th><td>{$record.traceability_due_date|default='-'}</td></tr>
+            <tr><th>确认结果</th><td>{$record.traceability_confirm_result|default='-'}</td></tr>
             <tr><th>上次校准</th><td>{$record.last_calibration_date|default='-'}</td></tr>
             <tr><th>下次校准</th><td>{$record.next_calibration_date|default='-'}</td></tr>
         </table>

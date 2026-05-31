@@ -9,7 +9,7 @@
                         {volist name="auditSchedules" id="s"}<option value="{$s.id}" {if $Request.param.audit_schedule_id==$s.id}selected{/if}>{$s.audit_date} - {$s.clause|default=''}</option>{/volist}
                     </select>
                 </div>
-                <div class="col-md-6 mb-3"><label>类型</label><select name="finding_type" class="form-select">{volist name="findingTypes" id="l" key="k"}<option value="{$k}">{$l}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label>类型</label><select name="finding_type" class="form-select">{foreach $findingTypes as $k=>$l}<option value="{$k}">{$l}</option>{/foreach}</select></div>
                 <div class="col-md-6 mb-3"><label>条款</label><input name="clause" class="form-control"></div>
                 <div class="col-md-6 mb-3"><label>责任部门</label><select name="department_id" class="form-select"><option value="">请选择</option>{volist name="departments" id="d"}<option value="{$d.id}">{$d.name}</option>{/volist}</select></div>
                 <div class="col-md-6 mb-3"><label>截止日期</label><input type="date" name="due_date" class="form-control"></div>

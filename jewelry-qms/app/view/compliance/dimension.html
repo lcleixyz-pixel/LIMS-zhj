@@ -1,0 +1,81 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">{$dimensionLabel}</h4>
+        <div class="text-muted small">审核准备维度详情，展示该维度全部检查项和证据缺口。</div>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/compliance/index" class="btn btn-sm btn-outline-secondary">返回驾驶舱</a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <div class="text-muted small">维度评分</div>
+            <div class="h3 mb-0">{if $dimensionScore === null}—{else}{$dimensionScore}/100{/if}</div>
+        </div>
+        {if $scorecard}
+        <div class="text-muted small">评估时间：{$scorecard.snapshot_time}</div>
+        {/if}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h6 class="mb-0">检查项</h6></div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-striped mb-0 align-middle">
+            <thead>
+            <tr>
+                <th>状态</th>
+                <th>条款</th>
+                <th>检查项</th>
+                <th>得分</th>
+                <th>不合规/预警</th>
+                <th>建议</th>
+                <th class="qms-action-cell">入口</th>
+            </tr>
+            </thead>
+            <tbody>
+            {foreach $results as $row}
+            {php}
+            $badgeClass = match ($row['status']) {
+                'pass' => 'success',
+                'warning' => 'warning text-dark',
+                'fail' => 'danger',
+                'insufficient_data' => 'danger-subtle text-danger border border-danger-subtle',
+                default => 'secondary',
+            };
+            $scoreText = $row['score'] === null ? '—' : round((float)$row['score'] * 100, 1) . '%';
+            $first = $row['fail_items'][0] ?? null;
+            {/php}
+            <tr>
+                <td>
+                    {if $row.status == 'pass'}<span class="badge bg-{$badgeClass}">通过</span>
+                    {elseif $row.status == 'warning'}<span class="badge bg-{$badgeClass}">预警</span>
+                    {elseif $row.status == 'fail'}<span class="badge bg-{$badgeClass}">不合规</span>
+                    {elseif $row.status == 'insufficient_data'}<span class="badge bg-{$badgeClass}">数据不足</span>
+                    {elseif $row.status == 'not_applicable'}<span class="badge bg-{$badgeClass}">不适用</span>
+                    {else}<span class="badge bg-{$badgeClass}">{$row.status|default='待确认'}</span>{/if}
+                </td>
+                <td>{$row.clause_number|default='-'}</td>
+                <td>{$row.check_name}</td>
+                <td>{$scoreText}</td>
+                <td>
+                    {if $first}
+                    <div>{$first.reason}</div>
+                    {if !empty($first['name'])}<div class="small text-muted">{$first.code} {$first.name}</div>{/if}
+                    {else}
+                    <span class="text-muted">无</span>
+                    {/if}
+                </td>
+                <td>{$row.suggestion_template|default='-'}</td>
+                <td class="qms-action-cell"><a class="btn btn-sm btn-outline-primary" href="{$row.action_url}">查看详情</a></td>
+            </tr>
+            {/foreach}
+            {empty name="results"}
+            <tr><td colspan="7"><div class="qms-empty-state">该维度暂无检查项。</div></td></tr>
+            {/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

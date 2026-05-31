@@ -27,7 +27,7 @@
                     <label class="form-check form-check-inline small"><input class="form-check-input" type="checkbox" name="management_review_input" value="1" checked> 管评输入</label>
                 </div>
                 <div class="col-md-10"><textarea name="policy_text" class="form-control form-control-sm" rows="2" placeholder="质量方针内容" required></textarea></div>
-                <div class="col-md-2"><button type="submit" class="btn btn-sm btn-success w-100">保存</button></div>
+                <div class="col-md-2"><button type="submit" class="btn btn-sm btn-primary w-100">保存方针</button></div>
             </form>
         </div>
         <div class="table-responsive">
@@ -40,11 +40,16 @@
                         <td>{$policy.version|default='-'}</td>
                         <td>{$policy.effective_date|default='-'}</td>
                         <td>{if $policy.is_current}是{else}否{/if}</td>
-                        <td><span class="badge bg-secondary">{$policy.review_status}</span></td>
+                        <td>
+                            {if $policy.review_status == 'published'}<span class="badge badge-status-effective">已发布</span>
+                            {elseif $policy.review_status == 'draft'}<span class="badge badge-status-draft">草稿</span>
+                            {elseif $policy.review_status == 'pending_review'}<span class="badge badge-status-pending">待复核</span>
+                            {else}<span class="badge bg-secondary">{$policy.review_status|default='待确认'}</span>{/if}
+                        </td>
                     </tr>
                     {/volist}
                     {empty name="policies"}
-                    <tr><td colspan="5" class="text-center text-muted">暂无质量方针登记</td></tr>
+                    <tr><td colspan="5"><div class="qms-empty-state">暂无质量方针登记，请点击“登记方针”补充当前有效方针。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>
@@ -99,7 +104,7 @@
                 <div class="col-md-2">
                     <label class="form-check small mt-1"><input class="form-check-input" type="checkbox" name="management_review_input" value="1" checked> 管评输入</label>
                 </div>
-                <div class="col-md-2"><button type="submit" class="btn btn-sm btn-success w-100">保存</button></div>
+                <div class="col-md-2"><button type="submit" class="btn btn-sm btn-primary w-100">保存目标</button></div>
             </form>
         </div>
         <div class="table-responsive">
@@ -112,13 +117,25 @@
                         <td>{$objective.title}</td>
                         <td>{$objective.metric_name|default='-'}</td>
                         <td>{$objective.target_value|default='-'}</td>
-                        <td>{$objective.statistic_cycle|default='annual'}</td>
+                        <td>
+                            {if $objective.statistic_cycle == 'annual'}年度
+                            {elseif $objective.statistic_cycle == 'semiannual'}半年
+                            {elseif $objective.statistic_cycle == 'quarterly'}季度
+                            {elseif $objective.statistic_cycle == 'monthly'}月度
+                            {elseif $objective.statistic_cycle == 'event'}事件
+                            {else}{$objective.statistic_cycle|default='年度'}{/if}
+                        </td>
                         <td>{if $objective.management_review_input}是{else}否{/if}</td>
-                        <td><span class="badge bg-secondary">{$objective.review_status}</span></td>
+                        <td>
+                            {if $objective.review_status == 'published'}<span class="badge badge-status-effective">已发布</span>
+                            {elseif $objective.review_status == 'draft'}<span class="badge badge-status-draft">草稿</span>
+                            {elseif $objective.review_status == 'pending_review'}<span class="badge badge-status-pending">待复核</span>
+                            {else}<span class="badge bg-secondary">{$objective.review_status|default='待确认'}</span>{/if}
+                        </td>
                     </tr>
                     {/volist}
                     {empty name="objectives"}
-                    <tr><td colspan="7" class="text-center text-muted">暂无质量目标登记</td></tr>
+                    <tr><td colspan="7"><div class="qms-empty-state">暂无质量目标登记，请点击“登记目标”补充年度或部门目标。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>

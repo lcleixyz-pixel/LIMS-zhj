@@ -10,9 +10,9 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label required">来源类型</label>
                     <select name="source_type" class="form-select" required>
-                        {volist name="sourceTypes" id="label" key="key"}
+                        {foreach $sourceTypes as $key=>$label}
                         <option value="{$key}">{$label}</option>
-                        {/volist}
+                        {/foreach}
                     </select>
                 </div>
                 <div class="col-md-6 mb-3">
@@ -33,7 +33,7 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label">状态</label>
                     <select name="status" class="form-select">
-                        {volist name="statusLabels" id="label" key="key"}<option value="{$key}">{$label}</option>{/volist}
+                        {foreach $statusLabels as $key=>$label}<option value="{$key}">{$label}</option>{/foreach}
                     </select>
                 </div>
                 <div class="col-12 mb-3">

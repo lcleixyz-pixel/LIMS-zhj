@@ -91,6 +91,37 @@ CREATE TABLE `employees` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `employee_appointments` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `employee_id` varchar(36) NOT NULL,
+  `position_id` varchar(36) DEFAULT NULL,
+  `site_id` varchar(36) DEFAULT NULL,
+  `appointment_key` varchar(200) NOT NULL,
+  `appointment_type` enum('role','authorization','responsibility') DEFAULT 'role',
+  `position_name` varchar(200) NOT NULL,
+  `appointment_scope` text,
+  `appointed_at` date DEFAULT NULL,
+  `valid_until` date DEFAULT NULL,
+  `source_document_id` varchar(36) DEFAULT NULL,
+  `source_document_number` varchar(80) DEFAULT NULL,
+  `source_excerpt` text,
+  `status` enum('active','inactive','expired') DEFAULT 'active',
+  `publish` tinyint(1) DEFAULT 1,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  `modified_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `company_appointment_key` (`company_id`,`appointment_key`),
+  KEY `employee_id` (`employee_id`),
+  KEY `position_id` (`position_id`),
+  KEY `site_id` (`site_id`),
+  KEY `appointment_type` (`appointment_type`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `users` (
   `id` varchar(36) NOT NULL,
   `company_id` varchar(36) NOT NULL,
@@ -527,6 +558,10 @@ CREATE TABLE `equipments` (
   `model` varchar(100) DEFAULT NULL,
   `manufacturer` varchar(200) DEFAULT NULL,
   `serial_number` varchar(100) DEFAULT NULL,
+  `measurement_range` varchar(200) DEFAULT NULL,
+  `traceability_method` varchar(50) DEFAULT NULL,
+  `traceability_due_date` date DEFAULT NULL,
+  `traceability_confirm_result` varchar(50) DEFAULT NULL,
   `department_id` varchar(36) DEFAULT NULL,
   `site_id` varchar(36) DEFAULT NULL,
   `location` varchar(200) DEFAULT NULL,
@@ -1316,6 +1351,60 @@ CREATE TABLE `qms_quality_objectives` (
   KEY `year` (`year`),
   KEY `department_id` (`department_id`),
   KEY `review_status` (`review_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `compliance_checks` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `clause_number` varchar(20) DEFAULT NULL,
+  `element_key` varchar(50) DEFAULT NULL,
+  `dimension` enum('personnel','equipment','material','method','environment','document','record','management') NOT NULL,
+  `check_code` varchar(100) NOT NULL,
+  `check_name` varchar(200) NOT NULL,
+  `check_description` text,
+  `severity` enum('critical','major','minor') NOT NULL DEFAULT 'major',
+  `weight` decimal(5,2) NOT NULL DEFAULT 1.00,
+  `suggestion_template` text,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `sort_order` int NOT NULL DEFAULT 0,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `company_check_code` (`company_id`,`check_code`),
+  KEY `idx_dimension` (`dimension`),
+  KEY `idx_element_key` (`element_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `compliance_snapshots` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `snapshot_time` datetime NOT NULL,
+  `trigger_type` enum('scheduled','manual') NOT NULL DEFAULT 'manual',
+  `total_score` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `dimension_scores` json NOT NULL,
+  `summary` json NOT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_company_time` (`company_id`,`snapshot_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `compliance_check_results` (
+  `id` varchar(36) NOT NULL,
+  `snapshot_id` varchar(36) NOT NULL,
+  `check_id` varchar(36) NOT NULL,
+  `check_code` varchar(100) NOT NULL,
+  `dimension` varchar(30) NOT NULL,
+  `status` enum('pass','fail','warning','insufficient_data','not_applicable') NOT NULL,
+  `score` decimal(5,4) DEFAULT NULL,
+  `total_checked` int NOT NULL DEFAULT 0,
+  `fail_count` int NOT NULL DEFAULT 0,
+  `warning_count` int NOT NULL DEFAULT 0,
+  `fail_items` json DEFAULT NULL,
+  `checked_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_snapshot` (`snapshot_id`),
+  KEY `idx_check_code` (`check_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== 通知与历史 ==========

@@ -33,6 +33,11 @@
         <a class="navbar-brand" href="/dashboard/index">工作台</a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav">
+                {if condition="qms_can('compliance')"}
+                <li class="nav-item">
+                    <a class="nav-link" href="/compliance/index">审核准备</a>
+                </li>
+                {/if}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">文件控制</a>
                     <ul class="dropdown-menu">

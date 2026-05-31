@@ -8,9 +8,11 @@
             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="待完成高保真复核后可填写记录">填写记录</button>
             {/if}
             <a href="/record_form_template/preview?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-info">打印预览</a>
-            {if $record.source_file_path}
+            {if $record.source_file_available}
             <a href="/record_form_template/sourcePreview?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-secondary">原始预览</a>
             <a href="/record_form_template/source?id={$record.id}" class="btn btn-sm btn-outline-secondary">下载原始附件</a>
+            {elseif $record.source_file_path}
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="数据库有附件记录，但物理文件不存在">原始附件缺失</button>
             {/if}
             <a href="/record_form_template/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
             <form method="post" action="/record_form_template/delete?id={$record.id}" class="d-inline">

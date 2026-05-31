@@ -37,7 +37,7 @@ $manualRows = Db::name('qms_document_blocks')
     ->join('documents d', 'd.id = l.procedure_document_id')
     ->join('qms_elements e', 'e.id = l.element_id')
     ->where('sd.document_role', 'quality_manual')
-    ->where('sd.doc_number', 'QM-04')
+    ->where('sd.doc_number', 'XZTC/SC')
     ->where('b.soft_delete', 0)
     ->where('d.soft_delete', 0)
     ->whereIn('b.section_number', ['6.2', '6.4', '7.8', '8.8', '8.9'])
@@ -58,15 +58,15 @@ foreach ($bySection as $section => $numbers) {
     $bySection[$section] = array_values(array_unique($numbers));
 }
 
-assert_true(in_array('QP-01', $bySection['6.2'] ?? [], true), 'Manual personnel section links to personnel training procedure');
-assert_true(in_array('QP-03', $bySection['6.4'] ?? [], true), 'Manual equipment section links to equipment management procedure');
-assert_true(in_array('QP-29', $bySection['7.8'] ?? [], true), 'Manual results-reporting section links to report procedure');
-assert_true(in_array('QP-20', $bySection['8.8'] ?? [], true), 'Manual internal-audit section links to internal audit procedure');
-assert_true(in_array('QP-21', $bySection['8.9'] ?? [], true), 'Manual management-review section links to management review procedure');
+assert_true(in_array('XZTC/CX-01-2022', $bySection['6.2'] ?? [], true), 'Manual personnel section links to personnel training procedure');
+assert_true(in_array('XZTC/CX-03-2022', $bySection['6.4'] ?? [], true), 'Manual equipment section links to equipment management procedure');
+assert_true(in_array('XZTC/CX-29-2022', $bySection['7.8'] ?? [], true), 'Manual results-reporting section links to report procedure');
+assert_true(in_array('XZTC/CX-20-2022', $bySection['8.8'] ?? [], true), 'Manual internal-audit section links to internal audit procedure');
+assert_true(in_array('XZTC/CX-21-2022', $bySection['8.9'] ?? [], true), 'Manual management-review section links to management review procedure');
 
 $detail = QmsDocumentStructureService::structuredDocumentDetail((string)Db::name('qms_structured_documents')
     ->where('document_role', 'quality_manual')
-    ->where('doc_number', 'QM-04')
+    ->where('doc_number', 'XZTC/SC')
     ->where('soft_delete', 0)
     ->value('id'));
 $personnelBlock = array_values(array_filter(
@@ -78,6 +78,6 @@ $procedureLabels = array_values(array_filter(
     array_map(fn (array $link): string => trim((string)($link['procedure_number'] ?? '') . ' ' . (string)($link['procedure_title'] ?? '')), $personnelBlock['links']),
     fn (string $label): bool => $label !== ''
 ));
-assert_true(in_array('QP-01 人员培训程序', $procedureLabels, true), 'Manual detail rows expose linked procedure labels');
+assert_true(in_array('XZTC/CX-01-2022 人员培训程序', $procedureLabels, true), 'Manual detail rows expose linked procedure labels');
 
 echo "qms_manual_procedure_traceability_smoke passed\n";

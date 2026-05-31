@@ -97,13 +97,13 @@ $beforeArchiveCount = (int)($beforeSummary['archive_count'] ?? 0);
 $impactBlock = Db::name('qms_document_blocks')
     ->alias('b')
     ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
-    ->where('sd.doc_number', 'QP-26')
+    ->where('sd.doc_number', 'XZTC/CX-26-2022')
     ->where('b.block_type', 'record_requirement')
     ->where('b.soft_delete', 0)
     ->field('b.id,b.title,b.stable_key,sd.id structured_document_id,sd.document_role,sd.doc_number,sd.title document_title,sd.version')
     ->find();
-assert_true(is_array($impactBlock), 'QP-26 has a block for package change impact navigation smoke');
-$impactNote = '组合包影响清单跳转 smoke：QP-26 记录要求';
+assert_true(is_array($impactBlock), 'XZTC/CX-26-2022 has a block for package change impact navigation smoke');
+$impactNote = '组合包影响清单跳转 smoke：XZTC/CX-26-2022 记录要求';
 Db::name('qms_document_change_logs')
     ->where('structured_document_id', (string)$impactBlock['structured_document_id'])
     ->where('revision_note', $impactNote)
@@ -140,7 +140,7 @@ Db::name('qms_document_change_logs')->insert([
             'element_name' => '数据控制和信息管理',
             'source_code' => 'GB/T 27025-2019',
             'clause_number' => '7.11',
-            'procedure_number' => 'QP-26',
+            'procedure_number' => 'XZTC/CX-26-2022',
             'procedure_title' => '计算机文件及数据控制程序',
             'record_number' => 'XZTC/BG-26-01',
             'record_name' => '计算机软件登记表',
@@ -212,8 +212,8 @@ assert_true(in_array('XZTC/BG-26-01 计算机软件登记表', $impactRow['trace
 assert_true(isset($latestManifestEntry['document_inventory']) && is_array($latestManifestEntry['document_inventory']), 'Package archive manifest records included document inventory');
 $inventory = $latestManifestEntry['document_inventory'];
 assert_same((int)$summary['total_documents'], count($inventory), 'Document inventory count matches total package documents');
-$procedureInventory = inventory_row_for($inventory, 'procedure', 'QP-26');
-assert_true(is_array($procedureInventory), 'Document inventory includes QP-26 procedure');
+$procedureInventory = inventory_row_for($inventory, 'procedure', 'XZTC/CX-26-2022');
+assert_true(is_array($procedureInventory), 'Document inventory includes XZTC/CX-26-2022 procedure');
 assert_contains('计算机文件及数据控制程序', (string)($procedureInventory['title'] ?? ''), 'Procedure inventory keeps document title');
 assert_true((int)($procedureInventory['block_count'] ?? 0) > 0, 'Procedure inventory records structured block count');
 assert_true((string)($procedureInventory['source_asset_id'] ?? '') !== '', 'Procedure inventory records source asset id');
@@ -252,8 +252,8 @@ foreach (array_slice($manifest, 0, -1) as $historyEntry) {
 }
 $blockTraceRows = QmsDocumentStructureService::latestSystemPackageBlockTraceRows();
 assert_same((int)$summary['latest_block_trace_count'], count($blockTraceRows), 'Latest package block trace rows match summary count');
-$procedureBlockTrace = block_trace_row_for($blockTraceRows, 'QP-26', (string)$impactBlock['stable_key']);
-assert_true(is_array($procedureBlockTrace), 'Block trace inventory includes the QP-26 record requirement block');
+$procedureBlockTrace = block_trace_row_for($blockTraceRows, 'XZTC/CX-26-2022', (string)$impactBlock['stable_key']);
+assert_true(is_array($procedureBlockTrace), 'Block trace inventory includes the XZTC/CX-26-2022 record requirement block');
 assert_same('/planning/structures/view?id=' . (string)$impactBlock['structured_document_id'], (string)($procedureBlockTrace['document_url'] ?? ''), 'Block trace row links back to structured document detail');
 assert_same('/planning/structures/blocks/edit?id=' . (string)$impactBlock['id'], (string)($procedureBlockTrace['block_edit_url'] ?? ''), 'Block trace row links back to block edit page');
 assert_same('/planning/structures/links/review?block_id=' . (string)$impactBlock['id'], (string)($procedureBlockTrace['trace_review_url'] ?? ''), 'Block trace row links back to trace review page');
@@ -266,7 +266,7 @@ assert_contains('## 内容块级追溯索引', $markdown, 'Package includes a bl
 assert_contains('## 组合包变更影响清单', $markdown, 'Package includes a change impact inventory section');
 assert_contains('| 无编号要素 | 主外部条款 | 手册章节 | 程序文件 | 记录表格 | 运行模块 | 岗位职责 | 缺口 |', $markdown, 'Traceability index has stable columns');
 assert_contains('| 文件 | 内容块 | 块类型 | 要素 | 条款 | 手册章节 | 程序文件 | 记录表格 | 运行模块 | 岗位 | 复核状态 |', $markdown, 'Block traceability index has stable columns');
-assert_contains('QP-26 计算机文件及数据控制程序', $markdown, 'Block traceability index keeps procedure document context');
+assert_contains('XZTC/CX-26-2022 计算机文件及数据控制程序', $markdown, 'Block traceability index keeps procedure document context');
 assert_contains((string)$impactBlock['stable_key'], $markdown, 'Block traceability index keeps stable block keys for modular editing');
 assert_contains('| 人员 | GB/T 27025-2019 6.2', $markdown, 'Traceability index keeps clause number outside the element name');
 assert_contains('| 设备 | GB/T 27025-2019 6.4', $markdown, 'Traceability index includes equipment clause mapping');
@@ -274,10 +274,10 @@ assert_contains('| 数据控制和信息管理 | GB/T 27025-2019 7.11', $markdow
 assert_contains('## 质量手册', $markdown, 'Package groups quality manual documents');
 assert_contains('## 程序文件', $markdown, 'Package groups procedure documents');
 assert_contains('## 记录表格', $markdown, 'Package groups record form documents');
-assert_contains('QP-26 计算机文件及数据控制程序', $markdown, 'Package includes the computer-data-control procedure');
+assert_contains('XZTC/CX-26-2022 计算机文件及数据控制程序', $markdown, 'Package includes the computer-data-control procedure');
 assert_true(!str_contains($markdown, 'REF-2025-PROCEDURES'), 'Package excludes draft reference procedure inputs');
 assert_contains('XZTC/BG-26-01 计算机软件登记表', $markdown, 'Package includes the linked computer software register');
-assert_contains('关联程序：QP-26 计算机文件及数据控制程序', $markdown, 'Package keeps record-form procedure traceability text');
+assert_contains('关联程序：XZTC/CX-26-2022 计算机文件及数据控制程序', $markdown, 'Package keeps record-form procedure traceability text');
 assert_contains('关联要素：数据控制和信息管理', $markdown, 'Package keeps record-form element traceability text');
 
 $routeSource = file_get_contents(dirname(__DIR__) . '/route/app.php') ?: '';

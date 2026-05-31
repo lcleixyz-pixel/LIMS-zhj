@@ -3,27 +3,34 @@
         <h4 class="mb-1">复核追溯</h4>
         <div class="text-muted small">{$detail.document.doc_number} {$detail.document.title} · {$detail.block.title}</div>
     </div>
-    <a href="/planning/structures/view?id={$detail.document.id}" class="btn btn-sm btn-outline-secondary">返回文件</a>
+    <div class="qms-page-actions">
+        <a href="/planning/structures/view?id={$detail.document.id}" class="btn btn-sm btn-outline-secondary">返回文件</a>
+    </div>
 </div>
 
 <div class="card mb-3">
     <div class="card-body">
-        <div class="row g-3">
+        <div class="row qms-info-grid">
             <div class="col-md-3">
-                <div class="text-muted small">内容块类型</div>
-                <div>{$detail.block.block_type}</div>
+                <div class="qms-info-label">内容块类型</div>
+                <div class="qms-info-value">{$detail.block.block_type}</div>
             </div>
             <div class="col-md-3">
-                <div class="text-muted small">稳定键</div>
-                <div class="font-monospace text-break">{$detail.block.stable_key}</div>
+                <div class="qms-info-label">稳定键</div>
+                <div class="qms-info-value font-monospace text-break">{$detail.block.stable_key}</div>
             </div>
             <div class="col-md-3">
-                <div class="text-muted small">当前关系</div>
-                <div>{$detail.links|count} 条</div>
+                <div class="qms-info-label">当前关系</div>
+                <div class="qms-info-value">{$detail.links|count} 条</div>
             </div>
             <div class="col-md-3">
-                <div class="text-muted small">文件状态</div>
-                <div>{$detail.document.status}</div>
+                <div class="qms-info-label">文件状态</div>
+                <div class="qms-info-value">
+                    {if $detail.document.status == 'published'}<span class="badge badge-status-effective">已发布</span>
+                    {elseif $detail.document.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
+                    {elseif $detail.document.status == 'under_review'}<span class="badge badge-status-under-review">复核中</span>
+                    {else}<span class="badge bg-secondary">{$detail.document.status|default='待确认'}</span>{/if}
+                </div>
             </div>
         </div>
     </div>
@@ -147,13 +154,21 @@
                         <th>运行模块</th>
                         <th>岗位</th>
                         <th>说明</th>
-                        <th class="text-end">操作</th>
+                        <th class="qms-action-cell">入口</th>
                     </tr>
                 </thead>
                 <tbody>
                     {volist name="detail.links" id="link"}
                     <tr>
-                        <td>{$link.relation_type}</td>
+                        <td>
+                            {if $link.relation_type == 'supporting'}支撑
+                            {elseif $link.relation_type == 'implements'}落实
+                            {elseif $link.relation_type == 'basis'}依据
+                            {elseif $link.relation_type == 'mentions'}提及
+                            {elseif $link.relation_type == 'responsible'}职责
+                            {elseif $link.relation_type == 'requires_record'}要求记录
+                            {else}{$link.relation_type|default='待确认'}{/if}
+                        </td>
                         <td>{$link.element_name|default='-'}</td>
                         <td>{if $link.clause_number}{$link.source_code} {$link.clause_number}{else}-{/if}</td>
                         <td>{if $link.section_number}{$link.section_number} {$link.manual_title}{else}-{/if}</td>
@@ -162,8 +177,8 @@
                         <td>{if $link.module_name}{$link.module_code} {$link.module_name}{else}-{/if}</td>
                         <td>{$link.position_name|default='-'}</td>
                         <td>{$link.note|default='-'}</td>
-                        <td class="text-end">
-                            <form method="post" action="/planning/structures/links/delete" class="d-flex gap-2 justify-content-end">
+                        <td class="qms-action-cell">
+                            <form method="post" action="/planning/structures/links/delete" class="qms-suggestion-form justify-content-end" onsubmit="return confirm('确认删除该追溯关系？');">
                                 <input type="hidden" name="block_id" value="{$detail.block.id}">
                                 <input type="hidden" name="link_id" value="{$link.id}">
                                 <input type="text" name="review_note" class="form-control form-control-sm" required placeholder="删除说明">
@@ -173,7 +188,7 @@
                     </tr>
                     {/volist}
                     {empty name="detail.links"}
-                    <tr><td colspan="10" class="text-center text-muted">暂无追溯关系。</td></tr>
+                    <tr><td colspan="10"><div class="qms-empty-state">暂无追溯关系，请在上方选择对象后保存。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>

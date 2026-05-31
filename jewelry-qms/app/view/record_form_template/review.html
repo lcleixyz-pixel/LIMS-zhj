@@ -73,10 +73,12 @@
                         <td>{$item.field_count}</td>
                         <td>{$item.repeatable_count}</td>
                         <td>
-                            {if $item.source_file_path}
+                            {if $item.source_file_available}
                             <a href="/record_form_template/sourcePreview?id={$item.id}" target="_blank">原始预览</a>
                             <span class="text-muted">/</span>
                             <a href="/record_form_template/source?id={$item.id}">{$item.source_file_name|default='下载'}</a>
+                            {elseif $item.source_file_path}
+                            <span class="text-warning">附件缺失</span>
                             {else}
                             <span class="text-muted">-</span>
                             {/if}

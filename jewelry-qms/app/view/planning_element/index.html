@@ -24,9 +24,9 @@
                         <th>运行模块</th>
                         <th>岗位职责</th>
                         <th>结构块证据</th>
-                        <th>智能体建议</th>
+                        <th>待处理建议</th>
                         <th>状态</th>
-                        <th class="text-end">操作</th>
+                        <th class="qms-action-cell">入口</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,14 +57,14 @@
                             <span class="badge bg-warning text-dark">缺口 {$row.gap_count}</span>
                             {/if}
                         </td>
-                        <td class="text-end">
-                            <a href="/planning/elements/view?id={$row.element.id}" class="btn btn-sm btn-outline-info">查看</a>
+                        <td class="qms-action-cell">
+                            <a href="/planning/elements/view?id={$row.element.id}" class="btn btn-sm btn-outline-primary">查看详情</a>
                             <a href="/planning/elements/edit?id={$row.element.id}" class="btn btn-sm btn-outline-primary">编辑</a>
                         </td>
                     </tr>
                     {/volist}
                     {empty name="rows"}
-                    <tr><td colspan="13" class="text-center text-muted">暂无要素数据，请先初始化策划骨架。</td></tr>
+                    <tr><td colspan="13" class="qms-empty-state">暂无要素数据，请先点击右上角“初始化策划骨架”。</td></tr>
                     {/empty}
                 </tbody>
             </table>

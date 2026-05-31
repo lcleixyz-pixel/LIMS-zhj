@@ -194,7 +194,7 @@ class QmsPlanningImportService
     {
         $documents = [[
             'document_level' => 1,
-            'doc_number' => 'QM-04',
+            'doc_number' => 'XZTC/SC',
             'title' => '质量手册（第四版）',
             'version' => '第四版',
             'version_year' => '',
@@ -1732,7 +1732,7 @@ TEXT);
 
         return [
             'document_level' => 2,
-            'doc_number' => 'QP-' . (string)$match[1],
+            'doc_number' => 'XZTC/CX-' . (string)$match[1] . '-' . $versionYear,
             'title' => $title,
             'version' => $versionYear,
             'version_year' => $versionYear,

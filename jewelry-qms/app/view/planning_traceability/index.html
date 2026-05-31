@@ -3,7 +3,7 @@
         <h4 class="mb-1">追溯矩阵</h4>
         <div class="text-muted small">{$chainLabel}</div>
     </div>
-    <a href="/planning/elements" class="btn btn-sm btn-outline-primary">查看要素</a>
+    <a href="/planning/elements" class="btn btn-sm btn-outline-primary">查看体系要素</a>
 </div>
 
 <div class="card">
@@ -21,8 +21,8 @@
                         <th>运行证据</th>
                         <th>岗位职责</th>
                         <th>结构块证据</th>
-                        <th>schema来源</th>
-                        <th>智能体建议</th>
+                        <th>字段来源</th>
+                        <th>待处理建议</th>
                         <th>缺口</th>
                     </tr>
                 </thead>
@@ -54,7 +54,7 @@
                     </tr>
                     {/volist}
                     {empty name="rows"}
-                    <tr><td colspan="12" class="text-center text-muted">暂无追溯数据。</td></tr>
+                    <tr><td colspan="12"><div class="qms-empty-state">暂无追溯数据，请先完成体系要素与条款映射。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>
