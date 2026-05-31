@@ -3,8 +3,8 @@
         <h4 class="mb-1">外部依据</h4>
         <div class="text-muted small">登记正式依据并直接抽取到条款库，同时保留查新日期、结论和证据来源。</div>
     </div>
-    <form method="post" action="/planning/sources/seed" class="m-0">
-        <button type="submit" class="btn btn-primary btn-sm">登记内置依据并抽条款</button>
+    <form method="post" action="/planning/sources/seed" class="qms-page-actions m-0">
+        <button type="submit" class="btn btn-primary btn-sm">登记内置依据并抽取条款</button>
     </form>
 </div>
 
@@ -53,7 +53,7 @@
     <div class="card-header"><h5 class="mb-0">处理进度</h5></div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-sm align-middle">
+            <table class="table table-sm align-middle qms-table-wide">
                 <thead>
                     <tr>
                         <th>依据编号</th>
@@ -100,7 +100,7 @@
                     </tr>
                     {/volist}
                     {empty name="processingRows"}
-                    <tr><td colspan="8" class="text-center text-muted">暂无处理进度，请先登记外部依据。</td></tr>
+                    <tr><td colspan="8"><div class="qms-empty-state">暂无处理进度，请先上传或登记外部依据。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>
@@ -133,7 +133,7 @@
     <div class="card-header"><h5 class="mb-0">正式依据登记</h5></div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle">
+            <table class="table table-sm table-hover align-middle qms-table-wide">
                 <thead>
                     <tr>
                         <th>依据编号</th>
@@ -143,7 +143,7 @@
                         <th>查新结论</th>
                         <th>下次查新</th>
                         <th>状态</th>
-                        <th class="text-end">操作</th>
+                        <th class="qms-action-cell">入口</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -151,7 +151,12 @@
                     <tr>
                         <td>{$item.source_code}</td>
                         <td>{$item.name}</td>
-                        <td>{$item.source_type}</td>
+                        <td>
+                            {if $item.source_type == 'standard' || $item.source_type == 'external_standard'}标准
+                            {elseif $item.source_type == 'guidance' || $item.source_type == 'external_guidance'}认可说明
+                            {elseif $item.source_type == 'regulation' || $item.source_type == 'external_regulation'}法规/准则
+                            {else}{$item.source_type|default='其他'}{/if}
+                        </td>
                         <td>{$item.freshness_checked_at|default='-'}</td>
                         <td>{$item.freshness_result|default='-'}</td>
                         <td>{$item.next_freshness_due|default='-'}</td>
@@ -160,9 +165,9 @@
                             {elseif $item.status == 'obsolete'}<span class="badge badge-status-obsolete">已废止</span>
                             {else}<span class="badge badge-status-draft">草稿</span>{/if}
                         </td>
-                        <td class="text-end">
+                        <td class="qms-action-cell">
                             <form method="post" action="/planning/sources/extract-clauses?id={$item.id}" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-primary">更新条款</button>
+                                <button type="submit" class="btn btn-sm btn-outline-primary">更新条款库</button>
                             </form>
                             {if $item.status != 'obsolete'}
                             <form method="post" action="/planning/sources/obsolete?id={$item.id}" class="d-inline" onsubmit="return confirm('确认标记该依据废止？');">
@@ -204,7 +209,7 @@
                     </tr>
                     {/volist}
                     {empty name="items"}
-                    <tr><td colspan="8" class="text-center text-muted">暂无外部依据登记。</td></tr>
+                    <tr><td colspan="8"><div class="qms-empty-state">暂无外部依据登记，请先上传本地依据文件或登记内置依据。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>

@@ -30,6 +30,7 @@ return [
         'admin' => ['*'],
         'quality_manager' => [
             'dashboard', 'document', 'record_form_template', 'record_form_instance', 'approval', 'doc_category', 'doc_template',
+            'compliance',
             'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningobjective',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
@@ -39,7 +40,7 @@ return [
             'department', 'employee', 'site', 'equipment_transfer', 'user',
         ],
         'auditor' => [
-            'dashboard', 'document', 'record_form_template', 'record_form_instance', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
+            'dashboard', 'compliance', 'document', 'record_form_template', 'record_form_instance', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'capa', 'nonconformity', 'complaint', 'notification',
         ],
         'department_head' => [

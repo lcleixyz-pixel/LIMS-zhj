@@ -3,39 +3,56 @@
         <h4 class="mb-1">{$detail.document.doc_number} {$detail.document.title}</h4>
         <div class="text-muted small">内容块级追溯：每个 Markdown 块可连接条款、要素、手册章节、程序文件、记录表格和岗位。</div>
     </div>
-    <a href="/planning/structures" class="btn btn-sm btn-outline-secondary">返回列表</a>
+    <div class="qms-page-actions">
+        <a href="/planning/structures" class="btn btn-sm btn-outline-secondary">返回列表</a>
+    </div>
 </div>
 
 <div class="card mb-3">
     <div class="card-body">
-        <div class="row g-3">
+        <div class="row qms-info-grid">
             <div class="col-md-3">
-                <div class="text-muted small">原始文件</div>
-                <div>{if $detail.asset}{$detail.asset.original_name}{else}-{/if}</div>
+                <div class="qms-info-label">原始文件</div>
+                <div class="qms-info-value">{if $detail.asset}{$detail.asset.original_name}{else}-{/if}</div>
             </div>
             <div class="col-md-3">
-                <div class="text-muted small">归档状态</div>
-                <div>{if $detail.asset}{$detail.asset.archive_status}{else}-{/if}</div>
+                <div class="qms-info-label">归档状态</div>
+                <div class="qms-info-value">
+                    {if $detail.asset}
+                        {if $detail.asset.archive_status == 'archived'}<span class="badge badge-status-effective">已归档</span>
+                        {elseif $detail.asset.archive_status == 'missing'}<span class="badge badge-status-obsolete">缺失</span>
+                        {else}<span class="badge bg-secondary">{$detail.asset.archive_status|default='待确认'}</span>{/if}
+                    {else}-{/if}
+                </div>
             </div>
             <div class="col-md-3">
-                <div class="text-muted small">Markdown结构</div>
-                <div>{$detail.document.markdown_path|default='-'}</div>
+                <div class="qms-info-label">Markdown 结构</div>
+                <div class="qms-info-value font-monospace text-break">{$detail.document.markdown_path|default='-'}</div>
             </div>
             <div class="col-md-3">
-                <div class="text-muted small">渲染输出</div>
-                <div>{$detail.document.render_status}</div>
+                <div class="qms-info-label">渲染输出</div>
+                <div class="qms-info-value">
+                    {if $detail.document.render_status == 'rendered'}<span class="badge badge-status-rendered">已渲染</span>
+                    {else}<span class="badge bg-secondary">{$detail.document.render_status|default='未渲染'}</span>{/if}
+                </div>
             </div>
             <div class="col-md-3">
-                <div class="text-muted small">文件状态</div>
-                <div>{$detail.document.status}</div>
+                <div class="qms-info-label">文件状态</div>
+                <div class="qms-info-value">
+                    {if $detail.document.status == 'published'}<span class="badge badge-status-effective">已发布</span>
+                    {elseif $detail.document.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
+                    {elseif $detail.document.status == 'under_review'}<span class="badge badge-status-under-review">复核中</span>
+                    {elseif $detail.document.status == 'obsolete'}<span class="badge badge-status-obsolete">已废止</span>
+                    {else}<span class="badge bg-secondary">{$detail.document.status|default='待确认'}</span>{/if}
+                </div>
             </div>
             <div class="col-md-3">
-                <div class="text-muted small">渲染存档</div>
-                <div>{$detail.render_archive.archive_count|default=0} 次</div>
+                <div class="qms-info-label">渲染存档</div>
+                <div class="qms-info-value">{$detail.render_archive.archive_count|default=0} 次</div>
             </div>
             <div class="col-md-9">
-                <div class="text-muted small">最新存档</div>
-                <div class="font-monospace text-break">{$detail.render_archive.latest_archive_path|default='-'}</div>
+                <div class="qms-info-label">最新存档</div>
+                <div class="qms-info-value font-monospace text-break">{$detail.render_archive.latest_archive_path|default='-'}</div>
             </div>
         </div>
     </div>
@@ -71,7 +88,7 @@
             </div>
         </form>
         {else}
-        <div class="text-muted small">当前文件状态为 {$detail.document.status}，无需发布操作；草稿发布时需要填写发布说明。</div>
+        <div class="text-muted small">当前文件不是草稿，无需发布操作；草稿发布时需要填写发布说明。</div>
         {/if}
     </div>
 </div>
@@ -104,7 +121,7 @@
                     </tr>
                     {/volist}
                     {empty name="detail.change_logs"}
-                    <tr><td colspan="5" class="text-center text-muted">暂无变更记录。</td></tr>
+                    <tr><td colspan="5"><div class="qms-empty-state">暂无变更记录。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>
@@ -118,7 +135,7 @@
         <h5 class="mb-0">参考程序对照</h5>
     </div>
     <div class="card-body">
-        <div class="text-muted small mb-3">参考文件仅形成智能体建议，不自动修改正式体系数据；人工复核后再决定是否修订现用程序。</div>
+        <div class="text-muted small mb-3">参考文件仅形成系统建议，不自动修改正式体系数据；人工复核后再决定是否修订现用程序。</div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
@@ -162,7 +179,7 @@
                         <th>参考程序</th>
                         <th>期望结构块</th>
                         <th>处理边界</th>
-                        <th class="text-end">人工匹配</th>
+                        <th class="qms-action-cell">人工匹配</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -200,7 +217,7 @@
 {notempty name="detail.document_suggestions"}
 <div class="card mb-3">
     <div class="card-header">
-        <h5 class="mb-0">智能体建议</h5>
+        <h5 class="mb-0">待处理建议</h5>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -210,7 +227,7 @@
                         <th>建议标题</th>
                         <th>建议内容</th>
                         <th>证据</th>
-                        <th class="text-end">人工处理</th>
+                        <th class="qms-action-cell">人工处理</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -220,11 +237,11 @@
                         <td>{$suggestion.content}</td>
                         <td>{$suggestion.evidence}</td>
                         <td>
-                            <form method="post" action="/planning/suggestions/review" class="d-flex gap-2 justify-content-end align-items-start">
+                            <form method="post" action="/planning/suggestions/review" class="qms-suggestion-form justify-content-end">
                                 <input type="hidden" name="suggestion_id" value="{$suggestion.id}">
                                 <input type="hidden" name="redirect_to" value="/planning/structures/view?id={$detail.document.id}">
                                 <textarea name="review_note" class="form-control form-control-sm" rows="2" placeholder="填写复核说明" required></textarea>
-                                <div class="btn-group btn-group-sm" role="group" aria-label="智能体建议处理">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="建议处理">
                                     <button type="submit" name="status" value="accepted" class="btn btn-outline-success">采纳建议</button>
                                     <button type="submit" name="status" value="rejected" class="btn btn-outline-danger">驳回建议</button>
                                 </div>
@@ -275,7 +292,15 @@
                     <tbody>
                         {volist name="row.links" id="link"}
                         <tr>
-                            <td>{$link.relation_type}</td>
+                            <td>
+                                {if $link.relation_type == 'supporting'}支撑
+                                {elseif $link.relation_type == 'implements'}落实
+                                {elseif $link.relation_type == 'basis'}依据
+                                {elseif $link.relation_type == 'mentions'}提及
+                                {elseif $link.relation_type == 'responsible'}职责
+                                {elseif $link.relation_type == 'requires_record'}要求记录
+                                {else}{$link.relation_type|default='待确认'}{/if}
+                            </td>
                             <td>{$link.element_name|default='-'}</td>
                             <td>{if $link.clause_number}{$link.source_code} {$link.clause_number}{else}-{/if}</td>
                             <td>{if $link.section_number}{$link.section_number} {$link.manual_title}{else}-{/if}</td>
@@ -288,7 +313,7 @@
                         </tr>
                         {/volist}
                         {empty name="row.links"}
-                        <tr><td colspan="10" class="text-center text-muted">暂无块级追溯映射</td></tr>
+                        <tr><td colspan="10"><div class="qms-empty-state">暂无块级追溯映射。</div></td></tr>
                         {/empty}
                     </tbody>
                 </table>
@@ -296,7 +321,7 @@
         </div>
         {/volist}
         {empty name="detail.blocks"}
-        <div class="text-center text-muted">暂无内容块。</div>
+        <div class="qms-empty-state">暂无内容块。</div>
         {/empty}
     </div>
 </div>

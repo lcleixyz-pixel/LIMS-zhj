@@ -15,6 +15,10 @@ Route::get('api/v1/customers', 'Api/customers');
 Route::group(function () {
     Route::get('/', 'Dashboard/index');
     Route::rule('dashboard/index', 'Dashboard/index');
+    Route::get('compliance/index', 'Compliance/index');
+    Route::post('compliance/refresh', 'Compliance/refresh');
+    Route::get('compliance/dimension', 'Compliance/dimension');
+    Route::post('compliance/seed', 'Compliance/seed');
 
     Route::rule('document/index', 'Document/index');
     Route::rule('document/add', 'Document/add');

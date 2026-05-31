@@ -299,6 +299,7 @@ class RecordFormTemplate extends BaseController
     {
         $record = $this->findTemplate();
         $record->setAttr('fillable', $this->isTemplateFillable($record));
+        $record->setAttr('source_file_available', $this->sourceFileAvailable($record));
         View::assign('record', $record);
         View::assign('schema', RecordFormSchemaService::decode($record->field_schema));
         View::assign('requirementEvidence', QmsDocumentStructureService::recordFormRequirementEvidence((string)$record->id));
@@ -334,8 +335,10 @@ class RecordFormTemplate extends BaseController
     public function source()
     {
         $record = $this->findTemplate();
-        if (!$record->source_file_path) {
-            throw new HttpException(404, '原始附件不存在');
+        if (!$this->sourceFileAvailable($record)) {
+            Session::flash('warning', '原始附件文件未找到，请重新上传后再预览或下载。');
+
+            return redirect('/record_form_template/view?id=' . rawurlencode((string)$record->id));
         }
 
         FileService::download($record->source_file_path, $record->source_file_name ?: $record->name);
@@ -344,8 +347,10 @@ class RecordFormTemplate extends BaseController
     public function sourcePreview()
     {
         $record = $this->findTemplate();
-        if (!$record->source_file_path) {
-            throw new HttpException(404, '原始附件不存在');
+        if (!$this->sourceFileAvailable($record)) {
+            Session::flash('warning', '原始附件文件未找到，请重新上传后再预览或下载。');
+
+            return redirect('/record_form_template/view?id=' . rawurlencode((string)$record->id));
         }
 
         FileService::preview($record->source_file_path, $record->source_file_name ?: $record->name);
@@ -440,6 +445,7 @@ class RecordFormTemplate extends BaseController
             $item->setAttr('review_status_value', array_key_exists($reviewStatus, self::REVIEW_STATUSES) ? $reviewStatus : 'pending');
             $item->setAttr('review_status_label', self::REVIEW_STATUSES[$item->review_status_value] ?? self::REVIEW_STATUSES['pending']);
             $item->setAttr('fillable', $this->isTemplateFillable($item));
+            $item->setAttr('source_file_available', $this->sourceFileAvailable($item));
         }
     }
 
@@ -447,7 +453,15 @@ class RecordFormTemplate extends BaseController
     {
         foreach ($items as $item) {
             $item->setAttr('fillable', $this->isTemplateFillable($item));
+            $item->setAttr('source_file_available', $this->sourceFileAvailable($item));
         }
+    }
+
+    private function sourceFileAvailable(TemplateModel $template): bool
+    {
+        $path = trim((string)$template->source_file_path);
+
+        return $path !== '' && is_file(public_path() . $path);
     }
 
     private function isTemplateFillable(TemplateModel $template): bool

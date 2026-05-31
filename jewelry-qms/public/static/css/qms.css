@@ -10,7 +10,7 @@ body {
 }
 
 .qms-page-header {
-    align-items: center;
+    align-items: flex-start;
     display: flex;
     gap: 16px;
     justify-content: space-between;
@@ -28,6 +28,86 @@ body {
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 12px;
+}
+
+.qms-page-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.qms-kpi-card .card-body {
+    padding: 16px;
+}
+
+.qms-kpi-label {
+    color: #6e6e73;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.qms-kpi-value {
+    color: #1d1d1f;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-top: 4px;
+}
+
+.qms-filter-form {
+    align-items: end;
+    margin-bottom: 16px;
+}
+
+.qms-empty-state {
+    color: #6e6e73;
+    padding: 24px 12px;
+    text-align: center;
+}
+
+.qms-info-grid {
+    row-gap: 12px;
+}
+
+.qms-info-label {
+    color: #6e6e73;
+    font-size: 12px;
+    line-height: 1.35;
+    margin-bottom: 2px;
+}
+
+.qms-info-value {
+    color: #1d1d1f;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.qms-action-cell,
+.qms-table-action {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.qms-suggestion-form {
+    align-items: flex-start;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    min-width: 300px;
+}
+
+.qms-suggestion-form textarea {
+    min-width: 160px;
+}
+
+.qms-nowrap {
+    white-space: nowrap;
+}
+
+.qms-table-wide {
+    min-width: 960px;
 }
 
 .card {
@@ -230,6 +310,56 @@ body {
 
 .badge-status-obsolete {
     background: #dc3545;
+}
+
+.badge-status-open,
+.badge-status-pending,
+.badge-status-under-review {
+    background: #ff9f0a;
+    color: #1d1d1f;
+}
+
+.badge-status-accepted,
+.badge-status-current,
+.badge-status-archived,
+.badge-status-rendered,
+.badge-status-pass {
+    background: #34c759;
+}
+
+.badge-status-rejected,
+.badge-status-missing,
+.badge-status-fail,
+.badge-status-insufficient {
+    background: #ff3b30;
+}
+
+.badge-status-warning,
+.badge-status-due {
+    background: #ff9f0a;
+    color: #1d1d1f;
+}
+
+@media (max-width: 768px) {
+    .qms-page-header {
+        display: block;
+    }
+
+    .qms-page-actions {
+        justify-content: flex-start;
+        margin-top: 12px;
+    }
+
+    .qms-suggestion-form {
+        display: block;
+        min-width: 0;
+    }
+
+    .qms-suggestion-form textarea,
+    .qms-suggestion-form .btn-group {
+        margin-top: 8px;
+        width: 100%;
+    }
 }
 
 .record-form-employee-picker {

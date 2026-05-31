@@ -9,7 +9,7 @@
             </div>
             <div class="mb-3"><label>条款</label><input name="clause" class="form-control"></div>
             <div class="mb-3"><label class="required">检查项</label><textarea name="check_item" class="form-control" rows="3" required></textarea></div>
-            <div class="mb-3"><label>结果</label><select name="result" class="form-select"><option value="">待检查</option>{volist name="resultOptions" id="l" key="k"}<option value="{$k}">{$l}</option>{/volist}</select></div>
+            <div class="mb-3"><label>结果</label><select name="result" class="form-select"><option value="">待检查</option>{foreach $resultOptions as $k=>$l}<option value="{$k}">{$l}</option>{/foreach}</select></div>
             <div class="mb-3"><label>证据</label><textarea name="evidence" class="form-control" rows="2"></textarea></div>
             <button type="submit" class="btn btn-primary">保存</button>
         </form>

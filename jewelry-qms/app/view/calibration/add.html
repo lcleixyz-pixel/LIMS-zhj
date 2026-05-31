@@ -7,8 +7,9 @@
                     <label class="form-label required">设备</label>
                     <select name="equipment_id" class="form-select" required>
                         <option value="">请选择</option>
+                        {php}$selectedEquipmentId = $currentEquipmentId !== '' ? $currentEquipmentId : ($form['equipment_id'] ?? '');{/php}
                         {volist name="equipments" id="eq"}
-                        <option value="{$eq.id}" {if $currentEquipmentId == $eq.id || $form.equipment_id == $eq.id}selected{/if}>{$eq.equipment_number} - {$eq.name}</option>
+                        <option value="{$eq.id}" {if $selectedEquipmentId == $eq.id}selected{/if}>{$eq.equipment_number} - {$eq.name}</option>
                         {/volist}
                     </select>
                 </div>
@@ -31,8 +32,9 @@
                 <div class="col-md-6 mb-3">
                     <label class="form-label">校准结果</label>
                     <select name="result" class="form-select">
+                        {php}$selectedResult = $form['result'] ?? 'pass';{/php}
                         {volist name="resultOptions" id="option"}
-                        <option value="{$option.value}" {if $form.result|default='pass' == $option.value}selected{/if}>{$option.label}</option>
+                        <option value="{$option.value}" {if $selectedResult == $option.value}selected{/if}>{$option.label}</option>
                         {/volist}
                     </select>
                 </div>

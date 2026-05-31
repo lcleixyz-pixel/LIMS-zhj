@@ -69,12 +69,12 @@ $rows = Db::name('record_form_templates')
     ->toArray();
 
 $expected = [
-    'XZTC/BG-20-04|授权签字人审核记录表|20-04授权签字人审核记录表.docx' => ['QP-20', 'internal_audit'],
-    '待定-20-04|内部审核资料封皮目录|内部审核资料封皮目录.docx' => ['QP-20', 'internal_audit'],
-    'XZTC/BG-26-01|计算机软件登记表|26-01计算机软件登记表.doc' => ['QP-26', 'data_information'],
-    'XZTC/BG-26-02|计算机内容变更申请表|26-02计算机内容变更申请表.doc' => ['QP-26', 'data_information'],
-    'XZTC/BG-28-02|样品标识卡|28-02样品标识卡.docx' => ['QP-28', 'item_handling'],
-    'XZTC/BG-28-02|样品标识卡（（六联））|28-02样品标识卡（六联）.docx' => ['QP-28', 'item_handling'],
+    'XZTC/BG-20-04|授权签字人审核记录表|20-04授权签字人审核记录表.docx' => ['XZTC/CX-20-2022', 'internal_audit'],
+    '待定-20-04|内部审核资料封皮目录|内部审核资料封皮目录.docx' => ['XZTC/CX-20-2022', 'internal_audit'],
+    'XZTC/BG-26-01|计算机软件登记表|26-01计算机软件登记表.doc' => ['XZTC/CX-26-2022', 'data_information'],
+    'XZTC/BG-26-02|计算机内容变更申请表|26-02计算机内容变更申请表.doc' => ['XZTC/CX-26-2022', 'data_information'],
+    'XZTC/BG-28-02|样品标识卡|28-02样品标识卡.docx' => ['XZTC/CX-28-2022', 'item_handling'],
+    'XZTC/BG-28-02|样品标识卡（（六联））|28-02样品标识卡（六联）.docx' => ['XZTC/CX-28-2022', 'item_handling'],
 ];
 
 $actual = [];
@@ -94,7 +94,7 @@ $qp26Links = Db::name('qms_document_blocks')
     ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
     ->join('qms_document_block_links l', 'l.block_id = b.id AND l.soft_delete = 0')
     ->join('record_form_templates r', 'r.id = l.record_form_template_id')
-    ->where('sd.doc_number', 'QP-26')
+    ->where('sd.doc_number', 'XZTC/CX-26-2022')
     ->where('b.block_type', 'record_requirement')
     ->where('l.relation_type', 'requires_record')
     ->where('b.soft_delete', 0)
@@ -103,14 +103,14 @@ $qp26Links = Db::name('qms_document_blocks')
 $qp26Links = array_values(array_unique($qp26Links));
 sort($qp26Links);
 
-assert_same(['XZTC/BG-26-01', 'XZTC/BG-26-02'], $qp26Links, 'QP-26 record requirement block links both computer record forms');
+assert_same(['XZTC/BG-26-01', 'XZTC/BG-26-02'], $qp26Links, 'XZTC/CX-26-2022 record requirement block links both computer record forms');
 
 $qp28Links = Db::name('qms_document_blocks')
     ->alias('b')
     ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
     ->join('qms_document_block_links l', 'l.block_id = b.id AND l.soft_delete = 0')
     ->join('record_form_templates r', 'r.id = l.record_form_template_id')
-    ->where('sd.doc_number', 'QP-28')
+    ->where('sd.doc_number', 'XZTC/CX-28-2022')
     ->where('b.block_type', 'record_requirement')
     ->where('l.relation_type', 'requires_record')
     ->where('b.soft_delete', 0)
@@ -118,14 +118,14 @@ $qp28Links = Db::name('qms_document_blocks')
     ->where('r.doc_number', 'XZTC/BG-28-02')
     ->count();
 
-assert_true($qp28Links >= 1, 'QP-28 record requirement block links sample label card templates');
+assert_true($qp28Links >= 1, 'XZTC/CX-28-2022 record requirement block links sample label card templates');
 
 $bg2601Markdown = rendered_record_form_markdown('XZTC/BG-26-01', '计算机软件登记表', '26-01计算机软件登记表.doc');
-assert_true(str_contains($bg2601Markdown, '关联程序：QP-26 计算机文件及数据控制程序'), 'Rendered record form markdown names the linked QP-26 procedure');
+assert_true(str_contains($bg2601Markdown, '关联程序：XZTC/CX-26-2022 计算机文件及数据控制程序'), 'Rendered record form markdown names the linked XZTC/CX-26-2022 procedure');
 assert_true(str_contains($bg2601Markdown, '关联要素：数据控制和信息管理'), 'Rendered record form markdown names the linked data-information element');
 
 $bg2802Markdown = rendered_record_form_markdown('XZTC/BG-28-02', '样品标识卡', '28-02样品标识卡.docx');
-assert_true(str_contains($bg2802Markdown, '关联程序：QP-28 样品处置和管理程序'), 'Rendered sample label markdown names the linked QP-28 procedure');
+assert_true(str_contains($bg2802Markdown, '关联程序：XZTC/CX-28-2022 样品处置和管理程序'), 'Rendered sample label markdown names the linked XZTC/CX-28-2022 procedure');
 assert_true(str_contains($bg2802Markdown, '关联要素：检测和校准物品处置'), 'Rendered sample label markdown names the linked item-handling element');
 
 echo "qms_record_form_traceability_smoke passed\n";

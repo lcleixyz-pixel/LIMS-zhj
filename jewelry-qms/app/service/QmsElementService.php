@@ -415,10 +415,10 @@ class QmsElementService
 
     public static function seedManualSections(): array
     {
-        $manual = Document::where('doc_number', 'QM-04')->where('soft_delete', 0)->find();
+        $manual = Document::whereIn('doc_number', ['XZTC/SC', 'QM-04'])->where('soft_delete', 0)->orderRaw("FIELD(doc_number,'XZTC/SC','QM-04')")->find();
         if (!$manual) {
             self::seedProcedureDocuments();
-            $manual = Document::where('doc_number', 'QM-04')->where('soft_delete', 0)->find();
+            $manual = Document::whereIn('doc_number', ['XZTC/SC', 'QM-04'])->where('soft_delete', 0)->orderRaw("FIELD(doc_number,'XZTC/SC','QM-04')")->find();
         }
         $summary = ['manual_sections' => 0];
         foreach (self::defaultElementDefinitions() as $definition) {
@@ -823,9 +823,12 @@ class QmsElementService
             ->toArray();
 
         return array_map(static function (array $row): array {
-            $row['record_form_edit_url'] = self::evidenceUrlAfterLabel((string)($row['evidence'] ?? ''), '记录表格编辑');
+            $row['record_form_edit_url'] = self::usableRecordFormEditUrl(
+                self::evidenceUrlAfterLabel((string)($row['evidence'] ?? ''), '记录表格编辑')
+            );
             if ($row['record_form_edit_url'] !== '') {
-                $row['record_form_edit_url'] .= '&schema_suggestion_id=' . rawurlencode((string)($row['id'] ?? ''));
+                $separator = str_contains($row['record_form_edit_url'], '?') ? '&' : '?';
+                $row['record_form_edit_url'] .= $separator . 'schema_suggestion_id=' . rawurlencode((string)($row['id'] ?? ''));
             }
 
             return $row;
@@ -1281,6 +1284,40 @@ class QmsElementService
 
         $url = trim((string)$match[1]);
         return str_starts_with($url, '/') ? $url : '';
+    }
+
+    private static function usableRecordFormEditUrl(string $url): string
+    {
+        if ($url === '') {
+            return '';
+        }
+
+        $path = (string)(parse_url($url, PHP_URL_PATH) ?: '');
+        if ($path !== '/record_form_template/edit') {
+            return '';
+        }
+
+        parse_str((string)(parse_url($url, PHP_URL_QUERY) ?: ''), $query);
+        $templateId = trim((string)($query['id'] ?? ''));
+        $blockId = trim((string)($query['schema_draft_block_id'] ?? ''));
+        if ($templateId === '' || $blockId === '') {
+            return '';
+        }
+
+        $templateExists = Db::name('record_form_templates')
+            ->where('id', $templateId)
+            ->where('soft_delete', 0)
+            ->count() === 1;
+        if (!$templateExists) {
+            return '';
+        }
+
+        $blockExists = Db::name('qms_document_blocks')
+            ->where('id', $blockId)
+            ->where('soft_delete', 0)
+            ->count() === 1;
+
+        return $blockExists ? $url : '';
     }
 
     private static function seedSupplementClauseLinks(): void
@@ -1768,7 +1805,7 @@ class QmsElementService
             return null;
         }
 
-        foreach (Document::where('soft_delete', 0)->whereLike('doc_number', 'QP-%')->select() as $document) {
+        foreach (Document::where('soft_delete', 0)->where('level', 2)->select() as $document) {
             $titleKey = self::compactLookupText((string)$document->title);
             if ($titleKey === '') {
                 continue;

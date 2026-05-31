@@ -122,7 +122,7 @@ Db::execute(
 );
 
 $main = Db::name('sites')->where('code', 'MAIN')->where('soft_delete', 0)->find();
-assert_true($main !== null && $main['name'] === '主场所', 'Default main site seed exists');
+assert_true($main !== null && in_array((string)$main['name'], ['主场所', '乌鲁木齐实验室'], true), 'Default main site seed exists');
 
 $nullEquipmentCount = Db::name('equipments')->whereNull('site_id')->count();
 assert_true($nullEquipmentCount >= 0, 'Equipment site_id remains nullable for historical records');

@@ -39,11 +39,11 @@ function assert_mapping(string $elementKey, string $procedureNumber): void
 QmsElementService::seedAll();
 
 foreach ([
-    'confidentiality' => 'QP-06',
-    'metrological_traceability' => 'QP-05',
-    'technical_records' => 'QP-19',
-    'measurement_uncertainty' => 'QP-27',
-    'improvement' => 'QP-18',
+    'confidentiality' => 'XZTC/CX-06-2022',
+    'metrological_traceability' => 'XZTC/CX-05-2022',
+    'technical_records' => 'XZTC/CX-19-2022',
+    'measurement_uncertainty' => 'XZTC/CX-27-2022',
+    'improvement' => 'XZTC/CX-18-2022',
 ] as $elementKey => $procedureNumber) {
     assert_mapping($elementKey, $procedureNumber);
 }

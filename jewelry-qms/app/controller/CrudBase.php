@@ -17,6 +17,15 @@ class CrudBase extends BaseController
     protected string $pageTitle = '';
     protected array $validateRules = [];
     protected array $validateMessages = [];
+    protected array $viewFieldLabels = [];
+    protected array $hiddenViewFields = [
+        'id',
+        'company_id',
+        'password',
+        'soft_delete',
+        'created_by',
+        'modified_by',
+    ];
 
     /** 表单页（add/edit GET）追加模板变量 */
     protected function assignFormContext(): void
@@ -116,6 +125,80 @@ class CrudBase extends BaseController
         $this->assignFormContext();
 
         return View::fetch($template);
+    }
+
+    protected function buildViewFields(object $record): array
+    {
+        $model = $this->getModel();
+        try {
+            $fieldNames = array_keys($model->db()->getFields());
+        } catch (\Throwable $exception) {
+            $fieldNames = array_keys((array)$record);
+        }
+
+        $fields = [];
+        foreach ($fieldNames as $field) {
+            if (in_array($field, $this->hiddenViewFields, true)) {
+                continue;
+            }
+
+            $fields[] = [
+                'label' => $this->viewFieldLabel($field),
+                'value' => $this->formatViewFieldValue($field, $record->{$field} ?? null),
+            ];
+        }
+
+        return $fields;
+    }
+
+    protected function viewFieldLabel(string $field): string
+    {
+        $labels = array_merge([
+            'code' => '编号',
+            'name' => '名称',
+            'title' => '标题',
+            'status' => '状态',
+            'publish' => '启用',
+            'department_id' => '所属部门',
+            'employee_id' => '员工',
+            'equipment_id' => '设备',
+            'supplier_id' => '供应商',
+            'description' => '描述',
+            'remark' => '备注',
+            'remarks' => '备注',
+            'created' => '创建时间',
+            'modified' => '更新时间',
+        ], $this->viewFieldLabels);
+
+        if (isset($labels[$field])) {
+            return $labels[$field];
+        }
+
+        return ucwords(str_replace('_', ' ', $field));
+    }
+
+    protected function formatViewFieldValue(string $field, mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '-';
+        }
+        if (is_bool($value)) {
+            return $value ? '是' : '否';
+        }
+        if (in_array($field, ['publish'], true)) {
+            return (int)$value === 1 ? '是' : '否';
+        }
+        if ($field === 'status') {
+            return qms_status_label(qms_controller_url($this->request->controller()), (string)$value);
+        }
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d H:i:s');
+        }
+        if (is_array($value) || is_object($value)) {
+            return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '-';
+        }
+
+        return (string)$value;
     }
 
     protected function flashValidationErrors(array $errors): void
@@ -223,6 +306,7 @@ class CrudBase extends BaseController
             throw new HttpException(404, '记录不存在');
         }
         View::assign('record', $record);
+        View::assign('fields', $this->buildViewFields($record));
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
         $this->assignFormContext();
 

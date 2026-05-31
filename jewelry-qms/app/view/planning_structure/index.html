@@ -3,7 +3,7 @@
         <h4 class="mb-1">文件结构化</h4>
         <div class="text-muted small">将外部依据、质量手册、程序文件、作业指导书和记录表格拆为可追溯的 Markdown 内容块。</div>
     </div>
-    <div class="d-flex gap-2">
+    <div class="qms-page-actions">
         <a href="/planning/structures/package" class="btn btn-outline-primary btn-sm">体系文件组合包</a>
         <form method="post" action="/planning/structures/seed" class="m-0">
             <button type="submit" class="btn btn-primary btn-sm">生成结构化骨架</button>
@@ -88,7 +88,7 @@
                         <th>层级</th>
                         <th>版本</th>
                         <th>源文件</th>
-                        <th class="text-end">处理</th>
+                        <th class="qms-action-cell">处理</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -110,7 +110,7 @@
                             {/if}
                             <div class="text-muted small text-break">{$missing.source_file_path|default='-'}</div>
                         </td>
-                        <td class="text-end">
+                        <td class="qms-action-cell">
                             <form method="post" action="{$missing.seed_url}" class="d-inline">
                                 <button type="submit" class="btn btn-sm btn-outline-primary">生成结构化骨架</button>
                             </form>
@@ -118,7 +118,7 @@
                     </tr>
                     {/volist}
                     {empty name="coverage.missing_rows"}
-                    <tr><td colspan="5" class="text-center text-muted">受控文件均已进入 Markdown 结构。</td></tr>
+                    <tr><td colspan="5"><div class="qms-empty-state">受控文件均已进入 Markdown 结构。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>
@@ -128,8 +128,8 @@
 
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">记录要求 schema 复核</h5>
-        <div class="text-muted small">逐条检查程序记录要求块是否已落到记录表格 schema</div>
+        <h5 class="mb-0">记录要求字段结构复核</h5>
+        <div class="text-muted small">逐条检查程序记录要求块是否已落到记录表格字段结构</div>
     </div>
     <div class="card-body">
         <div class="row g-3 mb-3">
@@ -142,11 +142,11 @@
                 <div class="h5 mb-0">{$recordSchemaCoverage.linked_requirement_blocks|default=0}</div>
             </div>
             <div class="col-md-3">
-                <div class="text-muted small">schema已覆盖</div>
+                <div class="text-muted small">字段已覆盖</div>
                 <div class="h5 mb-0">{$recordSchemaCoverage.schema_covered_blocks|default=0}</div>
             </div>
             <div class="col-md-3">
-                <div class="text-muted small">schema缺口</div>
+                <div class="text-muted small">字段缺口</div>
                 <div class="h5 mb-0">{$recordSchemaCoverage.gap_blocks|default=0}</div>
             </div>
         </div>
@@ -156,10 +156,10 @@
                     <tr>
                         <th>程序记录要求块</th>
                         <th>记录表格</th>
-                        <th>schema文档</th>
-                        <th>字段schema</th>
+                        <th>字段来源文档</th>
+                        <th>字段数</th>
                         <th>状态</th>
-                        <th class="text-end">处理</th>
+                        <th class="qms-action-cell">处理</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -179,14 +179,14 @@
                             <span class="badge bg-warning text-dark">需复核</span>
                             <div class="text-muted small">{$gap.gap_text}</div>
                         </td>
-                        <td class="text-end">
+                        <td class="qms-action-cell">
                             <a href="{$gap.structure_url}" class="btn btn-sm btn-outline-primary">查看结构化文件</a>
                             <a href="{$gap.trace_review_url}" class="btn btn-sm btn-outline-secondary">复核追溯</a>
                         </td>
                     </tr>
                     {/volist}
                     {empty name="recordSchemaCoverage.gap_rows"}
-                    <tr><td colspan="6" class="text-center text-muted">记录要求块均已落到记录表格 schema。</td></tr>
+                    <tr><td colspan="6"><div class="qms-empty-state">记录要求块均已落到记录表格字段结构。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>
@@ -197,7 +197,7 @@
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">程序记录要求覆盖</h5>
-        <div class="text-muted small">程序文件记录要求、记录表格关联和 schema文档覆盖情况</div>
+        <div class="text-muted small">程序文件记录要求、记录表格关联和字段来源文档覆盖情况</div>
     </div>
     <div class="card-body">
         <div class="row g-3 mb-3">
@@ -225,9 +225,9 @@
                         <th>程序文件</th>
                         <th>记录要求块</th>
                         <th>记录表格</th>
-                        <th>schema文档</th>
+                        <th>字段来源文档</th>
                         <th>状态</th>
-                        <th class="text-end">处理</th>
+                        <th class="qms-action-cell">处理</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -244,7 +244,7 @@
                             <span class="badge bg-warning text-dark">需复核</span>
                             <div class="text-muted small">{$gap.gap_text}</div>
                         </td>
-                        <td class="text-end">
+                        <td class="qms-action-cell">
                             {if $gap.structure_url != ''}
                             <a href="{$gap.structure_url}" class="btn btn-sm btn-outline-primary">查看结构化文件</a>
                             {else}
@@ -256,7 +256,7 @@
                     </tr>
                     {/volist}
                     {empty name="recordCoverage.gap_rows"}
-                    <tr><td colspan="6" class="text-center text-muted">程序记录要求均已关联记录表格和 schema 文档。</td></tr>
+                    <tr><td colspan="6"><div class="qms-empty-state">程序记录要求均已关联记录表格和字段结构文档。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>
@@ -267,7 +267,7 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">结构化文档</h5>
-        <div class="text-muted small">原始文件 -> Markdown结构 -> 内容块 -> 块级追溯 -> 渲染输出</div>
+        <div class="text-muted small">原始文件 -> Markdown 结构 -> 内容块 -> 块级追溯 -> 渲染输出</div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -282,7 +282,7 @@
                         <th>内容块</th>
                         <th>块级追溯</th>
                         <th>渲染输出</th>
-                        <th class="text-end">操作</th>
+                        <th class="qms-action-cell">入口</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -302,11 +302,19 @@
                         <td>{$row.document.version|default='-'}</td>
                         <td>
                             {if $row.asset}
-                            {$row.asset.archive_status}
+                            {if $row.asset.archive_status == 'archived'}<span class="badge badge-status-effective">已归档</span>
+                            {elseif $row.asset.archive_status == 'missing'}<span class="badge badge-status-obsolete">缺失</span>
+                            {else}<span class="badge bg-secondary">{$row.asset.archive_status|default='待确认'}</span>{/if}
                             <div class="text-muted small">{$row.asset.normalized_name}</div>
                             {else}-{/if}
                         </td>
-                        <td>{$row.document.status}</td>
+                        <td>
+                            {if $row.document.status == 'published'}<span class="badge badge-status-effective">已发布</span>
+                            {elseif $row.document.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
+                            {elseif $row.document.status == 'under_review'}<span class="badge badge-status-under-review">复核中</span>
+                            {elseif $row.document.status == 'obsolete'}<span class="badge badge-status-obsolete">已废止</span>
+                            {else}<span class="badge bg-secondary">{$row.document.status|default='待确认'}</span>{/if}
+                        </td>
                         <td>{$row.block_count}</td>
                         <td>{$row.link_count}</td>
                         <td>
@@ -316,13 +324,13 @@
                             <span class="badge bg-secondary">未渲染</span>
                             {/if}
                         </td>
-                        <td class="text-end">
-                            <a href="/planning/structures/view?id={$row.document.id}" class="btn btn-sm btn-outline-info">查看</a>
+                        <td class="qms-action-cell">
+                            <a href="/planning/structures/view?id={$row.document.id}" class="btn btn-sm btn-outline-primary">查看详情</a>
                         </td>
                     </tr>
                     {/volist}
                     {empty name="rows"}
-                    <tr><td colspan="9" class="text-center text-muted">暂无结构化文件，请先生成结构化骨架。</td></tr>
+                    <tr><td colspan="9"><div class="qms-empty-state">暂无结构化文件，请先生成结构化骨架。</div></td></tr>
                     {/empty}
                 </tbody>
             </table>
