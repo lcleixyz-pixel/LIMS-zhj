@@ -20,6 +20,13 @@ Route::group(function () {
     Route::get('compliance/dimension', 'Compliance/dimension');
     Route::post('compliance/seed', 'Compliance/seed');
 
+    Route::get('ai_assistant/index', 'AiAssistant/index');
+    Route::post('ai_assistant/extract', 'AiAssistant/extract');
+    Route::post('ai_assistant/confirm', 'AiAssistant/confirm');
+    Route::post('ai_assistant/reject', 'AiAssistant/reject');
+    Route::get('ai_assistant/history', 'AiAssistant/history');
+    Route::get('ai_assistant/preview', 'AiAssistant/preview');
+
     Route::rule('document/index', 'Document/index');
     Route::rule('document/add', 'Document/add');
     Route::rule('document/edit', 'Document/edit');

@@ -114,6 +114,9 @@
                         <li><a class="dropdown-item" href="/user/index">用户</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="/import/index">批量导入</a></li>
+                        {if condition="qms_can('ai_assistant')"}
+                        <li><a class="dropdown-item" href="/ai_assistant/index">AI 文档助理</a></li>
+                        {/if}
                         <li><a class="dropdown-item" href="/notification/index">通知中心</a></li>
                     </ul>
                 </li>

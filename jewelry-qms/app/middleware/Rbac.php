@@ -44,6 +44,7 @@ class Rbac
             'uploadevidence', 'revieweffectiveness',
             'uploadcertificate',
             'approve', 'complete', 'uploadattachment', 'refresh',
+            'extract', 'confirm', 'reject',
         ];
         if (in_array($action, $writeActions, true) && !RbacService::canWrite($controller)) {
             Session::flash('error', '您没有编辑权限');

@@ -43,6 +43,55 @@
 </div>
 
 <div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">培训记录</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-sm mb-0">
+                <thead><tr><th>培训主题</th><th>培训日期</th><th>培训师</th><th>出勤</th><th>考核结果</th><th>培训状态</th></tr></thead>
+                <tbody>
+                    {volist name="trainingRecords" id="training"}
+                    <tr>
+                        <td>{$training.title|default='-'}</td>
+                        <td>{$training.training_date|default='-'}</td>
+                        <td>{$training.trainer|default='-'}</td>
+                        <td>{$training.attendance|default='-'}</td>
+                        <td>{$training.evaluation_result|default='-'}</td>
+                        <td>{$training.status|default='-'}</td>
+                    </tr>
+                    {/volist}
+                    {empty name="trainingRecords"}<tr><td colspan="6" class="text-center text-muted">暂无培训记录</td></tr>{/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">能力确认记录</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-sm mb-0">
+                <thead><tr><th>检测项目/方法</th><th>标准方法</th><th>评估日期</th><th>评估人</th><th>结论</th><th>授权范围</th><th>有效期至</th></tr></thead>
+                <tbody>
+                    {volist name="competencyRecords" id="competency"}
+                    <tr>
+                        <td>{$competency.test_item|default='-'}</td>
+                        <td>{$competency.method_standard|default='-'}</td>
+                        <td>{$competency.assessment_date|default='-'}</td>
+                        <td>{$competency.assessor_name|default='-'}</td>
+                        <td>{$competency.result|default='-'}</td>
+                        <td>{$competency.authorization_scope|default='-'}</td>
+                        <td>{$competency.valid_until|default='-'}</td>
+                    </tr>
+                    {/volist}
+                    {empty name="competencyRecords"}<tr><td colspan="7" class="text-center text-muted">暂无能力确认记录</td></tr>{/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
     <div class="card-header"><h5 class="mb-0">人员资质证书</h5></div>
     <div class="card-body">
         <div class="table-responsive">

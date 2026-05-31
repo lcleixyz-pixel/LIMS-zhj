@@ -1,0 +1,201 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">AI 文档助理</h4>
+        <div class="text-muted small">上传或选择现用 Word 文档，由 DeepSeek 提取结构化记录，确认后写入正式数据库。</div>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/ai_assistant/history" class="btn btn-outline-secondary btn-sm">提取历史</a>
+    </div>
+</div>
+
+{if !$configured}
+<div class="alert alert-warning">DeepSeek API 未配置。请在环境变量中设置 <code>DEEPSEEK_API_KEY</code> 后重试。</div>
+{/if}
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">现用文件</h5>
+                {if $currentDir}
+                <a href="/ai_assistant/index?dir={$parentDir|urlencode}" class="btn btn-sm btn-outline-secondary">上级目录</a>
+                {/if}
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" style="max-height: 520px; overflow:auto;">
+                    {volist name="sourceItems" id="item"}
+                    {if $item.type == 'dir'}
+                    <a href="/ai_assistant/index?dir={$item.relative_path|urlencode}" class="list-group-item list-group-item-action">
+                        <span class="me-2">📁</span>{$item.name}
+                    </a>
+                    {else}
+                    <button type="button" class="list-group-item list-group-item-action source-file-item" data-path="{$item.relative_path}">
+                        <span class="me-2">📄</span>{$item.name}
+                        <span class="badge text-bg-light float-end">{$item.extension}</span>
+                    </button>
+                    {/if}
+                    {/volist}
+                    {empty name="sourceItems"}
+                    <div class="list-group-item text-muted">目录为空或现用文件目录不存在</div>
+                    {/empty}
+                </div>
+            </div>
+            <div class="card-footer small text-muted">根目录：{$workspaceRoot}</div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="mb-0">提取设置</h5></div>
+            <div class="card-body">
+                <form id="extractForm" method="post" action="/ai_assistant/extract" enctype="multipart/form-data">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">目标记录类型</label>
+                            <select name="target_type" class="form-select" required>
+                                {foreach $targetTypes as $key => $label}
+                                <option value="{$key}">{$label}</option>
+                                {/foreach}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">数据来源</label>
+                            <select name="source_mode" id="sourceMode" class="form-select">
+                                <option value="workspace">现用文件目录</option>
+                                <option value="upload">本地上传</option>
+                            </select>
+                        </div>
+                        <div class="col-12" id="workspaceSourceBlock">
+                            <label class="form-label">已选文件</label>
+                            <input type="text" id="selectedFileLabel" class="form-control" readonly placeholder="请从左侧选择文档">
+                            <input type="hidden" name="relative_path" id="relativePath" value="">
+                        </div>
+                        <div class="col-12 d-none" id="uploadSourceBlock">
+                            <label class="form-label">上传文件</label>
+                            <input type="file" name="file" class="form-control" accept=".doc,.docx,.txt">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary" {if !$configured}disabled{/if}>AI 提取</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card" id="previewCard" style="display:none;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">提取预览</h5>
+                <span class="badge text-bg-warning" id="previewWarnings"></span>
+            </div>
+            <div class="card-body">
+                <form id="confirmForm" method="post" action="/ai_assistant/confirm">
+                    <input type="hidden" name="log_id" id="confirmLogId" value="">
+                    <input type="hidden" name="payload_json" id="payloadJson" value="">
+                    <div id="previewContent"></div>
+                    <div class="mt-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-success">确认入库</button>
+                        <button type="button" class="btn btn-outline-secondary" id="resetPreviewBtn">重新选择</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header"><h5 class="mb-0">最近提取</h5></div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>时间</th><th>类型</th><th>文件</th><th>状态</th><th></th></tr></thead>
+                    <tbody>
+                        {volist name="recentLogs" id="log"}
+                        <tr>
+                            <td>{$log.created|default='-'}</td>
+                            <td>{$targetTypes[$log.target_type]|default=$log.target_type}</td>
+                            <td>{:basename($log.source_file)}</td>
+                            <td>{$log.status}</td>
+                            <td><a href="/ai_assistant/preview?id={$log.id}" class="btn btn-sm btn-outline-info">查看</a></td>
+                        </tr>
+                        {/volist}
+                        {empty name="recentLogs"}<tr><td colspan="5" class="text-center text-muted">暂无提取记录</td></tr>{/empty}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const sourceMode = document.getElementById('sourceMode');
+    const workspaceBlock = document.getElementById('workspaceSourceBlock');
+    const uploadBlock = document.getElementById('uploadSourceBlock');
+    const relativePath = document.getElementById('relativePath');
+    const selectedFileLabel = document.getElementById('selectedFileLabel');
+    const extractForm = document.getElementById('extractForm');
+    const previewCard = document.getElementById('previewCard');
+    const previewContent = document.getElementById('previewContent');
+    const payloadJson = document.getElementById('payloadJson');
+    const confirmLogId = document.getElementById('confirmLogId');
+    const previewWarnings = document.getElementById('previewWarnings');
+    const resetPreviewBtn = document.getElementById('resetPreviewBtn');
+
+    document.querySelectorAll('.source-file-item').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            relativePath.value = btn.dataset.path || '';
+            selectedFileLabel.value = btn.dataset.path || '';
+            document.querySelectorAll('.source-file-item').forEach(function (item) {
+                item.classList.remove('active');
+            });
+            btn.classList.add('active');
+        });
+    });
+
+    sourceMode.addEventListener('change', function () {
+        const upload = sourceMode.value === 'upload';
+        workspaceBlock.classList.toggle('d-none', upload);
+        uploadBlock.classList.toggle('d-none', !upload);
+    });
+
+    resetPreviewBtn.addEventListener('click', function () {
+        previewCard.style.display = 'none';
+        previewContent.innerHTML = '';
+        payloadJson.value = '';
+        confirmLogId.value = '';
+    });
+
+    extractForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const formData = new FormData(extractForm);
+        fetch('/ai_assistant/extract', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (response) { return response.json(); }).then(function (result) {
+            if (result.code !== 0) {
+                alert(result.msg || '提取失败');
+                return;
+            }
+            renderPreview(result.data);
+        }).catch(function () {
+            alert('提取请求失败');
+        });
+    });
+
+    function renderPreview(data) {
+        const payload = data.data || {};
+        payloadJson.value = JSON.stringify(payload);
+        confirmLogId.value = data.log_id || '';
+        previewWarnings.textContent = (payload.warnings || []).length ? (payload.warnings.length + ' 条警告') : '无警告';
+        previewContent.innerHTML = '<pre class="bg-light p-3 rounded small mb-0" style="white-space:pre-wrap;">' +
+            escapeHtml(JSON.stringify(payload, null, 2)) + '</pre>';
+        previewCard.style.display = 'block';
+        previewCard.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function escapeHtml(text) {
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+})();
+</script>
