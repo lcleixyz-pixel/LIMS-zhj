@@ -34,7 +34,7 @@ QmsDocumentStructureService::seedAll();
 
 $companyId = (string)Config::get('qms.company_id');
 $elementKey = 'smoke_clause_inferred_evidence';
-$note = '条款经要素推导证据 smoke：7.11 经临时要素指向 QP-26 记录要求';
+$note = '条款经要素推导证据 smoke：7.11 经临时要素指向 XZTC/CX-26-2022 记录要求';
 $now = date('Y-m-d H:i:s');
 
 $clause = Db::name('qms_clauses')
@@ -48,14 +48,14 @@ $clause = Db::name('qms_clauses')
 $block = Db::name('qms_document_blocks')
     ->alias('b')
     ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
-    ->where('sd.doc_number', 'QP-26')
+    ->where('sd.doc_number', 'XZTC/CX-26-2022')
     ->where('b.block_type', 'record_requirement')
     ->where('b.soft_delete', 0)
     ->field('b.id,b.structured_document_id,b.title')
     ->find();
 
 assert_true((bool)$clause, 'GB/T 27025 7.11 clause exists');
-assert_true((bool)$block, 'QP-26 record requirement block exists');
+assert_true((bool)$block, 'XZTC/CX-26-2022 record requirement block exists');
 
 $clauseId = (string)$clause['id'];
 $blockId = (string)$block['id'];
@@ -138,7 +138,7 @@ try {
     assert_true((string)$evidence['element_name'] === '条款经要素推导证据 smoke 要素', 'Inferred evidence names the mapped element');
     assert_true((string)$evidence['block_id'] === $blockId, 'Inferred evidence keeps the source block id');
     assert_true((string)$evidence['structured_document_id'] === $structuredId, 'Inferred evidence keeps the structured document id');
-    assert_true((string)$evidence['doc_number'] === 'QP-26', 'Inferred evidence names the source procedure');
+    assert_true((string)$evidence['doc_number'] === 'XZTC/CX-26-2022', 'Inferred evidence names the source procedure');
     assert_true((string)$evidence['review_url'] === '/planning/structures/links/review?block_id=' . $blockId, 'Inferred evidence links back to trace review');
     assert_true((string)$evidence['document_url'] === '/planning/structures/view?id=' . $structuredId, 'Inferred evidence links back to structured document');
     assert_contains('经要素映射', (string)($evidence['evidence_path'] ?? ''), 'Inferred evidence labels the trace path');

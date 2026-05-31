@@ -189,8 +189,8 @@ try {
     assert_contains("'recordSchemaCoverage'", $controllerSource, 'Structure controller exposes record schema coverage to index view');
 
     $viewSource = file_get_contents(dirname(__DIR__) . '/app/view/planning_structure/index.html') ?: '';
-    assert_contains('记录要求 schema 复核', $viewSource, 'Structure index shows record requirement schema review panel');
-    assert_contains('字段schema', $viewSource, 'Structure index shows field schema status');
+    assert_contains('记录要求字段结构复核', $viewSource, 'Structure index shows record requirement schema review panel');
+    assert_contains('字段已覆盖', $viewSource, 'Structure index shows field schema status');
     assert_contains('复核追溯', $viewSource, 'Structure index links schema gaps back to trace review');
 } finally {
     cleanup_record_requirement_schema_coverage_smoke($documentId, $structuredId, $blockId, $templateId);

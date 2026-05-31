@@ -52,13 +52,13 @@ QmsDocumentStructureService::seedAll();
 $block = Db::name('qms_document_blocks')
     ->alias('b')
     ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
-    ->where('sd.doc_number', 'QP-26')
+    ->where('sd.doc_number', 'XZTC/CX-26-2022')
     ->where('b.block_type', 'record_requirement')
     ->where('b.soft_delete', 0)
     ->field('b.id,b.markdown,sd.id structured_document_id,sd.status structured_status,sd.review_note')
     ->find();
 
-assert_true((bool)$block, 'QP-26 has a record requirement block for change-control testing');
+assert_true((bool)$block, 'XZTC/CX-26-2022 has a record requirement block for change-control testing');
 
 $blockId = (string)$block['id'];
 $structuredId = (string)$block['structured_document_id'];

@@ -39,10 +39,10 @@ assert_true(
 );
 
 $document = Db::name('documents')
-    ->where('doc_number', 'QP-26')
+    ->where('doc_number', 'XZTC/CX-26-2022')
     ->where('soft_delete', 0)
     ->find();
-assert_true(is_array($document), 'QP-26 controlled document exists');
+assert_true(is_array($document), 'XZTC/CX-26-2022 controlled document exists');
 
 $summary = QmsDocumentStructureService::controlledDocumentStructureSummary((string)$document['id']);
 assert_true((string)($summary['structured_document_id'] ?? '') !== '', 'Controlled document summary links to structured document');

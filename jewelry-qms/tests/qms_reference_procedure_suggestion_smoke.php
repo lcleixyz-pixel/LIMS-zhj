@@ -83,7 +83,7 @@ $suggestion = Db::name('qms_agent_suggestions')
     ->where('status', 'open')
     ->find();
 assert_true(is_array($suggestion), 'Reference procedure block creates an advisory comparison suggestion');
-assert_contains('现用程序：QP-21 管理评审程序', (string)$suggestion['content'], 'Reference procedure suggestion names the matched current procedure');
+assert_contains('现用程序：XZTC/CX-21-2022 管理评审程序', (string)$suggestion['content'], 'Reference procedure suggestion names the matched current procedure');
 assert_contains('仅供人工复核', (string)$suggestion['content'], 'Reference procedure suggestion is advisory');
 assert_contains('不自动修改正式体系数据', (string)$suggestion['evidence'], 'Reference procedure suggestion evidence keeps the formal data boundary');
 
