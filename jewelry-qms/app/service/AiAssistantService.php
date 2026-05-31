@@ -156,8 +156,8 @@ class AiAssistantService
             throw new \InvalidArgumentException('不支持的记录类型');
         }
 
-        if (!self::isConfigured()) {
-            throw new \RuntimeException('DeepSeek API 未配置，请在环境变量中设置 DEEPSEEK_API_KEY');
+        if (!self::isConfigured($companyId)) {
+            throw new \RuntimeException('DeepSeek API 未配置，请在 AI 服务配置或环境变量中设置 DEEPSEEK_API_KEY');
         }
 
         $documentText = DocumentParserService::summarizeForAi($filePath);
@@ -166,7 +166,7 @@ class AiAssistantService
         }
 
         $context = self::buildContext($companyId);
-        $response = self::callDeepSeek($targetType, $documentText, $context);
+        $response = self::callDeepSeek($targetType, $documentText, $context, $companyId);
         $validated = self::validateExtraction($response, $targetType, $context);
         $logId = qms_uuid();
         $now = date('Y-m-d H:i:s');
@@ -409,9 +409,11 @@ class AiAssistantService
         return $row;
     }
 
-    public static function isConfigured(): bool
+    public static function isConfigured(?string $companyId = null): bool
     {
-        return trim((string)Config::get('qms.ai.api_key', '')) !== '';
+        $companyId = $companyId ?? (string)Config::get('qms.company_id');
+
+        return AiSettingsService::isConfigured($companyId);
     }
 
     public static function getPromptTemplate(string $targetType): string
@@ -426,15 +428,8 @@ class AiAssistantService
         };
     }
 
-    private static function callDeepSeek(string $targetType, string $documentText, array $context): array
+    private static function callDeepSeek(string $targetType, string $documentText, array $context, string $companyId): array
     {
-        $config = Config::get('qms.ai', []);
-        $apiKey = (string)($config['api_key'] ?? '');
-        $baseUrl = rtrim((string)($config['base_url'] ?? 'https://api.deepseek.com'), '/');
-        $model = (string)($config['model'] ?? 'deepseek-chat');
-        $maxTokens = (int)($config['max_tokens'] ?? 4096);
-        $temperature = (float)($config['temperature'] ?? 0.1);
-
         $employeeNames = array_map(static fn (array $row): string => (string)$row['name'], $context['employees'] ?? []);
         $equipmentNumbers = array_map(static fn (array $row): string => (string)$row['equipment_number'] . ' ' . (string)$row['name'], $context['equipments'] ?? []);
 
@@ -453,63 +448,20 @@ class AiAssistantService
             $documentText,
         ]);
 
-        $payload = json_encode([
-            'model' => $model,
-            'messages' => [
-                ['role' => 'system', 'content' => $systemPrompt],
-                ['role' => 'user', 'content' => $userPrompt],
-            ],
-            'temperature' => $temperature,
-            'max_tokens' => $maxTokens,
+        $result = DeepSeekService::chat([
+            ['role' => 'system', 'content' => $systemPrompt],
+            ['role' => 'user', 'content' => $userPrompt],
+        ], [
+            'company_id' => $companyId,
             'response_format' => ['type' => 'json_object'],
-        ], JSON_UNESCAPED_UNICODE);
-
-        $response = self::httpPost($baseUrl . '/chat/completions', $payload, [
-            'Authorization: Bearer ' . $apiKey,
-            'Content-Type: application/json',
         ]);
 
-        $decoded = json_decode($response, true);
-        if (!is_array($decoded)) {
-            throw new \RuntimeException('DeepSeek 返回无效 JSON');
-        }
-
-        if (isset($decoded['error']['message'])) {
-            throw new \RuntimeException('DeepSeek API 错误：' . (string)$decoded['error']['message']);
-        }
-
-        $content = (string)($decoded['choices'][0]['message']['content'] ?? '');
-        $json = json_decode($content, true);
+        $json = json_decode((string)$result['content'], true);
         if (!is_array($json)) {
             throw new \RuntimeException('AI 未返回有效结构化 JSON');
         }
 
         return $json;
-    }
-
-    private static function httpPost(string $url, string $payload, array $headers): string
-    {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $payload,
-            CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 120,
-        ]);
-        $response = curl_exec($ch);
-        $error = curl_error($ch);
-        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($response === false) {
-            throw new \RuntimeException('DeepSeek 请求失败：' . $error);
-        }
-        if ($status >= 400) {
-            throw new \RuntimeException('DeepSeek HTTP ' . $status . '：' . $response);
-        }
-
-        return (string)$response;
     }
 
     private static function insertTrainingRecords(string $companyId, array $data, string $sourceFile): int

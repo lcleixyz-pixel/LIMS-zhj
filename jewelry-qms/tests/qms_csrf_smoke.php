@@ -27,6 +27,7 @@ foreach ([
     "input.name = '__token__'",
     'X-CSRF-TOKEN',
     'ajaxSetup',
+    'qmsRefreshCsrfToken',
 ] as $needle) {
     assert_contains($needle, $script, 'CSRF helper supports ' . $needle);
 }

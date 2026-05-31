@@ -62,3 +62,12 @@ if (!function_exists('qms_can')) {
         return \app\service\RbacService::canAccess($controller);
     }
 }
+
+if (!function_exists('qms_json')) {
+    function qms_json(array $payload)
+    {
+        $payload['csrf_token'] = token();
+
+        return json($payload);
+    }
+}

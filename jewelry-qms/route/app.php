@@ -27,6 +27,16 @@ Route::group(function () {
     Route::get('ai_assistant/history', 'AiAssistant/history');
     Route::get('ai_assistant/preview', 'AiAssistant/preview');
 
+    Route::get('ai_settings/index', 'AiSettings/index');
+    Route::post('ai_settings/save', 'AiSettings/save');
+    Route::post('ai_settings/test', 'AiSettings/test');
+
+    Route::get('ai_chat/sessions', 'AiChat/sessions');
+    Route::post('ai_chat/create', 'AiChat/create');
+    Route::get('ai_chat/messages', 'AiChat/messages');
+    Route::post('ai_chat/send', 'AiChat/send');
+    Route::post('ai_chat/purge', 'AiChat/purge');
+
     Route::rule('document/index', 'Document/index');
     Route::rule('document/add', 'Document/add');
     Route::rule('document/edit', 'Document/edit');
@@ -181,6 +191,7 @@ Route::group(function () {
 })->middleware([
     \app\middleware\Auth::class,
     \app\middleware\Rbac::class,
+    \app\middleware\PageContext::class,
     \think\middleware\FormTokenCheck::class,
     \app\middleware\AuditLog::class,
 ]);
