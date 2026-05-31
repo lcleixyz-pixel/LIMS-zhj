@@ -45,7 +45,7 @@ $cx12 = array_values(array_filter(
 ))[0] ?? null;
 
 assert_true(is_array($cx32), 'CX-32 reference procedure has a block-level comparison row');
-assert_true((string)$cx32['current_procedure_number'] === 'QP-21', 'CX-32 maps to the current management review procedure');
+assert_true((string)$cx32['current_procedure_number'] === 'XZTC/CX-21-2022', 'CX-32 maps to the current management review procedure');
 assert_true((string)$cx32['current_procedure_title'] === '管理评审程序', 'CX-32 comparison names the current procedure title');
 assert_true($cx12 === null, 'CX-12 outsourcing procedure is not mapped to an unrelated current procedure by fuzzy title matching');
 assert_true($cx32['missing_labels'] === [], 'Current management review procedure covers the expected source block labels');
@@ -60,7 +60,7 @@ $suggestion = Db::name('qms_agent_suggestions')
     ->where('status', 'open')
     ->find();
 assert_true(is_array($suggestion), 'Block-level comparison creates an advisory suggestion');
-assert_contains('现用程序：QP-21 管理评审程序', (string)$suggestion['content'], 'Block-level suggestion names the matched current procedure');
+assert_contains('现用程序：XZTC/CX-21-2022 管理评审程序', (string)$suggestion['content'], 'Block-level suggestion names the matched current procedure');
 assert_contains('已覆盖：目的、范围、职责、工作程序、记录要求', (string)$suggestion['content'], 'Block-level suggestion lists covered sections');
 assert_contains('待补齐：无', (string)$suggestion['content'], 'Block-level suggestion states there are no missing sections for CX-32');
 assert_contains('不自动修改正式体系数据', (string)$suggestion['evidence'], 'Block-level suggestion keeps the advisory-only boundary');
@@ -103,7 +103,7 @@ $detailCx32 = array_values(array_filter(
     fn (array $row): bool => (string)($row['reference_title'] ?? '') === 'CX-32 管理评审程序'
 ))[0] ?? null;
 assert_true(is_array($detailCx32), 'Reference structured detail exposes block-level comparison rows');
-assert_true((string)$detailCx32['current_procedure_number'] === 'QP-21', 'Reference detail comparison keeps the matched current procedure');
+assert_true((string)$detailCx32['current_procedure_number'] === 'XZTC/CX-21-2022', 'Reference detail comparison keeps the matched current procedure');
 
 $detailSuggestions = $detail['document_suggestions'] ?? [];
 $detailSuggestion = array_values(array_filter(

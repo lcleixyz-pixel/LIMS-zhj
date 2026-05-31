@@ -38,6 +38,7 @@ class CurrentFilesSeedService
             'documents' => ['manual' => 0, 'procedures' => 0, 'work_instructions' => 0],
             'quality' => ['policies' => 0, 'objectives' => 0],
             'equipment' => ['urumqi' => 0, 'hetian' => 0],
+            'equipment_authorizations' => ['upserted' => 0],
             'reference_materials' => ['created' => 0],
             'structured' => [],
             'missing_evidence' => [],
@@ -64,6 +65,7 @@ class CurrentFilesSeedService
             $summary['appointments']['upserted'] += self::seedAppointments($companyId, $employees, $positions, $sites, $manual);
             $summary['equipment']['urumqi'] += self::seedEquipmentWorkbook($companyId, $urumqiEquipmentPath, (string)$sites['MAIN']['id']);
             $summary['equipment']['hetian'] += self::seedEquipmentWorkbook($companyId, $hetianEquipmentPath, (string)$sites['HETIAN']['id']);
+            $summary['equipment_authorizations']['upserted'] += self::seedEquipmentAuthorizations($companyId, $employees, $sites);
             $summary['missing_evidence'] = self::standardMaterialEvidenceGaps($sourceRoot);
         });
 
@@ -324,6 +326,7 @@ class CurrentFilesSeedService
             'title' => (string)$row['title'],
             'version' => (string)($row['version'] ?? 'A/0'),
             'effective_date' => $row['effective_date'] ?? null,
+            'review_date' => self::calcReviewDate($row['effective_date'] ?? null, (int)$row['level']),
             'status' => 'published',
             'file_path' => (string)($row['file_path'] ?? ''),
             'file_name' => (string)($row['file_name'] ?? ''),
@@ -659,6 +662,110 @@ class CurrentFilesSeedService
         }
 
         return $count;
+    }
+
+    private static function seedEquipmentAuthorizations(string $companyId, array $employees, array $sites): int
+    {
+        $appointments = Db::name('employee_appointments')
+            ->alias('a')
+            ->leftJoin('qms_positions p', 'p.id = a.position_id')
+            ->where('a.company_id', $companyId)
+            ->where('a.soft_delete', 0)
+            ->where('a.status', 'active')
+            ->field('a.employee_id,a.site_id,a.appointed_at,p.code position_code')
+            ->select()
+            ->toArray();
+
+        $equipments = Db::name('equipments')
+            ->where('company_id', $companyId)
+            ->where('soft_delete', 0)
+            ->where('status', 'active')
+            ->field('id,site_id,name')
+            ->select()
+            ->toArray();
+
+        $count = 0;
+        foreach ($appointments as $appointment) {
+            $positionCode = (string)($appointment['position_code'] ?? '');
+            if (!in_array($positionCode, ['equipment_manager', 'testing_room_manager', 'testing_staff', 'authorized_signatory'], true)) {
+                continue;
+            }
+
+            $siteId = (string)($appointment['site_id'] ?? '');
+            foreach ($equipments as $equipment) {
+                if ($siteId !== '' && (string)($equipment['site_id'] ?? '') !== $siteId) {
+                    continue;
+                }
+                if ($positionCode === 'testing_staff' && self::isMonitoringEquipment((string)$equipment['name'])) {
+                    continue;
+                }
+
+                self::upsertEquipmentAuthorization(
+                    $companyId,
+                    (string)$equipment['id'],
+                    (string)$appointment['employee_id'],
+                    (string)($appointment['appointed_at'] ?? self::MANUAL_EFFECTIVE_DATE),
+                    $positionCode === 'testing_staff' ? '检测操作授权' : '管理/监督授权'
+                );
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    private static function upsertEquipmentAuthorization(
+        string $companyId,
+        string $equipmentId,
+        string $employeeId,
+        string $authorizedDate,
+        string $scope
+    ): void {
+        $row = Db::name('equipment_authorizations')
+            ->where('company_id', $companyId)
+            ->where('equipment_id', $equipmentId)
+            ->where('employee_id', $employeeId)
+            ->where('soft_delete', 0)
+            ->find();
+        $id = (string)($row['id'] ?? qms_uuid());
+        $payload = [
+            'id' => $id,
+            'company_id' => $companyId,
+            'equipment_id' => $equipmentId,
+            'employee_id' => $employeeId,
+            'authorized_date' => $authorizedDate,
+            'valid_until' => null,
+            'authorization_scope' => $scope,
+            'status' => 'active',
+            'publish' => 1,
+            'soft_delete' => 0,
+            'modified' => date('Y-m-d H:i:s'),
+        ];
+        if ($row) {
+            Db::name('equipment_authorizations')->where('id', $id)->update($payload);
+        } else {
+            $payload['created'] = date('Y-m-d H:i:s');
+            Db::name('equipment_authorizations')->insert($payload);
+        }
+    }
+
+    private static function isMonitoringEquipment(string $name): bool
+    {
+        return str_contains($name, '温湿度') || str_contains($name, '温度计') || str_contains($name, '湿度计');
+    }
+
+    private static function calcReviewDate(?string $effectiveDate, int $level): ?string
+    {
+        if ($effectiveDate === null || trim($effectiveDate) === '') {
+            return date('Y') . '-12-31';
+        }
+
+        $reviewDate = date('Y-m-d', strtotime($effectiveDate . ' +3 years'));
+        if ($reviewDate < date('Y-m-d')) {
+            return ((int)date('Y') + 1) . '-01-01';
+        }
+
+        return $reviewDate;
     }
 
     private static function seedWorkInstructionStructures(): int

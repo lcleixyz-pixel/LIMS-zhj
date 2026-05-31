@@ -30,6 +30,10 @@ class AuditLog
                 'seedsamples',
                 'submitreview',
                 'updatereview',
+                'save',
+                'test',
+                'purge',
+                'send',
             ];
             if (in_array(strtolower($action), $logActions, true)) {
                 try {

@@ -60,13 +60,15 @@ QmsDocumentStructureService::seedAll();
 $block = Db::name('qms_document_blocks')
     ->alias('b')
     ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
-    ->where('sd.doc_number', 'QP-26')
+    ->where('sd.doc_number', 'XZTC/CX-26-2022')
     ->where('sd.document_role', 'procedure')
     ->where('b.block_type', 'record_requirement')
+    ->where('b.stable_key', 'like', 'procedure:xztc_cx_26_2022:%')
+    ->where('b.source_locator', '<>', '')
     ->where('b.soft_delete', 0)
     ->field('b.id,b.markdown,b.stable_key,sd.id structured_document_id,sd.status structured_status,sd.review_note')
     ->find();
-assert_true(is_array($block), 'QP-26 has a record requirement block for source refresh');
+assert_true(is_array($block), 'XZTC/CX-26-2022 has a record requirement block for source refresh');
 
 $blockId = (string)$block['id'];
 $structuredId = (string)$block['structured_document_id'];

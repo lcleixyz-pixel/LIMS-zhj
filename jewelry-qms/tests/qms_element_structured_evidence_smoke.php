@@ -40,7 +40,7 @@ $now = date('Y-m-d H:i:s');
 $block = Db::name('qms_document_blocks')
     ->alias('b')
     ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
-    ->where('sd.doc_number', 'QP-26')
+    ->where('sd.doc_number', 'XZTC/CX-26-2022')
     ->where('b.block_type', 'record_requirement')
     ->where('b.soft_delete', 0)
     ->field('b.id,b.structured_document_id,b.title')
@@ -109,7 +109,7 @@ try {
     assert_true(is_array($evidence), 'Element detail can locate the reviewed block evidence row');
     assert_true((string)$evidence['block_id'] === $blockId, 'Structured evidence keeps the source block id');
     assert_true((string)$evidence['structured_document_id'] === $structuredId, 'Structured evidence keeps the source document id');
-    assert_true((string)$evidence['doc_number'] === 'QP-26', 'Structured evidence names the source procedure');
+    assert_true((string)$evidence['doc_number'] === 'XZTC/CX-26-2022', 'Structured evidence names the source procedure');
     assert_true((string)$evidence['record_number'] === 'XZTC/BG-26-01', 'Structured evidence names linked record form');
     assert_true((string)$evidence['position_name'] !== '', 'Structured evidence names linked position');
     assert_true((string)$evidence['module_name'] !== '', 'Structured evidence names linked running module');

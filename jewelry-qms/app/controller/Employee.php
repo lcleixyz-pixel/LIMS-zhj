@@ -33,6 +33,8 @@ class Employee extends CrudBase
 
         View::assign('record', $record);
         View::assign('employeeCertificates', TrainingEvidenceService::employeeCertificateRows($id));
+        View::assign('trainingRecords', TrainingEvidenceService::trainingRecordsForEmployee($id));
+        View::assign('competencyRecords', TrainingEvidenceService::competencyRecordsForEmployee($id));
         View::assign('supervisionRecords', TrainingEvidenceService::supervisionRecordInstances($id));
         View::assign('employeeAppointments', Db::name('employee_appointments')
             ->alias('a')

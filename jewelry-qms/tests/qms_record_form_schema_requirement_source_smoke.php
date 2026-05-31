@@ -41,19 +41,19 @@ assert_true(is_array($template), 'Computer software record form exists');
 $evidence = QmsDocumentStructureService::recordFormRequirementEvidence((string)$template['id']);
 $sourceEvidence = null;
 foreach ($evidence as $row) {
-    if ((string)($row['procedure_number'] ?? '') === 'QP-26'
+    if ((string)($row['procedure_number'] ?? '') === 'XZTC/CX-26-2022'
         && str_contains((string)($row['markdown'] ?? ''), '计算机软件登记表')) {
         $sourceEvidence = $row;
         break;
     }
 }
-assert_true(is_array($sourceEvidence), 'Record form has QP-26 procedure requirement evidence');
+assert_true(is_array($sourceEvidence), 'Record form has XZTC/CX-26-2022 procedure requirement evidence');
 
 $renderedPath = dirname(__DIR__) . '/runtime/qms_structured/record_form/XZTC_BG-26-01-A_0.md';
 $markdown = file_get_contents($renderedPath) ?: '';
 assert_true($markdown !== '', 'Rendered record form schema markdown exists');
 assert_contains('### 程序记录要求来源', $markdown, 'Record form schema document embeds procedure requirement source section');
-assert_contains('QP-26 计算机文件及数据控制程序', $markdown, 'Requirement source section names the source procedure');
+assert_contains('XZTC/CX-26-2022 计算机文件及数据控制程序', $markdown, 'Requirement source section names the source procedure');
 assert_contains('procedure:qp_26:source:records', $markdown, 'Requirement source section keeps stable block key');
 assert_contains('《计算机软件登记表》 XZTC/BG-26-01', $markdown, 'Requirement source section quotes the procedure record list');
 assert_contains('schema来源：按程序文件记录要求复核字段、责任人、频次和保留期限', $markdown, 'Requirement source section carries schema construction requirement');

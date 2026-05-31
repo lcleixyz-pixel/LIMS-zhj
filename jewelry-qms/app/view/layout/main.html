@@ -7,9 +7,19 @@
     {:token_meta()}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/css/qms.css" rel="stylesheet">
+    <link href="/static/css/qms-copilot.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
 </head>
-<body>
+<body
+    data-qms-controller="{$qmsPageContext.controller|default=''}"
+    data-qms-action="{$qmsPageContext.action|default=''}"
+    data-qms-record-id="{$qmsPageContext.record_id|default=''}"
+    data-qms-route="{$qmsPageContext.route|default=''}"
+    data-qms-module="{$qmsPageContext.module|default=''}"
+    data-qms-title="{$qmsPageContext.title|default=''}"
+    data-qms-copilot-enabled="{if isset($qmsCopilotEnabled) && $qmsCopilotEnabled}1{else}0{/if}"
+    data-qms-ai-configured="{if isset($qmsAiConfigured) && $qmsAiConfigured}1{else}0{/if}"
+>
 <div class="container-fluid qms-header">
     <div class="row align-items-center py-2">
         <div class="col-md-3">
@@ -114,6 +124,12 @@
                         <li><a class="dropdown-item" href="/user/index">用户</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="/import/index">批量导入</a></li>
+                        {if condition="qms_can('ai_assistant')"}
+                        <li><a class="dropdown-item" href="/ai_assistant/index">AI 文档助理</a></li>
+                        {/if}
+                        {if condition="qms_can('ai_settings')"}
+                        <li><a class="dropdown-item" href="/ai_settings/index">AI 服务配置</a></li>
+                        {/if}
                         <li><a class="dropdown-item" href="/notification/index">通知中心</a></li>
                     </ul>
                 </li>
@@ -145,6 +161,34 @@
     {/if}
     {__CONTENT__}
 </div>
+{if isset($qmsCopilotEnabled) && $qmsCopilotEnabled}
+<button type="button" id="qmsCopilotFab" data-bs-toggle="offcanvas" data-bs-target="#qmsCopilotDrawer" aria-label="QMS Copilot">💬</button>
+<div class="offcanvas offcanvas-end" tabindex="-1" id="qmsCopilotDrawer" aria-labelledby="qmsCopilotDrawerLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="qmsCopilotDrawerLabel">QMS Copilot</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="关闭"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column p-0">
+        <div class="qms-copilot-toolbar">
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <select id="qmsCopilotMode" class="form-select form-select-sm" style="width:auto;">
+                    <option value="general">通用</option>
+                    <option value="context" selected>上下文</option>
+                    <option value="expert">评审专家</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="qmsCopilotNewChat">新对话</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" id="qmsCopilotClearMine">清空我的会话</button>
+            </div>
+            <div id="qmsCopilotStatus" class="small text-muted pt-1"></div>
+        </div>
+        <div id="qmsCopilotMessages" class="qms-copilot-messages"></div>
+        <div class="qms-copilot-input-row">
+            <textarea id="qmsCopilotInput" class="form-control" rows="2" placeholder="输入问题，Enter 发送"></textarea>
+            <button type="button" class="btn btn-primary" id="qmsCopilotSendBtn">发送</button>
+        </div>
+    </div>
+</div>
+{/if}
 <div class="container mt-4">
     <footer class="text-center text-muted py-3">
         <small>&copy; {:date('Y')} {$systemTitle|default='JewelryQMS'} v{$systemVersion|default='2.0'}</small>
@@ -152,5 +196,8 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/static/js/csrf.js"></script>
+{if isset($qmsCopilotEnabled) && $qmsCopilotEnabled}
+<script src="/static/js/qms-copilot.js"></script>
+{/if}
 </body>
 </html>

@@ -2,5 +2,8 @@
 !.gitignore
 !css/
 !css/qms.css
+!css/qms-copilot.css
 !js/
 !js/record-form-editor.js
+!js/csrf.js
+!js/qms-copilot.js

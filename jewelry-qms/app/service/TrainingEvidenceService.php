@@ -49,6 +49,33 @@ class TrainingEvidenceService
             ->select();
     }
 
+    public static function trainingRecordsForEmployee(string $employeeId): array
+    {
+        return \think\facade\Db::name('training_records')
+            ->alias('r')
+            ->join('trainings t', 't.id = r.training_id')
+            ->where('r.employee_id', $employeeId)
+            ->where('r.soft_delete', 0)
+            ->where('t.soft_delete', 0)
+            ->field('r.id,r.attendance,r.evaluation_score,r.evaluation_result,r.created,t.title,t.training_date,t.trainer,t.training_type,t.status')
+            ->order('t.training_date', 'desc')
+            ->select()
+            ->toArray();
+    }
+
+    public static function competencyRecordsForEmployee(string $employeeId): array
+    {
+        return \think\facade\Db::name('competency_records')
+            ->alias('c')
+            ->leftJoin('employees e', 'e.id = c.assessor_id')
+            ->where('c.employee_id', $employeeId)
+            ->where('c.soft_delete', 0)
+            ->field('c.id,c.test_item,c.method_standard,c.assessment_date,c.result,c.authorization_scope,c.valid_until,e.name assessor_name')
+            ->order('c.assessment_date', 'desc')
+            ->select()
+            ->toArray();
+    }
+
     public static function supervisionRecordInstances(string $employeeId): Collection
     {
         $employee = Employee::find($employeeId);

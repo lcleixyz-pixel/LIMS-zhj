@@ -30,7 +30,7 @@ return [
         'admin' => ['*'],
         'quality_manager' => [
             'dashboard', 'document', 'record_form_template', 'record_form_instance', 'approval', 'doc_category', 'doc_template',
-            'compliance',
+            'compliance', 'ai_assistant', 'ai_chat',
             'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningobjective',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
@@ -163,5 +163,16 @@ return [
         'enabled' => env('ONLYOFFICE_ENABLED', false),
         'server_url' => env('ONLYOFFICE_SERVER_URL', ''),
         'jwt_secret' => env('ONLYOFFICE_JWT_SECRET', ''),
+    ],
+
+    'ai' => [
+        'provider' => 'deepseek',
+        'api_key' => env('DEEPSEEK_API_KEY', ''),
+        'base_url' => 'https://api.deepseek.com',
+        'model' => 'deepseek-v4-flash',
+        'max_tokens' => 4096,
+        'chat_max_tokens' => 2048,
+        'chat_timeout' => 180,
+        'temperature' => 0.1,
     ],
 ];
