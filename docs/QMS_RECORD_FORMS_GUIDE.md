@@ -66,7 +66,7 @@ php think record_form:reconstruction_review
 - 字段义务、责任义务、频次或触发条件、保存期限。
 - 与外部依据台账、运行模块或结构化块的边界。
 
-只有 `ready_for_rebuild` 的表单才允许进入 AI schema 重建；`needs_system_link`、`needs_human_scope` 或 `identity_conflict` 应先补体系链路、人工界定范围或修正编号身份。
+只有 `ready_for_rebuild` 的表单建议进入 AI schema 重建；`needs_system_link`、`needs_human_scope` 或 `identity_conflict` 应先补体系链路、人工界定范围或修正编号身份。审查结论不阻断人工操作，而是在发布时写入 `review_note` 作为参考提示。
 
 ## 4. schema 构建来源
 
@@ -96,17 +96,18 @@ php think record_form:reconstruction_review
 ```text
 待复核
 -> AI 重建候选 schema（可选）
--> 通过重构准备审查
+-> 重构准备审查（可选，提供体系义务参考）
 -> 比对程序文件记录要求
 -> 比对现用表格原件
 -> 确认字段类型、必填性、选项和默认值
 -> 标记 field_confirmed
 -> 生成或调整打印模板
--> 通过字段覆盖、样例值校验和打印渲染检查
--> 标记 completed
+-> 标记 completed → 系统自动设为 published
 ```
 
-批量构建会对来源文件重构模板执行可填写门槛检查。若模板已通过重构准备审查、字段 schema 非空、来源文件存在、打印模板不是通用模板、schema 覆盖字段身份/日期频次/责任/判定/签名链等关键义务，并且样例值可以校验和渲染，则可写入 `status=published`、`review_status=completed`。未通过这些条件的模板仍保持草稿或候选状态，等待人工复核或高保真补齐。
+**发布权归人**：`updateReview()` 将 `review_status` 设为 `completed` 时自动发布。系统会检查重构准备审查和字段覆盖，但仅在 `review_note` 中写入建议，不阻断发布。
+
+**可填写条件**：模板 `status = published`，且有独立打印模板（非 `generic_record_form`）即可填写。不再要求 `review_status = completed`。
 
 ## 6. 页面入口
 
@@ -159,8 +160,9 @@ php think record_form:reconstruction_review
 | `label` | 中文标签 |
 | `type` | 字段类型，如 `text`、`date`、`select`、`number`、`person` |
 | `required` | 是否必填 |
+| `readonly` | 是否只读（预填固定值，用户不可修改） |
 | `options` | 选项字段的可选值 |
-| `default` | 默认值 |
+| `default` | 默认值（`readonly` 字段的预填值即此值） |
 | `note` | 字段说明或来源 |
 
 示例：

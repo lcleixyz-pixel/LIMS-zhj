@@ -5,6 +5,7 @@ namespace app\controller;
 
 use app\BaseController;
 use app\service\AiAssistantService;
+use app\service\AiSettingsService;
 use think\facade\Config;
 use think\facade\Session;
 use think\facade\View;
@@ -22,7 +23,7 @@ class AiAssistant extends BaseController
         View::assign('sourceItems', AiAssistantService::listSourceFiles($relativeDir));
         View::assign('currentDir', $relativeDir);
         View::assign('parentDir', $this->parentDir($relativeDir));
-        View::assign('configured', AiAssistantService::isConfigured());
+        View::assign('configured', AiSettingsService::isConfigured($companyId));
         View::assign('recentLogs', AiAssistantService::history($companyId, 10));
         View::assign('workspaceRoot', AiAssistantService::workspaceSourceRoot());
 

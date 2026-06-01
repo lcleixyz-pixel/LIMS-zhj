@@ -60,14 +60,13 @@ $name = P::cell($template, 'name');
 $module = P::cell($template, 'module');
 $sourceFileName = P::cell($template, 'source_file_name');
 $reference = P::cell($template, 'reference');
-$isFillableRebuild = (string)($template['status'] ?? '') === 'published'
-    && (string)($template['review_status'] ?? '') === 'completed';
-$reviewMark = $isFillableRebuild
-    ? '源文件重构版：已通过体系链路与字段覆盖检查，可先填写并继续逐表优化版式'
-    : '高保真重构草稿：请与原始附件逐表复核后再开放正式填写';
-$footerNote = $isFillableRebuild
-    ? '系统重构打印预览，建议按原始附件继续优化版式高保真'
-    : '系统重构打印预览，正式启用前应完成逐表版式复核';
+$isPublished = (string)($template['status'] ?? '') === 'published';
+$reviewMark = $isPublished
+    ? '受控记录表格，可正常填写'
+    : '草稿状态，请完成复核并发布后再正式使用';
+$footerNote = $isPublished
+    ? '系统打印预览'
+    : '系统打印预览（草稿，正式启用前请先发布）';
 ?>
 <!doctype html>
 <html lang="zh-CN">

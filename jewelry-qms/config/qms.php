@@ -30,7 +30,7 @@ return [
         'admin' => ['*'],
         'quality_manager' => [
             'dashboard', 'document', 'record_form_template', 'record_form_instance', 'approval', 'doc_category', 'doc_template',
-            'compliance', 'ai_assistant',
+            'compliance', 'ai_assistant', 'ai_chat',
             'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningobjective',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
@@ -171,6 +171,8 @@ return [
         'base_url' => 'https://api.deepseek.com',
         'model' => env('DEEPSEEK_MODEL', getenv('DEEPSEEK_MODEL') ?: 'deepseek-chat'),
         'max_tokens' => 4096,
+        'chat_max_tokens' => 2048,
+        'chat_timeout' => 180,
         'temperature' => 0.1,
     ],
 ];

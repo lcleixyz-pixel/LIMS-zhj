@@ -9,6 +9,17 @@
         return;
     }
 
+    window.qmsRefreshCsrfToken = function (newToken) {
+        if (!newToken) {
+            return;
+        }
+        token = newToken;
+        meta.setAttribute('content', newToken);
+        document.querySelectorAll('input[name="__token__"]').forEach(function (input) {
+            input.value = newToken;
+        });
+    };
+
     document.querySelectorAll('form').forEach(function (form) {
         var method = (form.getAttribute('method') || 'get').toLowerCase();
         if (method !== 'post' || form.querySelector('input[name="__token__"]')) {

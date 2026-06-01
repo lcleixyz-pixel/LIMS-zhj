@@ -322,7 +322,8 @@ $rebuildTemplate = array_values(array_filter(
 $rebuildHtml = RecordFormPrintService::render($rebuildTemplate['print_template_key'], $rebuildTemplate, batch_sample_values($rebuildTemplate['field_schema']));
 assert_contains($rebuildTemplate['doc_number'], $rebuildHtml, 'Per-source rebuild print includes doc number');
 assert_contains($rebuildTemplate['name'], $rebuildHtml, 'Per-source rebuild print includes template name');
-assert_contains('源文件重构版', $rebuildHtml, 'Fillable rebuild print explains source-backed review state');
+$statusLabel = ($rebuildTemplate['status'] ?? '') === 'published' ? '受控记录表格' : '草稿状态';
+assert_contains($statusLabel, $rebuildHtml, 'Rebuild print shows status-appropriate label');
 assert_contains('break-inside: avoid', $rebuildHtml, 'Per-source rebuild print protects table rows from being split across pages');
 
 $routeSource = file_get_contents(dirname(__DIR__) . '/route/app.php') ?: '';
