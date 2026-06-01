@@ -5,6 +5,8 @@
 use app\command\CheckReminders;
 use app\command\ComplianceAssess;
 use app\command\CurrentFilesSeed;
+use app\command\RecordFormRebuildSchema;
+use app\command\RecordFormReconstructionReview;
 
 return [
     // 指令定义
@@ -12,5 +14,7 @@ return [
         CheckReminders::class,
         ComplianceAssess::class,
         CurrentFilesSeed::class,
+        RecordFormRebuildSchema::class,
+        RecordFormReconstructionReview::class,
     ],
 ];

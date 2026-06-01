@@ -136,7 +136,7 @@ try {
 
     $traceabilityView = file_get_contents(dirname(__DIR__) . '/app/view/planning_traceability/index.html') ?: '';
     assert_contains('结构块证据', $traceabilityView, 'Traceability matrix exposes structured block evidence');
-    assert_contains('schema来源', $traceabilityView, 'Traceability matrix exposes schema source trace');
+    assert_contains('字段来源', $traceabilityView, 'Traceability matrix exposes schema source trace');
 } finally {
     Db::name('qms_document_block_links')->where('note', $note)->update(['soft_delete' => 1]);
     Db::name('qms_document_change_logs')->where('revision_note', $note)->update(['soft_delete' => 1]);

@@ -361,7 +361,7 @@ CREATE TABLE `record_form_templates` (
   `field_schema` text NOT NULL,
   `version` varchar(20) DEFAULT 'A/0',
   `status` enum('draft','published','obsolete') DEFAULT 'draft',
-  `review_status` enum('pending','field_confirmed','needs_fidelity','deferred','completed') DEFAULT 'pending',
+  `review_status` enum('pending','ai_generated','field_confirmed','needs_fidelity','deferred','completed') DEFAULT 'pending',
   `review_note` text,
   `reviewed_at` datetime DEFAULT NULL,
   `publish` tinyint(1) DEFAULT 1,

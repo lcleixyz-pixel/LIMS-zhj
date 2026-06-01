@@ -11,6 +11,7 @@ use app\service\QmsElementService;
 use app\service\RecordFormBatchTemplateService;
 use app\service\RecordFormFixtureService;
 use app\service\RecordFormPrintService;
+use app\service\RecordFormReconstructionReviewService;
 use app\service\RecordFormSchemaService;
 use InvalidArgumentException;
 use RuntimeException;
@@ -22,6 +23,7 @@ class RecordFormTemplate extends BaseController
 {
     private const REVIEW_STATUSES = [
         'pending' => '待复核',
+        'ai_generated' => 'AI 已重建',
         'field_confirmed' => '字段已确认',
         'needs_fidelity' => '需高保真',
         'deferred' => '暂缓',
@@ -107,12 +109,25 @@ class RecordFormTemplate extends BaseController
             return redirect('/record_form_template/review');
         }
 
-        $record->save([
+        $updates = [
             'review_status' => $reviewStatus,
             'review_note' => trim((string)$this->request->post('review_note', '')),
             'reviewed_at' => date('Y-m-d H:i:s'),
-        ]);
-        Session::flash('success', '模板复核状态已更新');
+        ];
+
+        if ($reviewStatus === 'completed' && (string)$record->status === 'draft') {
+            $publishGate = RecordFormReconstructionReviewService::canPublishTemplate($record);
+            if (!$publishGate['allowed']) {
+                $hint = '[系统提示] 链路核查参考：' . $publishGate['message']
+                    . '（缺失项：' . implode('、', $publishGate['missing_layers']) . '）';
+                $updates['review_note'] = trim($updates['review_note'] . "\n" . $hint);
+            }
+            $updates['status'] = 'published';
+        }
+
+        $record->save($updates);
+        $statusUpgraded = isset($updates['status']);
+        Session::flash('success', '模板复核状态已更新' . ($statusUpgraded ? '，已自动升级为 published' : ''));
 
         return redirect('/record_form_template/review');
     }
@@ -390,18 +405,37 @@ class RecordFormTemplate extends BaseController
     {
         $summary = RecordFormBatchTemplateService::seed();
         $message = sprintf(
-            '批量建立模板完成：总计 %d，新增 %d，更新 %d，跳过 %d，作废旧generic %d',
+            '批量建立模板完成：总计 %d，新增 %d，更新 %d，跳过 %d，作废旧generic %d，作废前推旧模板 %d',
             $summary['total'],
             $summary['created'],
             $summary['updated'],
             $summary['skipped'],
-            $summary['retired_generic'] ?? 0
+            $summary['retired_generic'] ?? 0,
+            $summary['retired_superseded'] ?? 0
         );
         if (($summary['errors'] ?? []) !== []) {
             $message .= '；问题：' . implode('；', array_slice($summary['errors'], 0, 3));
         }
 
-        Session::flash($summary['skipped'] > 0 ? 'warning' : 'success', $message);
+        Session::flash($summary['errors'] !== [] ? 'warning' : 'success', $message);
+
+        return redirect('/record_form_template/index');
+    }
+
+    public function seedGap()
+    {
+        $summary = RecordFormBatchTemplateService::seedGapTemplates();
+        $message = sprintf(
+            '补齐缺失模板完成：总计 %d，新增 %d，跳过 %d',
+            $summary['total'],
+            $summary['created'],
+            $summary['skipped']
+        );
+        if (($summary['errors'] ?? []) !== []) {
+            $message .= '；问题：' . implode('；', array_slice($summary['errors'], 0, 3));
+        }
+
+        Session::flash($summary['errors'] !== [] ? 'warning' : 'success', $message);
 
         return redirect('/record_form_template/index');
     }
@@ -469,7 +503,6 @@ class RecordFormTemplate extends BaseController
         $printTemplateKey = trim((string)$template->print_template_key);
 
         return $template->status === 'published'
-            && (string)($template->review_status ?? '') === 'completed'
             && $printTemplateKey !== ''
             && $printTemplateKey !== 'generic_record_form'
             && $this->printTemplateExists($printTemplateKey);

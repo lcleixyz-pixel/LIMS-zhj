@@ -1,0 +1,1140 @@
+{
+    "XZTC\/BG-22-01::XZTC_BG-22-01-A_0": {
+        "doc_number": "XZTC\/BG-22-01",
+        "name": "非标准方法确认评审表",
+        "module": "XZTC\/CX-22-2022 检测方法的选择与确认程序",
+        "field_schema": [
+            {
+                "key": "method_code_name",
+                "label": "检测方法代号名称",
+                "type": "text",
+                "required": true
+            },
+            {
+                "key": "project_leader",
+                "label": "方案实施负责人",
+                "type": "person",
+                "required": false
+            },
+            {
+                "key": "testing_room_or_field",
+                "label": "检测室或领域",
+                "type": "text",
+                "required": false
+            },
+            {
+                "key": "review_basis",
+                "label": "评审依据",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "review_date",
+                "label": "评审时间",
+                "type": "date",
+                "required": false
+            },
+            {
+                "key": "training_date",
+                "label": "培训日期",
+                "type": "date",
+                "required": false
+            },
+            {
+                "key": "training_method",
+                "label": "培训方式",
+                "type": "text",
+                "required": false
+            },
+            {
+                "key": "training_participants",
+                "label": "参培人员",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "training_effect",
+                "label": "培训效果",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "training_other",
+                "label": "其他",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "reference_materials",
+                "label": "参考的技术资料",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "confirmation_technique",
+                "label": "采用的确认技术",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "instrument_equipment",
+                "label": "采用仪器设备名称及编号",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "practical_operation_verification",
+                "label": "实际操作验证",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "review_comments",
+                "label": "评审意见",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "reviewer_signature",
+                "label": "评审人",
+                "type": "signature",
+                "required": true
+            },
+            {
+                "key": "reviewer_date",
+                "label": "评审人日期",
+                "type": "date",
+                "required": true
+            },
+            {
+                "key": "confirm_comments",
+                "label": "确认意见",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "technical_director_signature",
+                "label": "技术负责人",
+                "type": "signature",
+                "required": true
+            },
+            {
+                "key": "technical_director_date",
+                "label": "技术负责人日期",
+                "type": "date",
+                "required": true
+            }
+        ],
+        "generated_at": "2026-06-01 04:18:45",
+        "source_file": "XZTC_BG-22-01-A_0.md",
+        "reconstruction_review": {
+            "decision": "ready_for_rebuild",
+            "identity_key": "XZTC\/BG-22-01::XZTC_BG-22-01-A_0",
+            "evidence_keys": [
+                "manual",
+                "procedure",
+                "record_list",
+                "data_model"
+            ],
+            "missing_obligations": [],
+            "field_obligations": [
+                "field_identity",
+                "core_record_data",
+                "conclusion_or_judgement",
+                "responsible_party",
+                "date_or_frequency",
+                "signature_chain",
+                "external_register_boundary"
+            ],
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "detail": "关联要素：方法选择、验证和确认"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC\/CX-22-2022",
+                    "detail": "XZTC\/CX-22-2022 检测方法的选择与确认程序"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "管理记录或档案记录不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC\/BG-22-01",
+                    "detail": "1\n    \n    《标准方法确认记录》 XZTC\/BG-22-02\n    \n    《现行有效标准清单》 XZTC\/BG-22-03\n- 程序文件：XZTC\/CX-22-2022 检测方法的选择与确认程序\n  - 内容块：记录\n  - 稳定键：`procedure:qp_22:source:records`\n  - 要求摘录：\n    ### 记录"
+                },
+                "operation_guarantee": []
+            },
+            "issues": []
+        },
+        "schema_coverage": {
+            "passes": true,
+            "checks": {
+                "field_identity": true,
+                "core_record_data": true,
+                "conclusion_or_judgement": true,
+                "responsible_party": true,
+                "date_or_frequency": true,
+                "signature_chain": true,
+                "external_register_boundary": true
+            },
+            "missing": [],
+            "field_count": 20
+        }
+    },
+    "XZTC\/BG-22-01": {
+        "doc_number": "XZTC\/BG-22-01",
+        "name": "非标准方法确认评审表",
+        "module": "XZTC\/CX-22-2022 检测方法的选择与确认程序",
+        "field_schema": [
+            {
+                "key": "method_code_name",
+                "label": "检测方法代号名称",
+                "type": "text",
+                "required": true
+            },
+            {
+                "key": "project_leader",
+                "label": "方案实施负责人",
+                "type": "person",
+                "required": false
+            },
+            {
+                "key": "testing_room_or_field",
+                "label": "检测室或领域",
+                "type": "text",
+                "required": false
+            },
+            {
+                "key": "review_basis",
+                "label": "评审依据",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "review_date",
+                "label": "评审时间",
+                "type": "date",
+                "required": false
+            },
+            {
+                "key": "training_date",
+                "label": "培训日期",
+                "type": "date",
+                "required": false
+            },
+            {
+                "key": "training_method",
+                "label": "培训方式",
+                "type": "text",
+                "required": false
+            },
+            {
+                "key": "training_participants",
+                "label": "参培人员",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "training_effect",
+                "label": "培训效果",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "training_other",
+                "label": "其他",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "reference_materials",
+                "label": "参考的技术资料",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "confirmation_technique",
+                "label": "采用的确认技术",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "instrument_equipment",
+                "label": "采用仪器设备名称及编号",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "practical_operation_verification",
+                "label": "实际操作验证",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "review_comments",
+                "label": "评审意见",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "reviewer_signature",
+                "label": "评审人",
+                "type": "signature",
+                "required": true
+            },
+            {
+                "key": "reviewer_date",
+                "label": "评审人日期",
+                "type": "date",
+                "required": true
+            },
+            {
+                "key": "confirm_comments",
+                "label": "确认意见",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "technical_director_signature",
+                "label": "技术负责人",
+                "type": "signature",
+                "required": true
+            },
+            {
+                "key": "technical_director_date",
+                "label": "技术负责人日期",
+                "type": "date",
+                "required": true
+            }
+        ],
+        "generated_at": "2026-06-01 04:18:45",
+        "source_file": "XZTC_BG-22-01-A_0.md",
+        "reconstruction_review": {
+            "decision": "ready_for_rebuild",
+            "identity_key": "XZTC\/BG-22-01::22-01非标准方法确认评审表",
+            "evidence_keys": [
+                "manual",
+                "procedure",
+                "data_model",
+                "record_list"
+            ],
+            "missing_obligations": [],
+            "field_obligations": [
+                "field_identity",
+                "core_record_data",
+                "conclusion_or_judgement"
+            ],
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "detail": "由归属程序\/记录要求反向定位手册或体系要素。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "检测方法的选择与确认程序",
+                    "detail": "检测方法的选择与确认程序"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "管理记录或档案记录不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": false,
+                    "doc_number": "XZTC\/BG-22-01",
+                    "detail": ""
+                },
+                "operation_guarantee": []
+            },
+            "issues": []
+        },
+        "schema_coverage": {
+            "passes": true,
+            "checks": {
+                "field_identity": true,
+                "core_record_data": true,
+                "conclusion_or_judgement": true,
+                "responsible_party": true,
+                "date_or_frequency": true,
+                "signature_chain": true,
+                "external_register_boundary": true
+            },
+            "missing": [],
+            "field_count": 20
+        }
+    },
+    "XZTC\/BG-22-02::XZTC_BG-22-02-A_0": {
+        "doc_number": "XZTC\/BG-22-02",
+        "name": "标准方法确认记录",
+        "module": "XZTC\/CX-22-2022 检测方法的选择与确认程序",
+        "field_schema": [
+            {
+                "key": "method_name",
+                "label": "标准方法名称\/代号（含年号）",
+                "type": "text",
+                "required": true
+            },
+            {
+                "key": "confirmation_group_or_person",
+                "label": "确认组别\/确认人",
+                "type": "text",
+                "required": false
+            },
+            {
+                "key": "confirm_personnel",
+                "label": "人员",
+                "type": "checkbox",
+                "required": false
+            },
+            {
+                "key": "confirm_equipment",
+                "label": "设备",
+                "type": "checkbox",
+                "required": false
+            },
+            {
+                "key": "confirm_reagent_standard",
+                "label": "试剂标准",
+                "type": "checkbox",
+                "required": false
+            },
+            {
+                "key": "confirm_environment",
+                "label": "环境条件",
+                "type": "checkbox",
+                "required": false
+            },
+            {
+                "key": "understanding_of_principle",
+                "label": "对标准原理的理解",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "理解",
+                    "基本理解",
+                    "不理解"
+                ]
+            },
+            {
+                "key": "operation_experience",
+                "label": "对标准是否进行过操作",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "已操作",
+                    "没有操作"
+                ]
+            },
+            {
+                "key": "familiarity_with_operation",
+                "label": "对标准操作过程的熟悉程度",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "熟悉",
+                    "基本熟悉",
+                    "不熟悉"
+                ]
+            },
+            {
+                "key": "equipment_name",
+                "label": "标准要求的主要设备\/名称",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "equipment_satisfaction",
+                "label": "设备能否满足标准的要求",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "满足",
+                    "基本满足",
+                    "不满足"
+                ]
+            },
+            {
+                "key": "reagent_availability",
+                "label": "是否有标准所要求的试剂",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "有试剂",
+                    "无试剂"
+                ]
+            },
+            {
+                "key": "standard_availability",
+                "label": "是否有标准所要求的标准品",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "有标准",
+                    "无标准",
+                    "不需要标准品"
+                ]
+            },
+            {
+                "key": "reagent_standard_satisfaction",
+                "label": "试剂标准能否满足标准的要求",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "满足",
+                    "基本满足",
+                    "不满足"
+                ]
+            },
+            {
+                "key": "env_satisfaction",
+                "label": "实验室环境条件能否满足标准方法的要求",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "满足",
+                    "基本满足",
+                    "不满足"
+                ]
+            },
+            {
+                "key": "env_special_requirement",
+                "label": "标准方法对实验室环境有无特殊的要求",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "有要求",
+                    "无要求"
+                ]
+            },
+            {
+                "key": "env_special_requirement_desc",
+                "label": "如果对实验室环境有无特殊的要求，请描述",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "remarks",
+                "label": "备注（其他需要说明与补充的内容）",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "confirmation_conclusion",
+                "label": "标准方法的确认结论",
+                "type": "select",
+                "required": true,
+                "options": [
+                    "满足",
+                    "基本满足",
+                    "不满足"
+                ]
+            },
+            {
+                "key": "confirmation_opinion",
+                "label": "标准方法的确认意见",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "confirmer_signature",
+                "label": "确认人签名",
+                "type": "signature",
+                "required": true
+            },
+            {
+                "key": "confirmer_date",
+                "label": "确认人日期",
+                "type": "date",
+                "required": true
+            },
+            {
+                "key": "reviewer_signature",
+                "label": "复核者签名",
+                "type": "signature",
+                "required": true
+            },
+            {
+                "key": "reviewer_date",
+                "label": "复核者日期",
+                "type": "date",
+                "required": true
+            },
+            {
+                "key": "tech_opinion",
+                "label": "各专业领域技术负责人意见",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "tech_signature",
+                "label": "技术负责人签名",
+                "type": "signature",
+                "required": true
+            },
+            {
+                "key": "tech_date",
+                "label": "技术负责人日期",
+                "type": "date",
+                "required": true
+            }
+        ],
+        "generated_at": "2026-06-01 04:20:47",
+        "source_file": "XZTC_BG-22-02-A_0.md",
+        "reconstruction_review": {
+            "decision": "ready_for_rebuild",
+            "identity_key": "XZTC\/BG-22-02::XZTC_BG-22-02-A_0",
+            "evidence_keys": [
+                "manual",
+                "procedure",
+                "record_list",
+                "data_model"
+            ],
+            "missing_obligations": [],
+            "field_obligations": [
+                "field_identity",
+                "core_record_data",
+                "conclusion_or_judgement",
+                "responsible_party",
+                "date_or_frequency",
+                "signature_chain",
+                "external_register_boundary"
+            ],
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "detail": "关联要素：记录控制"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC\/CX-22-2022",
+                    "detail": "XZTC\/CX-22-2022 检测方法的选择与确认程序"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "管理记录或档案记录不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC\/BG-22-02",
+                    "detail": "》 XZTC\/BG-22-03\n- 程序文件：XZTC\/CX-22-2022 检测方法的选择与确认程序\n  - 内容块：记录\n  - 稳定键：`procedure:qp_22:source:records`\n  - 要求摘录：\n    ### 记录\n    \n    《非标准方法确认评审表》 XZTC\/BG-22-01\n    \n    《标准方法确认记录》"
+                },
+                "operation_guarantee": []
+            },
+            "issues": []
+        },
+        "schema_coverage": {
+            "passes": true,
+            "checks": {
+                "field_identity": true,
+                "core_record_data": true,
+                "conclusion_or_judgement": true,
+                "responsible_party": true,
+                "date_or_frequency": true,
+                "signature_chain": true,
+                "external_register_boundary": true
+            },
+            "missing": [],
+            "field_count": 27
+        }
+    },
+    "XZTC\/BG-22-02": {
+        "doc_number": "XZTC\/BG-22-02",
+        "name": "标准方法确认记录",
+        "module": "XZTC\/CX-22-2022 检测方法的选择与确认程序",
+        "field_schema": [
+            {
+                "key": "method_name",
+                "label": "标准方法名称\/代号（含年号）",
+                "type": "text",
+                "required": true
+            },
+            {
+                "key": "confirmation_group_or_person",
+                "label": "确认组别\/确认人",
+                "type": "text",
+                "required": false
+            },
+            {
+                "key": "confirm_personnel",
+                "label": "人员",
+                "type": "checkbox",
+                "required": false
+            },
+            {
+                "key": "confirm_equipment",
+                "label": "设备",
+                "type": "checkbox",
+                "required": false
+            },
+            {
+                "key": "confirm_reagent_standard",
+                "label": "试剂标准",
+                "type": "checkbox",
+                "required": false
+            },
+            {
+                "key": "confirm_environment",
+                "label": "环境条件",
+                "type": "checkbox",
+                "required": false
+            },
+            {
+                "key": "understanding_of_principle",
+                "label": "对标准原理的理解",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "理解",
+                    "基本理解",
+                    "不理解"
+                ]
+            },
+            {
+                "key": "operation_experience",
+                "label": "对标准是否进行过操作",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "已操作",
+                    "没有操作"
+                ]
+            },
+            {
+                "key": "familiarity_with_operation",
+                "label": "对标准操作过程的熟悉程度",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "熟悉",
+                    "基本熟悉",
+                    "不熟悉"
+                ]
+            },
+            {
+                "key": "equipment_name",
+                "label": "标准要求的主要设备\/名称",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "equipment_satisfaction",
+                "label": "设备能否满足标准的要求",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "满足",
+                    "基本满足",
+                    "不满足"
+                ]
+            },
+            {
+                "key": "reagent_availability",
+                "label": "是否有标准所要求的试剂",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "有试剂",
+                    "无试剂"
+                ]
+            },
+            {
+                "key": "standard_availability",
+                "label": "是否有标准所要求的标准品",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "有标准",
+                    "无标准",
+                    "不需要标准品"
+                ]
+            },
+            {
+                "key": "reagent_standard_satisfaction",
+                "label": "试剂标准能否满足标准的要求",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "满足",
+                    "基本满足",
+                    "不满足"
+                ]
+            },
+            {
+                "key": "env_satisfaction",
+                "label": "实验室环境条件能否满足标准方法的要求",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "满足",
+                    "基本满足",
+                    "不满足"
+                ]
+            },
+            {
+                "key": "env_special_requirement",
+                "label": "标准方法对实验室环境有无特殊的要求",
+                "type": "select",
+                "required": false,
+                "options": [
+                    "有要求",
+                    "无要求"
+                ]
+            },
+            {
+                "key": "env_special_requirement_desc",
+                "label": "如果对实验室环境有无特殊的要求，请描述",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "remarks",
+                "label": "备注（其他需要说明与补充的内容）",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "confirmation_conclusion",
+                "label": "标准方法的确认结论",
+                "type": "select",
+                "required": true,
+                "options": [
+                    "满足",
+                    "基本满足",
+                    "不满足"
+                ]
+            },
+            {
+                "key": "confirmation_opinion",
+                "label": "标准方法的确认意见",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "confirmer_signature",
+                "label": "确认人签名",
+                "type": "signature",
+                "required": true
+            },
+            {
+                "key": "confirmer_date",
+                "label": "确认人日期",
+                "type": "date",
+                "required": true
+            },
+            {
+                "key": "reviewer_signature",
+                "label": "复核者签名",
+                "type": "signature",
+                "required": true
+            },
+            {
+                "key": "reviewer_date",
+                "label": "复核者日期",
+                "type": "date",
+                "required": true
+            },
+            {
+                "key": "tech_opinion",
+                "label": "各专业领域技术负责人意见",
+                "type": "textarea",
+                "required": false
+            },
+            {
+                "key": "tech_signature",
+                "label": "技术负责人签名",
+                "type": "signature",
+                "required": true
+            },
+            {
+                "key": "tech_date",
+                "label": "技术负责人日期",
+                "type": "date",
+                "required": true
+            }
+        ],
+        "generated_at": "2026-06-01 04:20:47",
+        "source_file": "XZTC_BG-22-02-A_0.md",
+        "reconstruction_review": {
+            "decision": "ready_for_rebuild",
+            "identity_key": "XZTC\/BG-22-02::22-02标准方法确认记录",
+            "evidence_keys": [
+                "manual",
+                "procedure",
+                "data_model",
+                "record_list"
+            ],
+            "missing_obligations": [],
+            "field_obligations": [
+                "field_identity",
+                "core_record_data",
+                "conclusion_or_judgement"
+            ],
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "detail": "由归属程序\/记录要求反向定位手册或体系要素。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "检测方法的选择与确认程序",
+                    "detail": "检测方法的选择与确认程序"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "管理记录或档案记录不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": false,
+                    "doc_number": "XZTC\/BG-22-02",
+                    "detail": ""
+                },
+                "operation_guarantee": []
+            },
+            "issues": []
+        },
+        "schema_coverage": {
+            "passes": true,
+            "checks": {
+                "field_identity": true,
+                "core_record_data": true,
+                "conclusion_or_judgement": true,
+                "responsible_party": true,
+                "date_or_frequency": true,
+                "signature_chain": true,
+                "external_register_boundary": true
+            },
+            "missing": [],
+            "field_count": 27
+        }
+    },
+    "XZTC\/BG-22-03::待定-22-01-A_0": {
+        "doc_number": "XZTC\/BG-22-03",
+        "original_doc_number": "待定-22-01",
+        "name": "现行有效标准清单",
+        "module": "XZTC\/CX-22-2022 检测方法的选择与确认程序",
+        "field_schema": [
+            {
+                "key": "check_date",
+                "label": "清单核查日期",
+                "type": "date",
+                "required": true
+            },
+            {
+                "key": "prepared_by",
+                "label": "填写\/核查人",
+                "type": "person",
+                "required": false
+            },
+            {
+                "key": "standard_list",
+                "label": "现行有效标准明细",
+                "type": "repeatable_table",
+                "required": true,
+                "columns": [
+                    {
+                        "key": "seq",
+                        "label": "序号",
+                        "type": "number",
+                        "required": true
+                    },
+                    {
+                        "key": "standard_name",
+                        "label": "标准名称",
+                        "type": "text",
+                        "required": true
+                    },
+                    {
+                        "key": "original_code",
+                        "label": "标准原编号",
+                        "type": "text",
+                        "required": true
+                    },
+                    {
+                        "key": "remark",
+                        "label": "备注",
+                        "type": "text",
+                        "required": false
+                    }
+                ],
+                "help_text": "本表维护在用检测标准清单；每项标准的查新日期、结论、证据来源和下次查新由 qms_sources 外部依据查新字段承接。"
+            }
+        ],
+        "generated_at": "2026-06-01 04:18:45",
+        "source_file": "待定-22-01-A_0.md",
+        "identity_note": "源摘录记录编号 XZTC\/BG-22-03 归并临时编号 待定-22-01",
+        "reconstruction_review": {
+            "decision": "ready_for_rebuild",
+            "identity_key": "XZTC\/BG-22-03::待定-22-01-A_0",
+            "evidence_keys": [
+                "manual",
+                "procedure",
+                "data_model",
+                "record_list"
+            ],
+            "missing_obligations": [],
+            "field_obligations": [
+                "field_identity",
+                "core_record_data",
+                "conclusion_or_judgement",
+                "responsible_party",
+                "date_or_frequency",
+                "external_register_boundary"
+            ],
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "detail": "关联要素：方法选择、验证和确认"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC\/CX-22-2022",
+                    "detail": "XZTC\/CX-22-2022 检测方法的选择与确认程序"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "管理记录或档案记录不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": false,
+                    "doc_number": "XZTC\/BG-22-03",
+                    "detail": ""
+                },
+                "operation_guarantee": []
+            },
+            "issues": []
+        },
+        "schema_coverage": {
+            "passes": true,
+            "checks": {
+                "field_identity": true,
+                "core_record_data": true,
+                "conclusion_or_judgement": true,
+                "responsible_party": true,
+                "date_or_frequency": true,
+                "signature_chain": true,
+                "external_register_boundary": true
+            },
+            "missing": [],
+            "field_count": 7
+        }
+    },
+    "XZTC\/BG-22-03": {
+        "doc_number": "XZTC\/BG-22-03",
+        "original_doc_number": "待定-22-01",
+        "name": "现行有效标准清单",
+        "module": "XZTC\/CX-22-2022 检测方法的选择与确认程序",
+        "field_schema": [
+            {
+                "key": "check_date",
+                "label": "清单核查日期",
+                "type": "date",
+                "required": true
+            },
+            {
+                "key": "prepared_by",
+                "label": "填写\/核查人",
+                "type": "person",
+                "required": false
+            },
+            {
+                "key": "standard_list",
+                "label": "现行有效标准明细",
+                "type": "repeatable_table",
+                "required": true,
+                "columns": [
+                    {
+                        "key": "seq",
+                        "label": "序号",
+                        "type": "number",
+                        "required": true
+                    },
+                    {
+                        "key": "standard_name",
+                        "label": "标准名称",
+                        "type": "text",
+                        "required": true
+                    },
+                    {
+                        "key": "original_code",
+                        "label": "标准原编号",
+                        "type": "text",
+                        "required": true
+                    },
+                    {
+                        "key": "remark",
+                        "label": "备注",
+                        "type": "text",
+                        "required": false
+                    }
+                ],
+                "help_text": "本表维护在用检测标准清单；每项标准的查新日期、结论、证据来源和下次查新由 qms_sources 外部依据查新字段承接。"
+            }
+        ],
+        "generated_at": "2026-06-01 04:18:45",
+        "source_file": "待定-22-01-A_0.md",
+        "identity_note": "源摘录记录编号 XZTC\/BG-22-03 归并临时编号 待定-22-01",
+        "reconstruction_review": {
+            "decision": "ready_for_rebuild",
+            "identity_key": "XZTC\/BG-22-03::现行有效标准清单(原始）",
+            "evidence_keys": [
+                "manual",
+                "procedure",
+                "record_list",
+                "data_model"
+            ],
+            "missing_obligations": [],
+            "field_obligations": [
+                "field_identity",
+                "core_record_data",
+                "conclusion_or_judgement",
+                "responsible_party",
+                "date_or_frequency",
+                "external_register_boundary"
+            ],
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "detail": "由归属程序\/记录要求反向定位手册或体系要素。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC\/CX-22-2022",
+                    "detail": "检测方法的选择与确认程序"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "管理记录或档案记录不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC\/BG-22-03",
+                    "detail": "XZTC\/CX-22-2022 要求检测标准保持现行有效并每半年查新\n按 XZTC\/BG-22-03 建立在用检测标准有效性清单，人工复核后发布"
+                },
+                "operation_guarantee": []
+            },
+            "issues": []
+        },
+        "schema_coverage": {
+            "passes": true,
+            "checks": {
+                "field_identity": true,
+                "core_record_data": true,
+                "conclusion_or_judgement": true,
+                "responsible_party": true,
+                "date_or_frequency": true,
+                "signature_chain": true,
+                "external_register_boundary": true
+            },
+            "missing": [],
+            "field_count": 7
+        }
+    }
+}

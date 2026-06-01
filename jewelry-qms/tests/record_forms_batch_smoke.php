@@ -13,6 +13,7 @@ if (!function_exists('root_path')) {
 
 use app\service\RecordFormBatchTemplateService;
 use app\service\RecordFormPrintService;
+use app\service\RecordFormSchemaRebuilder;
 use app\service\RecordFormSchemaService;
 
 function assert_same($expected, $actual, string $message): void
@@ -73,7 +74,41 @@ function batch_sample_values(array $schema): array
     return $values;
 }
 
+function field_map(array $schema): array
+{
+    $map = [];
+    foreach ($schema as $field) {
+        $map[$field['key']] = $field;
+    }
+
+    return $map;
+}
+
 $manifest = RecordFormBatchTemplateService::manifest();
+$schemaRegistry = RecordFormSchemaRebuilder::loadRegistry();
+assert_true(!isset($schemaRegistry['待定-22-01']), 'Conflicting draft standard-list short key is not kept in schema registry');
+assert_true(!isset($schemaRegistry['待定-22-01::待定-22-01-A_0']), 'Conflicting draft standard-list composite key is not kept in schema registry');
+assert_true(isset($schemaRegistry['XZTC/BG-22-03']['field_schema']), 'Standard validity list is kept under the formal source record number');
+
+$bg2201RegistryFields = field_map($schemaRegistry['XZTC/BG-22-01']['field_schema']);
+foreach (['method_code_name', 'reviewer_signature', 'reviewer_date', 'technical_director_signature', 'technical_director_date'] as $key) {
+    assert_true($bg2201RegistryFields[$key]['required'] ?? false, 'BG-22-01 key field is required: ' . $key);
+}
+assert_same('评审人日期', $bg2201RegistryFields['reviewer_date']['label'], 'BG-22-01 reviewer date label keeps signature context');
+assert_same('技术负责人日期', $bg2201RegistryFields['technical_director_date']['label'], 'BG-22-01 technical director date label keeps signature context');
+
+$bg2202RegistryFields = field_map($schemaRegistry['XZTC/BG-22-02']['field_schema']);
+foreach (['method_name', 'confirmation_conclusion', 'confirmer_signature', 'confirmer_date', 'reviewer_signature', 'reviewer_date', 'tech_signature', 'tech_date'] as $key) {
+    assert_true($bg2202RegistryFields[$key]['required'] ?? false, 'BG-22-02 key field is required: ' . $key);
+}
+
+$bg2203RegistryFields = field_map($schemaRegistry['XZTC/BG-22-03']['field_schema']);
+assert_true($bg2203RegistryFields['standard_list']['required'] ?? false, 'BG-22-03 standard list is required');
+$bg2203Columns = field_map($bg2203RegistryFields['standard_list']['columns']);
+foreach (['seq', 'standard_name', 'original_code'] as $key) {
+    assert_true($bg2203Columns[$key]['required'] ?? false, 'BG-22-03 standard list core column is required: ' . $key);
+}
+assert_contains('qms_sources', $bg2203RegistryFields['standard_list']['help_text'] ?? '', 'BG-22-03 standard list explains qms_sources freshness handoff');
 $formalPersonnelPrintKeys = [
     'rf_xztc_bg_01_01_5325a1b0bd',
     'training_record',
@@ -107,13 +142,8 @@ $identityKeys = [];
 foreach ($manifest as $row) {
     $identityKeys[] = $row['doc_number'] . '|' . $row['name'] . '|' . $row['source_file_name'];
     assert_true(is_file($row['source_absolute_path']), 'Source attachment exists for ' . $row['doc_number'] . ' ' . $row['source_file_name']);
-    if ($isFormalBatchTemplate($row)) {
-        assert_same('published', $row['status'], 'Formal reconstructed template stays published');
-        assert_same('completed', $row['review_status'], 'Formal reconstructed template is completed');
-    } else {
-        assert_same('draft', $row['status'], 'High-fidelity rebuild templates stay draft until reviewed');
-        assert_same('needs_fidelity', $row['review_status'], 'High-fidelity rebuild templates are marked for reconstruction');
-    }
+    assert_same('published', $row['status'], 'Source-backed reconstructed template is published for form filling');
+    assert_same('completed', $row['review_status'], 'Source-backed reconstructed template passed fillability readiness');
     assert_true($row['print_template_key'] !== '', 'Print template key is set for ' . $row['doc_number']);
     assert_true($row['print_template_key'] !== 'generic_record_form', 'Batch manifest must not use generic print template for ' . $row['doc_number']);
     assert_true(
@@ -135,7 +165,7 @@ $printKeys = array_column($manifest, 'print_template_key');
 assert_same(count($printKeys), count(array_unique($printKeys)), 'Each source attachment has its own print template key');
 
 $formalRows = array_values(array_filter($manifest, $isFormalBatchTemplate));
-assert_same(66, count($formalRows), 'Personnel, equipment, and file-control batches have 66 formal templates in the batch manifest');
+assert_same(67, count($formalRows), 'Personnel, equipment, and file-control batches include the directly included equipment usage variant');
 
 $trainingRows = array_values(array_filter($manifest, fn (array $row): bool => $row['print_template_key'] === 'training_record'));
 assert_same(1, count($trainingRows), 'Personnel training record is one formal template in the batch manifest');
@@ -205,6 +235,19 @@ assert_same(
     'Management review meeting record schema follows sign-in and meeting-record source fields'
 );
 
+$standardValidityRows = array_values(array_filter(
+    $manifest,
+    fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-22-03' && str_contains($row['name'], '现行有效标准清单')
+));
+assert_same(1, count($standardValidityRows), 'Current effective standards list is present once under its formal record number');
+assert_same('completed', $standardValidityRows[0]['review_status'], 'Current effective standards list passed fillability readiness');
+assert_same(['check_date', 'prepared_by', 'standard_list'], array_column($standardValidityRows[0]['field_schema'], 'key'), 'Current effective standards list keeps trace fields plus the repeatable standard-list field');
+assert_same(
+    ['seq', 'standard_name', 'original_code', 'remark'],
+    array_column($standardValidityRows[0]['field_schema'][2]['columns'], 'key'),
+    'Current effective standards list schema preserves source list columns'
+);
+
 $computerSoftwareRows = array_values(array_filter(
     $manifest,
     fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-26-01' && str_contains($row['name'], '计算机软件登记表')
@@ -245,17 +288,17 @@ assert_same(
 
 $internalAuditCatalogRows = array_values(array_filter(
     $manifest,
-    fn (array $row): bool => $row['doc_number'] === '待定-20-04' && str_contains($row['name'], '内部审核资料封皮目录')
+    fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-20-10' && str_contains($row['name'], '内部审核资料封皮目录')
 ));
 assert_same(1, count($internalAuditCatalogRows), 'Internal audit archive catalog is present once in the batch manifest');
 assert_same(
-    ['audit_year', 'archive_date', 'catalog_items'],
+    ['audit_year', 'archived_by', 'archive_date', 'catalog_items'],
     array_column($internalAuditCatalogRows[0]['field_schema'], 'key'),
     'Internal audit archive catalog schema follows the cover directory source'
 );
 assert_same(
     ['sequence', 'document_name', 'included', 'remarks'],
-    array_column($internalAuditCatalogRows[0]['field_schema'][2]['columns'], 'key'),
+    array_column($internalAuditCatalogRows[0]['field_schema'][3]['columns'], 'key'),
     'Internal audit archive catalog keeps source directory item columns'
 );
 
@@ -272,15 +315,15 @@ foreach ($sampleLabelCardRows as $sampleLabelCardRow) {
     );
 }
 
-$draftTemplate = array_values(array_filter(
+$rebuildTemplate = array_values(array_filter(
     $manifest,
     fn (array $row): bool => !$isFormalBatchTemplate($row)
 ))[0];
-$draftHtml = RecordFormPrintService::render($draftTemplate['print_template_key'], $draftTemplate, batch_sample_values($draftTemplate['field_schema']));
-assert_contains($draftTemplate['doc_number'], $draftHtml, 'Per-source draft print includes doc number');
-assert_contains($draftTemplate['name'], $draftHtml, 'Per-source draft print includes template name');
-assert_contains('高保真重构草稿', $draftHtml, 'Draft print clearly marks templates that still need fidelity review');
-assert_contains('break-inside: avoid', $draftHtml, 'Per-source draft print protects table rows from being split across pages');
+$rebuildHtml = RecordFormPrintService::render($rebuildTemplate['print_template_key'], $rebuildTemplate, batch_sample_values($rebuildTemplate['field_schema']));
+assert_contains($rebuildTemplate['doc_number'], $rebuildHtml, 'Per-source rebuild print includes doc number');
+assert_contains($rebuildTemplate['name'], $rebuildHtml, 'Per-source rebuild print includes template name');
+assert_contains('源文件重构版', $rebuildHtml, 'Fillable rebuild print explains source-backed review state');
+assert_contains('break-inside: avoid', $rebuildHtml, 'Per-source rebuild print protects table rows from being split across pages');
 
 $routeSource = file_get_contents(dirname(__DIR__) . '/route/app.php') ?: '';
 assert_contains("record_form_template/seedBatch", $routeSource, 'Routes expose batch template builder');

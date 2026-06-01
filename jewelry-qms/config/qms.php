@@ -167,9 +167,9 @@ return [
 
     'ai' => [
         'provider' => 'deepseek',
-        'api_key' => env('DEEPSEEK_API_KEY', ''),
+        'api_key' => env('DEEPSEEK_API_KEY', getenv('DEEPSEEK_API_KEY') ?: ''),
         'base_url' => 'https://api.deepseek.com',
-        'model' => 'deepseek-chat',
+        'model' => env('DEEPSEEK_MODEL', getenv('DEEPSEEK_MODEL') ?: 'deepseek-chat'),
         'max_tokens' => 4096,
         'temperature' => 0.1,
     ],

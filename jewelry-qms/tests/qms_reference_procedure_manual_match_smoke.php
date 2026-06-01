@@ -51,7 +51,7 @@ QmsDocumentStructureService::seedAll();
 $referenceTitle = 'CX-12 分包管理程序';
 $reviewNote = 'reference-manual-match-smoke-' . date('YmdHis');
 $procedure = Db::name('documents')
-    ->where('doc_number', 'QP-33')
+    ->where('doc_number', 'XZTC/CX-33-2022')
     ->where('level', 2)
     ->where('soft_delete', 0)
     ->field('id,doc_number,title')
@@ -109,7 +109,7 @@ try {
         fn (array $row): bool => (string)($row['reference_title'] ?? '') === $referenceTitle
     ))[0] ?? null;
     assert_true(is_array($cx12), 'Manual match creates a comparison row');
-    assert_true((string)$cx12['current_procedure_number'] === 'QP-33', 'Manual comparison row uses the selected current procedure');
+    assert_true((string)$cx12['current_procedure_number'] === 'XZTC/CX-33-2022', 'Manual comparison row uses the selected current procedure');
     assert_true((string)$cx12['match_source'] === 'manual', 'Manual comparison row is marked as manual');
 
     $unmatchedRows = QmsDocumentStructureService::referenceProcedureUnmatchedRows();
@@ -125,7 +125,7 @@ try {
         ->where('status', 'open')
         ->find();
     assert_true(is_array($suggestion), 'Manual match creates a block-level advisory comparison suggestion');
-    assert_contains('现用程序：QP-33 内务与安全管理程序', (string)$suggestion['content'], 'Manual match suggestion names the selected current procedure');
+    assert_contains('现用程序：XZTC/CX-33-2022 内务与安全管理程序', (string)$suggestion['content'], 'Manual match suggestion names the selected current procedure');
     assert_contains('人工匹配', (string)$suggestion['evidence'], 'Manual match suggestion evidence records manual review');
     assert_contains('不自动修改正式体系数据', (string)$suggestion['evidence'], 'Manual match suggestion remains advisory');
 

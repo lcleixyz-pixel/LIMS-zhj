@@ -42,14 +42,14 @@ $clause = Db::name('qms_clauses')
 $block = Db::name('qms_document_blocks')
     ->alias('b')
     ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
-    ->where('sd.doc_number', 'QP-26')
+    ->where('sd.doc_number', 'XZTC/CX-26-2022')
     ->where('b.block_type', 'record_requirement')
     ->where('b.soft_delete', 0)
     ->field('b.id,b.structured_document_id,b.title')
     ->find();
 
 assert_true((bool)$clause, 'GB/T 27025 7.11 clause exists');
-assert_true((bool)$block, 'QP-26 record requirement block exists');
+assert_true((bool)$block, 'XZTC/CX-26-2022 record requirement block exists');
 
 $clauseId = (string)$clause['id'];
 $blockId = (string)$block['id'];
@@ -82,7 +82,7 @@ try {
     assert_true((string)$evidence['clause_id'] === $clauseId, 'Clause evidence keeps the source clause id');
     assert_true((string)$evidence['block_id'] === $blockId, 'Clause evidence keeps the source block id');
     assert_true((string)$evidence['structured_document_id'] === $structuredId, 'Clause evidence keeps the structured document id');
-    assert_true((string)$evidence['doc_number'] === 'QP-26', 'Clause evidence names the source procedure');
+    assert_true((string)$evidence['doc_number'] === 'XZTC/CX-26-2022', 'Clause evidence names the source procedure');
     assert_true((string)$evidence['review_url'] === '/planning/structures/links/review?block_id=' . $blockId, 'Clause evidence links back to trace review');
     assert_true((string)$evidence['document_url'] === '/planning/structures/view?id=' . $structuredId, 'Clause evidence links back to structured document');
 

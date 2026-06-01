@@ -61,6 +61,18 @@ class RecordFormSchemaService
         return $encoded;
     }
 
+    public static function enforceReadonly(array $schema, array $values): array
+    {
+        foreach ($schema as $field) {
+            if (!($field['readonly'] ?? false)) {
+                continue;
+            }
+            $values[$field['key']] = $field['default'] ?? '';
+        }
+
+        return $values;
+    }
+
     public static function validateValues(array $schema, array $values): array
     {
         $errors = [];
@@ -142,6 +154,7 @@ class RecordFormSchemaService
             'label' => $label,
             'type' => $type,
             'required' => (bool)($field['required'] ?? false),
+            'readonly' => (bool)($field['readonly'] ?? false),
             'default' => $field['default'] ?? '',
             'options' => $options,
             'print_bind' => (string)($field['print_bind'] ?? $key),

@@ -44,7 +44,7 @@ assert_true(count($rows) >= 1, 'Record form detail can read procedure requiremen
 
 $evidence = null;
 foreach ($rows as $row) {
-    if ((string)($row['procedure_number'] ?? '') === 'QP-26'
+    if ((string)($row['procedure_number'] ?? '') === 'XZTC/CX-26-2022'
         && (string)($row['block_type'] ?? '') === 'record_requirement'
         && (string)($row['relation_type'] ?? '') === 'requires_record'
         && str_contains((string)($row['block_title'] ?? ''), '记录要求')) {
@@ -53,9 +53,9 @@ foreach ($rows as $row) {
     }
 }
 
-assert_true(is_array($evidence), 'Record form evidence includes the QP-26 record requirement block');
+assert_true(is_array($evidence), 'Record form evidence includes the XZTC/CX-26-2022 record requirement block');
 assert_true((string)$evidence['record_form_template_id'] === $templateId, 'Evidence keeps the record form template id');
-assert_true((string)$evidence['doc_number'] === 'QP-26', 'Evidence names the structured procedure document');
+assert_true((string)$evidence['doc_number'] === 'XZTC/CX-26-2022', 'Evidence names the structured procedure document');
 assert_true((string)$evidence['document_role'] === 'procedure', 'Evidence comes from procedure structured document');
 assert_true((string)$evidence['procedure_title'] !== '', 'Evidence names the source procedure title');
 assert_true(str_contains((string)$evidence['block_title'], '记录要求'), 'Evidence points to a record requirement content block');

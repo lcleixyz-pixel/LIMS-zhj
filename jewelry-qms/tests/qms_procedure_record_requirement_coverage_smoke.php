@@ -124,21 +124,21 @@ try {
 
     $coverage = QmsDocumentStructureService::procedureRecordRequirementCoverage();
     assert_true((int)($coverage['total_procedures'] ?? 0) >= 1, 'Coverage reports total procedures');
-    assert_true((int)($coverage['covered_procedures'] ?? 0) >= 1, 'Coverage reports covered procedures such as QP-26');
+    assert_true((int)($coverage['covered_procedures'] ?? 0) >= 1, 'Coverage reports covered procedures such as XZTC/CX-26-2022');
     assert_true((int)($coverage['gap_procedures'] ?? 0) >= 1, 'Coverage reports procedure record gaps');
 
     $qp26 = null;
     foreach ($coverage['rows'] ?? [] as $row) {
-        if ((string)($row['doc_number'] ?? '') === 'QP-26') {
+        if ((string)($row['doc_number'] ?? '') === 'XZTC/CX-26-2022') {
             $qp26 = $row;
             break;
         }
     }
-    assert_true(is_array($qp26), 'Coverage rows include QP-26');
-    assert_true((int)$qp26['record_requirement_blocks'] >= 1, 'QP-26 has record requirement blocks');
-    assert_true((int)$qp26['linked_record_forms'] >= 1, 'QP-26 links record forms');
-    assert_true((int)$qp26['record_form_schema_documents'] >= 1, 'QP-26 linked record forms have schema documents');
-    assert_true((string)$qp26['coverage_status'] === 'covered', 'QP-26 is covered');
+    assert_true(is_array($qp26), 'Coverage rows include XZTC/CX-26-2022');
+    assert_true((int)$qp26['record_requirement_blocks'] >= 1, 'XZTC/CX-26-2022 has record requirement blocks');
+    assert_true((int)$qp26['linked_record_forms'] >= 1, 'XZTC/CX-26-2022 links record forms');
+    assert_true((int)$qp26['record_form_schema_documents'] >= 1, 'XZTC/CX-26-2022 linked record forms have schema documents');
+    assert_true((string)$qp26['coverage_status'] === 'covered', 'XZTC/CX-26-2022 is covered');
 
     $gap = null;
     foreach ($coverage['gap_rows'] ?? [] as $row) {
@@ -159,7 +159,7 @@ try {
     $viewSource = file_get_contents(dirname(__DIR__) . '/app/view/planning_structure/index.html') ?: '';
     assert_contains('程序记录要求覆盖', $viewSource, 'Structure index shows procedure record coverage panel');
     assert_contains('记录要求缺口', $viewSource, 'Structure index labels procedure record gaps');
-    assert_contains('schema文档', $viewSource, 'Structure index shows record-form schema coverage');
+    assert_contains('字段来源文档', $viewSource, 'Structure index shows record-form schema coverage');
 } finally {
     cleanup_procedure_record_coverage_smoke($documentId, $docNumber);
 }

@@ -295,7 +295,7 @@ assert_contains('体系文件组合包', $indexView, 'Structure index links to t
 $packageView = file_get_contents(dirname(__DIR__) . '/app/view/planning_structure/package.html') ?: '';
 assert_contains('外部依据、质量手册、程序文件、作业指导书和记录表格', $packageView, 'Package page describes the full structured document scope');
 assert_contains('条款级追溯索引', $packageView, 'Package page exposes the traceability index included in the package');
-assert_contains('无编号要素', $packageView, 'Package page names unnumbered elements in the traceability index description');
+assert_contains('体系要素', $packageView, 'Package page names elements in the traceability index description');
 assert_contains('document_count_by_role.external_basis', $packageView, 'Package page shows external basis count');
 assert_contains('document_count_by_role.work_instruction', $packageView, 'Package page shows work instruction count');
 assert_contains('内容哈希', $packageView, 'Package page shows the content hash label');

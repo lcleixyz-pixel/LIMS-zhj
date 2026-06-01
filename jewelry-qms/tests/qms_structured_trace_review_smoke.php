@@ -50,12 +50,12 @@ QmsDocumentStructureService::seedAll();
 $block = Db::name('qms_document_blocks')
     ->alias('b')
     ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
-    ->where('sd.doc_number', 'QP-26')
+    ->where('sd.doc_number', 'XZTC/CX-26-2022')
     ->where('b.block_type', 'record_requirement')
     ->where('b.soft_delete', 0)
     ->field('b.id,b.structured_document_id')
     ->find();
-assert_true((bool)$block, 'QP-26 has a record requirement block for trace review');
+assert_true((bool)$block, 'XZTC/CX-26-2022 has a record requirement block for trace review');
 
 $positionId = (string)Db::name('qms_positions')->where('code', 'document_controller')->where('soft_delete', 0)->value('id');
 assert_true($positionId !== '', 'Document controller position exists');

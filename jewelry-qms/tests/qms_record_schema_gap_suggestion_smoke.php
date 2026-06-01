@@ -398,7 +398,7 @@ try {
     assert_contains('openRecordSchemaSuggestions', $dashboardSource, 'Dashboard loads record schema suggestions');
 
     $viewSource = file_get_contents(dirname(__DIR__) . '/app/view/planning_dashboard/index.html') ?: '';
-    assert_contains('记录表格schema建议', $viewSource, 'Dashboard shows record schema suggestions');
+    assert_contains('记录表格字段建议', $viewSource, 'Dashboard shows record schema suggestions');
     assert_contains('record_form_edit_url', $viewSource, 'Dashboard exposes target record form edit link for schema suggestions');
     assert_contains('编辑记录表格', $viewSource, 'Dashboard labels target record form editor action');
     assert_contains('采纳建议', $viewSource, 'Dashboard allows accepting record schema suggestions');

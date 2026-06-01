@@ -89,8 +89,8 @@ foreach ($manifest as $entry) {
     }
 }
 
-assert_same(48, count($equipmentRows), 'Equipment and period-check numbered entries are formalized as the second batch');
-assert_same(2, count($pendingRows), 'Directory-outside equipment attachments remain pending for manual review');
+assert_same(50, count($equipmentRows), 'Equipment and period-check numbered entries include directly included source variants');
+assert_same(0, count($pendingRows), 'Directory-outside equipment attachments are resolved through forward-chain decisions');
 
 foreach ($equipmentRows as $entry) {
     assert_same('published', $entry['status'], $entry['doc_number'] . ' ' . $entry['name'] . ' is published');
@@ -117,8 +117,8 @@ $expectedSchemas = [
     'rf_xztc_bg_03_08_038ec7b048' => ['equipment_name', 'equipment_code', 'supplier_name', 'contract_number', 'model_spec', 'manufacture_date', 'received_date', 'started_date', 'storage_location', 'manual_number', 'received_status', 'maintenance_method', 'calibration_method', 'calibration_items'],
     'rf_xztc_bg_04_01_b5c6503f71' => ['plan_items', 'prepared_by', 'prepared_date', 'approved_by', 'approved_date'],
     'rf_xztc_bg_04_02_543a179a95' => ['checked_object', 'team_leader', 'team_members', 'check_time', 'check_place', 'execution_files', 'calibration_or_validity_period', 'prepared_by', 'prepared_date', 'approved_by', 'approved_date'],
-    'rf_xztc_bg_04_03_97e1588ba9' => ['equipment_name', 'model_spec', 'equipment_code', 'check_basis', 'check_resources', 'check_personnel', 'process_record', 'recorder', 'record_date', 'result_judgement', 'checkers', 'check_date', 'reviewer_opinion', 'reviewer', 'review_date'],
-    'rf_xztc_bg_04_05_6729ed2c60' => ['equipment_name', 'model_spec', 'equipment_code', 'check_basis', 'check_resources', 'check_personnel', 'process_record', 'recorder', 'record_date', 'function_result', 'checkers', 'check_date', 'reviewer_opinion', 'reviewer', 'review_date'],
+    'rf_xztc_bg_04_03_97e1588ba9' => ['equipment_name', 'model_spec', 'equipment_code', 'check_basis', 'check_method', 'acceptance_criteria', 'check_resources', 'check_personnel', 'measurement_data', 'process_record', 'recorder', 'record_date', 'result_judgement', 'checkers', 'check_date', 'reviewer_opinion', 'reviewer', 'review_date'],
+    'rf_xztc_bg_04_05_6729ed2c60' => ['equipment_name', 'model_spec', 'equipment_code', 'check_basis', 'check_method', 'acceptance_criteria', 'check_resources', 'check_personnel', 'measurement_data', 'process_record', 'recorder', 'record_date', 'function_result', 'checkers', 'check_date', 'reviewer_opinion', 'reviewer', 'review_date'],
     'rf_xztc_bg_04_06_01d9f5d025' => ['equipment_name', 'model_spec', 'equipment_code', 'check_basis', 'check_items', 'check_personnel', 'check_standard', 'result_judgement', 'responsible_person', 'responsible_date', 'evaluation', 'evaluation_responsible_person', 'evaluation_date', 'reviewer_opinion', 'reviewer', 'review_date'],
 ];
 

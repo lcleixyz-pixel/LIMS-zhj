@@ -60,6 +60,14 @@ $name = P::cell($template, 'name');
 $module = P::cell($template, 'module');
 $sourceFileName = P::cell($template, 'source_file_name');
 $reference = P::cell($template, 'reference');
+$isFillableRebuild = (string)($template['status'] ?? '') === 'published'
+    && (string)($template['review_status'] ?? '') === 'completed';
+$reviewMark = $isFillableRebuild
+    ? '源文件重构版：已通过体系链路与字段覆盖检查，可先填写并继续逐表优化版式'
+    : '高保真重构草稿：请与原始附件逐表复核后再开放正式填写';
+$footerNote = $isFillableRebuild
+    ? '系统重构打印预览，建议按原始附件继续优化版式高保真'
+    : '系统重构打印预览，正式启用前应完成逐表版式复核';
 ?>
 <!doctype html>
 <html lang="zh-CN">
@@ -84,7 +92,7 @@ $reference = P::cell($template, 'reference');
     </style>
 </head>
 <body>
-    <div class="draft-mark">高保真重构草稿：请与原始附件逐表复核后再开放正式填写</div>
+    <div class="draft-mark"><?= $reviewMark ?></div>
     <div class="title"><?= $name !== '' ? $name : '记录表格' ?></div>
     <table class="meta">
         <tr>
@@ -149,7 +157,7 @@ $reference = P::cell($template, 'reference');
     <?php endforeach; ?>
 
     <div class="footer">
-        <span>系统重构打印预览，正式启用前应完成逐表版式复核</span>
+        <span><?= $footerNote ?></span>
         <span>生成日期：<?= date('Y-m-d') ?></span>
     </div>
 </body>

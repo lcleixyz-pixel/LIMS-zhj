@@ -56,6 +56,7 @@ class RecordFormInstance extends BaseController
 
         if ($this->request->isPost()) {
             $values = $this->collectValues($schema);
+            $values = RecordFormSchemaService::enforceReadonly($schema, $values);
             $errors = RecordFormSchemaService::validateValues($schema, $values);
             if ($errors !== []) {
                 $this->assignRecordFormEditorContext($template, $schema, $this->prepareFormValues($schema, $values), $errors);
@@ -106,6 +107,7 @@ class RecordFormInstance extends BaseController
 
         if ($this->request->isPost()) {
             $values = $this->collectValues($schema);
+            $values = RecordFormSchemaService::enforceReadonly($schema, $values);
             $errors = RecordFormSchemaService::validateValues($schema, $values);
             if ($errors === []) {
                 $record->save([
@@ -233,7 +235,6 @@ class RecordFormInstance extends BaseController
         $printTemplateKey = trim((string)$template->print_template_key);
 
         return $template->status === 'published'
-            && (string)($template->review_status ?? '') === 'completed'
             && $printTemplateKey !== ''
             && $printTemplateKey !== 'generic_record_form'
             && $this->printTemplateExists($printTemplateKey);

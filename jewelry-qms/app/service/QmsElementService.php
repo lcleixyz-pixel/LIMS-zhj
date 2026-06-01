@@ -88,7 +88,7 @@ class QmsElementService
 
     public static function traceabilityColumnLabels(): array
     {
-        return ['要素名称', '外部条款', '手册章节', '程序文件', '记录表格', '运行模块', '岗位职责', '结构块证据', 'schema来源', '智能体建议'];
+        return ['要素名称', '外部条款', '手册章节', '程序文件', '记录表格', '运行模块', '岗位职责', '结构块证据', '字段来源', '智能体建议'];
     }
 
     public static function seedAll(): array

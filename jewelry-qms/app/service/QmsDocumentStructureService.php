@@ -30,6 +30,7 @@ use ZipArchive;
 class QmsDocumentStructureService
 {
     private const SYSTEM_PACKAGE_MANIFEST_RETENTION = 50;
+    private static ?array $recordFormOriginalSourceNameIndex = null;
 
     public static function structureLayerDefinitions(): array
     {
@@ -2791,6 +2792,7 @@ class QmsDocumentStructureService
     private static function seedProcedureBlocks(QmsStructuredDocument $structured, Document $document, array $row, string $role = 'procedure'): array
     {
         $summary = ['blocks' => 0, 'links' => 0];
+        $activeStableKeys = [];
         $documentTypeLabel = (string)($row['document_type_label'] ?? self::documentRoleLabel($role));
         $stablePrefix = (string)($row['stable_prefix'] ?? self::documentRoleStablePrefix($role));
         $overviewMarkdown = '# ' . (string)$document->doc_number . ' ' . (string)$document->title . "\n\n"
@@ -2807,6 +2809,7 @@ class QmsDocumentStructureService
             'markdown' => $overviewMarkdown,
         ]);
         self::resetBlockLinks($overview);
+        $activeStableKeys[] = (string)$overview->stable_key;
         $summary['blocks']++;
 
         $elementIds = Db::table('qms_element_documents')
@@ -2819,6 +2822,7 @@ class QmsDocumentStructureService
         ])) as $sourceBlueprint) {
             $sourceBlock = self::upsertBlock($structured, $document, $sourceBlueprint);
             self::resetBlockLinks($sourceBlock);
+            $activeStableKeys[] = (string)$sourceBlock->stable_key;
             $summary['blocks']++;
             foreach ($elementIds as $elementId) {
                 self::createBlockLink($sourceBlock, [
@@ -2876,8 +2880,10 @@ class QmsDocumentStructureService
             if (!$element) {
                 continue;
             }
-            $block = self::upsertBlock($structured, $document, self::procedureBlockBlueprint($row, $element));
+            $procedureBlockBlueprint = self::procedureBlockBlueprint($row, $element);
+            $block = self::upsertBlock($structured, $document, $procedureBlockBlueprint);
             self::resetBlockLinks($block);
+            $activeStableKeys[] = (string)$block->stable_key;
             $summary['blocks']++;
             self::createBlockLink($block, [
                 'element_id' => (string)$element->id,
@@ -2908,6 +2914,7 @@ class QmsDocumentStructureService
                         . "- schema来源：按程序文件记录要求复核字段、责任人、频次和保留期限。\n",
                 ]);
                 self::resetBlockLinks($recordBlock);
+                $activeStableKeys[] = (string)$recordBlock->stable_key;
                 $summary['blocks']++;
                 self::createBlockLink($recordBlock, [
                     'element_id' => (string)$element->id,
@@ -2921,16 +2928,19 @@ class QmsDocumentStructureService
                 $summary['links'] += self::createRecordTemplateModuleLinks($recordBlock, $template, (string)$element->id);
             }
         }
+        self::retireObsoleteGeneratedBlocks($structured, $activeStableKeys, [$stablePrefix . ':']);
 
         return $summary;
     }
 
     private static function seedRecordFormStructures(): array
     {
-        $summary = ['assets' => 0, 'structured_documents' => 0, 'blocks' => 0, 'links' => 0, 'rendered' => 0];
+        $summary = ['assets' => 0, 'structured_documents' => 0, 'blocks' => 0, 'links' => 0, 'rendered' => 0, 'retired' => 0];
+        $activeTemplateIds = [];
         foreach (RecordFormTemplate::where('soft_delete', 0)->order('doc_number', 'asc')->select() as $template) {
+            $activeTemplateIds[] = (string)$template->id;
             $resolvedPath = self::resolveRecordFormSourcePath($template);
-            $resolvedName = $resolvedPath !== '' ? basename($resolvedPath) : '';
+            $resolvedName = self::recordFormOriginalSourceName($template, $resolvedPath);
             if ($resolvedPath !== '' && is_file(self::workspacePath($resolvedPath))
                 && ($resolvedPath !== (string)$template->source_file_path || $resolvedName !== (string)$template->source_file_name)) {
                 $template->save([
@@ -2977,8 +2987,44 @@ class QmsDocumentStructureService
                 $summary['rendered']++;
             }
         }
+        $summary['retired'] = self::retireObsoleteRecordFormStructures($activeTemplateIds);
 
         return $summary;
+    }
+
+    private static function retireObsoleteRecordFormStructures(array $activeTemplateIds): int
+    {
+        $active = array_fill_keys(array_values(array_unique(array_filter(array_map('strval', $activeTemplateIds)))), true);
+        $retired = 0;
+
+        foreach (QmsDocumentAsset::where('source_kind', 'record_form')
+            ->whereNotNull('record_form_template_id')
+            ->where('soft_delete', 0)
+            ->select() as $asset) {
+            $templateId = (string)$asset->record_form_template_id;
+            if (isset($active[$templateId])) {
+                continue;
+            }
+
+            foreach (QmsStructuredDocument::where('document_role', 'record_form')
+                ->where('source_asset_id', (string)$asset->id)
+                ->where('soft_delete', 0)
+                ->select() as $structured) {
+                $blockIds = QmsDocumentBlock::where('structured_document_id', (string)$structured->id)
+                    ->where('soft_delete', 0)
+                    ->column('id');
+                if ($blockIds !== []) {
+                    QmsDocumentBlockLink::whereIn('block_id', $blockIds)->where('soft_delete', 0)->update(['soft_delete' => 1]);
+                    QmsDocumentBlock::whereIn('id', $blockIds)->where('soft_delete', 0)->update(['soft_delete' => 1, 'publish' => 0]);
+                }
+                $structured->save(['soft_delete' => 1, 'publish' => 0]);
+                $retired++;
+            }
+
+            $asset->save(['soft_delete' => 1, 'publish' => 0]);
+        }
+
+        return $retired;
     }
 
     private static function upsertAsset(string $sourceKind, array $row, ?Document $document = null, ?QmsSource $source = null, ?RecordFormTemplate $template = null): QmsDocumentAsset
@@ -3112,7 +3158,6 @@ class QmsDocumentStructureService
     {
         $block = QmsDocumentBlock::where('structured_document_id', (string)$structured->id)
             ->where('stable_key', (string)$blueprint['stable_key'])
-            ->where('soft_delete', 0)
             ->find();
         if (!$block) {
             $block = new QmsDocumentBlock();
@@ -3139,6 +3184,42 @@ class QmsDocumentStructureService
     private static function resetBlockLinks(QmsDocumentBlock $block): void
     {
         QmsDocumentBlockLink::where('block_id', (string)$block->id)->where('soft_delete', 0)->update(['soft_delete' => 1]);
+    }
+
+    private static function retireObsoleteGeneratedBlocks(QmsStructuredDocument $structured, array $activeStableKeys, array $managedPrefixes): int
+    {
+        $active = array_fill_keys(array_values(array_unique(array_filter(array_map('strval', $activeStableKeys)))), true);
+        $prefixes = array_values(array_filter(array_unique(array_map('strval', $managedPrefixes))));
+        if ($prefixes === []) {
+            return 0;
+        }
+
+        $retired = 0;
+        foreach (QmsDocumentBlock::where('structured_document_id', (string)$structured->id)->where('soft_delete', 0)->select() as $block) {
+            $stableKey = (string)$block->stable_key;
+            if ($stableKey === '' || isset($active[$stableKey])) {
+                continue;
+            }
+            $managed = false;
+            foreach ($prefixes as $prefix) {
+                if ($prefix !== '' && str_starts_with($stableKey, $prefix)) {
+                    $managed = true;
+                    break;
+                }
+            }
+            if (!$managed) {
+                continue;
+            }
+
+            QmsDocumentBlockLink::where('block_id', (string)$block->id)->where('soft_delete', 0)->update(['soft_delete' => 1]);
+            $block->save([
+                'publish' => 0,
+                'soft_delete' => 1,
+            ]);
+            $retired++;
+        }
+
+        return $retired;
     }
 
     private static function createBlockLink(QmsDocumentBlock $block, array $data): void
@@ -4113,6 +4194,75 @@ class QmsDocumentStructureService
         }
 
         return array_values(array_unique(array_filter($keys)));
+    }
+
+    private static function recordFormOriginalSourceName(array|RecordFormTemplate $template, string $resolvedPath): string
+    {
+        $sourceFileName = is_array($template)
+            ? (string)($template['source_file_name'] ?? '')
+            : (string)$template->source_file_name;
+        if ($sourceFileName !== '' && !self::isManagedRecordFormSourceFileName($sourceFileName)) {
+            return $sourceFileName;
+        }
+
+        $docNumber = is_array($template)
+            ? (string)($template['doc_number'] ?? '')
+            : (string)$template->doc_number;
+        $name = is_array($template)
+            ? (string)($template['name'] ?? '')
+            : (string)$template->name;
+        $sourceFileSha1 = is_array($template)
+            ? (string)($template['source_file_sha1'] ?? '')
+            : (string)$template->source_file_sha1;
+
+        $index = self::recordFormOriginalSourceNameIndex();
+        $identity = $docNumber . '|' . $name;
+        if ($sourceFileSha1 !== '' && isset($index['by_hash'][$identity . '|' . $sourceFileSha1])) {
+            return (string)$index['by_hash'][$identity . '|' . $sourceFileSha1];
+        }
+        if (isset($index['by_identity'][$identity]) && is_string($index['by_identity'][$identity])) {
+            return (string)$index['by_identity'][$identity];
+        }
+
+        return $resolvedPath !== '' ? basename($resolvedPath) : $sourceFileName;
+    }
+
+    private static function isManagedRecordFormSourceFileName(string $fileName): bool
+    {
+        return preg_match('/\A[a-f0-9]{40}\.(?:docx?|xlsx?|pdf|json)\z/i', basename($fileName)) === 1;
+    }
+
+    private static function recordFormOriginalSourceNameIndex(): array
+    {
+        if (self::$recordFormOriginalSourceNameIndex !== null) {
+            return self::$recordFormOriginalSourceNameIndex;
+        }
+
+        $byHash = [];
+        $identityCounts = [];
+        $identityNames = [];
+        foreach (RecordFormBatchTemplateService::manifest() as $entry) {
+            $identity = (string)$entry['doc_number'] . '|' . (string)$entry['name'];
+            $sourceFileName = (string)$entry['source_file_name'];
+            $sourceFileSha1 = (string)($entry['source_file_sha1'] ?? '');
+            if ($sourceFileSha1 !== '') {
+                $byHash[$identity . '|' . $sourceFileSha1] = $sourceFileName;
+            }
+            $identityCounts[$identity] = ($identityCounts[$identity] ?? 0) + 1;
+            $identityNames[$identity] = $sourceFileName;
+        }
+
+        $byIdentity = [];
+        foreach ($identityNames as $identity => $sourceFileName) {
+            if (($identityCounts[$identity] ?? 0) === 1) {
+                $byIdentity[$identity] = $sourceFileName;
+            }
+        }
+
+        return self::$recordFormOriginalSourceNameIndex = [
+            'by_hash' => $byHash,
+            'by_identity' => $byIdentity,
+        ];
     }
 
     private static function sourceKey(string $value): string

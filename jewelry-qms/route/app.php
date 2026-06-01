@@ -55,6 +55,7 @@ Route::group(function () {
     Route::get('record_form_template/preview', 'RecordFormTemplate/preview');
     Route::post('record_form_template/seedSamples', 'RecordFormTemplate/seedSamples');
     Route::post('record_form_template/seedBatch', 'RecordFormTemplate/seedBatch');
+    Route::post('record_form_template/seedGap', 'RecordFormTemplate/seedGap');
 
     Route::rule('record_form_instance/index', 'RecordFormInstance/index');
     Route::rule('record_form_instance/create', 'RecordFormInstance/create');

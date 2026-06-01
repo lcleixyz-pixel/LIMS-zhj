@@ -31,10 +31,10 @@ QmsDocumentStructureService::seedAll();
 
 $structured = Db::name('qms_structured_documents')
     ->where('document_role', 'procedure')
-    ->where('doc_number', 'QP-26')
+    ->where('doc_number', 'XZTC/CX-26-2022')
     ->where('soft_delete', 0)
     ->find();
-assert_true((bool)$structured, 'QP-26 structured document exists');
+assert_true((bool)$structured, 'XZTC/CX-26-2022 structured document exists');
 
 $detail = QmsDocumentStructureService::structuredDocumentDetail((string)$structured['id']);
 assert_true(isset($detail['render_archive']), 'Structured document detail includes render archive summary');
@@ -55,8 +55,8 @@ assert_true(isset($latest['block_count']), 'Structured document render manifest 
 
 $currentMarkdown = file_get_contents(dirname(__DIR__) . '/' . $latest['rendered_file_path']) ?: '';
 $archiveMarkdown = file_get_contents(dirname(__DIR__) . '/' . $latest['archive_path']) ?: '';
-assert_contains('# QP-26 计算机文件及数据控制程序', $currentMarkdown, 'Current rendered procedure markdown has QP-26 title');
-assert_contains('# QP-26 计算机文件及数据控制程序', $archiveMarkdown, 'Archived rendered procedure markdown has QP-26 title');
+assert_contains('# XZTC/CX-26-2022 计算机文件及数据控制程序', $currentMarkdown, 'Current rendered procedure markdown has XZTC/CX-26-2022 title');
+assert_contains('# XZTC/CX-26-2022 计算机文件及数据控制程序', $archiveMarkdown, 'Archived rendered procedure markdown has XZTC/CX-26-2022 title');
 assert_true(hash('sha256', $currentMarkdown) === (string)$latest['content_sha256'], 'Render manifest hash matches current rendered markdown');
 
 $viewSource = file_get_contents(dirname(__DIR__) . '/app/view/planning_structure/view.html') ?: '';
