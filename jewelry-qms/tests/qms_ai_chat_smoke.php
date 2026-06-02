@@ -10,6 +10,7 @@ $app->initialize();
 use app\service\AiChatService;
 use app\service\AiSettingsService;
 use app\service\PageContextBuilder;
+use app\service\QmsDocumentStructureService;
 use app\service\SettingsCipher;
 use think\exception\HttpException;
 use think\facade\Config;
@@ -92,6 +93,40 @@ $draft = AiChatService::sanitizeDraft([
 assert_true(!isset($draft['fields']['id']), 'sanitizeDraft drops id');
 assert_true(!isset($draft['fields']['__token__']), 'sanitizeDraft drops __token__');
 assert_true(isset($draft['fields']['title']), 'sanitizeDraft keeps allowed fields');
+
+QmsDocumentStructureService::seedAll();
+
+$recordReviewContext = PageContextBuilder::fromPageMeta(
+    $companyId,
+    'recordformtemplate',
+    'review',
+    null,
+    'context',
+    '记录模板复核',
+    'record_form_template/review'
+);
+assert_true(($recordReviewContext['record_summary']['module'] ?? '') === 'record_form_template', 'Record review page exposes record-form summary to Copilot');
+assert_true(isset($recordReviewContext['record_summary']['schema_gap_blocks']), 'Record review context includes schema gap counts');
+assert_contains('对照程序记录要求缺哪些字段', json_encode($recordReviewContext, JSON_UNESCAPED_UNICODE) ?: '', 'Record review context suggests field-gap Copilot prompt');
+
+$structuredId = (string)Db::name('qms_structured_documents')
+    ->where('doc_number', 'XZTC/CX-26-2022')
+    ->where('soft_delete', 0)
+    ->value('id');
+assert_true($structuredId !== '', 'AI smoke has a structured procedure for planning context');
+$planningContext = PageContextBuilder::fromPageMeta(
+    $companyId,
+    'planningstructure',
+    'changeimpact',
+    $structuredId,
+    'context',
+    '变更影响预检',
+    'planning/structures/change-impact'
+);
+assert_true(($planningContext['record_summary']['module'] ?? '') === 'planning_structure', 'Planning structure page exposes planning summary to Copilot');
+assert_true(($planningContext['record_summary']['selected_document']['doc_number'] ?? '') === 'XZTC/CX-26-2022', 'Planning context keeps selected structured document');
+assert_contains('XZTC/BG-', json_encode($planningContext['record_summary']['selected_change_impact']['record_forms'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '', 'Planning context includes affected BG record forms');
+assert_contains('改这份程序会影响哪些 BG', json_encode($planningContext, JSON_UNESCAPED_UNICODE) ?: '', 'Planning context suggests change-impact Copilot prompt');
 
 $userA = qms_uuid();
 $userB = qms_uuid();

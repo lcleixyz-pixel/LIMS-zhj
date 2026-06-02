@@ -11,6 +11,7 @@ class PageContextBuilder
         'employee', 'training', 'competencyrecord', 'employeecertificate',
         'referencematerial', 'equipment', 'compliance', 'document',
         'dashboard', 'aiassistant', 'aichat', 'aisettings',
+        'recordformtemplate', 'planningstructure',
     ];
 
     public static function fromRequestPayload(string $companyId, array $pageMeta, string $contextMode): array
@@ -105,7 +106,7 @@ class PageContextBuilder
         }
 
         if ($contextMode === 'context' || $contextMode === 'expert') {
-            $context['record_summary'] = self::recordSummary($companyId, $controller, $recordId);
+            $context['record_summary'] = self::recordSummary($companyId, $controller, $recordId, $action);
             $context['compliance_hints'] = self::complianceHints($companyId, $contextMode === 'expert' ? 10 : 5);
         }
 
@@ -192,8 +193,16 @@ class PageContextBuilder
         };
     }
 
-    private static function recordSummary(string $companyId, string $controller, ?string $recordId): ?array
+    private static function recordSummary(string $companyId, string $controller, ?string $recordId, string $action = ''): ?array
     {
+        if ($controller === 'recordformtemplate') {
+            return self::recordFormTemplateSummary();
+        }
+
+        if ($controller === 'planningstructure') {
+            return self::planningStructureSummary($recordId, $action);
+        }
+
         if ($recordId === null || $recordId === '') {
             return null;
         }
@@ -204,6 +213,84 @@ class PageContextBuilder
             'equipment' => self::equipmentSummary($companyId, $recordId),
             default => ['record_id' => $recordId],
         };
+    }
+
+    private static function recordFormTemplateSummary(): array
+    {
+        $reviewRows = Db::name('record_form_templates')
+            ->where('soft_delete', 0)
+            ->field('review_status,COUNT(*) total')
+            ->group('review_status')
+            ->select()
+            ->toArray();
+        $statusRows = Db::name('record_form_templates')
+            ->where('soft_delete', 0)
+            ->field('status,COUNT(*) total')
+            ->group('status')
+            ->select()
+            ->toArray();
+        $schemaCoverage = QmsDocumentStructureService::recordRequirementSchemaCoverage();
+
+        return [
+            'module' => 'record_form_template',
+            'workflow' => '模板库 -> 复核 -> 填写实例 -> PDF归档',
+            'review_counts' => self::countMap($reviewRows, 'review_status'),
+            'status_counts' => self::countMap($statusRows, 'status'),
+            'record_requirement_blocks' => (int)($schemaCoverage['total_requirement_blocks'] ?? 0),
+            'schema_covered_blocks' => (int)($schemaCoverage['schema_covered_blocks'] ?? 0),
+            'schema_gap_blocks' => (int)($schemaCoverage['gap_blocks'] ?? 0),
+            'schema_gap_examples' => array_slice($schemaCoverage['gap_rows'] ?? [], 0, 5),
+            'copilot_prompts' => [
+                '对照程序记录要求缺哪些字段？',
+                '哪些模板还不能填写？',
+                '这个记录表格发布前还缺什么复核证据？',
+            ],
+        ];
+    }
+
+    private static function planningStructureSummary(?string $recordId, string $action): array
+    {
+        $recordCoverage = QmsDocumentStructureService::procedureRecordRequirementCoverage();
+        $schemaCoverage = QmsDocumentStructureService::recordRequirementSchemaCoverage();
+        $packageSummary = QmsDocumentStructureService::systemPackageSummary();
+        $summary = [
+            'module' => 'planning_structure',
+            'workflow' => '结构化文件 -> 块级追溯 -> 变更影响预检 -> 修订草稿 -> 复核发布',
+            'action' => $action,
+            'total_procedures' => (int)($recordCoverage['total_procedures'] ?? 0),
+            'record_requirement_gap_procedures' => (int)($recordCoverage['gap_procedures'] ?? 0),
+            'schema_gap_blocks' => (int)($schemaCoverage['gap_blocks'] ?? 0),
+            'latest_change_impact_count' => (int)($packageSummary['latest_change_impact_count'] ?? 0),
+            'latest_block_trace_count' => (int)($packageSummary['latest_block_trace_count'] ?? 0),
+            'record_requirement_gap_examples' => array_slice($recordCoverage['gap_rows'] ?? [], 0, 5),
+            'copilot_prompts' => [
+                '这条记录要求是否已有模板？',
+                '改这份程序会影响哪些 BG 记录表格？',
+                '建议同步复核哪些结构化内容块？',
+            ],
+        ];
+
+        if ($recordId !== null && $recordId !== '') {
+            $preview = QmsDocumentStructureService::changeControlImpactPreview($recordId);
+            $summary['selected_document'] = $preview['selected_document'] ?? [];
+            $summary['selected_change_impact'] = $preview['summary'] ?? [];
+        }
+
+        return $summary;
+    }
+
+    private static function countMap(array $rows, string $keyField): array
+    {
+        $counts = [];
+        foreach ($rows as $row) {
+            $key = (string)($row[$keyField] ?? '');
+            if ($key === '') {
+                $key = 'pending';
+            }
+            $counts[$key] = (int)($row['total'] ?? 0);
+        }
+
+        return $counts;
     }
 
     private static function employeeSummary(string $companyId, string $recordId): ?array
