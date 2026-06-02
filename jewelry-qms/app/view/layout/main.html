@@ -52,11 +52,12 @@
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">文件控制</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="/document/index">体系文件列表</a></li>
-                        <li><a class="dropdown-item" href="/record_form_template/index">记录表格模板</a></li>
+                        <li><a class="dropdown-item" href="/record_form_template/index">记录模板</a></li>
+                        <li><a class="dropdown-item" href="/record_form_template/review">模板复核</a></li>
                         {if condition="class_exists('app\\controller\\RecordFormInstance')"}
-                        <li><a class="dropdown-item" href="/record_form_instance/index">记录填写记录</a></li>
+                        <li><a class="dropdown-item" href="/record_form_instance/index">填写实例</a></li>
                         {else}
-                        <li><span class="dropdown-item disabled" aria-disabled="true" title="记录填写功能将在 Task5 接入后启用">记录填写记录</span></li>
+                        <li><span class="dropdown-item disabled" aria-disabled="true" title="记录填写功能将在 Task5 接入后启用">填写实例</span></li>
                         {/if}
                         <li><a class="dropdown-item" href="/document/add">新建文件</a></li>
                         <li><hr class="dropdown-divider"></li>

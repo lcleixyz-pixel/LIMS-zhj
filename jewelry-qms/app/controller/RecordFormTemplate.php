@@ -480,7 +480,44 @@ class RecordFormTemplate extends BaseController
             $item->setAttr('review_status_label', self::REVIEW_STATUSES[$item->review_status_value] ?? self::REVIEW_STATUSES['pending']);
             $item->setAttr('fillable', $this->isTemplateFillable($item));
             $item->setAttr('source_file_available', $this->sourceFileAvailable($item));
+            $schemaDraftAction = $this->recordFormSchemaDraftAction((string)$item->id);
+            $item->setAttr('schema_draft_url', $schemaDraftAction['url']);
+            $item->setAttr('schema_draft_source_label', $schemaDraftAction['source_label']);
         }
+    }
+
+    private function recordFormSchemaDraftAction(string $templateId): array
+    {
+        $templateId = trim($templateId);
+        if ($templateId === '') {
+            return [
+                'url' => '',
+                'source_label' => '',
+            ];
+        }
+
+        foreach (QmsDocumentStructureService::recordFormRequirementEvidence($templateId) as $row) {
+            $blockId = trim((string)($row['block_id'] ?? ''));
+            if ($blockId === '') {
+                continue;
+            }
+            $procedure = trim((string)($row['procedure_number'] ?? '') . ' ' . (string)($row['procedure_title'] ?? ''));
+            if ($procedure === '') {
+                $procedure = trim((string)($row['doc_number'] ?? '') . ' ' . (string)($row['document_title'] ?? ''));
+            }
+            $blockLabel = trim((string)($row['block_section_number'] ?? '') . ' ' . (string)($row['block_title'] ?? ''));
+
+            return [
+                'url' => '/record_form_template/edit?id=' . rawurlencode($templateId)
+                    . '&schema_draft_block_id=' . rawurlencode($blockId),
+                'source_label' => trim($procedure . ($blockLabel !== '' ? ' / ' . $blockLabel : '')),
+            ];
+        }
+
+        return [
+            'url' => '',
+            'source_label' => '',
+        ];
     }
 
     private function decorateTemplateRows(iterable $items): void

@@ -69,8 +69,13 @@ class RecordFormBatchTemplateService
                 ? self::formalSchemaFor($row['doc_number'], $row['current_name'], $sourceFileName, $printKey)
                 : self::schemaFromRegistryOrHeuristic($row['doc_number'], $name, $row['module'], $row['match_conclusion'], $row['suggestion'], $sourceFileName);
             $isFillable = self::isFillableSourceBackedTemplate($row, $schema, $printKey, $sourceFileSha1, $sourceAbsolutePath);
+            $isArchiveOnly = self::isArchiveOnlySourceBackedTemplate($row);
 
-            if ($isFormal) {
+            if ($isArchiveOnly) {
+                $reviewStatus = 'deferred';
+                $reviewNote = '已按正式编号归并并保留审查证据；现行有效标准由 qms_sources/外部依据台账承接，不进入记录表格发布填写路径。';
+                $status = 'obsolete';
+            } elseif ($isFormal) {
                 $reviewStatus = 'completed';
                 $reviewNote = '已按高保真打印模板完成，可正式填写。';
                 $status = 'published';
@@ -446,6 +451,17 @@ class RecordFormBatchTemplateService
         }
 
         return is_file(root_path() . 'app' . DIRECTORY_SEPARATOR . 'record_form_print' . DIRECTORY_SEPARATOR . $printKey . '.php');
+    }
+
+    private static function isArchiveOnlySourceBackedTemplate(array $row): bool
+    {
+        $docNumber = (string)($row['doc_number'] ?? '');
+        $originalDocNumber = (string)($row['_original_doc_number'] ?? '');
+        $name = (string)($row['current_name'] ?? $row['name'] ?? '');
+        $sourceFileName = basename((string)($row['source_file_path'] ?? $row['source_file_name'] ?? ''));
+
+        return $docNumber === 'XZTC/BG-22-03'
+            && ($originalDocNumber === '待定-22-01' || str_contains($sourceFileName, '待定-22-01') || str_contains($name, '现行有效标准清单'));
     }
 
     private static function formalSchemaFor(string $docNumber, string $baseName, string $sourceFileName, string $printKey): array

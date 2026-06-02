@@ -22,6 +22,7 @@ use app\controller\RecordFormInstance;
 use app\model\RecordFormInstance as InstanceModel;
 use app\model\RecordFormTemplate;
 use app\service\PdfRenderService;
+use app\service\RecordFormPrintService;
 use app\service\RecordFormSchemaService;
 use think\exception\HttpException;
 
@@ -192,6 +193,28 @@ $snapshot = invoke_private($controller, 'templateForRecord', [$snapshotRecord]);
 assert_same('人员培训记录表快照', $snapshot['name'], 'Record uses stored template snapshot name');
 assert_same('training_record', $snapshot['print_template_key'], 'Record uses stored print template snapshot');
 assert_same('培训日期', invoke_private($controller, 'decodeSchema', [$snapshot])[0]['label'], 'Stored template snapshot schema is decodable');
+
+$generatedSnapshotRecord = new SmokeRecordFormInstance();
+$generatedSnapshotRecord->id = 'record-generated';
+$generatedSnapshotRecord->template_id = 'template-generated';
+$generatedSnapshotRecord->doc_number = 'XZTC/BG-22-01';
+$generatedSnapshotRecord->record_title = 'P0 试点非标准方法确认评审表';
+$generatedSnapshotRecord->status = 'generated';
+$generatedSnapshotRecord->template_name = '非标准方法确认评审表';
+$generatedSnapshotRecord->template_module = '方法确认';
+$generatedSnapshotRecord->template_version = 'A/0';
+$generatedSnapshotRecord->template_print_template_key = 'rf_xztc_bg_22_01_e36ff34c95';
+$generatedSnapshotRecord->template_field_schema = RecordFormSchemaService::encode([
+    ['key' => 'method_code_name', 'label' => '检测方法代号名称', 'type' => 'text'],
+]);
+$generatedSnapshot = invoke_private($controller, 'templateForRecord', [$generatedSnapshotRecord]);
+$generatedSnapshotHtml = RecordFormPrintService::render(
+    $generatedSnapshot['print_template_key'],
+    $generatedSnapshot,
+    ['method_code_name' => 'P0-NSM-2026-0602 非标准宝石检测方法确认']
+);
+assert_contains('受控记录表格，可正常填写', $generatedSnapshotHtml, 'Generated records from a stored fillable template snapshot print as controlled record forms');
+assert_not_contains('草稿状态，请完成复核并发布后再正式使用', $generatedSnapshotHtml, 'Generated records from a stored fillable template snapshot do not print a draft warning');
 
 $templateForRecordSource = method_source(RecordFormInstance::class, 'templateForRecord');
 assert_contains('hasTemplateSnapshot', $templateForRecordSource, 'Record template lookup prefers stored snapshots');

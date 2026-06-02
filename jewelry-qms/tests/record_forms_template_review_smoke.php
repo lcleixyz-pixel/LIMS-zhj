@@ -64,16 +64,25 @@ assert_contains('reviewStatusOptions', $controllerSource, 'Template controller c
 assert_contains("'ai_generated' => 'AI 已重建'", $controllerSource, 'Template controller exposes AI-generated review state');
 assert_contains('field_count', $controllerSource, 'Template review rows include field counts');
 assert_contains('repeatable_count', $controllerSource, 'Template review rows include repeatable table counts');
+assert_contains('recordFormSchemaDraftAction', $controllerSource, 'Template review rows expose program-record field completion actions');
+assert_contains('recordFormRequirementEvidence', $controllerSource, 'Template review field completion actions reuse procedure requirement evidence');
+assert_contains('schema_draft_url', $controllerSource, 'Template review rows include schema draft edit urls');
+assert_contains('schema_draft_source_label', $controllerSource, 'Template review rows include schema draft source labels');
 assert_contains('isTemplateFillable', $controllerSource, 'Template list gates fill links on completed high-fidelity templates');
 assert_contains('generic_record_form', $controllerSource, 'Template list refuses generic print templates as fillable');
 
 $reviewView = $root . '/app/view/record_form_template/review.html';
-assert_file_contains($reviewView, '模板复核清单', 'Review view has clear title');
+assert_file_contains($reviewView, '记录模板复核', 'Review view has clear title');
 assert_file_contains($reviewView, '复核状态', 'Review view shows review status');
 assert_file_contains($reviewView, '字段数', 'Review view shows field count');
 assert_file_contains($reviewView, '动态明细', 'Review view shows repeatable table count');
-assert_file_contains($reviewView, '原始附件', 'Review view links source attachment');
+assert_file_contains($reviewView, '来源预览', 'Review view links source attachment');
 assert_file_contains($reviewView, '原始预览', 'Review view links source attachment preview');
+assert_file_contains($reviewView, '系统建议 / 复核备注', 'Review view keeps system suggestions in the review flow');
+assert_file_contains($reviewView, 'review_note', 'Review view exposes the review note field for system suggestions');
+assert_file_contains($reviewView, '从程序记录要求补字段', 'Review view exposes the business action to complete fields from procedure record requirements');
+assert_file_contains($reviewView, 'schema_draft_url', 'Review view links field completion to the candidate schema draft editor');
+assert_file_contains($reviewView, 'schema_draft_source_label', 'Review view explains the procedure record requirement source');
 assert_file_contains($reviewView, 'data-review-status', 'Review view marks update controls');
 assert_file_contains($reviewView, '待完成高保真复核后可试填', 'Review view disables trial filling for draft rebuild templates');
 
@@ -105,7 +114,17 @@ assert_true(!empty($trueConflict['conflict']), 'Non-draft mismatched record numb
 
 $indexView = file_get_contents($root . '/app/view/record_form_template/index.html') ?: '';
 assert_contains('复核清单', $indexView, 'Template index links to review list');
+assert_contains('填写实例', $indexView, 'Template index links to fill instances');
+assert_contains('系统维护', $indexView, 'Template index moves maintenance-only actions out of the primary path');
+assert_contains('qms-system-maintenance', $indexView, 'Template index marks the hidden maintenance action area');
 assert_contains('item.fillable', $indexView, 'Template index only exposes fill action for fillable templates');
+$maintenancePosition = strpos($indexView, 'qms-system-maintenance');
+assert_true($maintenancePosition !== false, 'Template index has a bounded maintenance action area');
+$primaryActionSource = substr($indexView, 0, $maintenancePosition);
+assert_true(
+    !str_contains($primaryActionSource, 'seedBatch') && !str_contains($primaryActionSource, 'seedSamples'),
+    'Template index primary actions must not expose batch seed tooling'
+);
 
 $createView = file_get_contents($root . '/app/view/record_form_instance/create.html') ?: '';
 $editView = file_get_contents($root . '/app/view/record_form_instance/edit.html') ?: '';

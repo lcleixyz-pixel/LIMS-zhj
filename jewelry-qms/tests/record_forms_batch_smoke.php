@@ -142,8 +142,13 @@ $identityKeys = [];
 foreach ($manifest as $row) {
     $identityKeys[] = $row['doc_number'] . '|' . $row['name'] . '|' . $row['source_file_name'];
     assert_true(is_file($row['source_absolute_path']), 'Source attachment exists for ' . $row['doc_number'] . ' ' . $row['source_file_name']);
-    assert_same('published', $row['status'], 'Source-backed reconstructed template is published for form filling');
-    assert_same('completed', $row['review_status'], 'Source-backed reconstructed template passed fillability readiness');
+    if ($row['doc_number'] === 'XZTC/BG-22-03' && str_contains((string)$row['name'], '现行有效标准清单')) {
+        assert_same('obsolete', $row['status'], 'Archive-only standard validity list is not published for form filling');
+        assert_same('deferred', $row['review_status'], 'Archive-only standard validity list keeps deferred review state');
+    } else {
+        assert_same('published', $row['status'], 'Source-backed reconstructed template is published for form filling');
+        assert_same('completed', $row['review_status'], 'Source-backed reconstructed template passed fillability readiness');
+    }
     assert_true($row['print_template_key'] !== '', 'Print template key is set for ' . $row['doc_number']);
     assert_true($row['print_template_key'] !== 'generic_record_form', 'Batch manifest must not use generic print template for ' . $row['doc_number']);
     assert_true(
@@ -240,7 +245,9 @@ $standardValidityRows = array_values(array_filter(
     fn (array $row): bool => $row['doc_number'] === 'XZTC/BG-22-03' && str_contains($row['name'], '现行有效标准清单')
 ));
 assert_same(1, count($standardValidityRows), 'Current effective standards list is present once under its formal record number');
-assert_same('completed', $standardValidityRows[0]['review_status'], 'Current effective standards list passed fillability readiness');
+assert_same('obsolete', $standardValidityRows[0]['status'], 'Current effective standards list is archived after provisional identity merge');
+assert_same('deferred', $standardValidityRows[0]['review_status'], 'Current effective standards list stays out of the fillable publishing path');
+assert_contains('qms_sources', $standardValidityRows[0]['review_note'], 'Current effective standards list documents the external register handoff');
 assert_same(['check_date', 'prepared_by', 'standard_list'], array_column($standardValidityRows[0]['field_schema'], 'key'), 'Current effective standards list keeps trace fields plus the repeatable standard-list field');
 assert_same(
     ['seq', 'standard_name', 'original_code', 'remark'],
@@ -336,7 +343,8 @@ $serviceSource = file_get_contents(dirname(__DIR__) . '/app/service/RecordFormBa
 assert_contains('retireGenericTemplates', $serviceSource, 'Batch build retires the previous generic template batch');
 
 $indexSource = file_get_contents(dirname(__DIR__) . '/app/view/record_form_template/index.html') ?: '';
-assert_contains('批量建立模板', $indexSource, 'Template index exposes batch build action');
+assert_contains('系统维护', $indexSource, 'Template index keeps batch build under maintenance tools');
+assert_contains('批量建立模板', $indexSource, 'Template index still exposes batch build action inside maintenance tools');
 
 $rbacSource = file_get_contents(dirname(__DIR__) . '/app/middleware/Rbac.php') ?: '';
 assert_contains('seedbatch', $rbacSource, 'RBAC treats batch build as a write action');

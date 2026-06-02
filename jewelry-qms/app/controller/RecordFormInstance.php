@@ -307,6 +307,8 @@ class RecordFormInstance extends BaseController
             'name' => (string)($record->template_name ?: $record->record_title),
             'module' => (string)($record->template_module ?: ''),
             'version' => (string)($record->template_version ?: ''),
+            'status' => 'published',
+            'review_status' => 'completed',
             'print_template_key' => (string)$record->template_print_template_key,
             'field_schema' => (string)$record->template_field_schema,
         ];
@@ -339,6 +341,8 @@ class RecordFormInstance extends BaseController
             'name' => (string)$template->name,
             'module' => (string)$template->module,
             'version' => (string)$template->version,
+            'status' => (string)$template->status,
+            'review_status' => (string)$template->review_status,
             'print_template_key' => (string)$template->print_template_key,
             'field_schema' => (string)$template->field_schema,
         ];

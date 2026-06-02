@@ -66,10 +66,16 @@ assert_true((string)$evidence['review_url'] === '/planning/structures/links/revi
 $controllerSource = file_get_contents(dirname(__DIR__) . '/app/controller/RecordFormTemplate.php') ?: '';
 assert_contains('recordFormRequirementEvidence', $controllerSource, 'Record form template controller assigns procedure requirement evidence');
 assert_contains('requirementEvidence', $controllerSource, 'Record form template controller exposes evidence to the view');
+assert_contains('recordFormSchemaDraftAction', $controllerSource, 'Record form review page builds a schema draft action from requirement evidence');
+assert_contains('schema_draft_block_id', $controllerSource, 'Record form review schema draft action targets the linked requirement block');
 
 $viewSource = file_get_contents(dirname(__DIR__) . '/app/view/record_form_template/view.html') ?: '';
 assert_contains('程序要求追溯', $viewSource, 'Record form detail page shows procedure requirement evidence section');
 assert_contains('requirementEvidence', $viewSource, 'Record form detail page renders evidence rows');
 assert_contains('复核追溯', $viewSource, 'Record form detail page links back to block trace review');
+
+$reviewViewSource = file_get_contents(dirname(__DIR__) . '/app/view/record_form_template/review.html') ?: '';
+assert_contains('从程序记录要求补字段', $reviewViewSource, 'Record form review page exposes procedure-requirement field completion');
+assert_contains('schema_draft_url', $reviewViewSource, 'Record form review page links to candidate schema draft editing');
 
 echo "qms_record_form_requirement_evidence_smoke passed\n";

@@ -78,6 +78,12 @@ function packets_by_identity(array $review): array
     return $packets;
 }
 
+function is_archive_only_record_form(array $row): bool
+{
+    return ($row['doc_number'] ?? '') === 'XZTC/BG-22-03'
+        && str_contains((string)($row['name'] ?? ''), '现行有效标准清单');
+}
+
 $manifest = RecordFormBatchTemplateService::manifest();
 $review = RecordFormReconstructionReviewService::reviewAll(null, null, 'both');
 $packets = packets_by_identity($review);
@@ -86,6 +92,16 @@ $failures = [];
 foreach ($manifest as $row) {
     $identity = $row['doc_number'] . '::' . pathinfo((string)$row['source_file_name'], PATHINFO_FILENAME);
     $label = $row['doc_number'] . ' ' . $row['name'] . ' [' . $row['source_file_name'] . ']';
+    if (is_archive_only_record_form($row)) {
+        if (($row['status'] ?? '') !== 'obsolete' || ($row['review_status'] ?? '') !== 'deferred') {
+            $failures[] = $label . ' archive-only record form must stay obsolete/deferred';
+        }
+        if (!str_contains((string)($row['review_note'] ?? ''), 'qms_sources')) {
+            $failures[] = $label . ' archive-only record form must document qms_sources handoff';
+        }
+        continue;
+    }
+
     $packet = $packets[$identity] ?? $packets[$row['doc_number']] ?? null;
     if ($packet === null) {
         $failures[] = $label . ' missing reconstruction packet';

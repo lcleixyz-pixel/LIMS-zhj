@@ -1,18 +1,24 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">记录表格模板</h5>
-        <div class="d-flex gap-2">
+        <h5 class="mb-0">记录模板</h5>
+        <div class="d-flex gap-2 flex-wrap">
             <a href="/record_form_template/review" class="btn btn-sm btn-outline-primary">复核清单</a>
-            <form method="post" action="/record_form_template/seedBatch">
-                <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('确认按导入预览清单批量建立记录表格模板？')">批量建立模板</button>
-            </form>
-            <form method="post" action="/record_form_template/seedSamples">
-                <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('确认写入已完成的正式样板模板？')">写入正式样板</button>
-            </form>
+            <a href="/record_form_instance/index" class="btn btn-sm btn-outline-success">填写实例</a>
             <a href="/record_form_template/add" class="btn btn-sm btn-primary">新增模板</a>
         </div>
     </div>
     <div class="card-body">
+        <details class="mb-3 border rounded-2 p-2 qms-system-maintenance">
+            <summary class="small fw-semibold text-muted">系统维护</summary>
+            <div class="d-flex gap-2 flex-wrap mt-2">
+                <form method="post" action="/record_form_template/seedBatch">
+                    <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('确认按导入预览清单批量建立记录表格模板？')">批量建立模板</button>
+                </form>
+                <form method="post" action="/record_form_template/seedSamples">
+                    <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('确认写入已完成的正式样板模板？')">写入正式样板</button>
+                </form>
+            </div>
+        </details>
         <form method="get" action="/record_form_template/index" class="row g-2 mb-3">
             <div class="col-md-5">
                 <input type="text" name="keyword" value="{$filter.keyword|default=''}" class="form-control form-control-sm" placeholder="编号、名称、模块">
