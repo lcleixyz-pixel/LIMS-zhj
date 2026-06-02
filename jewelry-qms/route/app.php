@@ -102,6 +102,9 @@ Route::group(function () {
     Route::post('planning/structures/publish', 'PlanningStructure/publishDocument');
     Route::post('planning/structures/refresh-source', 'PlanningStructure/refreshSource');
     Route::get('planning/structures/package', 'PlanningStructure/package');
+    Route::get('planning/structures/change-impact', 'PlanningStructure/changeImpact');
+    Route::post('planning/structures/change-request/save', 'PlanningStructure/saveChangeRequest');
+    Route::post('planning/structures/change-request/update', 'PlanningStructure/updateChangeRequest');
     Route::post('planning/structures/render-package', 'PlanningStructure/renderPackage');
     Route::post('planning/structures/seed', 'PlanningStructure/seed');
     Route::rule('planning/structures', 'PlanningStructure/index');

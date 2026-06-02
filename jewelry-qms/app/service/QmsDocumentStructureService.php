@@ -2004,6 +2004,161 @@ class QmsDocumentStructureService
         return self::normalizePackageBlockTraceRows($rows);
     }
 
+    public static function changeControlImpactPreview(string $structuredDocumentId = '', string $revisionNote = ''): array
+    {
+        $options = self::changeControlDocumentOptions();
+        $selected = null;
+        foreach ($options as $option) {
+            if ($structuredDocumentId !== '' && (string)$option['id'] === $structuredDocumentId) {
+                $selected = $option;
+                break;
+            }
+        }
+        if ($selected === null && $options !== []) {
+            $selected = $options[0];
+        }
+
+        $impactRows = [];
+        if ($selected !== null) {
+            $blocks = QmsDocumentBlock::where('structured_document_id', (string)$selected['id'])
+                ->where('soft_delete', 0)
+                ->order('sort_order', 'asc')
+                ->order('title', 'asc')
+                ->select();
+            foreach ($blocks as $block) {
+                $links = self::linksForBlock((string)$block->id);
+                $snapshot = ['links' => $links];
+                $impactRows[] = [
+                    'block_id' => (string)$block->id,
+                    'block_stable_key' => (string)$block->stable_key,
+                    'block_section_number' => (string)$block->section_number,
+                    'block_title' => (string)$block->title,
+                    'block_type' => (string)$block->block_type,
+                    'source_locator' => (string)$block->source_locator,
+                    'link_count' => count($links),
+                    'trace_targets' => self::changeImpactTraceTargets($snapshot),
+                    'trace_summary' => self::changeImpactTraceSummary($snapshot),
+                    'block_edit_url' => '/planning/structures/blocks/edit?id=' . (string)$block->id,
+                    'trace_review_url' => '/planning/structures/links/review?block_id=' . (string)$block->id,
+                ];
+            }
+        }
+
+        return [
+            'document_options' => $options,
+            'selected_document' => $selected ?? [],
+            'revision_note' => trim($revisionNote),
+            'impact_rows' => $impactRows,
+            'summary' => self::changeControlImpactSummary($impactRows),
+            'change_requests' => $selected !== null ? self::changeRequestsForStructuredDocument((string)$selected['id']) : [],
+        ];
+    }
+
+    public static function saveChangeRequest(string $structuredDocumentId, string $revisionNote, array $manualTasks = []): array
+    {
+        $revisionNote = trim($revisionNote);
+        if ($revisionNote === '') {
+            throw new \RuntimeException('变更原因不能为空');
+        }
+
+        $preview = self::changeControlImpactPreview($structuredDocumentId, $revisionNote);
+        $selected = $preview['selected_document'] ?? [];
+        $selectedId = (string)($selected['id'] ?? '');
+        if ($selectedId === '') {
+            throw new \RuntimeException('请选择拟修订的结构化文件');
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $userId = Session::has('user.id') ? (string)Session::get('user.id') : null;
+        $requestId = qms_uuid();
+        $tasks = self::normalizeChangeRequestTasks($manualTasks);
+        $snapshot = [
+            'type' => 'change_request',
+            'requested_at' => $now,
+            'selected_document' => $selected,
+            'revision_note' => $revisionNote,
+            'impact_summary' => $preview['summary'] ?? [],
+            'impact_rows' => $preview['impact_rows'] ?? [],
+            'manual_tasks' => $tasks,
+        ];
+        $summaryText = '变更申请：' . $revisionNote
+            . "\n受影响记录表格：" . implode('、', $snapshot['impact_summary']['record_forms'] ?? []);
+
+        self::ensureChangeLogTable();
+        Db::name('qms_document_change_logs')->insert([
+            'id' => $requestId,
+            'company_id' => (string)Config::get('qms.company_id'),
+            'structured_document_id' => $selectedId,
+            'block_id' => null,
+            'document_id' => (string)($selected['document_id'] ?? '') !== '' ? (string)$selected['document_id'] : null,
+            'change_type' => 'version_update',
+            'revision_note' => $revisionNote,
+            'old_markdown_sha256' => null,
+            'new_markdown_sha256' => null,
+            'old_excerpt' => null,
+            'new_excerpt' => self::excerpt($summaryText),
+            'rendered_file_path' => '',
+            'archive_path' => '',
+            'trace_snapshot_json' => json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}',
+            'status_from' => (string)($selected['status'] ?? ''),
+            'status_to' => 'change_requested',
+            'publish' => 1,
+            'soft_delete' => 0,
+            'created' => $now,
+            'modified' => $now,
+            'created_by' => $userId,
+            'modified_by' => $userId,
+        ]);
+
+        $changeRequest = Db::name('qms_document_change_logs')->where('id', $requestId)->find() ?: [];
+
+        return [
+            'change_request' => $changeRequest,
+            'preview' => self::changeControlImpactPreview($selectedId, $revisionNote),
+        ];
+    }
+
+    public static function updateChangeRequestTasks(string $changeRequestId, array $manualTasks = [], bool $closeRequest = false): array
+    {
+        self::ensureChangeLogTable();
+        $changeRequest = Db::name('qms_document_change_logs')
+            ->where('id', $changeRequestId)
+            ->whereIn('status_to', ['change_requested', 'closed'])
+            ->where('soft_delete', 0)
+            ->find();
+        if (!$changeRequest) {
+            throw new \RuntimeException('变更申请不存在');
+        }
+
+        $snapshot = self::decodeTraceSnapshot((string)($changeRequest['trace_snapshot_json'] ?? ''));
+        if (($snapshot['type'] ?? '') !== 'change_request') {
+            throw new \RuntimeException('该记录不是变更申请');
+        }
+
+        $snapshot['manual_tasks'] = self::normalizeChangeRequestTasks($manualTasks);
+        $snapshot['updated_at'] = date('Y-m-d H:i:s');
+        if ($closeRequest) {
+            $snapshot['closed_at'] = $snapshot['updated_at'];
+        }
+
+        $userId = Session::has('user.id') ? (string)Session::get('user.id') : null;
+        Db::name('qms_document_change_logs')
+            ->where('id', $changeRequestId)
+            ->update([
+                'trace_snapshot_json' => json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}',
+                'status_to' => $closeRequest ? 'closed' : 'change_requested',
+                'modified' => $snapshot['updated_at'],
+                'modified_by' => $userId,
+            ]);
+
+        $updated = Db::name('qms_document_change_logs')->where('id', $changeRequestId)->find() ?: [];
+
+        return [
+            'change_request' => $updated,
+            'trace_snapshot' => self::decodeTraceSnapshot((string)($updated['trace_snapshot_json'] ?? '')),
+        ];
+    }
+
     public static function renderSystemPackage(): array
     {
         $outputPath = self::systemPackageOutputPath();
@@ -2484,6 +2639,96 @@ class QmsDocumentStructureService
             $row['trace_review_url'] = (string)($row['trace_review_url'] ?? ($blockId !== '' ? '/planning/structures/links/review?block_id=' . $blockId : ''));
             $row['trace_targets'] = is_array($row['trace_targets'] ?? null) ? $row['trace_targets'] : [];
             $row['trace_summary'] = (string)($row['trace_summary'] ?? self::changeImpactTraceSummary(['links' => []]));
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    private static function changeControlDocumentOptions(): array
+    {
+        $rows = QmsStructuredDocument::where('soft_delete', 0)
+            ->whereIn('document_role', ['quality_manual', 'procedure', 'work_instruction'])
+            ->order('document_role', 'asc')
+            ->order('doc_number', 'asc')
+            ->field('id,document_id,document_role,doc_number,title,version,status,review_note')
+            ->select()
+            ->toArray();
+
+        foreach ($rows as &$row) {
+            $structuredId = (string)($row['id'] ?? '');
+            $documentId = (string)($row['document_id'] ?? '');
+            $row['document_role_label'] = self::documentRoleLabel((string)($row['document_role'] ?? ''));
+            $row['structure_url'] = $structuredId !== '' ? '/planning/structures/view?id=' . $structuredId : '';
+            $row['revision_url'] = $documentId !== '' ? '/document/revise?id=' . $documentId : '';
+            $row['change_impact_url'] = $structuredId !== '' ? '/planning/structures/change-impact?id=' . $structuredId : '';
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    private static function changeControlImpactSummary(array $impactRows): array
+    {
+        $summary = [
+            'block_count' => count($impactRows),
+            'linked_block_count' => 0,
+            'elements' => [],
+            'clauses' => [],
+            'manual_sections' => [],
+            'procedures' => [],
+            'record_forms' => [],
+            'positions' => [],
+            'modules' => [],
+        ];
+        foreach ($impactRows as $row) {
+            $targets = is_array($row['trace_targets'] ?? null) ? $row['trace_targets'] : [];
+            if ((int)($row['link_count'] ?? 0) > 0) {
+                $summary['linked_block_count']++;
+            }
+            foreach (['elements', 'clauses', 'manual_sections', 'procedures', 'record_forms', 'positions', 'modules'] as $key) {
+                foreach (($targets[$key] ?? []) as $value) {
+                    self::pushUnique($summary[$key], (string)$value);
+                }
+            }
+        }
+
+        return $summary;
+    }
+
+    private static function normalizeChangeRequestTasks(array $manualTasks): array
+    {
+        $definitions = [
+            'record_template_review' => '复核受影响记录模板字段和打印版式',
+            'training_required' => '确认是否需要培训或宣贯',
+            'publish_review' => '修订草稿完成后走复核发布',
+        ];
+        $tasks = [];
+        foreach ($definitions as $key => $label) {
+            $value = $manualTasks[$key] ?? false;
+            $tasks[$key] = [
+                'label' => $label,
+                'checked' => in_array($value, [true, 1, '1', 'on', 'yes'], true),
+            ];
+        }
+
+        return $tasks;
+    }
+
+    private static function changeRequestsForStructuredDocument(string $structuredDocumentId, int $limit = 10): array
+    {
+        self::ensureChangeLogTable();
+        $rows = Db::name('qms_document_change_logs')
+            ->where('structured_document_id', $structuredDocumentId)
+            ->whereIn('status_to', ['change_requested', 'closed'])
+            ->where('soft_delete', 0)
+            ->field('id,revision_note,trace_snapshot_json,status_to,created,modified,created_by,modified_by')
+            ->order('created', 'desc')
+            ->limit($limit)
+            ->select()
+            ->toArray();
+        foreach ($rows as &$row) {
+            $row['trace_snapshot'] = self::decodeTraceSnapshot((string)($row['trace_snapshot_json'] ?? ''));
         }
         unset($row);
 
