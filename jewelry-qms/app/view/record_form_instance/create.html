@@ -2,9 +2,25 @@
     <div class="card-header"><h5 class="mb-0">填写记录 - {$template.name}</h5></div>
     <div class="card-body">
         <form method="post" action="/record_form_instance/create?template_id={$template.id}">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label required">记录年度</label>
+                    <select name="record_year" class="form-select" data-record-year-select data-template-id="{$template.id}">
+                        {volist name="recordYearOptions" id="yearOption"}
+                        <option value="{$yearOption}" {if $yearOption == $recordYear}selected{/if}>{$yearOption}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">建议编号</label>
+                    <input type="text" class="form-control bg-light" value="{$recordTitleSuggestion.record_instance_number|default=''}" readonly>
+                    <div class="form-text">按年度内同一记录表格已有草稿/已生成/已锁定记录顺序生成。</div>
+                </div>
+            </div>
             <div class="mb-3">
                 <label class="form-label required">记录标题</label>
-                <input type="text" name="record_title" class="form-control" value="{$template.name}" required>
+                <input type="text" name="record_title" class="form-control" value="{$recordTitleValue|default=$template.name}" required>
+                <input type="hidden" name="suggested_record_title" value="{$recordTitleSuggestion.record_title|default=''}">
             </div>
             {volist name="schema" id="field"}
             <div class="mb-3">
@@ -174,3 +190,18 @@
     </div>
 </div>
 <script src="/static/js/record-form-editor.js"></script>
+<script src="/static/js/record-form-session-keepalive.js"></script>
+<script>
+document.addEventListener('change', function (event) {
+    var select = event.target.closest('[data-record-year-select]');
+    if (!select) {
+        return;
+    }
+    var templateId = select.getAttribute('data-template-id');
+    var url = new URL(window.location.href);
+    url.pathname = '/record_form_instance/create';
+    url.searchParams.set('template_id', templateId);
+    url.searchParams.set('year', select.value);
+    window.location.href = url.toString();
+});
+</script>

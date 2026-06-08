@@ -11,7 +11,7 @@ class PageContextBuilder
         'employee', 'training', 'competencyrecord', 'employeecertificate',
         'referencematerial', 'equipment', 'compliance', 'document',
         'dashboard', 'aiassistant', 'aichat', 'aisettings',
-        'recordformtemplate', 'planningstructure',
+        'recordformtemplate', 'recordforminstance', 'planningstructure',
     ];
 
     public static function fromRequestPayload(string $companyId, array $pageMeta, string $contextMode): array
@@ -211,6 +211,7 @@ class PageContextBuilder
             'employee' => self::employeeSummary($companyId, $recordId),
             'training' => self::trainingSummary($recordId),
             'equipment' => self::equipmentSummary($companyId, $recordId),
+            'recordforminstance' => self::recordFormInstanceSummary($recordId),
             default => ['record_id' => $recordId],
         };
     }
@@ -323,6 +324,178 @@ class PageContextBuilder
             'training_date' => (string)($row['training_date'] ?? ''),
             'status' => (string)($row['status'] ?? ''),
         ] : null;
+    }
+
+    private static function recordFormInstanceSummary(string $recordId): ?array
+    {
+        $record = Db::name('record_form_instances')
+            ->where('id', $recordId)
+            ->field('id,template_id,template_name,template_module,template_version,doc_number,record_title,field_values,status,created,modified')
+            ->find();
+        if (!is_array($record)) {
+            return null;
+        }
+
+        $values = self::decodeJson((string)($record['field_values'] ?? ''));
+        $year = self::recordYearFromInstance($record, $values);
+        $summary = [
+            'module' => 'record_form_instance',
+            'workflow' => '记录实例 -> 草稿填写 -> 人工核对 -> PDF归档',
+            'current_instance' => [
+                'id' => (string)$record['id'],
+                'doc_number' => (string)$record['doc_number'],
+                'record_title' => (string)$record['record_title'],
+                'status' => (string)$record['status'],
+                'template_id' => (string)$record['template_id'],
+                'template_name' => (string)($record['template_name'] ?? ''),
+                'template_module' => (string)($record['template_module'] ?? ''),
+                'template_version' => (string)($record['template_version'] ?? ''),
+                'year' => $year,
+                'field_values' => self::compactValue($values),
+            ],
+            'copilot_prompts' => [
+                '根据当前记录内容生成填写建议',
+                '指出这份记录还缺哪些关键字段',
+                '根据当前年度培训计划生成培训记录草稿',
+            ],
+        ];
+
+        $trainingContext = self::trainingRecordContextForYear($year, (string)$record['doc_number']);
+        if ($trainingContext !== null) {
+            $summary['related_training_records'] = $trainingContext;
+        }
+
+        return $summary;
+    }
+
+    private static function trainingRecordContextForYear(?int $year, string $docNumber): ?array
+    {
+        if ($year === null || !in_array($docNumber, ['XZTC/BG-01-01', 'XZTC/BG-01-02'], true)) {
+            return null;
+        }
+
+        $annualPlanTemplate = self::recordFormTemplateBrief('XZTC/BG-01-01');
+        $trainingRecordTemplate = self::recordFormTemplateBrief('XZTC/BG-01-02');
+        $annualPlans = self::recordFormInstancesForYear('XZTC/BG-01-01', $year, 3);
+        $trainingRecords = self::recordFormInstancesForYear('XZTC/BG-01-02', $year, 5);
+
+        return [
+            'year' => $year,
+            'source_plan_doc_number' => 'XZTC/BG-01-01',
+            'target_record_doc_number' => 'XZTC/BG-01-02',
+            'source_plan_template' => $annualPlanTemplate,
+            'target_training_record_template' => $trainingRecordTemplate,
+            'annual_plan_instances' => $annualPlans,
+            'existing_training_record_instances' => $trainingRecords,
+            'draft_guidance' => '可根据 annual_plan_instances[].field_values.training_plan_items 逐项起草 XZTC/BG-01-02 人员培训记录；只给草稿建议，不自动保存。',
+        ];
+    }
+
+    private static function recordFormTemplateBrief(string $docNumber): ?array
+    {
+        $template = Db::name('record_form_templates')
+            ->where('doc_number', $docNumber)
+            ->where('soft_delete', 0)
+            ->where('status', 'published')
+            ->field('id,doc_number,name,module,version,field_schema,print_template_key')
+            ->order('created', 'asc')
+            ->find();
+        if (!is_array($template)) {
+            return null;
+        }
+
+        $schema = RecordFormSchemaService::decode((string)($template['field_schema'] ?? ''));
+
+        return [
+            'id' => (string)$template['id'],
+            'doc_number' => (string)$template['doc_number'],
+            'name' => (string)$template['name'],
+            'module' => (string)($template['module'] ?? ''),
+            'version' => (string)($template['version'] ?? ''),
+            'print_template_key' => (string)($template['print_template_key'] ?? ''),
+            'fields' => array_map(static function (array $field): array {
+                return [
+                    'key' => (string)($field['key'] ?? ''),
+                    'label' => (string)($field['label'] ?? ''),
+                    'type' => (string)($field['type'] ?? 'text'),
+                    'required' => (bool)($field['required'] ?? false),
+                ];
+            }, array_slice($schema, 0, 12)),
+        ];
+    }
+
+    private static function recordFormInstancesForYear(string $docNumber, int $year, int $limit): array
+    {
+        $rows = Db::name('record_form_instances')
+            ->where('doc_number', $docNumber)
+            ->where('status', '<>', 'voided')
+            ->where('record_title', 'like', $year . '运行记录-%')
+            ->field('id,doc_number,record_title,status,field_values,created,modified')
+            ->order('modified', 'desc')
+            ->limit(max(1, $limit))
+            ->select()
+            ->toArray();
+
+        return array_map(static function (array $row): array {
+            return [
+                'id' => (string)$row['id'],
+                'doc_number' => (string)$row['doc_number'],
+                'record_title' => (string)$row['record_title'],
+                'status' => (string)$row['status'],
+                'field_values' => self::compactValue(self::decodeJson((string)($row['field_values'] ?? ''))),
+            ];
+        }, $rows);
+    }
+
+    private static function recordYearFromInstance(array $record, array $values): ?int
+    {
+        foreach (['plan_year', 'year', 'review_year'] as $key) {
+            $candidate = (int)($values[$key] ?? 0);
+            if ($candidate >= 2000 && $candidate <= 2100) {
+                return $candidate;
+            }
+        }
+
+        $title = (string)($record['record_title'] ?? '');
+        if (preg_match('/(20\d{2})运行记录/u', $title, $matches) === 1) {
+            return (int)$matches[1];
+        }
+
+        return null;
+    }
+
+    private static function decodeJson(string $json): array
+    {
+        $json = trim($json);
+        if ($json === '') {
+            return [];
+        }
+
+        $decoded = json_decode($json, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private static function compactValue(mixed $value, int $depth = 0): mixed
+    {
+        if (!is_array($value)) {
+            $text = (string)$value;
+            return mb_strlen($text) > 500 ? mb_substr($text, 0, 500) . '…' : $value;
+        }
+
+        $limit = $depth === 0 ? 12 : 8;
+        $out = [];
+        $count = 0;
+        foreach ($value as $key => $item) {
+            if ($count >= $limit) {
+                $out['_truncated'] = true;
+                break;
+            }
+            $out[$key] = self::compactValue($item, $depth + 1);
+            $count++;
+        }
+
+        return $out;
     }
 
     private static function equipmentSummary(string $companyId, string $recordId): ?array

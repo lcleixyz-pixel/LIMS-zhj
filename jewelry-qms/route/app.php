@@ -15,6 +15,7 @@ Route::get('api/v1/customers', 'Api/customers');
 Route::group(function () {
     Route::get('/', 'Dashboard/index');
     Route::rule('dashboard/index', 'Dashboard/index');
+    Route::get('dashboard/keepAlive', 'Dashboard/keepAlive');
     Route::get('compliance/index', 'Compliance/index');
     Route::post('compliance/refresh', 'Compliance/refresh');
     Route::get('compliance/dimension', 'Compliance/dimension');
@@ -68,12 +69,16 @@ Route::group(function () {
     Route::post('record_form_template/seedGap', 'RecordFormTemplate/seedGap');
 
     Route::rule('record_form_instance/index', 'RecordFormInstance/index');
+    Route::get('record_form_instance/reviewDashboard', 'RecordFormInstance/reviewDashboard');
+    Route::post('record_form_instance/updateLayoutStatus', 'RecordFormInstance/updateLayoutStatus');
     Route::rule('record_form_instance/create', 'RecordFormInstance/create');
     Route::rule('record_form_instance/edit', 'RecordFormInstance/edit');
     Route::get('record_form_instance/view', 'RecordFormInstance/view');
     Route::get('record_form_instance/print', 'RecordFormInstance/print');
     Route::post('record_form_instance/exportPdf', 'RecordFormInstance/exportPdf');
     Route::get('record_form_instance/downloadPdf', 'RecordFormInstance/downloadPdf');
+    Route::get('record_form_instance/downloadPreviewPdf', 'RecordFormInstance/downloadPreviewPdf');
+    Route::get('record_form_instance/reviewArtifact', 'RecordFormInstance/reviewArtifact');
 
     Route::rule('planning/index', 'PlanningDashboard/index');
     Route::post('planning/suggestions/review', 'PlanningDashboard/reviewSuggestion');

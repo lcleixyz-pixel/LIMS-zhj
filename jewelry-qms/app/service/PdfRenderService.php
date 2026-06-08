@@ -36,6 +36,51 @@ class PdfRenderService
         }
     }
 
+    public static function renderHtmlPreview(string $html, string $recordId, string $title): array
+    {
+        $recordId = self::normalizeRecordId($recordId);
+        $safeTitle = self::safeFileTitle($title);
+        $root = root_path();
+        $previewDir = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR
+            . 'runtime' . DIRECTORY_SEPARATOR . 'record-form-preview-pdf' . DIRECTORY_SEPARATOR . $recordId . DIRECTORY_SEPARATOR;
+        if (!is_dir($previewDir) && !mkdir($previewDir, 0755, true) && !is_dir($previewDir)) {
+            throw new RuntimeException('PDF 预览目录创建失败');
+        }
+
+        $htmlPath = $previewDir . 'preview-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.html';
+        $pdfName = $safeTitle . '_preview_' . date('YmdHis') . '.pdf';
+        $pdfPath = $previewDir . $pdfName;
+        if (file_put_contents($htmlPath, $html, LOCK_EX) === false) {
+            throw new RuntimeException('PDF 预览 HTML 写入失败');
+        }
+
+        $script = $root . 'scripts' . DIRECTORY_SEPARATOR . 'render-record-pdf.mjs';
+        if (!is_file($script)) {
+            throw new RuntimeException('PDF 渲染脚本不存在');
+        }
+
+        $command = sprintf(
+            'cd %s && node %s %s %s 2>&1',
+            escapeshellarg($root),
+            escapeshellarg($script),
+            escapeshellarg($htmlPath),
+            escapeshellarg($pdfPath)
+        );
+
+        exec($command, $output, $code);
+        if ($code !== 0 || !is_file($pdfPath)) {
+            $message = self::summarizeRenderError(implode("\n", $output));
+
+            throw new RuntimeException('PDF 预览生成失败，退出码 ' . $code . ($message === '' ? '' : '：' . $message));
+        }
+
+        return [
+            'file_name' => $pdfName,
+            'file_path' => 'runtime/record-form-preview-pdf/' . $recordId . '/' . $pdfName,
+            'html_path' => 'runtime/record-form-preview-pdf/' . $recordId . '/' . basename($htmlPath),
+        ];
+    }
+
     private static function renderInput(string $input, string $recordId, string $title): array
     {
         $recordId = self::normalizeRecordId($recordId);

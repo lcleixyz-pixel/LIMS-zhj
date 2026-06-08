@@ -24,6 +24,21 @@
             <tr><th>记录标题</th><td>{$record.record_title}</td><th>模板</th><td>{$template.name}</td></tr>
             <tr><th>创建时间</th><td>{$record.created|default='-'}</td><th>更新时间</th><td>{$record.modified|default='-'}</td></tr>
             <tr><th>PDF</th><td colspan="3">{$record.generated_pdf_name|default='未生成'}</td></tr>
+            <tr>
+                <th>临时预览PDF</th>
+                <td colspan="3">
+                    {if $previewPdfFiles}
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        {volist name="previewPdfFiles" id="previewPdf"}
+                        <a href="{$previewPdf.download_url}" class="btn btn-sm btn-outline-primary">下载临时预览PDF</a>
+                        <span class="text-muted small me-2">{$previewPdf.modified}</span>
+                        {/volist}
+                    </div>
+                    {else}
+                    <span class="text-muted">未生成</span>
+                    {/if}
+                </td>
+            </tr>
         </table>
     </div>
 </div>
