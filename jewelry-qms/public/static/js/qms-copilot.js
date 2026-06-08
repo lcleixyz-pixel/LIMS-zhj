@@ -109,6 +109,80 @@
     var sendBtn = document.getElementById('qmsCopilotSendBtn');
     var modeSelect = document.getElementById('qmsCopilotMode');
     var statusEl = document.getElementById('qmsCopilotStatus');
+    var drawerEl = document.getElementById('qmsCopilotDrawer');
+    var fabEl = document.getElementById('qmsCopilotFab');
+
+    function qmsCopilotFallbackOffcanvas() {
+        if (!drawerEl || !fabEl || (window.bootstrap && window.bootstrap.Offcanvas)) {
+            return;
+        }
+
+        var backdropEl = null;
+
+        function closeDrawer(event) {
+            if (window.bootstrap && window.bootstrap.Offcanvas) {
+                return;
+            }
+            if (event) {
+                event.preventDefault();
+            }
+            drawerEl.classList.remove('show');
+            drawerEl.style.visibility = 'hidden';
+            drawerEl.style.transform = 'translateX(100%)';
+            drawerEl.setAttribute('aria-hidden', 'true');
+            drawerEl.removeAttribute('aria-modal');
+            drawerEl.removeAttribute('role');
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+            if (backdropEl && backdropEl.parentNode) {
+                backdropEl.parentNode.removeChild(backdropEl);
+            }
+            backdropEl = null;
+        }
+
+        function openDrawer(event) {
+            if (window.bootstrap && window.bootstrap.Offcanvas) {
+                return;
+            }
+            if (event) {
+                event.preventDefault();
+            }
+            drawerEl.classList.add('show');
+            drawerEl.style.visibility = 'visible';
+            drawerEl.style.transform = 'none';
+            drawerEl.removeAttribute('aria-hidden');
+            drawerEl.setAttribute('aria-modal', 'true');
+            drawerEl.setAttribute('role', 'dialog');
+            document.body.classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+
+            if (!backdropEl) {
+                backdropEl = document.createElement('div');
+                backdropEl.className = 'offcanvas-backdrop fade show qms-copilot-fallback-backdrop';
+                backdropEl.addEventListener('click', closeDrawer);
+                document.body.appendChild(backdropEl);
+            }
+
+            if (inputEl) {
+                setTimeout(function () {
+                    inputEl.focus();
+                }, 0);
+            }
+        }
+
+        fabEl.addEventListener('click', openDrawer);
+        drawerEl.querySelectorAll('[data-bs-dismiss="offcanvas"]').forEach(function (button) {
+            button.addEventListener('click', closeDrawer);
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && drawerEl.classList.contains('show')) {
+                closeDrawer(event);
+            }
+        });
+    }
+
+    qmsCopilotFallbackOffcanvas();
 
     function setStatus(text, isError) {
         if (!statusEl) return;

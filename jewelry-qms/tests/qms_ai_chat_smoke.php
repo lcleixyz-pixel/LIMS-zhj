@@ -286,8 +286,12 @@ assert_contains('AiPurgeChat::class', $console, 'Console registers ai:purge-chat
 assert_contains('data-qms-controller', $layout, 'Layout exposes page context data attributes');
 assert_contains('qmsCopilotFab', $layout, 'Layout renders copilot FAB conditionally');
 assert_contains('qmsCopilotEnabled', $layout, 'Layout conditionally renders copilot for ai_chat permission');
+assert_contains('bootstrap.bundle.min.js', $layout, 'Layout loads Bootstrap bundle');
+assert_contains('bootstrap.bundle.min.js" defer', $layout, 'Bootstrap bundle must not block local Copilot scripts when CDN is slow');
 assert_contains('X-CSRF-TOKEN', $copilotJs, 'Copilot fetch sends CSRF header');
 assert_contains('page_meta[', $copilotJs, 'Copilot sends page_meta fields');
+assert_contains('qmsCopilotFallbackOffcanvas', $copilotJs, 'Copilot JS has fallback drawer behavior when Bootstrap JS is unavailable');
+assert_contains('qms-copilot-fallback-backdrop', $copilotJs, 'Copilot JS fallback creates a dismissible backdrop');
 assert_contains('AiContextToolService::buildReadPack', (string)file_get_contents($root . '/app/service/AiChatService.php'), 'AiChatService attaches read-only evidence pack before model call');
 assert_contains('AiSettingsService::isConfigured', $assistantService, 'AiAssistantService uses AiSettingsService');
 assert_contains('DeepSeekService::chat', $assistantService, 'AiAssistantService uses DeepSeekService');
