@@ -30,6 +30,7 @@ use ZipArchive;
 class QmsDocumentStructureService
 {
     private const SYSTEM_PACKAGE_MANIFEST_RETENTION = 50;
+    private static ?array $recordFormOriginalSourceNameIndex = null;
 
     public static function structureLayerDefinitions(): array
     {
@@ -2003,6 +2004,161 @@ class QmsDocumentStructureService
         return self::normalizePackageBlockTraceRows($rows);
     }
 
+    public static function changeControlImpactPreview(string $structuredDocumentId = '', string $revisionNote = ''): array
+    {
+        $options = self::changeControlDocumentOptions();
+        $selected = null;
+        foreach ($options as $option) {
+            if ($structuredDocumentId !== '' && (string)$option['id'] === $structuredDocumentId) {
+                $selected = $option;
+                break;
+            }
+        }
+        if ($selected === null && $options !== []) {
+            $selected = $options[0];
+        }
+
+        $impactRows = [];
+        if ($selected !== null) {
+            $blocks = QmsDocumentBlock::where('structured_document_id', (string)$selected['id'])
+                ->where('soft_delete', 0)
+                ->order('sort_order', 'asc')
+                ->order('title', 'asc')
+                ->select();
+            foreach ($blocks as $block) {
+                $links = self::linksForBlock((string)$block->id);
+                $snapshot = ['links' => $links];
+                $impactRows[] = [
+                    'block_id' => (string)$block->id,
+                    'block_stable_key' => (string)$block->stable_key,
+                    'block_section_number' => (string)$block->section_number,
+                    'block_title' => (string)$block->title,
+                    'block_type' => (string)$block->block_type,
+                    'source_locator' => (string)$block->source_locator,
+                    'link_count' => count($links),
+                    'trace_targets' => self::changeImpactTraceTargets($snapshot),
+                    'trace_summary' => self::changeImpactTraceSummary($snapshot),
+                    'block_edit_url' => '/planning/structures/blocks/edit?id=' . (string)$block->id,
+                    'trace_review_url' => '/planning/structures/links/review?block_id=' . (string)$block->id,
+                ];
+            }
+        }
+
+        return [
+            'document_options' => $options,
+            'selected_document' => $selected ?? [],
+            'revision_note' => trim($revisionNote),
+            'impact_rows' => $impactRows,
+            'summary' => self::changeControlImpactSummary($impactRows),
+            'change_requests' => $selected !== null ? self::changeRequestsForStructuredDocument((string)$selected['id']) : [],
+        ];
+    }
+
+    public static function saveChangeRequest(string $structuredDocumentId, string $revisionNote, array $manualTasks = []): array
+    {
+        $revisionNote = trim($revisionNote);
+        if ($revisionNote === '') {
+            throw new \RuntimeException('变更原因不能为空');
+        }
+
+        $preview = self::changeControlImpactPreview($structuredDocumentId, $revisionNote);
+        $selected = $preview['selected_document'] ?? [];
+        $selectedId = (string)($selected['id'] ?? '');
+        if ($selectedId === '') {
+            throw new \RuntimeException('请选择拟修订的结构化文件');
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $userId = Session::has('user.id') ? (string)Session::get('user.id') : null;
+        $requestId = qms_uuid();
+        $tasks = self::normalizeChangeRequestTasks($manualTasks);
+        $snapshot = [
+            'type' => 'change_request',
+            'requested_at' => $now,
+            'selected_document' => $selected,
+            'revision_note' => $revisionNote,
+            'impact_summary' => $preview['summary'] ?? [],
+            'impact_rows' => $preview['impact_rows'] ?? [],
+            'manual_tasks' => $tasks,
+        ];
+        $summaryText = '变更申请：' . $revisionNote
+            . "\n受影响记录表格：" . implode('、', $snapshot['impact_summary']['record_forms'] ?? []);
+
+        self::ensureChangeLogTable();
+        Db::name('qms_document_change_logs')->insert([
+            'id' => $requestId,
+            'company_id' => (string)Config::get('qms.company_id'),
+            'structured_document_id' => $selectedId,
+            'block_id' => null,
+            'document_id' => (string)($selected['document_id'] ?? '') !== '' ? (string)$selected['document_id'] : null,
+            'change_type' => 'version_update',
+            'revision_note' => $revisionNote,
+            'old_markdown_sha256' => null,
+            'new_markdown_sha256' => null,
+            'old_excerpt' => null,
+            'new_excerpt' => self::excerpt($summaryText),
+            'rendered_file_path' => '',
+            'archive_path' => '',
+            'trace_snapshot_json' => json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}',
+            'status_from' => (string)($selected['status'] ?? ''),
+            'status_to' => 'change_requested',
+            'publish' => 1,
+            'soft_delete' => 0,
+            'created' => $now,
+            'modified' => $now,
+            'created_by' => $userId,
+            'modified_by' => $userId,
+        ]);
+
+        $changeRequest = Db::name('qms_document_change_logs')->where('id', $requestId)->find() ?: [];
+
+        return [
+            'change_request' => $changeRequest,
+            'preview' => self::changeControlImpactPreview($selectedId, $revisionNote),
+        ];
+    }
+
+    public static function updateChangeRequestTasks(string $changeRequestId, array $manualTasks = [], bool $closeRequest = false): array
+    {
+        self::ensureChangeLogTable();
+        $changeRequest = Db::name('qms_document_change_logs')
+            ->where('id', $changeRequestId)
+            ->whereIn('status_to', ['change_requested', 'closed'])
+            ->where('soft_delete', 0)
+            ->find();
+        if (!$changeRequest) {
+            throw new \RuntimeException('变更申请不存在');
+        }
+
+        $snapshot = self::decodeTraceSnapshot((string)($changeRequest['trace_snapshot_json'] ?? ''));
+        if (($snapshot['type'] ?? '') !== 'change_request') {
+            throw new \RuntimeException('该记录不是变更申请');
+        }
+
+        $snapshot['manual_tasks'] = self::normalizeChangeRequestTasks($manualTasks);
+        $snapshot['updated_at'] = date('Y-m-d H:i:s');
+        if ($closeRequest) {
+            $snapshot['closed_at'] = $snapshot['updated_at'];
+        }
+
+        $userId = Session::has('user.id') ? (string)Session::get('user.id') : null;
+        Db::name('qms_document_change_logs')
+            ->where('id', $changeRequestId)
+            ->update([
+                'trace_snapshot_json' => json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}',
+                'status_to' => $closeRequest ? 'closed' : 'change_requested',
+                'modified' => $snapshot['updated_at'],
+                'modified_by' => $userId,
+            ]);
+
+        $updated = Db::name('qms_document_change_logs')->where('id', $changeRequestId)->find() ?: [];
+
+        return [
+            'change_request' => $updated,
+            'trace_snapshot' => self::decodeTraceSnapshot((string)($updated['trace_snapshot_json'] ?? '')),
+        ];
+    }
+
     public static function renderSystemPackage(): array
     {
         $outputPath = self::systemPackageOutputPath();
@@ -2489,6 +2645,96 @@ class QmsDocumentStructureService
         return $rows;
     }
 
+    private static function changeControlDocumentOptions(): array
+    {
+        $rows = QmsStructuredDocument::where('soft_delete', 0)
+            ->whereIn('document_role', ['quality_manual', 'procedure', 'work_instruction'])
+            ->order('document_role', 'asc')
+            ->order('doc_number', 'asc')
+            ->field('id,document_id,document_role,doc_number,title,version,status,review_note')
+            ->select()
+            ->toArray();
+
+        foreach ($rows as &$row) {
+            $structuredId = (string)($row['id'] ?? '');
+            $documentId = (string)($row['document_id'] ?? '');
+            $row['document_role_label'] = self::documentRoleLabel((string)($row['document_role'] ?? ''));
+            $row['structure_url'] = $structuredId !== '' ? '/planning/structures/view?id=' . $structuredId : '';
+            $row['revision_url'] = $documentId !== '' ? '/document/revise?id=' . $documentId : '';
+            $row['change_impact_url'] = $structuredId !== '' ? '/planning/structures/change-impact?id=' . $structuredId : '';
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    private static function changeControlImpactSummary(array $impactRows): array
+    {
+        $summary = [
+            'block_count' => count($impactRows),
+            'linked_block_count' => 0,
+            'elements' => [],
+            'clauses' => [],
+            'manual_sections' => [],
+            'procedures' => [],
+            'record_forms' => [],
+            'positions' => [],
+            'modules' => [],
+        ];
+        foreach ($impactRows as $row) {
+            $targets = is_array($row['trace_targets'] ?? null) ? $row['trace_targets'] : [];
+            if ((int)($row['link_count'] ?? 0) > 0) {
+                $summary['linked_block_count']++;
+            }
+            foreach (['elements', 'clauses', 'manual_sections', 'procedures', 'record_forms', 'positions', 'modules'] as $key) {
+                foreach (($targets[$key] ?? []) as $value) {
+                    self::pushUnique($summary[$key], (string)$value);
+                }
+            }
+        }
+
+        return $summary;
+    }
+
+    private static function normalizeChangeRequestTasks(array $manualTasks): array
+    {
+        $definitions = [
+            'record_template_review' => '复核受影响记录模板字段和打印版式',
+            'training_required' => '确认是否需要培训或宣贯',
+            'publish_review' => '修订草稿完成后走复核发布',
+        ];
+        $tasks = [];
+        foreach ($definitions as $key => $label) {
+            $value = $manualTasks[$key] ?? false;
+            $tasks[$key] = [
+                'label' => $label,
+                'checked' => in_array($value, [true, 1, '1', 'on', 'yes'], true),
+            ];
+        }
+
+        return $tasks;
+    }
+
+    private static function changeRequestsForStructuredDocument(string $structuredDocumentId, int $limit = 10): array
+    {
+        self::ensureChangeLogTable();
+        $rows = Db::name('qms_document_change_logs')
+            ->where('structured_document_id', $structuredDocumentId)
+            ->whereIn('status_to', ['change_requested', 'closed'])
+            ->where('soft_delete', 0)
+            ->field('id,revision_note,trace_snapshot_json,status_to,created,modified,created_by,modified_by')
+            ->order('created', 'desc')
+            ->limit($limit)
+            ->select()
+            ->toArray();
+        foreach ($rows as &$row) {
+            $row['trace_snapshot'] = self::decodeTraceSnapshot((string)($row['trace_snapshot_json'] ?? ''));
+        }
+        unset($row);
+
+        return $rows;
+    }
+
     private static function systemPackageOutputPath(): string
     {
         return 'runtime/qms_structured/system_package/qms_system_package.md';
@@ -2791,6 +3037,7 @@ class QmsDocumentStructureService
     private static function seedProcedureBlocks(QmsStructuredDocument $structured, Document $document, array $row, string $role = 'procedure'): array
     {
         $summary = ['blocks' => 0, 'links' => 0];
+        $activeStableKeys = [];
         $documentTypeLabel = (string)($row['document_type_label'] ?? self::documentRoleLabel($role));
         $stablePrefix = (string)($row['stable_prefix'] ?? self::documentRoleStablePrefix($role));
         $overviewMarkdown = '# ' . (string)$document->doc_number . ' ' . (string)$document->title . "\n\n"
@@ -2807,6 +3054,7 @@ class QmsDocumentStructureService
             'markdown' => $overviewMarkdown,
         ]);
         self::resetBlockLinks($overview);
+        $activeStableKeys[] = (string)$overview->stable_key;
         $summary['blocks']++;
 
         $elementIds = Db::table('qms_element_documents')
@@ -2819,6 +3067,7 @@ class QmsDocumentStructureService
         ])) as $sourceBlueprint) {
             $sourceBlock = self::upsertBlock($structured, $document, $sourceBlueprint);
             self::resetBlockLinks($sourceBlock);
+            $activeStableKeys[] = (string)$sourceBlock->stable_key;
             $summary['blocks']++;
             foreach ($elementIds as $elementId) {
                 self::createBlockLink($sourceBlock, [
@@ -2876,8 +3125,10 @@ class QmsDocumentStructureService
             if (!$element) {
                 continue;
             }
-            $block = self::upsertBlock($structured, $document, self::procedureBlockBlueprint($row, $element));
+            $procedureBlockBlueprint = self::procedureBlockBlueprint($row, $element);
+            $block = self::upsertBlock($structured, $document, $procedureBlockBlueprint);
             self::resetBlockLinks($block);
+            $activeStableKeys[] = (string)$block->stable_key;
             $summary['blocks']++;
             self::createBlockLink($block, [
                 'element_id' => (string)$element->id,
@@ -2908,6 +3159,7 @@ class QmsDocumentStructureService
                         . "- schema来源：按程序文件记录要求复核字段、责任人、频次和保留期限。\n",
                 ]);
                 self::resetBlockLinks($recordBlock);
+                $activeStableKeys[] = (string)$recordBlock->stable_key;
                 $summary['blocks']++;
                 self::createBlockLink($recordBlock, [
                     'element_id' => (string)$element->id,
@@ -2921,16 +3173,19 @@ class QmsDocumentStructureService
                 $summary['links'] += self::createRecordTemplateModuleLinks($recordBlock, $template, (string)$element->id);
             }
         }
+        self::retireObsoleteGeneratedBlocks($structured, $activeStableKeys, [$stablePrefix . ':']);
 
         return $summary;
     }
 
     private static function seedRecordFormStructures(): array
     {
-        $summary = ['assets' => 0, 'structured_documents' => 0, 'blocks' => 0, 'links' => 0, 'rendered' => 0];
+        $summary = ['assets' => 0, 'structured_documents' => 0, 'blocks' => 0, 'links' => 0, 'rendered' => 0, 'retired' => 0];
+        $activeTemplateIds = [];
         foreach (RecordFormTemplate::where('soft_delete', 0)->order('doc_number', 'asc')->select() as $template) {
+            $activeTemplateIds[] = (string)$template->id;
             $resolvedPath = self::resolveRecordFormSourcePath($template);
-            $resolvedName = $resolvedPath !== '' ? basename($resolvedPath) : '';
+            $resolvedName = self::recordFormOriginalSourceName($template, $resolvedPath);
             if ($resolvedPath !== '' && is_file(self::workspacePath($resolvedPath))
                 && ($resolvedPath !== (string)$template->source_file_path || $resolvedName !== (string)$template->source_file_name)) {
                 $template->save([
@@ -2977,8 +3232,44 @@ class QmsDocumentStructureService
                 $summary['rendered']++;
             }
         }
+        $summary['retired'] = self::retireObsoleteRecordFormStructures($activeTemplateIds);
 
         return $summary;
+    }
+
+    private static function retireObsoleteRecordFormStructures(array $activeTemplateIds): int
+    {
+        $active = array_fill_keys(array_values(array_unique(array_filter(array_map('strval', $activeTemplateIds)))), true);
+        $retired = 0;
+
+        foreach (QmsDocumentAsset::where('source_kind', 'record_form')
+            ->whereNotNull('record_form_template_id')
+            ->where('soft_delete', 0)
+            ->select() as $asset) {
+            $templateId = (string)$asset->record_form_template_id;
+            if (isset($active[$templateId])) {
+                continue;
+            }
+
+            foreach (QmsStructuredDocument::where('document_role', 'record_form')
+                ->where('source_asset_id', (string)$asset->id)
+                ->where('soft_delete', 0)
+                ->select() as $structured) {
+                $blockIds = QmsDocumentBlock::where('structured_document_id', (string)$structured->id)
+                    ->where('soft_delete', 0)
+                    ->column('id');
+                if ($blockIds !== []) {
+                    QmsDocumentBlockLink::whereIn('block_id', $blockIds)->where('soft_delete', 0)->update(['soft_delete' => 1]);
+                    QmsDocumentBlock::whereIn('id', $blockIds)->where('soft_delete', 0)->update(['soft_delete' => 1, 'publish' => 0]);
+                }
+                $structured->save(['soft_delete' => 1, 'publish' => 0]);
+                $retired++;
+            }
+
+            $asset->save(['soft_delete' => 1, 'publish' => 0]);
+        }
+
+        return $retired;
     }
 
     private static function upsertAsset(string $sourceKind, array $row, ?Document $document = null, ?QmsSource $source = null, ?RecordFormTemplate $template = null): QmsDocumentAsset
@@ -3112,7 +3403,6 @@ class QmsDocumentStructureService
     {
         $block = QmsDocumentBlock::where('structured_document_id', (string)$structured->id)
             ->where('stable_key', (string)$blueprint['stable_key'])
-            ->where('soft_delete', 0)
             ->find();
         if (!$block) {
             $block = new QmsDocumentBlock();
@@ -3139,6 +3429,42 @@ class QmsDocumentStructureService
     private static function resetBlockLinks(QmsDocumentBlock $block): void
     {
         QmsDocumentBlockLink::where('block_id', (string)$block->id)->where('soft_delete', 0)->update(['soft_delete' => 1]);
+    }
+
+    private static function retireObsoleteGeneratedBlocks(QmsStructuredDocument $structured, array $activeStableKeys, array $managedPrefixes): int
+    {
+        $active = array_fill_keys(array_values(array_unique(array_filter(array_map('strval', $activeStableKeys)))), true);
+        $prefixes = array_values(array_filter(array_unique(array_map('strval', $managedPrefixes))));
+        if ($prefixes === []) {
+            return 0;
+        }
+
+        $retired = 0;
+        foreach (QmsDocumentBlock::where('structured_document_id', (string)$structured->id)->where('soft_delete', 0)->select() as $block) {
+            $stableKey = (string)$block->stable_key;
+            if ($stableKey === '' || isset($active[$stableKey])) {
+                continue;
+            }
+            $managed = false;
+            foreach ($prefixes as $prefix) {
+                if ($prefix !== '' && str_starts_with($stableKey, $prefix)) {
+                    $managed = true;
+                    break;
+                }
+            }
+            if (!$managed) {
+                continue;
+            }
+
+            QmsDocumentBlockLink::where('block_id', (string)$block->id)->where('soft_delete', 0)->update(['soft_delete' => 1]);
+            $block->save([
+                'publish' => 0,
+                'soft_delete' => 1,
+            ]);
+            $retired++;
+        }
+
+        return $retired;
     }
 
     private static function createBlockLink(QmsDocumentBlock $block, array $data): void
@@ -4113,6 +4439,75 @@ class QmsDocumentStructureService
         }
 
         return array_values(array_unique(array_filter($keys)));
+    }
+
+    private static function recordFormOriginalSourceName(array|RecordFormTemplate $template, string $resolvedPath): string
+    {
+        $sourceFileName = is_array($template)
+            ? (string)($template['source_file_name'] ?? '')
+            : (string)$template->source_file_name;
+        if ($sourceFileName !== '' && !self::isManagedRecordFormSourceFileName($sourceFileName)) {
+            return $sourceFileName;
+        }
+
+        $docNumber = is_array($template)
+            ? (string)($template['doc_number'] ?? '')
+            : (string)$template->doc_number;
+        $name = is_array($template)
+            ? (string)($template['name'] ?? '')
+            : (string)$template->name;
+        $sourceFileSha1 = is_array($template)
+            ? (string)($template['source_file_sha1'] ?? '')
+            : (string)$template->source_file_sha1;
+
+        $index = self::recordFormOriginalSourceNameIndex();
+        $identity = $docNumber . '|' . $name;
+        if ($sourceFileSha1 !== '' && isset($index['by_hash'][$identity . '|' . $sourceFileSha1])) {
+            return (string)$index['by_hash'][$identity . '|' . $sourceFileSha1];
+        }
+        if (isset($index['by_identity'][$identity]) && is_string($index['by_identity'][$identity])) {
+            return (string)$index['by_identity'][$identity];
+        }
+
+        return $resolvedPath !== '' ? basename($resolvedPath) : $sourceFileName;
+    }
+
+    private static function isManagedRecordFormSourceFileName(string $fileName): bool
+    {
+        return preg_match('/\A[a-f0-9]{40}\.(?:docx?|xlsx?|pdf|json)\z/i', basename($fileName)) === 1;
+    }
+
+    private static function recordFormOriginalSourceNameIndex(): array
+    {
+        if (self::$recordFormOriginalSourceNameIndex !== null) {
+            return self::$recordFormOriginalSourceNameIndex;
+        }
+
+        $byHash = [];
+        $identityCounts = [];
+        $identityNames = [];
+        foreach (RecordFormBatchTemplateService::manifest() as $entry) {
+            $identity = (string)$entry['doc_number'] . '|' . (string)$entry['name'];
+            $sourceFileName = (string)$entry['source_file_name'];
+            $sourceFileSha1 = (string)($entry['source_file_sha1'] ?? '');
+            if ($sourceFileSha1 !== '') {
+                $byHash[$identity . '|' . $sourceFileSha1] = $sourceFileName;
+            }
+            $identityCounts[$identity] = ($identityCounts[$identity] ?? 0) + 1;
+            $identityNames[$identity] = $sourceFileName;
+        }
+
+        $byIdentity = [];
+        foreach ($identityNames as $identity => $sourceFileName) {
+            if (($identityCounts[$identity] ?? 0) === 1) {
+                $byIdentity[$identity] = $sourceFileName;
+            }
+        }
+
+        return self::$recordFormOriginalSourceNameIndex = [
+            'by_hash' => $byHash,
+            'by_identity' => $byIdentity,
+        ];
     }
 
     private static function sourceKey(string $value): string

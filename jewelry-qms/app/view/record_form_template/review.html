@@ -1,9 +1,9 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">模板复核清单</h5>
+        <h5 class="mb-0">记录模板复核</h5>
         <div class="d-flex gap-2">
             <a href="/record_form_template/index" class="btn btn-sm btn-outline-secondary">返回模板列表</a>
-            <a href="/record_form_instance/index" class="btn btn-sm btn-outline-primary">填写记录</a>
+            <a href="/record_form_instance/index" class="btn btn-sm btn-outline-primary">填写实例</a>
         </div>
     </div>
     <div class="card-body">
@@ -55,9 +55,9 @@
                         <th>模块</th>
                         <th>字段数</th>
                         <th>动态明细</th>
-                        <th>原始附件</th>
+                        <th>来源预览</th>
                         <th>复核状态</th>
-                        <th width="300">复核备注</th>
+                        <th width="300">系统建议 / 复核备注</th>
                         <th width="170">操作</th>
                     </tr>
                 </thead>
@@ -93,6 +93,7 @@
                         </td>
                         <td>
                             <textarea name="review_note" class="form-control form-control-sm" rows="2" placeholder="字段调整、需高保真、暂缓原因等" form="review_{$item.id}">{$item.review_note|default=''}</textarea>
+                            <div class="form-text">review_note</div>
                         </td>
                         <td>
                             <form id="review_{$item.id}" method="post" action="/record_form_template/updateReview?id={$item.id}" class="d-inline"></form>
@@ -101,6 +102,11 @@
                             <a href="/record_form_instance/create?template_id={$item.id}" class="btn btn-sm btn-outline-success">试填</a>
                             {else}
                             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="待完成高保真复核后可试填">试填</button>
+                            {/if}
+                            {if $item.schema_draft_url}
+                            <a href="{$item.schema_draft_url}" class="btn btn-sm btn-outline-info mt-1" title="来源：{$item.schema_draft_source_label|default='程序记录要求'}">从程序记录要求补字段</a>
+                            {else}
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" disabled title="暂无已关联的程序记录要求">从程序记录要求补字段</button>
                             {/if}
                             <a href="/record_form_template/preview?id={$item.id}" target="_blank" class="btn btn-sm btn-outline-secondary">预览</a>
                         </td>

@@ -1,0 +1,448 @@
+{
+    "version": 1,
+    "generated_for": "record form forward-chain completion before reconstruction",
+    "decisions": [
+        {
+            "id": "personnel-confidentiality-agreement",
+            "match": {
+                "doc_number": "待定-01-01",
+                "name": "保密协议",
+                "source_file_contains": "保密协议"
+            },
+            "canonical": {
+                "doc_number": "XZTC/BG-01-10",
+                "name": "保密协议",
+                "module": "人员培训程序",
+                "print_template_key": "rf_01_01_4d056122d7"
+            },
+            "record_requirement": "XZTC/BG-01-10 保密协议：用于人员录用、签约人员管理和人员档案中保密义务的受控记录，原临时编号待定-01-01保留为历史来源。",
+            "reason": "从人员培训程序的签约人员管理、人员技术档案和保密义务正向纳入记录目录。",
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "doc_number": "质量手册 6.2/8.4",
+                    "detail": "人员能力、签约人员管理、记录控制和保密承诺要求。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC/CX-01-2022",
+                    "detail": "人员培训程序 4.2签约人员管理、4.5人员技术档案。"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "保密协议为人员档案受控记录，不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC/BG-01-10",
+                    "detail": "按现用源文件建立可填写模板，保留原临时编号。"
+                },
+                "operation_guarantee": [
+                    "录用或签约时触发填写，纳入人员技术档案。",
+                    "至少覆盖协议双方、保密范围、期限、责任、签署人和签署日期。",
+                    "后续复核时不得仅以自由附件替代受控记录。"
+                ]
+            },
+            "additional_field_obligations": ["responsible_party", "date_or_frequency", "signature_chain"]
+        },
+        {
+            "id": "personnel-labor-contract",
+            "match": {
+                "doc_number": "待定-01-02",
+                "name": "劳动合同",
+                "source_file_contains": "劳动合同"
+            },
+            "canonical": {
+                "doc_number": "XZTC/BG-01-11",
+                "name": "劳动合同",
+                "module": "人员培训程序",
+                "print_template_key": "rf_01_02_98d5e4a817"
+            },
+            "record_requirement": "XZTC/BG-01-11 劳动合同：用于人员录用、签约人员管理和人员档案完整性的受控记录，原临时编号待定-01-02保留为历史来源。",
+            "reason": "从人员培训程序的签约人员管理、岗位任职和人员技术档案正向纳入记录目录。",
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "doc_number": "质量手册 6.2/8.4",
+                    "detail": "人员能力、人员档案、签约人员受控和记录控制要求。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC/CX-01-2022",
+                    "detail": "人员培训程序 4.2签约人员管理、4.5人员技术档案。"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "劳动合同为人员档案受控记录，不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC/BG-01-11",
+                    "detail": "按现用源文件建立可填写模板，保留原临时编号。"
+                },
+                "operation_guarantee": [
+                    "人员录用或劳动关系调整时触发填写，纳入人员技术档案。",
+                    "至少覆盖合同期限、岗位/职责、签约双方、签署日期和归档责任。",
+                    "与人员能力确认、培训记录和授权记录保持同一人员档案边界。"
+                ]
+            },
+            "additional_field_obligations": ["responsible_party", "date_or_frequency", "signature_chain"]
+        },
+        {
+            "id": "equipment-usage-annual-bundle",
+            "match": {
+                "doc_number": "待定-03-01",
+                "name": "新疆中和鉴珠宝玉石质量检测研究所",
+                "source_file_contains": "新疆中和鉴珠宝玉石质量检测研究所"
+            },
+            "canonical": {
+                "doc_number": "XZTC/BG-03-02",
+                "name": "仪器设备使用记录表",
+                "module": "仪器设备管理程序",
+                "print_template_key": "rf_xztc_bg_03_02_55d510473b"
+            },
+            "record_requirement": "XZTC/BG-03-02 仪器设备使用记录表：用于各设备年度使用状态、使用人、时间和异常情况记录，原临时编号待定-03-01保留为历史来源。",
+            "reason": "源文件为按年度汇总的多设备使用记录，应归并为仪器设备使用记录表的来源变体。",
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "doc_number": "质量手册 6.4/8.4",
+                    "detail": "设备资源、设备状态和记录控制要求。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC/CX-03-2022",
+                    "detail": "仪器设备管理程序记录清单 XZTC/BG-03-02。"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "variant_by_equipment",
+                    "detail": "使用记录按具体设备和对应作业指导书/设备操作规程运行，不为年度汇总表单另设作业指导书。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC/BG-03-02",
+                    "detail": "保留通用使用记录模板，同时将年度汇总源文件作为来源变体。"
+                },
+                "operation_guarantee": [
+                    "每次设备使用时记录使用日期、起止时间、使用前后状态、使用人和异常说明。",
+                    "异常情况应触发设备维护、维修、降级或停用流程。",
+                    "与设备台账、期间核查、维护保养和维修记录互相追溯。"
+                ]
+            },
+            "additional_field_obligations": ["responsible_party", "date_or_frequency"]
+        },
+        {
+            "id": "ir-performance-confirmation",
+            "match": {
+                "doc_number": "待定-04-02",
+                "name": "红外性能确认",
+                "source_file_contains": "红外性能确认"
+            },
+            "canonical": {
+                "doc_number": "XZTC/BG-04-07",
+                "name": "红外光谱仪性能确认记录",
+                "module": "仪器设备和标准物质期间核查程序",
+                "print_template_key": "rf_04_02_8a11c0ae8c"
+            },
+            "record_requirement": "XZTC/BG-04-07 红外光谱仪性能确认记录：用于傅立叶红外光谱仪能量比、噪声水平、波数准确性等性能确认，原临时编号待定-04-02保留为历史来源。",
+            "reason": "源文件为红外设备功能/性能确认输出，应纳入期间核查程序并连接红外光谱仪作业指导书。",
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "doc_number": "质量手册 6.4/7.2/8.4",
+                    "detail": "设备适用性、方法执行和记录控制要求。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC/CX-04-2022",
+                    "detail": "仪器设备和标准物质期间核查程序；同时受 XZTC/CX-03-2022 设备状态管理约束。"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "linked",
+                    "doc_number": "XZTC/ZY-2-13-2018",
+                    "detail": "红外光谱仪作业指导书提供设备方法、性能确认和判定依据。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC/BG-04-07",
+                    "detail": "按红外性能确认源文件建立专用可填写模板。"
+                },
+                "operation_guarantee": [
+                    "按期间核查、设备维护或软件性能确认触发。",
+                    "至少覆盖测试项目、高低限、测得值、判定、操作者、批准人和日期。",
+                    "不合格结果应触发设备异常处理并限制相关检测使用。"
+                ]
+            },
+            "additional_field_obligations": ["conclusion_or_judgement", "responsible_party", "date_or_frequency", "signature_chain"]
+        },
+        {
+            "id": "internal-communication-meeting",
+            "match": {
+                "doc_number": "待定-13-01",
+                "name": "会议记录",
+                "source_file_contains": "会议记录"
+            },
+            "canonical": {
+                "doc_number": "XZTC/BG-13-01",
+                "name": "内部沟通会议记录",
+                "module": "内部沟通程序",
+                "print_template_key": "rf_13_01_38c2b4263b"
+            },
+            "record_requirement": "XZTC/BG-13-01 内部沟通会议记录：用于内部沟通、会议决议、责任分配和跟踪验证记录，原临时编号待定-13-01保留为历史来源。",
+            "reason": "会议记录承担内部沟通程序运行证据，应作为受控记录表单纳入。",
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "doc_number": "质量手册 8.2/8.4",
+                    "detail": "内部沟通、管理体系运行和记录控制要求。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC/CX-13-2022",
+                    "detail": "内部沟通程序的会议、沟通和跟踪要求。"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "内部沟通会议记录为管理记录，不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC/BG-13-01",
+                    "detail": "按现用会议记录源文件建立可填写模板。"
+                },
+                "operation_guarantee": [
+                    "内部沟通会议、专项协调或体系运行事项讨论时填写。",
+                    "至少覆盖会议时间、地点、主持人、参加人员、议题、决议、责任人和跟踪结果。",
+                    "与纠正措施、内审、管评等后续事项可互相引用。"
+                ]
+            },
+            "additional_field_obligations": ["responsible_party", "date_or_frequency", "signature_chain"]
+        },
+        {
+            "id": "audit-nonconformity-summary",
+            "match": {
+                "doc_number": "待定-20-01",
+                "name": "不符合项汇总表",
+                "source_file_contains": "不符合项汇总表"
+            },
+            "canonical": {
+                "doc_number": "XZTC/BG-20-09",
+                "name": "内审不符合项汇总表",
+                "module": "内部管理体系审核程序",
+                "print_template_key": "rf_20_01_caef5e467f"
+            },
+            "record_requirement": "XZTC/BG-20-09 内审不符合项汇总表：用于内审发现的不符合项编号、条款、责任部门、纠正措施和验证状态汇总，原临时编号待定-20-01保留为历史来源。",
+            "reason": "内审不符合项需要从发现、纠正、验证到关闭形成连续记录。",
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "doc_number": "质量手册 8.8/8.7/8.4",
+                    "detail": "内部审核、不符合控制、纠正措施和记录控制要求。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC/CX-20-2022",
+                    "detail": "内部管理体系审核程序；后续连接 XZTC/CX-16-2022 纠正措施程序。"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "内审不符合汇总为管理记录，不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC/BG-20-09",
+                    "detail": "按现用不符合项汇总表建立可填写模板。"
+                },
+                "operation_guarantee": [
+                    "每次内部审核形成不符合时填写并持续更新关闭状态。",
+                    "至少覆盖不符合事实、依据条款、责任部门、纠正措施编号、验证人和关闭日期。",
+                    "与纠正措施记录和管理评审输入保持追溯。"
+                ]
+            },
+            "additional_field_obligations": ["conclusion_or_judgement", "responsible_party", "date_or_frequency", "signature_chain"]
+        },
+        {
+            "id": "audit-archive-catalog",
+            "match": {
+                "doc_number": "待定-20-04",
+                "name": "内部审核资料封皮目录",
+                "source_file_contains": "内部审核资料封皮目录"
+            },
+            "canonical": {
+                "doc_number": "XZTC/BG-20-10",
+                "name": "内部审核资料封皮目录",
+                "module": "内部管理体系审核程序",
+                "print_template_key": "rf_20_04_174a400265"
+            },
+            "record_requirement": "XZTC/BG-20-10 内部审核资料封皮目录：用于内部审核全过程资料归档目录、资料完整性确认和保存边界，原临时编号待定-20-04保留为历史来源。",
+            "reason": "内审资料封皮目录承担内审证据包完整性和归档边界控制。",
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "doc_number": "质量手册 8.8/8.4",
+                    "detail": "内部审核资料完整性和记录控制要求。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC/CX-20-2022",
+                    "detail": "内部管理体系审核程序记录归档和审核证据控制。"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "内审资料目录为管理归档记录，不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC/BG-20-10",
+                    "detail": "按现用封皮目录建立可填写模板。"
+                },
+                "operation_guarantee": [
+                    "每次内部审核完成后作为审核资料包封面和目录填写。",
+                    "至少覆盖审核年度、归档日期、资料清单、是否归档和备注。",
+                    "与年度内审计划、检查表、不符合项、内审报告共同构成审计包。"
+                ]
+            },
+            "additional_field_obligations": ["responsible_party", "date_or_frequency"]
+        },
+        {
+            "id": "new-project-standard-freshness-report",
+            "match": {
+                "doc_number": "待定-24-01",
+                "name": "标准查新报告",
+                "source_file_contains": "标准查新报告"
+            },
+            "canonical": {
+                "doc_number": "XZTC/BG-24-03",
+                "name": "标准查新报告",
+                "module": "开展新项目评审程序",
+                "print_template_key": "rf_24_01_d0129fd188"
+            },
+            "record_requirement": "XZTC/BG-24-03 标准查新报告：用于新项目拟采用标准和在用标准有效状态查新，覆盖标准号、标准名称、状态、替代标准、新标准执行日期、查新来源和查新结论，原临时编号待定-24-01保留为历史来源。",
+            "reason": "开展新项目程序要求技术负责人提供现行有效标准；检测方法选择程序要求标准保持现行有效，因此查新记录应直接纳入记录目录。",
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "doc_number": "质量手册 7.2/8.4",
+                    "detail": "方法选择、标准有效性、外部文件控制和记录控制要求。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC/CX-24-2022",
+                    "related": ["XZTC/CX-22-2022", "XZTC/CX-08-2022"],
+                    "detail": "开展新项目程序 4.2.1 要求技术负责人提供现行有效标准；检测方法选择与确认程序负责在用方法标准有效性。"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "标准查新为外部标准有效性确认记录，不需要独立作业指导书；查新来源由外部文件/标准台账承接。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC/BG-24-03",
+                    "detail": "作为新项目查新和在用标准定期有效性检查的可填写记录。"
+                },
+                "operation_guarantee": [
+                    "开展新项目、采用新标准、标准更新或定期标准有效性检查时填写。",
+                    "至少覆盖标准号、标准名称、标准状态、替代标准、新标准执行日期、查新来源、查新人、查新日期和结论。",
+                    "外部标准来源、有效性状态和下次查新提醒由 qms_sources 或外部文件台账承接。"
+                ]
+            },
+            "additional_field_obligations": ["conclusion_or_judgement", "responsible_party", "date_or_frequency", "external_register_boundary"]
+        },
+        {
+            "id": "corrective-action-implementation",
+            "match": {
+                "doc_number": "待定-16-01",
+                "name": "实施纠正措施记录表",
+                "source_file_contains": "实施纠正措施记录表.docx"
+            },
+            "canonical": {
+                "doc_number": "XZTC/BG-16-01",
+                "name": "实施纠正措施记录表",
+                "module": "实施纠正措施程序",
+                "print_template_key": "rf_16_01_f6afe877d1"
+            },
+            "record_requirement": "XZTC/BG-16-01 实施纠正措施记录表：用于纠正措施原因分析、措施实施、验证和关闭，原临时编号待定-16-01保留为历史来源。",
+            "reason": "纠正措施记录已可由源表正文正式编号和程序要求正向归并。",
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "doc_number": "质量手册 8.7/8.4",
+                    "detail": "不符合控制、纠正措施和记录控制要求。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC/CX-16-2022",
+                    "detail": "实施纠正措施程序。"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "纠正措施为管理记录，不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC/BG-16-01",
+                    "detail": "按正式编号和现用源文件建立可填写模板。"
+                },
+                "operation_guarantee": [
+                    "投诉、内审、质控、监督或日常不符合触发时填写。",
+                    "至少覆盖问题事实、原因分析、纠正措施、责任人、完成期限、验证结论和关闭日期。",
+                    "与不符合项汇总、投诉处理、内审报告和管理评审输入保持追溯。"
+                ]
+            },
+            "additional_field_obligations": ["conclusion_or_judgement", "responsible_party", "date_or_frequency", "signature_chain"]
+        },
+        {
+            "id": "safety-check-record",
+            "match": {
+                "doc_number": "待定-33-01",
+                "name": "安全检查记录表",
+                "source_file_contains": "安 全 检 查 记 录 表"
+            },
+            "canonical": {
+                "doc_number": "XZTC/BG-33-01",
+                "name": "安全检查记录表",
+                "module": "内务与安全管理程序",
+                "print_template_key": "rf_33_01_0a53d3b8b0"
+            },
+            "record_requirement": "XZTC/BG-33-01 安全检查记录表：用于内务、安全、消防和现场检查记录，原临时编号待定-33-01保留为历史来源。",
+            "reason": "安全检查记录已由程序记录清单列明，目录外源文件作为同编号来源变体纳入。",
+            "forward_chain": {
+                "manual_or_element": {
+                    "found": true,
+                    "doc_number": "质量手册 6.3/6.4/8.4",
+                    "detail": "设施环境、安全管理和记录控制要求。"
+                },
+                "procedure": {
+                    "found": true,
+                    "doc_number": "XZTC/CX-33-2022",
+                    "detail": "内务与安全管理程序记录清单 XZTC/BG-33-01。"
+                },
+                "work_instruction": {
+                    "found": true,
+                    "status": "not_applicable",
+                    "detail": "安全检查表为现场管理记录，不需要单独作业指导书。"
+                },
+                "record_form_template": {
+                    "found": true,
+                    "doc_number": "XZTC/BG-33-01",
+                    "detail": "按现用安全检查源文件建立可填写模板。"
+                },
+                "operation_guarantee": [
+                    "按安全检查计划、日常巡检或异常事件后填写。",
+                    "至少覆盖检查日期、检查区域、检查项目、问题描述、责任人、整改期限和验证结果。",
+                    "异常项应联动纠正措施或设施维护记录。"
+                ]
+            },
+            "additional_field_obligations": ["conclusion_or_judgement", "responsible_party", "date_or_frequency", "signature_chain"]
+        }
+    ]
+}

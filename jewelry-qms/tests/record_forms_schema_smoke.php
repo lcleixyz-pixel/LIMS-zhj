@@ -219,4 +219,15 @@ assert_same('状态不在可选范围内', $typeErrors['status'], 'Reports inval
 assert_same('测试日期必须是有效日期', $typeErrors['test_date'], 'Reports invalid date');
 assert_same('项目第1行结果不在可选范围内', $typeErrors['items.0.result'], 'Reports invalid table select option');
 
+$readonlySchema = RecordFormSchemaService::normalize([
+    ['key' => 'fixed_basis', 'label' => '固定依据', 'type' => 'textarea', 'readonly' => true, 'default' => '作业指导书'],
+    ['key' => 'operator_note', 'label' => '操作记录', 'type' => 'textarea'],
+]);
+$readonlyValues = RecordFormSchemaService::enforceReadonly($readonlySchema, [
+    'fixed_basis' => '被篡改的依据',
+    'operator_note' => '按步骤完成',
+]);
+assert_same('作业指导书', $readonlyValues['fixed_basis'], 'Readonly fields are restored to schema defaults');
+assert_same('按步骤完成', $readonlyValues['operator_note'], 'Editable fields keep submitted values');
+
 echo "record_forms_schema_smoke passed\n";

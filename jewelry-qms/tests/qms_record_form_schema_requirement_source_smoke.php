@@ -54,7 +54,7 @@ $markdown = file_get_contents($renderedPath) ?: '';
 assert_true($markdown !== '', 'Rendered record form schema markdown exists');
 assert_contains('### 程序记录要求来源', $markdown, 'Record form schema document embeds procedure requirement source section');
 assert_contains('XZTC/CX-26-2022 计算机文件及数据控制程序', $markdown, 'Requirement source section names the source procedure');
-assert_contains('procedure:qp_26:source:records', $markdown, 'Requirement source section keeps stable block key');
+assert_contains('procedure:xztc_cx_26_2022:source:records', $markdown, 'Requirement source section keeps stable block key');
 assert_contains('《计算机软件登记表》 XZTC/BG-26-01', $markdown, 'Requirement source section quotes the procedure record list');
 assert_contains('schema来源：按程序文件记录要求复核字段、责任人、频次和保留期限', $markdown, 'Requirement source section carries schema construction requirement');
 assert_contains('### schema构建依据', $markdown, 'Record form schema document has structured construction evidence');

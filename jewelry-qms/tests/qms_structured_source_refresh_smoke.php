@@ -63,8 +63,7 @@ $block = Db::name('qms_document_blocks')
     ->where('sd.doc_number', 'XZTC/CX-26-2022')
     ->where('sd.document_role', 'procedure')
     ->where('b.block_type', 'record_requirement')
-    ->where('b.stable_key', 'like', 'procedure:xztc_cx_26_2022:%')
-    ->where('b.source_locator', '<>', '')
+    ->where('b.stable_key', 'procedure:xztc_cx_26_2022:source:records')
     ->where('b.soft_delete', 0)
     ->field('b.id,b.markdown,b.stable_key,sd.id structured_document_id,sd.status structured_status,sd.review_note')
     ->find();
@@ -124,6 +123,12 @@ try {
     assert_true((string)$refreshedBlock['stable_key'] === (string)$block['stable_key'], 'Source refresh keeps stable block key');
     assert_not_contains($marker, (string)$refreshedBlock['markdown'], 'Source refresh replaces manually diverged markdown with source text');
     assert_contains('计算机软件登记表', (string)$refreshedBlock['markdown'], 'Source refresh keeps source record requirement content');
+    $legacyBlockCount = Db::name('qms_document_blocks')
+        ->where('structured_document_id', $structuredId)
+        ->whereLike('stable_key', 'procedure:qp_26:%')
+        ->where('soft_delete', 0)
+        ->count();
+    assert_true((int)$legacyBlockCount === 0, 'Source refresh retires legacy QP-26 stable blocks after canonical renumbering');
 
     $manualLinkAfter = Db::name('qms_document_block_links')
         ->where('block_id', $blockId)

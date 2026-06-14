@@ -48,6 +48,16 @@ class FileService
         self::stream($filePath, $displayName, 'attachment');
     }
 
+    public static function downloadAbsolute(string $fullPath, string $displayName): void
+    {
+        self::streamAbsolute($fullPath, $displayName, 'attachment');
+    }
+
+    public static function previewAbsolute(string $fullPath, string $displayName): void
+    {
+        self::streamAbsolute($fullPath, $displayName, 'inline');
+    }
+
     public static function preview(string $filePath, string $displayName): void
     {
         self::stream($filePath, $displayName, 'inline');
@@ -56,6 +66,18 @@ class FileService
     private static function stream(string $filePath, string $displayName, string $disposition): void
     {
         $fullPath = public_path() . $filePath;
+        if (!file_exists($fullPath)) {
+            throw new HttpException(404, '文件未找到');
+        }
+        header('Content-Type: ' . self::contentType($fullPath));
+        header('Content-Disposition: ' . $disposition . '; filename="' . $displayName . '"');
+        header('Content-Length: ' . filesize($fullPath));
+        readfile($fullPath);
+        exit;
+    }
+
+    private static function streamAbsolute(string $fullPath, string $displayName, string $disposition): void
+    {
         if (!file_exists($fullPath)) {
             throw new HttpException(404, '文件未找到');
         }

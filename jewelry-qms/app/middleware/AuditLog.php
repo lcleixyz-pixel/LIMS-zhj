@@ -31,6 +31,8 @@ class AuditLog
                 'submitreview',
                 'updatereview',
                 'save',
+                'savechangerequest',
+                'updatechangerequest',
                 'test',
                 'purge',
                 'send',

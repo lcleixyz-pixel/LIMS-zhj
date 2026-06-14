@@ -1,0 +1,288 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h5 class="mb-1">{$year}运行记录版式确认</h5>
+        <div class="text-muted small">逐表核对草稿内容、打印预览和临时 PDF，确认后再从实例页生成正式 PDF。</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/record_form_instance/index?keyword={$year}运行记录" class="btn btn-sm btn-outline-secondary">实例列表</a>
+        {if $pdfAudit.exists}
+        <span class="btn btn-sm btn-outline-warning disabled">PDF巡检：需关注 {$pdfAudit.summary.attention|default=0}</span>
+        {/if}
+        {if $visualReview.exists}
+        <a href="{$visualReview.html_url}" target="_blank" class="btn btn-sm btn-outline-success">PDF视觉索引</a>
+        {/if}
+        {if isset($dashboard.report.markdown_path)}
+        <span class="btn btn-sm btn-outline-info disabled">报告：{$dashboard.report.markdown_path}</span>
+        {/if}
+    </div>
+</div>
+
+{if $pdfAudit.exists}
+<div class="alert alert-light border d-flex justify-content-between align-items-center py-2">
+    <div>
+        <strong>临时 PDF 巡检</strong>
+        <span class="text-muted ms-2">正常 {$pdfAudit.summary.ok|default=0}，需关注 {$pdfAudit.summary.attention|default=0}，缺 PDF {$pdfAudit.summary.missing_pdf|default=0}</span>
+    </div>
+    <span class="text-muted small">{$pdfAudit.markdown_path}</span>
+</div>
+{/if}
+
+{if $visualReview.exists}
+<div class="alert alert-light border d-flex justify-content-between align-items-center py-2">
+    <div>
+        <strong>PDF 视觉索引</strong>
+        <span class="text-muted ms-2">缩略图 {$visualReview.summary.with_thumbnail|default=0}/{$visualReview.summary.total|default=0}，失败 {$visualReview.summary.thumbnail_failed|default=0}</span>
+    </div>
+    <a href="{$visualReview.html_url}" target="_blank" class="btn btn-sm btn-outline-success">打开索引</a>
+</div>
+{/if}
+
+<div class="row g-3 mb-3">
+    <div class="col-md-2">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <div class="text-muted small">草稿实例</div>
+                <div class="fs-4 fw-semibold">{$summary.total|default=0}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <div class="text-muted small">有临时PDF</div>
+                <div class="fs-4 fw-semibold">{$summary.with_preview_pdf|default=0}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <div class="text-muted small">留空必填</div>
+                <div class="fs-4 fw-semibold text-warning">{$summary.blank_required|default=0}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <div class="text-muted small">低置信</div>
+                <div class="fs-4 fw-semibold text-warning">{$summary.low_confidence|default=0}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <div class="text-muted small">AI候选</div>
+                <div class="fs-4 fw-semibold text-info">{$summary.ai_candidate|default=0}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <div class="text-muted small">无临时PDF</div>
+                <div class="fs-4 fw-semibold text-danger">{$summary.no_preview_pdf|default=0}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <div class="text-muted small">版式待确认</div>
+                <div class="fs-5 fw-semibold">{$summary.layout_pending|default=0}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <div class="text-muted small">版式已通过</div>
+                <div class="fs-5 fw-semibold text-success">{$summary.layout_accepted|default=0}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body py-3">
+                <div class="text-muted small">版式需调整</div>
+                <div class="fs-5 fw-semibold text-warning">{$summary.layout_needs_adjustment|default=0}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>模块概览</span>
+        <span class="text-muted small">{$dashboard.generated_at|default=''}</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>模块</th>
+                        <th>实例</th>
+                        <th>留空必填</th>
+                        <th>低置信</th>
+                        <th>AI候选</th>
+                        <th>无临时PDF</th>
+                        <th width="120">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {foreach $moduleCounts as $moduleName => $counts}
+                    <tr>
+                        <td>{$moduleName}</td>
+                        <td>{$counts.total|default=0}</td>
+                        <td>{$counts.blank_required|default=0}</td>
+                        <td>{$counts.low_confidence|default=0}</td>
+                        <td>{$counts.ai_candidate|default=0}</td>
+                        <td>{$counts.no_preview_pdf|default=0}</td>
+                        <td><a class="btn btn-sm btn-outline-primary" href="/record_form_instance/reviewDashboard?year={$year}&module={$moduleName|urlencode}">筛选</a></td>
+                    </tr>
+                    {/foreach}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <form method="get" action="/record_form_instance/reviewDashboard" class="row g-2 align-items-end">
+            <input type="hidden" name="year" value="{$year}">
+            <div class="col-md-4">
+                <label class="form-label small">模块</label>
+                <select name="module" class="form-select form-select-sm">
+                    <option value="">全部模块</option>
+                    {foreach $moduleCounts as $moduleName => $counts}
+                    <option value="{$moduleName}" {if $filter.module == $moduleName}selected{/if}>{$moduleName}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">重点</label>
+                <select name="attention" class="form-select form-select-sm">
+                    <option value="" {if $filter.attention == ''}selected{/if}>全部</option>
+                    <option value="blank_required" {if $filter.attention == 'blank_required'}selected{/if}>留空必填</option>
+                    <option value="low_confidence" {if $filter.attention == 'low_confidence'}selected{/if}>低置信</option>
+                    <option value="ai_candidate" {if $filter.attention == 'ai_candidate'}selected{/if}>AI候选</option>
+                    <option value="no_preview_pdf" {if $filter.attention == 'no_preview_pdf'}selected{/if}>无临时PDF</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-sm btn-primary w-100">筛选</button>
+            </div>
+            <div class="col-md-2">
+                <a href="/record_form_instance/reviewDashboard?year={$year}" class="btn btn-sm btn-outline-secondary w-100">重置</a>
+            </div>
+        </form>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>编号</th>
+                        <th>模块</th>
+                        <th>表格</th>
+                        <th>字段风险</th>
+                        <th>版式</th>
+                        <th width="260">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {foreach $rows as $row}
+                    <tr>
+                        <td class="text-nowrap">{$row.doc_number}</td>
+                        <td>{$row.module}</td>
+                        <td>
+                            <div><a href="{$row.instance_url}">{$row.name}</a></div>
+                            <div class="text-muted small">{$row.record_title}</div>
+                        </td>
+                        <td>
+                            {if $row.blank_required_count > 0}
+                            <span class="badge bg-warning text-dark">留空必填 {$row.blank_required_count}</span>
+                            {/if}
+                            {if $row.low_confidence_count > 0}
+                            <span class="badge bg-warning text-dark">低置信 {$row.low_confidence_count}</span>
+                            {/if}
+                            {if $row.ai_candidate_count > 0}
+                            <span class="badge bg-info">AI候选 {$row.ai_candidate_count}</span>
+                            {/if}
+                            {if $row.blank_required_count == 0 && $row.low_confidence_count == 0 && $row.ai_candidate_count == 0}
+                            <span class="text-muted">-</span>
+                            {/if}
+                            {if $row.blank_required_count > 0}
+                            <div class="small text-muted mt-1">必填：{$row.blank_required_text}</div>
+                            {/if}
+                            {if $row.low_confidence_count > 0}
+                            <div class="small text-muted mt-1">低置信：{$row.low_confidence_text}</div>
+                            {/if}
+                            {if $row.ai_candidate_count > 0}
+                            <div class="small text-muted mt-1">AI：{$row.ai_candidate_text}</div>
+                            {/if}
+                        </td>
+                        <td>
+                            {if $row.preview_pdf_url}
+                            <span class="badge bg-success">临时PDF</span>
+                            {else}
+                            <span class="badge bg-danger">缺PDF</span>
+                            {/if}
+                            <div class="small mt-1">
+                                {if $row.manual_layout_status == 'accepted'}
+                                <span class="badge bg-success">已通过</span>
+                                {elseif $row.manual_layout_status == 'needs_adjustment'}
+                                <span class="badge bg-warning text-dark">需调整</span>
+                                {else}
+                                <span class="badge bg-secondary">待确认</span>
+                                {/if}
+                            </div>
+                            {if $row.manual_layout_note}
+                            <div class="small text-muted mt-1">{$row.manual_layout_note}</div>
+                            {/if}
+                        </td>
+                        <td>
+                            <a href="{$row.instance_url}" class="btn btn-sm btn-outline-info">查看</a>
+                            <a href="{$row.edit_url}" class="btn btn-sm btn-outline-primary">编辑</a>
+                            <a href="{$row.print_url}" target="_blank" class="btn btn-sm btn-outline-secondary">打印</a>
+                            {if $row.preview_pdf_url}
+                            <a href="{$row.preview_pdf_url}" class="btn btn-sm btn-outline-success">PDF</a>
+                            {/if}
+                            <form method="post" action="/record_form_instance/updateLayoutStatus" class="d-inline">
+                                <input type="hidden" name="year" value="{$year}">
+                                <input type="hidden" name="id" value="{$row.id}">
+                                <input type="hidden" name="status" value="accepted">
+                                <input type="hidden" name="return_url" value="{$returnUrl}">
+                                <button type="submit" class="btn btn-sm btn-success">通过</button>
+                            </form>
+                            <form method="post" action="/record_form_instance/updateLayoutStatus" class="d-inline">
+                                <input type="hidden" name="year" value="{$year}">
+                                <input type="hidden" name="id" value="{$row.id}">
+                                <input type="hidden" name="status" value="needs_adjustment">
+                                <input type="hidden" name="return_url" value="{$returnUrl}">
+                                <button type="submit" class="btn btn-sm btn-warning">需调整</button>
+                            </form>
+                            <form method="post" action="/record_form_instance/updateLayoutStatus" class="d-inline">
+                                <input type="hidden" name="year" value="{$year}">
+                                <input type="hidden" name="id" value="{$row.id}">
+                                <input type="hidden" name="status" value="pending">
+                                <input type="hidden" name="return_url" value="{$returnUrl}">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">待定</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {/foreach}
+                    {empty name="rows"}
+                    <tr><td colspan="6" class="text-center text-muted">当前筛选下暂无记录</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

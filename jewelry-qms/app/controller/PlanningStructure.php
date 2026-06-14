@@ -186,6 +186,52 @@ class PlanningStructure extends BaseController
         return View::fetch('planning_structure/package');
     }
 
+    public function changeImpact()
+    {
+        View::assign('preview', QmsDocumentStructureService::changeControlImpactPreview(
+            (string)$this->request->param('id', ''),
+            (string)$this->request->param('revision_note', '')
+        ));
+
+        return View::fetch('planning_structure/change_impact');
+    }
+
+    public function saveChangeRequest()
+    {
+        $structuredId = (string)$this->request->post('id', '');
+        $revisionNote = (string)$this->request->post('revision_note', '');
+        try {
+            QmsDocumentStructureService::saveChangeRequest(
+                $structuredId,
+                $revisionNote,
+                (array)$this->request->post('manual_tasks', [])
+            );
+            Session::flash('success', '变更申请已保存，影响分析和人工待办已归档。');
+        } catch (\Throwable $exception) {
+            Session::flash('error', $exception->getMessage());
+        }
+
+        return redirect('/planning/structures/change-impact?id=' . $structuredId . '&revision_note=' . rawurlencode($revisionNote));
+    }
+
+    public function updateChangeRequest()
+    {
+        $structuredId = (string)$this->request->post('structured_document_id', '');
+        $revisionNote = (string)$this->request->post('revision_note', '');
+        try {
+            QmsDocumentStructureService::updateChangeRequestTasks(
+                (string)$this->request->post('change_request_id', ''),
+                (array)$this->request->post('manual_tasks', []),
+                (string)$this->request->post('close_request', '') === '1'
+            );
+            Session::flash('success', '变更申请待办状态已更新。');
+        } catch (\Throwable $exception) {
+            Session::flash('error', $exception->getMessage());
+        }
+
+        return redirect('/planning/structures/change-impact?id=' . $structuredId . '&revision_note=' . rawurlencode($revisionNote));
+    }
+
     public function renderPackage()
     {
         $summary = QmsDocumentStructureService::renderSystemPackage();

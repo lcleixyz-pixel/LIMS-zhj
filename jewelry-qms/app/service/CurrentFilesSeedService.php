@@ -838,7 +838,6 @@ class CurrentFilesSeedService
         $block = Db::name('qms_document_blocks')
             ->where('structured_document_id', $structuredId)
             ->where('stable_key', $stableKey)
-            ->where('soft_delete', 0)
             ->find();
         $id = (string)($block['id'] ?? qms_uuid());
         $payload = [

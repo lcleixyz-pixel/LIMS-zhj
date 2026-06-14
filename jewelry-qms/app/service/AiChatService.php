@@ -64,9 +64,10 @@ class AiChatService
             $contextMode = (string)$session['context_mode'];
         }
 
-        $snapshot = self::contextSnapshot($pageContext);
+        $readPack = AiContextToolService::buildReadPack($companyId, $content, $pageContext);
+        $snapshot = self::contextSnapshot($pageContext, $readPack);
         $history = self::buildChatHistory($sessionId);
-        $messages = self::buildPromptMessages($content, $pageContext, $contextMode, $history);
+        $messages = self::buildPromptMessages($content, $pageContext, $contextMode, $history, $readPack);
         $useJsonDraft = ($pageContext['form_schema'] ?? null) !== null;
 
         $now = date('Y-m-d H:i:s');
@@ -117,6 +118,7 @@ class AiChatService
             'content' => (string)$parsed['reply'],
             'draft' => $draft,
             'expert_placeholder' => ($contextMode === 'expert'),
+            'read_sources' => AiContextToolService::sourceSummary($readPack),
         ];
     }
 
@@ -241,14 +243,24 @@ class AiChatService
         return (array)Db::name('ai_chat_sessions')->where('id', $sessionId)->find();
     }
 
-    private static function contextSnapshot(array $pageContext): array
+    private static function contextSnapshot(array $pageContext, ?array $readPack = null): array
     {
-        return [
+        $snapshot = [
             'page' => $pageContext['page'] ?? [],
             'record_summary' => $pageContext['record_summary'] ?? null,
             'compliance_hints' => $pageContext['compliance_hints'] ?? [],
             'form_schema_module' => ($pageContext['form_schema']['module'] ?? null),
         ];
+
+        if ($readPack !== null) {
+            $snapshot['copilot_read_pack'] = [
+                'readonly' => (bool)($readPack['readonly'] ?? false),
+                'summary' => (string)($readPack['summary'] ?? ''),
+                'sources' => AiContextToolService::sourceSummary($readPack),
+            ];
+        }
+
+        return $snapshot;
     }
 
     private static function buildChatHistory(string $sessionId): array
@@ -273,12 +285,18 @@ class AiChatService
         return array_slice($messages, -8);
     }
 
-    private static function buildPromptMessages(string $content, array $pageContext, string $contextMode, array $history): array
-    {
+    private static function buildPromptMessages(
+        string $content,
+        array $pageContext,
+        string $contextMode,
+        array $history,
+        array $readPack = []
+    ): array {
         $systemParts = [
             '你是珠宝检测实验室 QMS 的使用助手，熟悉 ISO/IEC 17025 与系统各模块。',
             '只给建议和草稿，不声称已保存数据；涉及正式记录时提醒用户核对后手动保存。',
             '有 Word 原件时引导用户使用 AI 文档助理导入。',
+            '你只能使用后端提供的只读证据包和当前对话回答，不得声称已经读取、保存或修改未在证据包中出现的数据。',
         ];
 
         if ($contextMode === 'expert') {
@@ -287,6 +305,11 @@ class AiChatService
 
         if ($contextMode !== 'general') {
             $systemParts[] = '当前页面上下文：' . json_encode(self::contextSnapshot($pageContext), JSON_UNESCAPED_UNICODE);
+        }
+
+        if ($readPack !== []) {
+            $systemParts[] = '全库只读证据包：' . json_encode($readPack, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $systemParts[] = '回答末尾用“读取来源”列出证据包中的来源 label；如证据不足，明确说明缺口。';
         }
 
         if (($pageContext['form_schema'] ?? null) !== null) {

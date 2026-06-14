@@ -5,6 +5,13 @@ $kind = $equipmentPrintTemplate ?? '';
 $templateName = htmlspecialchars((string)($template['name'] ?? '仪器设备记录表格'), ENT_QUOTES, 'UTF-8');
 $docNumber = htmlspecialchars((string)($template['doc_number'] ?? ''), ENT_QUOTES, 'UTF-8');
 $version = htmlspecialchars((string)($template['version'] ?? 'A/0'), ENT_QUOTES, 'UTF-8');
+$isPublished = (string)($template['status'] ?? '') === 'published';
+$reviewMark = $isPublished
+    ? '受控记录表格，可正常填写'
+    : '草稿状态，请完成复核并发布后再正式使用';
+$footerNote = $isPublished
+    ? '系统打印预览'
+    : '系统打印预览（草稿，正式启用前请先发布）';
 $wideKinds = ['equipment_register', 'equipment_usage', 'field_performance', 'period_plan', 'function_plan'];
 $pageSize = in_array($kind, $wideKinds, true) ? 'A4 landscape' : 'A4';
 $schema = $template['field_schema'] ?? [];
@@ -39,6 +46,7 @@ $rows = static function (string $key, int $minRows = 1) use ($values): array {
     <style>
         @page { size: <?= $pageSize ?>; margin: 15mm 13mm; }
         body { font-family: "Noto Sans CJK SC", "Microsoft YaHei", Arial, sans-serif; color: #111; font-size: 12px; }
+        .status-mark { text-align: center; color: #8a5a00; font-size: 11px; margin-bottom: 4px; }
         .title { text-align: center; font-size: 20px; font-weight: 700; margin: 2px 0 11px; }
         .meta { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px; }
         .section-title { font-weight: 700; margin: 10px 0 5px; }
@@ -55,6 +63,7 @@ $rows = static function (string $key, int $minRows = 1) use ($values): array {
     </style>
 </head>
 <body>
+    <div class="status-mark"><?= $reviewMark ?></div>
     <div class="title"><?= $templateName ?></div>
     <div class="meta">
         <span>编号：<?= $docNumber ?></span>
@@ -255,7 +264,25 @@ $rows = static function (string $key, int $minRows = 1) use ($values): array {
         <table>
             <tr><th class="label">名称</th><td><?= $v('equipment_name') ?></td><th class="label">型号规格</th><td><?= $v('model_spec') ?></td></tr>
             <tr><th class="label">编号</th><td><?= $v('equipment_code') ?></td><th class="label">核查依据</th><td><?= $text('check_basis') ?></td></tr>
+            <tr><th class="label">核查方法</th><td colspan="3"><?= $text('check_method') ?></td></tr>
+            <tr><th class="label">判定标准</th><td colspan="3"><?= $text('acceptance_criteria') ?></td></tr>
             <tr><th class="label">核查所用仪器设备或标准物质</th><td><?= $text('check_resources') ?></td><th class="label">核查人员</th><td><?= $text('check_personnel') ?></td></tr>
+        </table>
+        <div class="section-title">测量数据</div>
+        <table class="small">
+            <tr><th style="width:6%">序号</th><th>核查项目</th><th>标准值/参考值</th><th>实测值</th><th>偏差</th><th>判定</th></tr>
+            <?php foreach ($rows('measurement_data', 2) as $index => $row): ?>
+            <tr>
+                <td class="center"><?= $index + 1 ?></td>
+                <td><?= $cell($row, 'item') ?></td>
+                <td><?= $cell($row, 'standard_value') ?></td>
+                <td><?= $cell($row, 'measured_value') ?></td>
+                <td><?= $cell($row, 'deviation') ?></td>
+                <td><?= $cell($row, 'judgement') ?></td>
+            </tr>
+            <?php endforeach; ?>
+        </table>
+        <table style="margin-top:8px">
             <tr><th class="label">核查过程记录</th><td colspan="3" class="tall"><?= $text('process_record') ?><br><br>记录人（设备管理员）：<?= $v('recorder') ?>　日期：<?= $v('record_date') ?></td></tr>
             <tr>
                 <th class="label"><?= $kind === 'function_record' ? '功能性核查结果' : '核查结果判定' ?></th>
@@ -280,7 +307,7 @@ $rows = static function (string $key, int $minRows = 1) use ($values): array {
     <?php endif; ?>
 
     <div class="footer">
-        <span>系统重构打印模板</span>
+        <span><?= $footerNote ?></span>
         <span>生成日期：<?= date('Y-m-d') ?></span>
     </div>
 </body>

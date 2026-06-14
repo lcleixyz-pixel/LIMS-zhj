@@ -37,9 +37,10 @@ class Rbac
         }
 
         $writeActions = [
-            'add', 'edit', 'delete', 'create', 'seedsamples', 'seedbatch', 'updatereview', 'exportpdf',
+            'add', 'edit', 'delete', 'create', 'seedsamples', 'seedbatch', 'updatereview', 'updatelayoutstatus', 'exportpdf',
             'seed', 'upload', 'renderpackage', 'extractclauses', 'obsolete', 'createpolicy', 'createobjective',
             'updateblock', 'publishdocument', 'savelink', 'deletelink', 'map', 'localelement',
+            'savechangerequest', 'updatechangerequest',
             'distribute', 'confirmreceipt', 'confirmrecall', 'review',
             'uploadevidence', 'revieweffectiveness',
             'uploadcertificate',

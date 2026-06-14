@@ -2,46 +2,66 @@
     <div class="card-header"><h5 class="mb-0">填写记录 - {$template.name}</h5></div>
     <div class="card-body">
         <form method="post" action="/record_form_instance/create?template_id={$template.id}">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label required">记录年度</label>
+                    <select name="record_year" class="form-select" data-record-year-select data-template-id="{$template.id}">
+                        {volist name="recordYearOptions" id="yearOption"}
+                        <option value="{$yearOption}" {if $yearOption == $recordYear}selected{/if}>{$yearOption}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">建议编号</label>
+                    <input type="text" class="form-control bg-light" value="{$recordTitleSuggestion.record_instance_number|default=''}" readonly>
+                    <div class="form-text">按年度内同一记录表格已有草稿/已生成/已锁定记录顺序生成。</div>
+                </div>
+            </div>
             <div class="mb-3">
                 <label class="form-label required">记录标题</label>
-                <input type="text" name="record_title" class="form-control" value="{$template.name}" required>
+                <input type="text" name="record_title" class="form-control" value="{$recordTitleValue|default=$template.name}" required>
+                <input type="hidden" name="suggested_record_title" value="{$recordTitleSuggestion.record_title|default=''}">
             </div>
             {volist name="schema" id="field"}
             <div class="mb-3">
-                <label class="form-label {if $field.required}required{/if}">{$field.label}</label>
+                <label class="form-label {if $field.required}required{/if}">{$field.label}{if $field.readonly} <span class="badge bg-secondary">只读</span>{/if}</label>
                 {if $field.help_text}<div class="form-text mb-1">{$field.help_text}</div>{/if}
                 {if $field.type == 'textarea'}
-                <textarea name="fields[{$field.key}]" class="form-control" rows="4">{$values[$field.key]|default=$field.default}</textarea>
+                <textarea name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" rows="4" {if $field.readonly}readonly{/if}>{$values[$field.key]|default=$field.default}</textarea>
                 {elseif $field.type == 'date'}
-                <input type="date" name="fields[{$field.key}]" class="form-control" value="{$values[$field.key]|default=$field.default}">
+                <input type="date" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.readonly}readonly{/if}>
                 {elseif $field.type == 'number'}
-                <input type="number" step="0.01" name="fields[{$field.key}]" class="form-control" value="{$values[$field.key]|default=$field.default}">
+                <input type="number" step="0.01" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.readonly}readonly{/if}>
                 {elseif $field.type == 'select'}
-                <select name="fields[{$field.key}]" class="form-select">
+                <select name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.readonly}disabled{/if}>
                     <option value="">请选择</option>
                     {volist name="field.options" id="option"}
                     <option value="{$option}" {if isset($values[$field.key]) && $values[$field.key] == $option}selected{/if}>{$option}</option>
                     {/volist}
                 </select>
+                {if $field.readonly}<input type="hidden" name="fields[{$field.key}]" value="{$values[$field.key]|default=$field.default}">{/if}
                 {elseif $field.type == 'checkbox'}
                 <div class="form-check">
-                    <input type="checkbox" name="fields[{$field.key}]" value="1" class="form-check-input" id="field_{$field.key}" {if isset($values[$field.key]) && ($values[$field.key] == '1' || $values[$field.key] == 1)}checked{/if}>
+                    <input type="checkbox" name="fields[{$field.key}]" value="1" class="form-check-input" id="field_{$field.key}" {if isset($values[$field.key]) && ($values[$field.key] == '1' || $values[$field.key] == 1)}checked{/if} {if $field.readonly}disabled{/if}>
                     <label class="form-check-label" for="field_{$field.key}">是</label>
                 </div>
+                {if $field.readonly}<input type="hidden" name="fields[{$field.key}]" value="{$values[$field.key]|default=$field.default}">{/if}
                 {elseif $field.type == 'person'}
-                <select name="fields[{$field.key}]" class="form-select">
+                <select name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.readonly}disabled{/if}>
                     <option value="">请选择人员</option>
                     {volist name="employeeOptions" id="employee"}
                     <option value="{$employee.name}" {if isset($values[$field.key]) && $values[$field.key] == $employee.name}selected{/if}>{$employee.name}{if $employee.department_name}（{$employee.department_name}）{/if}</option>
                     {/volist}
                 </select>
+                {if $field.readonly}<input type="hidden" name="fields[{$field.key}]" value="{$values[$field.key]|default=$field.default}">{/if}
                 {elseif $field.type == 'department'}
-                <select name="fields[{$field.key}]" class="form-select">
+                <select name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.readonly}disabled{/if}>
                     <option value="">请选择部门</option>
                     {volist name="departmentOptions" id="department"}
                     <option value="{$department.name}" {if isset($values[$field.key]) && $values[$field.key] == $department.name}selected{/if}>{$department.name}</option>
                     {/volist}
                 </select>
+                {if $field.readonly}<input type="hidden" name="fields[{$field.key}]" value="{$values[$field.key]|default=$field.default}">{/if}
                 {elseif $field.type == 'repeatable_table'}
                 {if isset($field['employee_picker']) && $field.employee_picker && !empty($employeeOptions)}
                 <div class="record-form-employee-picker mb-2" data-employee-picker="{$field.key}" data-name-column="{$field.employee_name_column}" data-department-column="{$field.employee_department_column}">
@@ -157,7 +177,7 @@
                     </template>
                 </div>
                 {else}
-                <input type="text" name="fields[{$field.key}]" class="form-control" value="{$values[$field.key]|default=$field.default}">
+                <input type="text" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.readonly}readonly{/if}>
                 {/if}
                 {if isset($errors[$field.key])}<div class="text-danger small mt-1">{$errors[$field.key]}</div>{/if}
             </div>
@@ -170,3 +190,18 @@
     </div>
 </div>
 <script src="/static/js/record-form-editor.js"></script>
+<script src="/static/js/record-form-session-keepalive.js"></script>
+<script>
+document.addEventListener('change', function (event) {
+    var select = event.target.closest('[data-record-year-select]');
+    if (!select) {
+        return;
+    }
+    var templateId = select.getAttribute('data-template-id');
+    var url = new URL(window.location.href);
+    url.pathname = '/record_form_instance/create';
+    url.searchParams.set('template_id', templateId);
+    url.searchParams.set('year', select.value);
+    window.location.href = url.toString();
+});
+</script>

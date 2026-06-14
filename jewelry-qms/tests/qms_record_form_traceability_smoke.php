@@ -9,6 +9,7 @@ $app->initialize();
 
 use app\service\QmsDocumentStructureService;
 use app\service\QmsElementService;
+use app\service\RecordFormBatchTemplateService;
 use think\facade\Db;
 
 function assert_same($expected, $actual, string $message): void
@@ -54,14 +55,22 @@ function rendered_record_form_markdown(string $docNumber, string $name, string $
 }
 
 QmsElementService::seedAll();
+$seedSummary = RecordFormBatchTemplateService::seed();
+assert_same([], $seedSummary['errors'], 'Batch record form seed completes without source errors');
 QmsDocumentStructureService::seedAll();
+
+$activeProvisionalTemplates = (int)Db::name('record_form_templates')
+    ->whereLike('doc_number', '待定-%')
+    ->where('soft_delete', 0)
+    ->count();
+assert_same(0, $activeProvisionalTemplates, 'Forward-chain decisions retire active provisional record form template numbers');
 
 $rows = Db::name('record_form_templates')
     ->alias('r')
     ->leftJoin('documents d', 'd.id = r.procedure_doc_id')
     ->leftJoin('qms_elements e', 'e.id = r.element_id')
     ->where('r.soft_delete', 0)
-    ->whereIn('r.doc_number', ['XZTC/BG-20-04', '待定-20-04', 'XZTC/BG-26-01', 'XZTC/BG-26-02', 'XZTC/BG-28-02'])
+    ->whereIn('r.doc_number', ['XZTC/BG-20-04', 'XZTC/BG-20-10', 'XZTC/BG-26-01', 'XZTC/BG-26-02', 'XZTC/BG-28-02'])
     ->field('r.doc_number,r.name,r.source_file_name,d.doc_number procedure_number,e.key element_key')
     ->order('r.doc_number')
     ->order('r.source_file_name')
@@ -70,7 +79,7 @@ $rows = Db::name('record_form_templates')
 
 $expected = [
     'XZTC/BG-20-04|授权签字人审核记录表|20-04授权签字人审核记录表.docx' => ['XZTC/CX-20-2022', 'internal_audit'],
-    '待定-20-04|内部审核资料封皮目录|内部审核资料封皮目录.docx' => ['XZTC/CX-20-2022', 'internal_audit'],
+    'XZTC/BG-20-10|内部审核资料封皮目录|内部审核资料封皮目录.docx' => ['XZTC/CX-20-2022', 'internal_audit'],
     'XZTC/BG-26-01|计算机软件登记表|26-01计算机软件登记表.doc' => ['XZTC/CX-26-2022', 'data_information'],
     'XZTC/BG-26-02|计算机内容变更申请表|26-02计算机内容变更申请表.doc' => ['XZTC/CX-26-2022', 'data_information'],
     'XZTC/BG-28-02|样品标识卡|28-02样品标识卡.docx' => ['XZTC/CX-28-2022', 'item_handling'],

@@ -10,6 +10,9 @@ use app\model\RecordFormInstance as InstanceModel;
 use app\model\RecordFormTemplate as TemplateModel;
 use app\service\FileService;
 use app\service\PdfRenderService;
+use app\service\RecordFormBatchReviewService;
+use app\service\RecordFormLayoutConfirmationService;
+use app\service\RecordFormInstanceTitleService;
 use app\service\RecordFormPrintService;
 use app\service\RecordFormSchemaService;
 use InvalidArgumentException;
@@ -43,6 +46,60 @@ class RecordFormInstance extends BaseController
         return View::fetch('record_form_instance/index');
     }
 
+    public function reviewDashboard()
+    {
+        $year = max(2000, min(2100, (int)$this->request->get('year', 2025)));
+        $module = trim((string)$this->request->get('module', ''));
+        $attention = trim((string)$this->request->get('attention', ''));
+        $dashboard = RecordFormBatchReviewService::build($year);
+        $rows = RecordFormBatchReviewService::filteredRows($dashboard['rows'], $module, $attention);
+        $pdfAudit = $this->pdfAuditReport($year);
+        $visualReview = $this->pdfVisualReviewReport($year);
+
+        View::assign('year', $year);
+        View::assign('dashboard', $dashboard);
+        View::assign('summary', $dashboard['summary']);
+        View::assign('rows', $rows);
+        View::assign('moduleCounts', $dashboard['summary']['module_counts'] ?? []);
+        View::assign('filter', ['module' => $module, 'attention' => $attention]);
+        View::assign('pdfAudit', $pdfAudit);
+        View::assign('visualReview', $visualReview);
+        View::assign('returnUrl', $this->request->url());
+
+        return View::fetch('record_form_instance/review_dashboard');
+    }
+
+    public function updateLayoutStatus()
+    {
+        $year = max(2000, min(2100, (int)$this->request->post('year', 2025)));
+        $id = trim((string)$this->request->post('id', ''));
+        $status = trim((string)$this->request->post('status', 'pending'));
+        $note = trim((string)$this->request->post('note', ''));
+        if ($id === '') {
+            throw new HttpException(404, '记录实例不存在');
+        }
+        $record = InstanceModel::where('id', $id)->find();
+        if (!$record) {
+            throw new HttpException(404, '记录实例不存在');
+        }
+
+        RecordFormLayoutConfirmationService::set(
+            $year,
+            $id,
+            $status,
+            $note,
+            (string)Session::get('user.name', Session::get('user.username', ''))
+        );
+        Session::flash('success', '版式确认状态已更新');
+
+        $returnUrl = trim((string)$this->request->post('return_url', ''));
+        if ($returnUrl === '' || !str_starts_with($returnUrl, '/record_form_instance/reviewDashboard')) {
+            $returnUrl = '/record_form_instance/reviewDashboard?year=' . $year;
+        }
+
+        return redirect($returnUrl);
+    }
+
     public function create()
     {
         $template = $this->findTemplate();
@@ -53,17 +110,32 @@ class RecordFormInstance extends BaseController
         }
 
         $schema = $this->decodeSchema($template);
+        $recordYear = $this->selectedRecordYear();
 
         if ($this->request->isPost()) {
             $values = $this->collectValues($schema);
+            $values = RecordFormSchemaService::enforceReadonly($schema, $values);
             $errors = RecordFormSchemaService::validateValues($schema, $values);
             if ($errors !== []) {
                 $this->assignRecordFormEditorContext($template, $schema, $this->prepareFormValues($schema, $values), $errors);
+                $this->assignRecordTitleSuggestionContext(
+                    $template,
+                    $recordYear,
+                    trim((string)$this->request->post('record_title', ''))
+                );
 
                 return View::fetch('record_form_instance/create');
             }
 
             $snapshot = $this->snapshotTemplate($template);
+            $postedTitle = trim((string)$this->request->post('record_title', ''));
+            $postedSuggestion = trim((string)$this->request->post('suggested_record_title', ''));
+            $currentSuggestion = RecordFormInstanceTitleService::suggest($template, $recordYear);
+            $recordTitle = $postedTitle;
+            if ($recordTitle === '' || ($postedSuggestion !== '' && $recordTitle === $postedSuggestion)) {
+                $recordTitle = (string)$currentSuggestion['record_title'];
+            }
+
             $record = InstanceModel::create([
                 'id' => qms_uuid(),
                 'template_id' => $template->id,
@@ -73,7 +145,7 @@ class RecordFormInstance extends BaseController
                 'template_print_template_key' => $snapshot['print_template_key'],
                 'template_field_schema' => $snapshot['field_schema'],
                 'doc_number' => $template->doc_number,
-                'record_title' => trim((string)$this->request->post('record_title', $template->name)),
+                'record_title' => $recordTitle,
                 'field_values' => $this->encodeValues($values),
                 'status' => 'draft',
             ]);
@@ -88,8 +160,54 @@ class RecordFormInstance extends BaseController
             $this->prepareFormValues($schema, $this->defaultValues($schema)),
             []
         );
+        $this->assignRecordTitleSuggestionContext($template, $recordYear);
 
         return View::fetch('record_form_instance/create');
+    }
+
+    private function pdfAuditReport(int $year): array
+    {
+        $jsonPath = root_path() . 'runtime' . DIRECTORY_SEPARATOR . 'record-form-batches' . DIRECTORY_SEPARATOR
+            . (string)$year . DIRECTORY_SEPARATOR . 'pdf-layout-audit' . DIRECTORY_SEPARATOR . 'report.json';
+        $markdownPath = root_path() . 'runtime' . DIRECTORY_SEPARATOR . 'record-form-batches' . DIRECTORY_SEPARATOR
+            . (string)$year . DIRECTORY_SEPARATOR . 'pdf-layout-audit' . DIRECTORY_SEPARATOR . 'report.md';
+        $summary = [];
+        if (is_file($jsonPath)) {
+            $decoded = json_decode((string)file_get_contents($jsonPath), true);
+            if (is_array($decoded)) {
+                $summary = (array)($decoded['summary'] ?? []);
+            }
+        }
+
+        return [
+            'exists' => is_file($markdownPath),
+            'markdown_path' => is_file($markdownPath) ? str_replace(root_path(), '', $markdownPath) : '',
+            'summary' => $summary,
+        ];
+    }
+
+    private function pdfVisualReviewReport(int $year): array
+    {
+        $jsonPath = root_path() . 'runtime' . DIRECTORY_SEPARATOR . 'record-form-batches' . DIRECTORY_SEPARATOR
+            . (string)$year . DIRECTORY_SEPARATOR . 'pdf-visual-review' . DIRECTORY_SEPARATOR . 'report.json';
+        $htmlPath = root_path() . 'runtime' . DIRECTORY_SEPARATOR . 'record-form-batches' . DIRECTORY_SEPARATOR
+            . (string)$year . DIRECTORY_SEPARATOR . 'pdf-visual-review' . DIRECTORY_SEPARATOR . 'index.html';
+        $summary = [];
+        if (is_file($jsonPath)) {
+            $decoded = json_decode((string)file_get_contents($jsonPath), true);
+            if (is_array($decoded)) {
+                $summary = (array)($decoded['summary'] ?? []);
+            }
+        }
+
+        return [
+            'exists' => is_file($htmlPath),
+            'html_path' => is_file($htmlPath) ? str_replace(root_path(), '', $htmlPath) : '',
+            'html_url' => is_file($htmlPath)
+                ? '/record_form_instance/reviewArtifact?year=' . $year . '&batch=pdf-visual-review&file=index.html'
+                : '',
+            'summary' => $summary,
+        ];
     }
 
     public function edit()
@@ -106,6 +224,7 @@ class RecordFormInstance extends BaseController
 
         if ($this->request->isPost()) {
             $values = $this->collectValues($schema);
+            $values = RecordFormSchemaService::enforceReadonly($schema, $values);
             $errors = RecordFormSchemaService::validateValues($schema, $values);
             if ($errors === []) {
                 $record->save([
@@ -144,6 +263,7 @@ class RecordFormInstance extends BaseController
         View::assign('values', $this->decodeValues($record->field_values));
         View::assign('canExportPdf', $this->canExportPdf($record));
         View::assign('pdfToken', $this->canExportPdf($record) ? $this->issuePdfActionToken((string)$record->id) : '');
+        View::assign('previewPdfFiles', $this->previewPdfFiles((string)$record->id));
 
         return View::fetch('record_form_instance/view');
     }
@@ -196,6 +316,49 @@ class RecordFormInstance extends BaseController
         FileService::download($record->generated_pdf_path, $record->generated_pdf_name ?: $record->record_title . '.pdf');
     }
 
+    public function downloadPreviewPdf()
+    {
+        $record = $this->findInstance();
+        $fileName = basename(trim((string)$this->request->param('file', '')));
+        if ($fileName === '' || !str_ends_with(strtolower($fileName), '.pdf')) {
+            throw new HttpException(404, '临时预览 PDF 不存在');
+        }
+
+        $dir = $this->previewPdfDirectory((string)$record->id);
+        $fullPath = $dir . $fileName;
+        if (!is_file($fullPath)) {
+            throw new HttpException(404, '临时预览 PDF 不存在');
+        }
+
+        FileService::downloadAbsolute($fullPath, $fileName);
+    }
+
+    public function reviewArtifact()
+    {
+        $year = max(2000, min(2100, (int)$this->request->param('year', 2025)));
+        $batch = trim((string)$this->request->param('batch', 'pdf-visual-review'));
+        $file = trim((string)$this->request->param('file', ''));
+        if ($batch === '' || preg_match('/^[a-zA-Z0-9._-]+$/', $batch) !== 1 || $file === '') {
+            throw new HttpException(404, '审核产物不存在');
+        }
+        if (str_contains($file, '..') || str_starts_with($file, '/') || str_starts_with($file, '\\')) {
+            throw new HttpException(404, '审核产物不存在');
+        }
+        if (preg_match('/^[a-zA-Z0-9._\/-]+$/', $file) !== 1) {
+            throw new HttpException(404, '审核产物不存在');
+        }
+
+        $base = root_path() . 'runtime' . DIRECTORY_SEPARATOR . 'record-form-batches' . DIRECTORY_SEPARATOR
+            . (string)$year . DIRECTORY_SEPARATOR . $batch . DIRECTORY_SEPARATOR;
+        $realBase = realpath($base);
+        $fullPath = realpath($base . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $file));
+        if (!$fullPath || !$realBase || !str_starts_with($fullPath, $realBase . DIRECTORY_SEPARATOR) || !is_file($fullPath)) {
+            throw new HttpException(404, '审核产物不存在');
+        }
+
+        FileService::previewAbsolute($fullPath, basename($fullPath));
+    }
+
     private function findTemplate(bool $requirePublished = false): TemplateModel
     {
         $id = trim((string)$this->request->param('template_id', ''));
@@ -233,7 +396,6 @@ class RecordFormInstance extends BaseController
         $printTemplateKey = trim((string)$template->print_template_key);
 
         return $template->status === 'published'
-            && (string)($template->review_status ?? '') === 'completed'
             && $printTemplateKey !== ''
             && $printTemplateKey !== 'generic_record_form'
             && $this->printTemplateExists($printTemplateKey);
@@ -306,6 +468,8 @@ class RecordFormInstance extends BaseController
             'name' => (string)($record->template_name ?: $record->record_title),
             'module' => (string)($record->template_module ?: ''),
             'version' => (string)($record->template_version ?: ''),
+            'status' => 'published',
+            'review_status' => 'completed',
             'print_template_key' => (string)$record->template_print_template_key,
             'field_schema' => (string)$record->template_field_schema,
         ];
@@ -338,6 +502,8 @@ class RecordFormInstance extends BaseController
             'name' => (string)$template->name,
             'module' => (string)$template->module,
             'version' => (string)$template->version,
+            'status' => (string)$template->status,
+            'review_status' => (string)$template->review_status,
             'print_template_key' => (string)$template->print_template_key,
             'field_schema' => (string)$template->field_schema,
         ];
@@ -346,6 +512,28 @@ class RecordFormInstance extends BaseController
     private function canExportPdf(InstanceModel $record): bool
     {
         return !$this->isTerminalStatus((string)$record->status);
+    }
+
+    private function previewPdfFiles(string $recordId): array
+    {
+        $files = glob($this->previewPdfDirectory($recordId) . '*.pdf') ?: [];
+        rsort($files);
+
+        return array_map(static function (string $path) use ($recordId): array {
+            $fileName = basename($path);
+
+            return [
+                'file_name' => $fileName,
+                'download_url' => '/record_form_instance/downloadPreviewPdf?id=' . rawurlencode($recordId)
+                    . '&file=' . rawurlencode($fileName),
+                'modified' => date('Y-m-d H:i:s', (int)filemtime($path)),
+            ];
+        }, $files);
+    }
+
+    private function previewPdfDirectory(string $recordId): string
+    {
+        return root_path() . 'runtime' . DIRECTORY_SEPARATOR . 'record-form-preview-pdf' . DIRECTORY_SEPARATOR . $recordId . DIRECTORY_SEPARATOR;
     }
 
     private function isTerminalStatus(string $status): bool
@@ -503,6 +691,34 @@ class RecordFormInstance extends BaseController
         View::assign('errors', $errors);
         View::assign('employeeOptions', $this->employeeOptions());
         View::assign('departmentOptions', $this->departmentOptions());
+    }
+
+    private function selectedRecordYear(): int
+    {
+        $defaultYear = (int)date('Y');
+        $year = $this->request->post('record_year', $this->request->param('year', $defaultYear));
+
+        return RecordFormInstanceTitleService::normalizeYear((int)$year);
+    }
+
+    private function assignRecordTitleSuggestionContext(TemplateModel $template, int $year, ?string $recordTitleValue = null): void
+    {
+        $suggestion = RecordFormInstanceTitleService::suggest($template, $year);
+        $currentYear = (int)date('Y');
+        $yearOptions = range($currentYear + 1, $currentYear - 2);
+        $yearOptions[] = 2025;
+        $yearOptions[] = $year;
+        $yearOptions = array_values(array_unique(array_map(
+            static fn (int $item): int => RecordFormInstanceTitleService::normalizeYear($item),
+            $yearOptions
+        )));
+        rsort($yearOptions);
+
+        $recordTitleValue = trim((string)($recordTitleValue ?? ''));
+        View::assign('recordYear', $year);
+        View::assign('recordYearOptions', $yearOptions);
+        View::assign('recordTitleSuggestion', $suggestion);
+        View::assign('recordTitleValue', $recordTitleValue !== '' ? $recordTitleValue : (string)$suggestion['record_title']);
     }
 
     private function decorateSchemaForEditor(array $schema): array

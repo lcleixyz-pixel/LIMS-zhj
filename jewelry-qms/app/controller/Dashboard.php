@@ -101,4 +101,14 @@ class Dashboard extends BaseController
 
         return View::fetch('dashboard/index');
     }
+
+    public function keepAlive()
+    {
+        Session::set('last_keep_alive_at', date('Y-m-d H:i:s'));
+
+        return json([
+            'code' => 0,
+            'server_time' => date('Y-m-d H:i:s'),
+        ]);
+    }
 }

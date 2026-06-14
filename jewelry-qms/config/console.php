@@ -6,6 +6,9 @@ use app\command\AiPurgeChat;
 use app\command\CheckReminders;
 use app\command\ComplianceAssess;
 use app\command\CurrentFilesSeed;
+use app\command\RecordFormRebuildSchema;
+use app\command\RecordFormReconstructionReview;
+use app\command\RecordFormSeedSourceInstances;
 
 return [
     // 指令定义
@@ -14,5 +17,8 @@ return [
         CheckReminders::class,
         ComplianceAssess::class,
         CurrentFilesSeed::class,
+        RecordFormRebuildSchema::class,
+        RecordFormReconstructionReview::class,
+        RecordFormSeedSourceInstances::class,
     ],
 ];

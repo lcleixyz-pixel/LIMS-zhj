@@ -60,6 +60,13 @@ $name = P::cell($template, 'name');
 $module = P::cell($template, 'module');
 $sourceFileName = P::cell($template, 'source_file_name');
 $reference = P::cell($template, 'reference');
+$isPublished = (string)($template['status'] ?? '') === 'published';
+$reviewMark = $isPublished
+    ? '受控记录表格，可正常填写'
+    : '草稿状态，请完成复核并发布后再正式使用';
+$footerNote = $isPublished
+    ? '系统打印预览'
+    : '系统打印预览（草稿，正式启用前请先发布）';
 ?>
 <!doctype html>
 <html lang="zh-CN">
@@ -84,7 +91,7 @@ $reference = P::cell($template, 'reference');
     </style>
 </head>
 <body>
-    <div class="draft-mark">高保真重构草稿：请与原始附件逐表复核后再开放正式填写</div>
+    <div class="draft-mark"><?= $reviewMark ?></div>
     <div class="title"><?= $name !== '' ? $name : '记录表格' ?></div>
     <table class="meta">
         <tr>
@@ -149,7 +156,7 @@ $reference = P::cell($template, 'reference');
     <?php endforeach; ?>
 
     <div class="footer">
-        <span>系统重构打印预览，正式启用前应完成逐表版式复核</span>
+        <span><?= $footerNote ?></span>
         <span>生成日期：<?= date('Y-m-d') ?></span>
     </div>
 </body>
