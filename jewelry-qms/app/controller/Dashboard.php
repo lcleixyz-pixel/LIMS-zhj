@@ -22,7 +22,7 @@ use think\facade\View;
 
 class Dashboard extends BaseController
 {
-    protected $middleware = [
+    protected array $middleware = [
         \app\middleware\Auth::class,
         \app\middleware\Rbac::class,
         \app\middleware\AuditLog::class,

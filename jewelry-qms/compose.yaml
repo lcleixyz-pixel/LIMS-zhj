@@ -1,0 +1,63 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_DEBUG: "true"
+      DB_TYPE: mysql
+      DB_HOST: db
+      DB_NAME: jewelry_qms
+      DB_USER: root
+      DB_PASS: ""
+      DB_PORT: "3306"
+      DB_CHARSET: utf8mb4
+      DEFAULT_LANG: zh-cn
+      COMPOSER_CACHE_DIR: /tmp/composer-cache
+    ports:
+      - "8010:8000"
+    volumes:
+      - .:/app
+      - ../docs:/docs:ro
+      - ../参考:/参考:ro
+      - ../现用文件:/现用文件:ro
+      - ./docker/.env.docker:/app/.env:ro
+      - vendor:/app/vendor
+      - composer_cache:/tmp/composer-cache
+
+  pdf:
+    image: mcr.microsoft.com/playwright:v1.53.0-noble
+    profiles:
+      - pdf
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    command: ["bash", "-lc", "npm ci && npm run pdf:render"]
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: jewelry_qms
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/jewelry_qms.sql:/docker-entrypoint-initdb.d/01-jewelry-qms.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+volumes:
+  db_data:
+  vendor:
+  node_modules:
+  composer_cache:
