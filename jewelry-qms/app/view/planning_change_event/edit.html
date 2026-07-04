@@ -1,0 +1,78 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">编辑变更事件 {$record.event_code}</h5>
+        <a href="/planning/change-events/view?id={$record.id}" class="btn btn-sm btn-outline-secondary">返回详情</a>
+    </div>
+    <div class="card-body">
+        <form method="post" action="/planning/change-events/edit?id={$record.id}">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">事件编号</label>
+                    <input type="text" class="form-control" value="{$record.event_code}" disabled>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label required">来源类型</label>
+                    <select name="source_kind" class="form-select" required>
+                        {foreach $sourceKindLabels as $key=>$label}
+                        <option value="{$key}" {if $record.source_kind == $key}selected{/if}>{$label}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">公告编号</label>
+                    <input type="text" name="announcement_number" class="form-control" value="{$record.announcement_number|default=''}">
+                </div>
+                <div class="col-md-8 mb-3">
+                    <label class="form-label required">公告/依据名称</label>
+                    <input type="text" name="source_name" class="form-control" value="{$record.source_name|default=''}" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">公告链接</label>
+                    <input type="url" name="source_url" class="form-control" value="{$record.source_url|default=''}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">发布日期</label>
+                    <input type="date" name="published_date" class="form-control" value="{$record.published_date|default=''}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">生效日期</label>
+                    <input type="date" name="effective_date" class="form-control" value="{$record.effective_date|default=''}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">旧版本</label>
+                    <input type="text" name="old_version" class="form-control" value="{$record.old_version|default=''}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">新版本</label>
+                    <input type="text" name="new_version" class="form-control" value="{$record.new_version|default=''}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">旧外部依据</label>
+                    <select name="old_source_id" class="form-select">
+                        <option value="">不关联</option>
+                        {volist name="sources" id="source"}
+                        <option value="{$source.id}" {if $record.old_source_id == $source.id}selected{/if}>{$source.source_code} - {$source.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">新外部依据</label>
+                    <select name="new_source_id" class="form-select">
+                        <option value="">不关联</option>
+                        {volist name="sources" id="source"}
+                        <option value="{$source.id}" {if $record.new_source_id == $source.id}selected{/if}>{$source.source_code} - {$source.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="form-label required">变更摘要</label>
+                    <textarea name="event_summary" class="form-control" rows="4" required>{$record.event_summary|default=''}</textarea>
+                </div>
+            </div>
+            <div class="text-end">
+                <a href="/planning/change-events/view?id={$record.id}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">保存修改</button>
+            </div>
+        </form>
+    </div>
+</div>

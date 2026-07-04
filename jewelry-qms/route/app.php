@@ -114,6 +114,13 @@ Route::group(function () {
     Route::post('planning/structures/seed', 'PlanningStructure/seed');
     Route::rule('planning/structures', 'PlanningStructure/index');
     Route::rule('planning/traceability', 'PlanningTraceability/index');
+    Route::rule('planning/change-events/add', 'PlanningChangeEvent/add');
+    Route::rule('planning/change-events/edit', 'PlanningChangeEvent/edit');
+    Route::get('planning/change-events/view', 'PlanningChangeEvent/view');
+    Route::post('planning/change-events/transition', 'PlanningChangeEvent/transition');
+    Route::post('planning/change-events/upload-attachment', 'PlanningChangeEvent/uploadAttachment');
+    Route::get('planning/change-events/download-attachment', 'PlanningChangeEvent/downloadAttachment');
+    Route::rule('planning/change-events', 'PlanningChangeEvent/index');
     Route::post('planning/objectives/create-policy', 'PlanningObjective/createPolicy');
     Route::post('planning/objectives/create-objective', 'PlanningObjective/createObjective');
     Route::rule('planning/objectives', 'PlanningObjective/index');

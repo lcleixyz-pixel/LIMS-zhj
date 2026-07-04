@@ -22,6 +22,7 @@ services:
     volumes:
       - .:/app
       - ../docs:/docs:ro
+      - ../knowledge:/knowledge
       - ../参考:/参考:ro
       - ../现用文件:/现用文件:ro
       - ./docker/.env.docker:/app/.env:ro

@@ -31,7 +31,7 @@ return [
         'quality_manager' => [
             'dashboard', 'document', 'record_form_template', 'record_form_instance', 'approval', 'doc_category', 'doc_template',
             'compliance', 'ai_assistant', 'ai_chat',
-            'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningobjective',
+            'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningchangeevent', 'planningobjective',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
             'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',
@@ -141,6 +141,13 @@ return [
             'expired' => '已过期',
             'revoked' => '已撤销',
             'archived' => '已归档',
+        ],
+        'planning_change_event' => [
+            'registered' => '已登记',
+            'assessing' => '影响评估中',
+            'revising' => '修订处理中',
+            'closed' => '已关闭',
+            'exempted' => '不适用归档',
         ],
     ],
 
