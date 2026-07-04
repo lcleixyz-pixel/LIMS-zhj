@@ -40,11 +40,11 @@ class Rbac
             'add', 'edit', 'delete', 'create', 'seedsamples', 'seedbatch', 'updatereview', 'updatelayoutstatus', 'exportpdf',
             'seed', 'upload', 'renderpackage', 'extractclauses', 'obsolete', 'createpolicy', 'createobjective',
             'updateblock', 'publishdocument', 'savelink', 'deletelink', 'map', 'localelement',
-            'savechangerequest', 'updatechangerequest',
+            'savechangerequest', 'updatechangerequest', 'transition', 'uploadattachment',
             'distribute', 'confirmreceipt', 'confirmrecall', 'review',
             'uploadevidence', 'revieweffectiveness',
             'uploadcertificate',
-            'approve', 'complete', 'uploadattachment', 'refresh',
+            'approve', 'complete', 'refresh',
             'extract', 'confirm', 'reject',
             'save', 'test', 'send', 'create', 'purge',
         ];

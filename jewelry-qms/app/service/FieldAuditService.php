@@ -15,6 +15,7 @@ class FieldAuditService
         'Capa' => ['status', 'root_cause', 'corrective_action', 'verified_by', 'verified_date'],
         'Equipment' => ['status', 'next_calibration_date', 'last_calibration_date', 'site_id'],
         'AuditFinding' => ['status', 'capa_id'],
+        'QmsExternalChangeEvent' => ['status', 'old_source_id', 'new_source_id', 'effective_date', 'graph_snapshot_hash', 'close_reason'],
     ];
 
     protected static array $sensitiveFields = ['password'];

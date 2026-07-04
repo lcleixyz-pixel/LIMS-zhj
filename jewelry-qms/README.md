@@ -51,6 +51,41 @@ http://127.0.0.1:8000
 php think run -H 127.0.0.1 -p 8010
 ```
 
+### Docker 开发启动
+
+已提供本地开发用 `compose.yaml`，会启动 PHP/ThinkPHP 应用和 MySQL 8.4，并自动导入 `database/jewelry_qms.sql`：
+
+```bash
+docker compose up --build
+```
+
+浏览器访问：
+
+```text
+http://127.0.0.1:8010
+```
+
+常用测试命令：
+
+```bash
+docker compose run --rm app php tests/qms_validation_smoke.php
+docker compose run --rm app php tests/record_forms_instance_smoke.php
+docker compose run --rm app php tests/record_forms_schema_smoke.php
+```
+
+容器内使用 `docker/.env.docker` 覆盖数据库连接，避免修改本机 `.env`。Compose 会把仓库父级的 `docs/`、`参考/`、`现用文件/` 以只读方式挂入容器，供结构化文档和 DOCX 解析相关流程读取。如需重建数据库：
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+PDF 渲染依赖 Playwright，默认不随主应用镜像安装。需要单独验证 PDF 输出时执行：
+
+```bash
+docker compose --profile pdf run --rm pdf
+```
+
 ## 数据库初始化
 
 ```bash

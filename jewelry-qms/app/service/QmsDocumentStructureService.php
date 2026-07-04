@@ -954,6 +954,409 @@ class QmsDocumentStructureService
         return $rows;
     }
 
+    public static function exportKnowledgeInternal(?string $outputRoot = null): array
+    {
+        $root = self::knowledgeInternalOutputRoot($outputRoot);
+        foreach ([$root, $root . '/procedures', $root . '/manual'] as $dir) {
+            if (!is_dir($dir)) {
+                mkdir($dir, 0775, true);
+            }
+        }
+
+        $summary = [
+            'output_root' => self::relativeKnowledgePath($root),
+            'manual' => ['exported' => 0],
+            'procedures' => ['exported' => 0],
+            'reports' => [],
+            'documents' => [],
+            'issues' => [],
+            'enumeration' => self::procedureEnumerationExportContext(),
+        ];
+
+        $documents = QmsStructuredDocument::where('soft_delete', 0)
+            ->where('source_status', 'current')
+            ->whereIn('status', ['structured', 'published'])
+            ->whereIn('document_role', ['quality_manual', 'procedure'])
+            ->order('document_role', 'asc')
+            ->order('doc_number', 'asc')
+            ->select();
+
+        foreach ($documents as $structured) {
+            $role = (string)$structured->document_role;
+            $targetDir = $role === 'quality_manual' ? $root . '/manual' : $root . '/procedures';
+            $row = self::exportKnowledgeStructuredDocument($structured, $targetDir);
+            if ($row === []) {
+                continue;
+            }
+            $summary['documents'][] = $row;
+            if ($role === 'quality_manual') {
+                $summary['manual']['exported']++;
+            }
+            if ($role === 'procedure') {
+                $summary['procedures']['exported']++;
+            }
+            if (($row['issues'] ?? []) !== []) {
+                foreach ((array)$row['issues'] as $issue) {
+                    $summary['issues'][] = [
+                        'doc_number' => (string)($row['doc_number'] ?? ''),
+                        'title' => (string)($row['title'] ?? ''),
+                        'issue' => (string)$issue,
+                    ];
+                }
+            }
+        }
+
+        foreach ((array)($summary['enumeration']['included'] ?? []) as $entry) {
+            if ((string)($entry['document_kind'] ?? '') === 'procedure') {
+                continue;
+            }
+            $summary['issues'][] = [
+                'doc_number' => (string)($entry['doc_number'] ?? ''),
+                'title' => (string)($entry['title'] ?? ''),
+                'issue' => '编号文件不是程序标题，未作为程序文件结构化导出',
+            ];
+        }
+
+        $indexPath = $root . '/INTERNAL_EXPORT_INDEX.md';
+        $reportPath = $root . '/CONVERSION_REPORT.md';
+        $reportJsonPath = $root . '/CONVERSION_REPORT.json';
+        $summary['reports'] = [
+            'index' => self::relativeKnowledgePath($indexPath),
+            'markdown' => self::relativeKnowledgePath($reportPath),
+            'json' => self::relativeKnowledgePath($reportJsonPath),
+        ];
+        file_put_contents($indexPath, self::renderKnowledgeInternalIndex($summary));
+        file_put_contents($reportPath, self::renderKnowledgeConversionReport($summary));
+        file_put_contents($reportJsonPath, json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+
+        return $summary;
+    }
+
+    private static function exportKnowledgeStructuredDocument(QmsStructuredDocument $structured, string $targetDir): array
+    {
+        $document = $structured->document_id
+            ? Document::where('id', (string)$structured->document_id)->where('soft_delete', 0)->find()
+            : null;
+        $asset = $structured->source_asset_id
+            ? QmsDocumentAsset::where('id', (string)$structured->source_asset_id)->where('soft_delete', 0)->find()
+            : null;
+        $blocks = QmsDocumentBlock::where('structured_document_id', (string)$structured->id)
+            ->where('soft_delete', 0)
+            ->order('sort_order', 'asc')
+            ->select()
+            ->toArray();
+        $sourcePath = $document ? (string)$document->file_path : (string)($asset->original_path ?? '');
+        $metrics = self::sourceMetricsFromPath($sourcePath);
+        $renderedMarkdown = self::renderedMarkdownForPackage($structured);
+        if ($renderedMarkdown === '') {
+            $parts = ['# ' . trim((string)$structured->doc_number . ' ' . (string)$structured->title)];
+            foreach ($blocks as $block) {
+                $parts[] = trim((string)($block['markdown'] ?? ''));
+            }
+            $renderedMarkdown = implode("\n\n", array_filter($parts));
+        }
+
+        $issues = [];
+        if (!$metrics['source_available']) {
+            $issues[] = '源文件不可访问';
+        }
+        if ($metrics['source_available'] && (int)$metrics['source_line_count'] === 0) {
+            $issues[] = '源文件文本抽取为空';
+        }
+        if ($blocks === []) {
+            $issues[] = '无结构化内容块';
+        }
+        if ($renderedMarkdown === '') {
+            $issues[] = '无渲染 Markdown';
+        }
+        if ((string)$structured->render_status !== 'rendered') {
+            $issues[] = '结构化文档未标记为 rendered';
+        }
+
+        $role = (string)$structured->document_role;
+        $type = $role === 'quality_manual' ? 'internal_manual' : 'internal_procedure';
+        $relativePath = self::relativeKnowledgePath($targetDir . '/' . self::safeToken(trim((string)$structured->doc_number . '-' . (string)$structured->title, '-')) . '.md');
+        $absolutePath = self::absoluteKnowledgePath($relativePath);
+        $frontmatter = self::knowledgeFrontmatter([
+            'id' => self::stableToken((string)$structured->doc_number),
+            'doc_number' => (string)$structured->doc_number,
+            'title' => (string)$structured->title,
+            'type' => $type,
+            'status' => 'generated',
+            'source_path' => $sourcePath,
+            'source_status' => (string)$structured->source_status,
+            'structured_document_id' => (string)$structured->id,
+            'generated_from' => 'qms_structured_documents',
+            'manual_edit' => false,
+            'clause_refs' => self::clauseRefsForStructuredDocument((string)$structured->id),
+        ]);
+        $content = $frontmatter
+            . "\n> 本文件由 jewelry-qms 结构化库单向导出。请勿手工直改；修订应回到结构化库或解析器后重新导出。\n\n"
+            . trim($renderedMarkdown) . "\n";
+        file_put_contents($absolutePath, $content);
+
+        return [
+            'structured_document_id' => (string)$structured->id,
+            'document_id' => $document ? (string)$document->id : '',
+            'document_role' => $role,
+            'doc_number' => (string)$structured->doc_number,
+            'title' => (string)$structured->title,
+            'version' => (string)$structured->version,
+            'source_path' => $sourcePath,
+            'export_path' => $relativePath,
+            'block_count' => count($blocks),
+            'paragraph_count' => (int)$metrics['paragraph_count'],
+            'table_count' => (int)$metrics['table_count'],
+            'table_row_count' => (int)$metrics['table_row_count'],
+            'source_line_count' => (int)$metrics['source_line_count'],
+            'rendered_line_count' => count(preg_split('/\R/u', trim($renderedMarkdown)) ?: []),
+            'content_sha256' => hash('sha256', $content),
+            'issues' => $issues,
+        ];
+    }
+
+    private static function renderKnowledgeInternalIndex(array $summary): string
+    {
+        $lines = [
+            '# 内部体系文件导出索引',
+            '',
+            '> 由 `qms:seed-current-files --export-knowledge-internal` 生成；`knowledge/internal/` 不是人工维护源。',
+            '',
+            '- 质量手册导出：' . (int)($summary['manual']['exported'] ?? 0),
+            '- 程序文件导出：' . (int)($summary['procedures']['exported'] ?? 0),
+            '- 待复核问题：' . count((array)($summary['issues'] ?? [])),
+            '',
+            '| 类型 | 编号 | 标题 | 内容块 | 导出文件 |',
+            '|---|---|---|---:|---|',
+        ];
+        foreach ((array)($summary['documents'] ?? []) as $row) {
+            $lines[] = '| '
+                . self::markdownTableCell(self::knowledgeRoleLabel((string)($row['document_role'] ?? ''))) . ' | `'
+                . self::markdownTableCell((string)($row['doc_number'] ?? '')) . '` | '
+                . self::markdownTableCell((string)($row['title'] ?? '')) . ' | '
+                . (int)($row['block_count'] ?? 0) . ' | `'
+                . self::markdownTableCell((string)($row['export_path'] ?? '')) . '` |';
+        }
+
+        return implode("\n", $lines) . "\n";
+    }
+
+    private static function renderKnowledgeConversionReport(array $summary): string
+    {
+        $enumeration = (array)($summary['enumeration'] ?? []);
+        $lines = [
+            '# 内部文件结构化转换报告',
+            '',
+            '> 由 jewelry-qms 结构化库导出生成；报告只反映当前开发库和当前 `现用文件/` 源文件状态。',
+            '',
+            '## 汇总',
+            '',
+            '- 2022 程序目录文件总数：' . (int)($enumeration['total_files'] ?? 0),
+            '- 2022 程序目录编号文件：' . (int)($enumeration['numbered_files'] ?? 0),
+            '- 结构化导出质量手册：' . (int)($summary['manual']['exported'] ?? 0),
+            '- 结构化导出程序文件：' . (int)($summary['procedures']['exported'] ?? 0),
+            '- 待复核问题：' . count((array)($summary['issues'] ?? [])),
+            '',
+            '## 文件转换明细',
+            '',
+            '| 类型 | 编号 | 标题 | 源段落 | 表格 | 表格行 | 内容块 | 疑似丢失项 | 导出文件 |',
+            '|---|---|---|---:|---:|---:|---:|---|---|',
+        ];
+        foreach ((array)($summary['documents'] ?? []) as $row) {
+            $issues = (array)($row['issues'] ?? []);
+            $lines[] = '| '
+                . self::markdownTableCell(self::knowledgeRoleLabel((string)($row['document_role'] ?? ''))) . ' | `'
+                . self::markdownTableCell((string)($row['doc_number'] ?? '')) . '` | '
+                . self::markdownTableCell((string)($row['title'] ?? '')) . ' | '
+                . (int)($row['paragraph_count'] ?? 0) . ' | '
+                . (int)($row['table_count'] ?? 0) . ' | '
+                . (int)($row['table_row_count'] ?? 0) . ' | '
+                . (int)($row['block_count'] ?? 0) . ' | '
+                . self::markdownTableCell($issues === [] ? '无自动识别问题' : implode('；', $issues)) . ' | `'
+                . self::markdownTableCell((string)($row['export_path'] ?? '')) . '` |';
+        }
+
+        $lines[] = '';
+        $lines[] = '## 待复核问题';
+        $lines[] = '';
+        if (($summary['issues'] ?? []) === []) {
+            $lines[] = '_无自动识别问题；仍需按任务单抽检 5 份与 docx 原文逐段对照。_';
+        } else {
+            $lines[] = '| 编号 | 标题 | 问题 |';
+            $lines[] = '|---|---|---|';
+            foreach ((array)$summary['issues'] as $issue) {
+                $lines[] = '| `'
+                    . self::markdownTableCell((string)($issue['doc_number'] ?? '')) . '` | '
+                    . self::markdownTableCell((string)($issue['title'] ?? '')) . ' | '
+                    . self::markdownTableCell((string)($issue['issue'] ?? '')) . ' |';
+            }
+        }
+
+        $lines[] = '';
+        $lines[] = '## 导出边界';
+        $lines[] = '';
+        $lines[] = '- `knowledge/internal/` 为结构化库单向导出层，不能手工直改。';
+        $lines[] = '- 编号清单中的非程序标题文件会保留在枚举清单和本报告中，但不会作为程序文件卡片导出。';
+        $lines[] = '- 抽检结论、人工修复项和条款映射仍需在后续任务中完成。';
+
+        return implode("\n", $lines) . "\n";
+    }
+
+    private static function knowledgeFrontmatter(array $data): string
+    {
+        $lines = ['---'];
+        foreach ($data as $key => $value) {
+            if (is_bool($value)) {
+                $lines[] = $key . ': ' . ($value ? 'true' : 'false');
+                continue;
+            }
+            if (is_array($value)) {
+                if ($value === []) {
+                    $lines[] = $key . ': []';
+                    continue;
+                }
+                $lines[] = $key . ':';
+                foreach ($value as $item) {
+                    $lines[] = '  - ' . self::yamlScalar((string)$item);
+                }
+                continue;
+            }
+            $lines[] = $key . ': ' . self::yamlScalar((string)$value);
+        }
+        $lines[] = '---';
+
+        return implode("\n", $lines) . "\n";
+    }
+
+    private static function yamlScalar(string $value): string
+    {
+        return '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $value) . '"';
+    }
+
+    private static function clauseRefsForStructuredDocument(string $structuredDocumentId): array
+    {
+        $rows = Db::table('qms_document_block_links')
+            ->alias('l')
+            ->join('qms_document_blocks b', 'b.id = l.block_id')
+            ->join('qms_clauses c', 'c.id = l.clause_id')
+            ->where('b.structured_document_id', $structuredDocumentId)
+            ->where('b.soft_delete', 0)
+            ->where('l.soft_delete', 0)
+            ->where('c.soft_delete', 0)
+            ->distinct(true)
+            ->order('c.clause_number', 'asc')
+            ->column('c.clause_number');
+
+        return array_values(array_filter(array_unique(array_map('strval', $rows))));
+    }
+
+    private static function sourceMetricsFromPath(string $relativePath): array
+    {
+        $absolutePath = self::workspacePath($relativePath);
+        $lines = self::sourceLinesFromPath($relativePath);
+        $metrics = [
+            'source_available' => $relativePath !== '' && is_file($absolutePath),
+            'source_line_count' => count($lines),
+            'paragraph_count' => count(array_values(array_filter($lines, static fn (string $line): bool => trim($line) !== ''))),
+            'table_count' => 0,
+            'table_row_count' => 0,
+        ];
+        if (!$metrics['source_available'] || strtolower((string)pathinfo($absolutePath, PATHINFO_EXTENSION)) !== 'docx') {
+            $metrics['table_row_count'] = count(array_filter($lines, static fn (string $line): bool => str_contains($line, ' | ')));
+            $metrics['table_count'] = $metrics['table_row_count'] > 0 ? 1 : 0;
+            return $metrics;
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($absolutePath) !== true) {
+            return $metrics;
+        }
+        $xml = $zip->getFromName('word/document.xml');
+        $zip->close();
+        if (!is_string($xml) || $xml === '') {
+            return $metrics;
+        }
+        $dom = new DOMDocument();
+        $previous = libxml_use_internal_errors(true);
+        $loaded = $dom->loadXML($xml);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        if (!$loaded) {
+            return $metrics;
+        }
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+        $metrics['paragraph_count'] = (int)$xpath->query('//w:body/w:p')->length;
+        $metrics['table_count'] = (int)$xpath->query('//w:body/w:tbl')->length;
+        $metrics['table_row_count'] = (int)$xpath->query('//w:body/w:tbl//w:tr')->length;
+
+        return $metrics;
+    }
+
+    private static function procedureEnumerationExportContext(): array
+    {
+        $sourceRoot = self::workspacePath('现用文件');
+        if ($sourceRoot === '' || !is_dir($sourceRoot)) {
+            return ['total_files' => 0, 'numbered_files' => 0, 'excluded_files' => 0, 'included' => [], 'excluded' => []];
+        }
+
+        return CurrentFilesSeedService::enumerateProcedureFiles($sourceRoot);
+    }
+
+    private static function knowledgeRoleLabel(string $role): string
+    {
+        return [
+            'quality_manual' => '质量手册',
+            'procedure' => '程序文件',
+        ][$role] ?? $role;
+    }
+
+    private static function knowledgeInternalOutputRoot(?string $outputRoot): string
+    {
+        if ($outputRoot !== null && trim($outputRoot) !== '') {
+            $outputRoot = rtrim(trim($outputRoot), '/\\');
+            if (str_starts_with($outputRoot, DIRECTORY_SEPARATOR)) {
+                return $outputRoot;
+            }
+            $workspaceRoot = dirname(self::appRoot());
+            if ($workspaceRoot === DIRECTORY_SEPARATOR && is_dir('/knowledge')) {
+                return DIRECTORY_SEPARATOR . trim($outputRoot, '/\\');
+            }
+            return $workspaceRoot . DIRECTORY_SEPARATOR . trim($outputRoot, '/\\');
+        }
+        if (dirname(self::appRoot()) === DIRECTORY_SEPARATOR && is_dir('/knowledge')) {
+            return '/knowledge/internal';
+        }
+
+        return dirname(self::appRoot()) . '/knowledge/internal';
+    }
+
+    private static function absoluteKnowledgePath(string $relativePath): string
+    {
+        if (str_starts_with($relativePath, DIRECTORY_SEPARATOR)) {
+            return $relativePath;
+        }
+        if (dirname(self::appRoot()) === DIRECTORY_SEPARATOR && str_starts_with($relativePath, 'knowledge/')) {
+            return DIRECTORY_SEPARATOR . $relativePath;
+        }
+
+        return dirname(self::appRoot()) . DIRECTORY_SEPARATOR . $relativePath;
+    }
+
+    private static function relativeKnowledgePath(string $absolutePath): string
+    {
+        $absolutePath = str_replace('\\', '/', $absolutePath);
+        if (str_starts_with($absolutePath, '/knowledge/')) {
+            return ltrim($absolutePath, '/');
+        }
+        $workspaceRoot = str_replace('\\', '/', dirname(self::appRoot()));
+        if ($workspaceRoot !== '/' && str_starts_with($absolutePath, $workspaceRoot . '/')) {
+            return substr($absolutePath, strlen($workspaceRoot) + 1);
+        }
+
+        return ltrim($absolutePath, '/');
+    }
+
     public static function controlledDocumentStructureCoverage(): array
     {
         $byLevel = [];
@@ -4980,6 +5383,9 @@ class QmsDocumentStructureService
         if ($lines === []) {
             $lines = self::extractTextWithTextutil($absolutePath);
         }
+        if ($lines === [] && $extension === 'doc') {
+            $lines = self::extractLegacyDocUtf16TextLines($absolutePath);
+        }
         if ($lines === [] && in_array($extension, ['txt', 'md'], true)) {
             $content = file_get_contents($absolutePath);
             $lines = $content === false ? [] : (preg_split('/\R/u', $content) ?: []);
@@ -5069,6 +5475,69 @@ class QmsDocumentStructureService
         }
 
         return preg_split('/\R/u', $output) ?: [];
+    }
+
+    private static function extractLegacyDocUtf16TextLines(string $path): array
+    {
+        $content = file_get_contents($path);
+        if (!is_string($content) || $content === '') {
+            return [];
+        }
+        if (!preg_match_all('/(?:[\x09\x0a\x0d\x20-\x7E]\x00|[\x00-\xFF][\x30\x4E-\x9F\xFF]){8,}/s', $content, $matches)) {
+            return [];
+        }
+
+        $lines = [];
+        foreach ($matches[0] as $chunk) {
+            $text = @iconv('UTF-16LE', 'UTF-8//IGNORE', (string)$chunk);
+            if (!is_string($text) || $text === '') {
+                continue;
+            }
+            $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]+/u', "\n", $text) ?? $text;
+            foreach (preg_split('/\R/u', $text) ?: [] as $line) {
+                $line = self::normalizeSourceLine((string)$line);
+                if ($line === '') {
+                    continue;
+                }
+                if (!preg_match('/\p{Han}/u', $line) && !preg_match('/^[0-9]+(?:\.[0-9]+)*[.、．]?\s*\S+/u', $line)) {
+                    continue;
+                }
+                if (preg_match('/^(Root Entry|SummaryInformation|DocumentSummaryInformation|WordDocument|WpsCustomData|KSOProductBuildVer)$/iu', $line)) {
+                    continue;
+                }
+                $lines[] = $line;
+            }
+        }
+
+        $title = self::legacyDocTitleFromPath($path);
+        if ($title !== '') {
+            foreach ($lines as $index => $line) {
+                if (str_contains($line, $title)) {
+                    $lines = array_slice($lines, $index);
+                    break;
+                }
+            }
+        }
+
+        $deduped = [];
+        foreach ($lines as $line) {
+            if (($deduped[count($deduped) - 1] ?? null) === $line) {
+                continue;
+            }
+            $deduped[] = $line;
+        }
+
+        return $deduped;
+    }
+
+    private static function legacyDocTitleFromPath(string $path): string
+    {
+        $baseName = pathinfo($path, PATHINFO_FILENAME);
+        if (preg_match('/^([0-9]+(?:-[0-9]+)?)\s*[-－]\s*(20[0-9]{2})(.+)$/u', $baseName, $match)) {
+            return trim((string)$match[3]);
+        }
+
+        return '';
     }
 
     private static function documentLinesToMarkdown(array $lines, int $maxLines): string

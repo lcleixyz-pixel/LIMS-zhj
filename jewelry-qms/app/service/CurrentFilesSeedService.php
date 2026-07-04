@@ -338,38 +338,201 @@ class CurrentFilesSeedService
         return $document;
     }
 
-    private static function procedureRows(string $sourceRoot): array
+    public static function enumerateProcedureFiles(string $sourceRoot): array
     {
         $dir = rtrim($sourceRoot, '/\\') . '/程序文件/程序文件2022';
-        $rows = [];
-        foreach (array_merge(glob($dir . '/*.docx') ?: [], glob($dir . '/*.doc') ?: []) as $path) {
-            $baseName = pathinfo((string)$path, PATHINFO_FILENAME);
+        $paths = array_merge(glob($dir . '/*.docx') ?: [], glob($dir . '/*.doc') ?: []);
+        sort($paths, SORT_NATURAL);
+
+        $included = [];
+        $excluded = [];
+        foreach ($paths as $path) {
+            $path = (string)$path;
+            $baseName = pathinfo($path, PATHINFO_FILENAME);
+            $entry = [
+                'file_name' => basename($path),
+                'relative_path' => self::relativeWorkspacePath($path),
+                'extension' => strtolower((string)pathinfo($path, PATHINFO_EXTENSION)),
+                'status' => 'excluded',
+                'reason' => '',
+            ];
+
             if (preg_match('/(封面|目录|批准页|修改页)$/u', $baseName)) {
+                $entry['reason'] = 'metadata_page';
+                $excluded[] = $entry;
                 continue;
             }
             if (!preg_match('/^([0-9]+(?:-[0-9]+)?)\s*[-－]\s*(20[0-9]{2})(.+)$/u', $baseName, $match)) {
+                $entry['reason'] = 'not_numbered_pattern';
+                $excluded[] = $entry;
                 continue;
             }
+
             $title = trim((string)$match[3]);
-            if ($title === '' || !str_ends_with($title, '程序')) {
+            if ($title === '') {
+                $entry['reason'] = 'blank_numbered_title';
+                $excluded[] = $entry;
                 continue;
             }
+
             $number = (string)$match[1];
             $year = (string)$match[2];
+            $isProcedure = str_ends_with($title, '程序');
+            $entry['status'] = 'included';
+            $entry['reason'] = $isProcedure ? 'numbered_procedure' : 'numbered_non_procedure';
+            $entry['document_kind'] = $isProcedure ? 'procedure' : 'numbered_attachment';
+            $entry['number'] = $number;
+            $entry['year'] = $year;
+            $entry['old_doc_number'] = 'QP-' . $number;
+            $entry['doc_number'] = 'XZTC/CX-' . $number . '-' . $year;
+            $entry['title'] = $title;
+            $entry['version'] = $year;
+            $included[] = $entry;
+        }
+
+        usort($included, static fn (array $a, array $b): int => self::compareProcedureEntries($a, $b));
+        usort($excluded, static fn (array $a, array $b): int => strnatcmp((string)$a['file_name'], (string)$b['file_name']));
+
+        return [
+            'source_dir' => self::relativeWorkspacePath($dir),
+            'total_files' => count($paths),
+            'numbered_files' => count($included),
+            'excluded_files' => count($excluded),
+            'included' => array_values($included),
+            'excluded' => array_values($excluded),
+            'items' => array_values(array_merge($included, $excluded)),
+        ];
+    }
+
+    public static function writeProcedureManifest(array $manifest, ?string $outputDir = null): array
+    {
+        $workspaceRoot = dirname(self::appRoot());
+        $dir = $outputDir !== null && trim($outputDir) !== ''
+            ? (str_starts_with($outputDir, '/') ? rtrim($outputDir, '/\\') : $workspaceRoot . '/' . trim($outputDir, '/\\'))
+            : $workspaceRoot . '/knowledge/internal/procedures';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+
+        $jsonPath = $dir . '/PROCEDURE_FILE_MANIFEST.json';
+        $markdownPath = $dir . '/PROCEDURE_FILE_MANIFEST.md';
+        file_put_contents($jsonPath, json_encode($manifest, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        file_put_contents($markdownPath, self::renderProcedureManifestMarkdown($manifest));
+
+        return [
+            'json' => self::relativeWorkspacePath($jsonPath),
+            'markdown' => self::relativeWorkspacePath($markdownPath),
+        ];
+    }
+
+    private static function procedureRows(string $sourceRoot): array
+    {
+        $rows = [];
+        foreach (self::enumerateProcedureFiles($sourceRoot)['included'] as $entry) {
+            if ((string)($entry['document_kind'] ?? '') !== 'procedure') {
+                continue;
+            }
             $rows[] = [
                 'level' => 2,
-                'old_doc_number' => 'QP-' . $number,
-                'doc_number' => 'XZTC/CX-' . $number . '-' . $year,
-                'title' => $title,
-                'version' => $year,
-                'file_path' => self::relativeWorkspacePath((string)$path),
-                'file_name' => basename((string)$path),
-                'file_type' => strtolower((string)pathinfo((string)$path, PATHINFO_EXTENSION)),
+                'old_doc_number' => (string)$entry['old_doc_number'],
+                'doc_number' => (string)$entry['doc_number'],
+                'title' => (string)$entry['title'],
+                'version' => (string)$entry['version'],
+                'file_path' => (string)$entry['relative_path'],
+                'file_name' => (string)$entry['file_name'],
+                'file_type' => (string)$entry['extension'],
             ];
         }
-        usort($rows, static fn (array $a, array $b): int => strnatcmp((string)$a['doc_number'], (string)$b['doc_number']));
 
         return $rows;
+    }
+
+    private static function renderProcedureManifestMarkdown(array $manifest): string
+    {
+        $lines = [
+            '# 2022 程序文件枚举清单',
+            '',
+            '> 由 `qms:seed-current-files --enumerate-procedures` 生成；`knowledge/internal/` 是结构化库的单向导出层。',
+            '',
+            '- 源目录：`' . self::markdownCell((string)($manifest['source_dir'] ?? '')) . '`',
+            '- 文件总数：' . (int)($manifest['total_files'] ?? 0),
+            '- 编号文件：' . (int)($manifest['numbered_files'] ?? 0),
+            '- 排除文件：' . (int)($manifest['excluded_files'] ?? 0),
+            '',
+            '## 编号文件',
+            '',
+            '| # | 受控编号 | 类别 | 标题 | 源文件 |',
+            '|---:|---|---|---|---|',
+        ];
+
+        foreach ((array)($manifest['included'] ?? []) as $index => $item) {
+            $lines[] = '| ' . ((int)$index + 1)
+                . ' | `' . self::markdownCell((string)($item['doc_number'] ?? '')) . '`'
+                . ' | ' . self::markdownCell(self::procedureKindLabel((string)($item['document_kind'] ?? '')))
+                . ' | ' . self::markdownCell((string)($item['title'] ?? ''))
+                . ' | `' . self::markdownCell((string)($item['relative_path'] ?? '')) . '` |';
+        }
+
+        $lines[] = '';
+        $lines[] = '## 排除文件';
+        $lines[] = '';
+        $lines[] = '| 文件 | 原因 |';
+        $lines[] = '|---|---|';
+        foreach ((array)($manifest['excluded'] ?? []) as $item) {
+            $lines[] = '| `' . self::markdownCell((string)($item['relative_path'] ?? '')) . '`'
+                . ' | ' . self::markdownCell(self::procedureExclusionReasonLabel((string)($item['reason'] ?? ''))) . ' |';
+        }
+
+        $lines[] = '';
+
+        return implode("\n", $lines);
+    }
+
+    private static function compareProcedureEntries(array $a, array $b): int
+    {
+        $left = array_map('intval', explode('-', (string)($a['number'] ?? '')));
+        $right = array_map('intval', explode('-', (string)($b['number'] ?? '')));
+        $max = max(count($left), count($right));
+        for ($index = 0; $index < $max; $index++) {
+            if (!array_key_exists($index, $left)) {
+                return -1;
+            }
+            if (!array_key_exists($index, $right)) {
+                return 1;
+            }
+            if ($left[$index] !== $right[$index]) {
+                return $left[$index] <=> $right[$index];
+            }
+        }
+
+        $yearCompare = strcmp((string)($a['year'] ?? ''), (string)($b['year'] ?? ''));
+        if ($yearCompare !== 0) {
+            return $yearCompare;
+        }
+
+        return strnatcmp((string)($a['file_name'] ?? ''), (string)($b['file_name'] ?? ''));
+    }
+
+    private static function procedureExclusionReasonLabel(string $reason): string
+    {
+        return [
+            'metadata_page' => '封面/目录/批准页/修改页',
+            'not_numbered_pattern' => '不符合编号命名规则',
+            'blank_numbered_title' => '编号文件标题为空',
+        ][$reason] ?? $reason;
+    }
+
+    private static function procedureKindLabel(string $kind): string
+    {
+        return [
+            'procedure' => '程序文件',
+            'numbered_attachment' => '编号附件/表单',
+        ][$kind] ?? $kind;
+    }
+
+    private static function markdownCell(string $value): string
+    {
+        return str_replace(["\r", "\n", '|'], [' ', ' ', '\\|'], $value);
     }
 
     private static function workInstructionRows(string $sourceRoot): array
@@ -1039,8 +1202,16 @@ class CurrentFilesSeedService
         $workspace = dirname(self::appRoot());
         $absolutePath = str_replace('\\', '/', $absolutePath);
         $workspace = str_replace('\\', '/', $workspace);
-        if (str_starts_with($absolutePath, $workspace . '/')) {
+        if ($workspace !== '/' && str_starts_with($absolutePath, $workspace . '/')) {
             return substr($absolutePath, strlen($workspace) + 1);
+        }
+        foreach (['/knowledge', '/docs', '/参考', '/现用文件'] as $mountPath) {
+            if ($absolutePath === $mountPath || str_starts_with($absolutePath, $mountPath . '/')) {
+                return ltrim($absolutePath, '/');
+            }
+        }
+        if ($workspace === '/' && str_starts_with($absolutePath, '/')) {
+            return ltrim($absolutePath, '/');
         }
 
         return $absolutePath;
