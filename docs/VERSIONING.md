@@ -21,6 +21,7 @@
 | `feature/*` | 功能分支，如 `feature/doc-import` |
 | `fix/*` | 缺陷修复 |
 | `codex/*` | Codex 辅助修改分支 |
+| `archive/*` | 交付包、验证材料或历史快照归档分支 |
 
 合并至 `main` 前须确认：
 
@@ -28,6 +29,8 @@
 - `database/jewelry_qms.sql` 可导入
 - 默认部署路径和文档已更新
 - 不包含 `.env`、上传文件、运行时缓存或真实密码
+
+远端历史分支的现状、是否已被 `main` 吸收、以及可否清理，见 [BRANCH_GOVERNANCE.md](BRANCH_GOVERNANCE.md)。判断项目当前事实时，以 `main` 和该分支治理说明为准，不以旧的 `codex/*` 草案分支为准。
 
 ## 3. 版本号（SemVer）
 

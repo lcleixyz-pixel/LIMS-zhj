@@ -2,6 +2,16 @@
 
 本文件遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 新增
+
+- 新增 `docs/BRANCH_GOVERNANCE.md`，记录远端分支合并状态、归档分支用途和后续清理建议。
+
+### 变更
+
+- 在 README、文档总览和版本管理规范中补充远端分支治理入口。
+
 ## [2.1.0] - 2026-05-21
 
 ### 新增
