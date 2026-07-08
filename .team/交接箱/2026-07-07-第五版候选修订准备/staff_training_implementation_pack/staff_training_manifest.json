@@ -1,0 +1,55 @@
+{
+  "generated_at": "2026-07-07T20:18:28",
+  "status": "staff_training_implementation_no_database_write",
+  "stage_dir": ".team/交接箱/2026-07-07-第五版候选修订准备",
+  "output_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/staff_training_implementation_pack",
+  "source_files": {
+    "training_rehearsal": "controlled_release_rehearsal/03-培训宣贯演练清单.csv",
+    "human_review_workbench": "human_review_workbench/00-人工评审总览.md",
+    "field_catalog": "record_template_field_catalog/00-字段字典总览.md",
+    "manual_revision_path": "manual_revision_path_pack/00-质量手册修订换版路径总览.md",
+    "release_execution_template": "release_execution_template_pack/templates/JL-REL-03-体系文件培训宣贯与理解确认记录.md"
+  },
+  "files": {
+    "manifest": "staff_training_manifest.json",
+    "overview": "00-机构人员学习实施总览.md",
+    "role_matrix": "01-岗位学习任务矩阵.csv",
+    "material_index": "02-学习材料入口清单.csv",
+    "question_bank": "03-理解确认题库.csv",
+    "feedback_template": "04-问题反馈与修订回填模板.csv",
+    "lims_boundary": "05-jewelry-qms试运行学习边界确认.md",
+    "training_record_template": "06-体系文件学习实施与理解确认记录候选模板.md",
+    "readme": "README.md",
+    "role_cards_dir": "role_cards"
+  },
+  "counts": {
+    "training_source_items": 29,
+    "role_learning_tasks": 88,
+    "learning_materials": 12,
+    "comprehension_questions": 12,
+    "feedback_rows": 8,
+    "role_cards": 10,
+    "required_before_effective_source_items": 28,
+    "database_write_performed": 0
+  },
+  "guardrails": [
+    "本包只用于机构人员学习、理解确认和问题反馈准备，不写数据库。",
+    "本包不代表真实培训完成、人工评审通过、文件批准、受控发布或写库授权。",
+    "本包不代表真实培训记录形成。",
+    "本包不代表人工评审通过。",
+    "所有学习任务和反馈模板保持 pending/空白，真实意见需进入人工评审回填预览。",
+    "资质状态口径：已取得 CMA，CNAS 申请中；不得表述为已取得 CNAS。",
+    "jewelry-qms 仍为建设中系统，只进入实施计划、试运行和治理准备材料，不写入质量手册正文。",
+    "模拟学习和理解确认材料不得作为真实培训记录；如需试填，必须保留 SIMULATED_TRAINING_NOT_REAL_RECORD 标识。",
+    "NO_DATABASE_WRITE",
+    "NO_SOURCE_DOCUMENT_MODIFICATION",
+    "TEST_COMPLETION_NOT_PRODUCTION_EVIDENCE"
+  ],
+  "pending_training_items": 0,
+  "pending_confirmation_items": 0,
+  "pending_feedback_items": 0,
+  "ready_for_lims_apply": "yes",
+  "test_completion_note": "测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。",
+  "production_record": false,
+  "test_completion_for_rehearsal": "yes"
+}

@@ -1,0 +1,13 @@
+material_id,category,title,path,primary_audience,purpose,must_read_before_effective
+MAT-001,manual,质量手册第五版候选稿,10-质量手册第五版候选稿.md,质量负责人；文件管理员；管理层；授权签字人,理解候选手册正文和条款覆盖，不代表已批准发布。,yes
+MAT-002,revision,第四版到第五版候选修订说明,11-第四版到第五版候选修订说明.md,质量负责人；文件管理员；最高管理者,核对修订原因、影响范围和批准前待确认事项。,yes
+MAT-003,procedure_catalog,支持性程序目录 2022 版,12-支持性程序目录-2022版.md,文件管理员；质量负责人；过程负责人,确认当前程序目录以 LIMS 导出的 2022 清单为基线。,yes
+MAT-004,record_templates,记录模板候选清单,13-记录模板包-候选清单.md,质量负责人；过程负责人；填写人员；复核人员,了解 26 个候选记录模板的适用条款和用途。,yes
+MAT-005,field_catalog,记录模板字段字典,record_template_field_catalog/00-字段字典总览.md,文件管理员；过程负责人；填写人员；复核人员,逐字段确认填写责任、必填性、更正规则、保存期限和保密等级。,yes
+MAT-006,full_trial,26 个记录模板全量模拟试填,record_template_full_trial_pack/README.md,填写人员；复核人员；文件管理员,用模拟样表检查字段可填性，不作为真实运行记录。,yes
+MAT-007,manual_revision,质量手册修订/换版路径包,manual_revision_path_pack/00-质量手册修订换版路径总览.md,文件管理员；质量负责人；最高管理者,确认 XZTC/SC 必须走既有文件修订/换版路径。,yes
+MAT-008,release,受控发布治理演练包,controlled_release_rehearsal/00-受控发布演练总览.md,文件管理员；质量负责人；培训责任人,确认审批签核、培训宣贯、旧版处置和有效性检查安排。,yes
+MAT-009,execution_records,发布执行记录模板包,release_execution_template_pack/00-发布执行记录模板总览.md,文件管理员；培训责任人；系统管理员,确认发布执行时应留下哪些记录模板和字段。,yes
+MAT-010,lims,jewelry-qms 实施计划与验证方案,14-jewelry-qms实施计划与验证方案.md,系统管理员；质量负责人；试运行人员,明确 jewelry-qms 当前只作为建设中系统和试运行对象。,no
+MAT-011,human_review,人工评审工作台,human_review_workbench/00-人工评审总览.md,所有评审角色,承接 67 个 pending 决策，作为正式回填前的人审工作面。,yes
+MAT-012,command_gate,LIMS 预导入命令使用说明与阻断项,23-LIMS预导入命令使用说明与阻断项.md,文件管理员；系统管理员；质量负责人,理解 dry-run、apply、rehearsal、write-preview 的边界和阻断项。,yes

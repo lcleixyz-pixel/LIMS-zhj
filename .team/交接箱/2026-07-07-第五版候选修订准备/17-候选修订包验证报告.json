@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-07-07T13:04:33",
+  "stage_dir": ".team/交接箱/2026-07-07-第五版候选修订准备",
+  "status": "passed",
+  "counts": {
+    "expected_clauses": 29,
+    "manual_clauses_present": 29,
+    "manifest_2022_codes": 38,
+    "manifest_2022_procedure_codes": 37,
+    "manifest_2022_attachment_form_codes": 1,
+    "catalog_codes": 38,
+    "manual_xztc_codes": 38,
+    "findings": 0
+  },
+  "findings": []
+}

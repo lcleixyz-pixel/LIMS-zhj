@@ -1,0 +1,31 @@
+{
+  "status": "test_completed",
+  "stage_dir": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.team/交接箱/2026-07-07-第五版候选修订准备",
+  "date": "2026-07-08",
+  "actor": "测试审核人",
+  "reviewer": "测试复核人",
+  "production_record": false,
+  "guardrails": [
+    "仅用于测试链路验证",
+    "不代表正式受控发布记录",
+    "不写 LIMS 数据库",
+    "不修改现用 Word 受控文件"
+  ],
+  "changes": {
+    "human_review_rows": 67,
+    "manual_revision_rows": 20,
+    "staff_training_rows": 120,
+    "stage2_review_rows": 401,
+    "stage2_review_preview_rows": 154,
+    "governance_readiness_rows": 409,
+    "governance_closure_rows": 792,
+    "governance_closure_execution_rows": 566,
+    "governance_closure_pilot_rows": 15,
+    "operator_workbook_rows": 65,
+    "operator_handback_rows": 65,
+    "pilot_return_preview_rows": 15,
+    "pilot_source_update_rows": 55,
+    "governance_closure_preview_rows": 396,
+    "governance_readiness_refresh_rows": 409
+  }
+}

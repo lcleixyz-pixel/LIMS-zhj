@@ -1,0 +1,6 @@
+pilot_batch_id,execution_batch_id,owner_role,gate_id,task_group,task_count,blocking_count,selection_reason,source_paths,pilot_status,required_before_closure_preview,not_imported,not_real_record
+GCPB-001,GCEB-002,业务受理/技术负责人,GR-03,record_template_field_confirmation,1,1,优先选择阻断数量少、便于人工试跑闭环的批次。,record_template_field_catalog/01-模板字段索引.csv,completed,yes,yes,yes
+GCPB-002,GCEB-003,全体影响检测活动人员,GR-07,staff_learning_task,1,1,优先选择阻断数量少、便于人工试跑闭环的批次。,staff_training_implementation_pack/01-岗位学习任务矩阵.csv,completed,yes,yes,yes
+GCPB-003,GCEB-004,内审组长,GR-03,record_template_field_confirmation,1,1,优先选择阻断数量少、便于人工试跑闭环的批次。,record_template_field_catalog/01-模板字段索引.csv,completed,yes,yes,yes
+GCPB-004,GCEB-005,原记录人员/复核人员,GR-03,record_template_field_confirmation,1,1,优先选择阻断数量少、便于人工试跑闭环的批次。,record_template_field_catalog/01-模板字段索引.csv,completed,yes,yes,yes
+GCPB-005,GCEB-006,复核人/授权签字人,GR-03,record_template_field_confirmation,1,1,优先选择阻断数量少、便于人工试跑闭环的批次。,record_template_field_catalog/01-模板字段索引.csv,completed,yes,yes,yes

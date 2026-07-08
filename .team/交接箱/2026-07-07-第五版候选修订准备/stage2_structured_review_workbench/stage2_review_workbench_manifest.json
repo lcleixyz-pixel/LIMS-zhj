@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-07-07T20:49:28",
+  "status": "stage2_structured_review_workbench_no_database_write",
+  "source_preview_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_stage2_write_preview_package",
+  "source_preview_status": "stage2_write_preview_no_database_write",
+  "workbench_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/stage2_structured_review_workbench",
+  "guardrails": [
+    "本工作台只用于第二阶段结构化导入人工复核准备，不写数据库。",
+    "本工作台不代表第二阶段已导入，不代表人工评审通过、受控发布或正式写库授权。",
+    "所有人工决策保持 pending/空白，真实意见需人工填写并另行复核。",
+    "第二阶段必须先完成人工评审、第一阶段文件/模板写入、质量手册修订/换版路径确认和人员学习实施确认。",
+    "资质状态口径：已取得 CMA，CNAS 申请中；不得表述为已取得 CNAS。",
+    "jewelry-qms 仍为建设中系统，只进入实施计划、演练和治理准备材料，不写入质量手册正文。",
+    "NO_DATABASE_WRITE",
+    "NO_SOURCE_DOCUMENT_MODIFICATION",
+    "TEST_COMPLETION_NOT_PRODUCTION_EVIDENCE"
+  ],
+  "counts": {
+    "structured_documents_preview_rows": 65,
+    "block_review_rows": 29,
+    "link_review_rows": 125,
+    "clause_summary_rows": 29,
+    "target_backreference_rows": 64,
+    "decision_rows": 154,
+    "pending_decisions": 0,
+    "procedure_document_links": 93,
+    "attachment_form_document_links": 2,
+    "record_form_template_links": 30,
+    "unresolved_targets": 0,
+    "database_write_performed": 0
+  },
+  "files": {
+    "manifest": "stage2_review_workbench_manifest.json",
+    "overview": "00-第二阶段结构化导入人工复核总览.md",
+    "block_review_matrix": "01-手册块复核矩阵.csv",
+    "link_review_matrix": "02-块级链接复核矩阵.csv",
+    "clause_target_summary": "03-按条款目标统计.csv",
+    "target_backreference": "04-目标文件记录反查清单.csv",
+    "decision_template": "05-人工复核意见回填模板.csv",
+    "readme": "README.md"
+  },
+  "review_status": "approved",
+  "pending_decisions": 0,
+  "approved_decisions": 401,
+  "ready_for_lims_apply": "yes",
+  "test_completion_note": "测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。",
+  "production_record": false
+}

@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-07-08T19:57:17",
+  "handback_dir": "../.team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_pilot_operator_handback",
+  "status": "passed",
+  "readiness": "operator_handback_ready_for_return_preview",
+  "ready_for_pilot_return_preview": "yes",
+  "ready_for_source_workbench_update": "no",
+  "ready_for_lims_apply": "no",
+  "pilot_items": 5,
+  "field_fill_items": 55,
+  "handoff_check_items": 5,
+  "task_cards": 5,
+  "pending_workbook_items": 0,
+  "pending_field_items": 0,
+  "pending_handoff_items": 0,
+  "completed_field_items": 55,
+  "completed_handoff_items": 5,
+  "source_workbench_modified": 0,
+  "database_write_performed": 0,
+  "findings": []
+}

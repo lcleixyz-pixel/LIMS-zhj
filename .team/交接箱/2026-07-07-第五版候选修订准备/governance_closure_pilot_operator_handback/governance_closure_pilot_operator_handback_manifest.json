@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-07-08T18:28:15",
+  "status": "governance_closure_pilot_operator_handback_no_write",
+  "readiness": "ready_for_pilot_return_preview",
+  "source_workbook_dir": "../.team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_pilot_operator_workbook",
+  "source_workbook_status": "governance_closure_pilot_operator_workbook_no_write",
+  "ready_for_pilot_return_preview": "yes",
+  "ready_for_source_workbench_update": "no",
+  "ready_for_lims_apply": "no",
+  "guardrails": [
+    "本包只读取 governance_closure_pilot_operator_workbook，不写数据库。",
+    "本包不修改 governance_closure_pilot_operator_workbook、试点包、源工作台、治理关闭工作台或任何现用 Word 文件。",
+    "本包用于真实人员交回后的验收准备，不代表人工评审通过，不代表真实培训完成，不代表受控发布。",
+    "本包初始状态全部 pending；只有真实人员补齐证据值、执行人、复核人、日期和签核交接后，复跑校验才可能进入 ready_for_pilot_return_preview=yes。",
+    "本包不得使用模拟执行人、模拟复核人或 SIMULATED 标识替代真实人员和真实证据。",
+    "资质状态口径：已取得 CMA，CNAS 申请中；不得表述为已取得 CNAS。",
+    "以 LIMS 当前导出的 2022 程序清单作为现行程序目录。",
+    "jewelry-qms 仍为建设中系统，只进入实施计划、演练和治理准备材料，不写入质量手册正文。",
+    "NO_DATABASE_WRITE",
+    "NO_SOURCE_DOCUMENT_MODIFICATION",
+    "TEST_COMPLETION_NOT_PRODUCTION_EVIDENCE"
+  ],
+  "files": {
+    "manifest": "governance_closure_pilot_operator_handback_manifest.json",
+    "overview": "00-真实执行交回总览.md",
+    "master": "01-真实执行交回主清单.csv",
+    "field_checklist": "02-真实逐字段交回清单.csv",
+    "handoff_checklist": "03-真实签核交接交回表.csv",
+    "acceptance": "04-交回验收与复跑说明.md",
+    "readme": "README.md",
+    "task_card_dir": "task_cards"
+  },
+  "counts": {
+    "pilot_items": 5,
+    "field_fill_items": 55,
+    "handoff_check_items": 5,
+    "task_cards": 5,
+    "initial_pending_workbook_items": 5,
+    "initial_pending_field_items": 55,
+    "initial_pending_handoff_items": 5,
+    "source_missing_fields": 55,
+    "source_blocked_patches": 55,
+    "source_workbench_modified": 0,
+    "database_write_performed": 0
+  },
+  "pending_workbook_items": 0,
+  "pending_field_items": 0,
+  "pending_handoff_items": 0,
+  "completed_field_items": "all",
+  "completed_handoff_items": "all",
+  "test_completion_note": "测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。",
+  "production_record": false
+}

@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-07-07T12:43:35",
+  "preview_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/human_review_decision_preview",
+  "status": "passed",
+  "readiness": "no_proposed_decisions",
+  "counts": {
+    "decision_items_total": 67,
+    "proposed_changes": 0,
+    "blocking_after_preview": 67,
+    "high_issues": 0,
+    "medium_issues": 0,
+    "findings": 0
+  },
+  "findings": []
+}

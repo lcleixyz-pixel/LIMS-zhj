@@ -1,0 +1,5 @@
+scope,target_type,decision_rows,proposed_decisions,not_proposed,pending_decisions,accepted_for_preview,invalid_decisions,missing_review_comments,blocking_items
+block,manual_block,29,29,0,0,29,0,0,0
+link,attachment_form_document,2,2,0,0,2,0,0,0
+link,procedure_document,93,93,0,0,93,0,0,0
+link,record_form_template,30,30,0,0,30,0,0,0

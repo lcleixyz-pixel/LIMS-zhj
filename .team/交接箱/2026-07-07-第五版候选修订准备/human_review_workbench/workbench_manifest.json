@@ -1,0 +1,47 @@
+{
+  "generated_at": "2026-07-07T12:27:28",
+  "status": "human_review_workbench_pending_no_database_write",
+  "stage_dir": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.team/交接箱/2026-07-07-第五版候选修订准备",
+  "review_dir": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.team/交接箱/2026-07-07-第五版候选修订准备/human_review_pack",
+  "preimport_dir": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.team/交接箱/2026-07-07-第五版候选修订准备/lims_preimport_package",
+  "trial_dir": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.team/交接箱/2026-07-07-第五版候选修订准备/record_template_full_trial_pack",
+  "workbench_dir": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.team/交接箱/2026-07-07-第五版候选修订准备/human_review_workbench",
+  "boundary": [
+    "本工作台为人工评审辅助材料，不写数据库。",
+    "本工作台不代表第五版候选稿、记录模板或 LIMS 预导入包已经审核批准。",
+    "本工作台不修改 human_review_pack 中的 human_decision。",
+    "decision_update_template.csv 的 current_decision 保持 pending，new_human_decision 初始为空，不能视为批准。",
+    "正式 apply 仍必须以 human_review_pack 全部通过和用户明确授权为准。"
+  ],
+  "counts": {
+    "decision_items_total": 67,
+    "manual_clause_items": 29,
+    "record_template_items": 26,
+    "attachment_disposition_items": 1,
+    "preapply_gate_items": 11,
+    "pending_decisions": 67,
+    "reviewer_roles": 10
+  },
+  "reviewer_roles": [
+    "Codex dry-run",
+    "技术负责人",
+    "文件管理员",
+    "文件管理员复核",
+    "最高管理者",
+    "最高管理者授权角色",
+    "用户",
+    "相关过程负责人",
+    "设备管理员",
+    "质量负责人"
+  ],
+  "files": {
+    "overview": "00-人工评审总览.md",
+    "role_checklist": "01-按角色评审清单.md",
+    "clause_workbench": "02-条款评审工作台.md",
+    "template_workbench": "03-记录模板评审工作台.md",
+    "attachment_workbench": "04-05-02归属判定工作台.md",
+    "gate_workbench": "05-apply前闸门工作台.md",
+    "decision_template": "decision_update_template.csv",
+    "manifest": "workbench_manifest.json"
+  }
+}

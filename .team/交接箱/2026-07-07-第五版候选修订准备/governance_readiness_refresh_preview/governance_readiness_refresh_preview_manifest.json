@@ -1,0 +1,73 @@
+{
+  "generated_at": "2026-07-07T22:08:55",
+  "status": "governance_readiness_refresh_preview_no_database_write",
+  "source_dashboard_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_readiness_dashboard",
+  "source_closure_preview_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_decision_preview",
+  "readiness": "ready_for_lims_apply",
+  "ready_for_lims_apply": "yes",
+  "files": {
+    "manifest": "governance_readiness_refresh_preview_manifest.json",
+    "overview": "00-治理就绪刷新预览总览.md",
+    "gate_refresh_preview": "01-总闸门刷新预览.csv",
+    "task_refresh_preview": "02-人工任务刷新预览.csv",
+    "blocking_tasks": "03-仍阻断任务清单.csv",
+    "change_summary": "04-刷新差异摘要.csv",
+    "readme": "README.md"
+  },
+  "counts": {
+    "gate_rows": 13,
+    "task_preview_rows": 396,
+    "accepted_task_closures": 396,
+    "refreshed_blocking_tasks": 0,
+    "refreshed_blocking_gates": 0,
+    "database_write_performed": 0
+  },
+  "source_counts": {
+    "governance_readiness": {
+      "gate_rows": 13,
+      "blocking_gates": 12,
+      "human_task_rows": 396,
+      "blocking_tasks": 392,
+      "human_review_pending": 67,
+      "field_confirmation_items": 437,
+      "manual_revision_pending": 5,
+      "release_approval_pending": 28,
+      "release_execution_templates_pending": 6,
+      "staff_learning_pending": 88,
+      "staff_learning_blocking": 84,
+      "comprehension_questions_pending": 12,
+      "feedback_pending": 8,
+      "write_preview_rows_pending_review": 95,
+      "stage2_review_pending": 154,
+      "stage2_preview_blocking": 154,
+      "database_write_performed": 0
+    },
+    "governance_closure_preview": {
+      "decision_items": 396,
+      "proposed_closures": 0,
+      "not_proposed": 396,
+      "accepted_for_preview": 0,
+      "invalid_closures": 0,
+      "missing_required_fields": 0,
+      "blocking_items": 392,
+      "database_write_performed": 0
+    }
+  },
+  "guardrails": [
+    "本预览包只读取 governance_readiness_dashboard 和 governance_closure_decision_preview 推导刷新结果，不写数据库。",
+    "本预览包不修改 governance_readiness_dashboard、governance_closure_workbench、governance_closure_decision_preview、人工评审包、第二阶段复核工作台或任何现用 Word 文件。",
+    "本预览包不代表人工评审通过，不代表真实培训完成，不代表受控发布，不代表正式写库授权。",
+    "只有治理关闭意见预览中 accepted_for_preview 的任务才会在本预览中模拟关闭；其它 pending、空白、缺证据或仍阻断项保持阻断。",
+    "资质状态口径：已取得 CMA，CNAS 申请中；不得表述为已取得 CNAS。",
+    "以 LIMS 当前导出的 2022 程序清单作为现行程序目录。",
+    "jewelry-qms 仍为建设中系统，只进入实施计划、演练和治理准备材料，不写入质量手册正文。",
+    "NO_DATABASE_WRITE",
+    "NO_SOURCE_DOCUMENT_MODIFICATION",
+    "TEST_COMPLETION_NOT_PRODUCTION_EVIDENCE"
+  ],
+  "refreshed_blocking_tasks": 0,
+  "refreshed_blocking_gates": 0,
+  "test_completion_note": "测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。",
+  "production_record": false,
+  "accepted_task_closures": 396
+}

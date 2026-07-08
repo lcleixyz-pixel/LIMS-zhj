@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-07-07T12:43:22",
+  "trial_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/record_template_full_trial_pack",
+  "preimport_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_preimport_package",
+  "status": "passed",
+  "counts": {
+    "trial_instances": 26,
+    "json_instances": 26,
+    "markdown_files": 26,
+    "selected_template_codes": 26,
+    "findings": 0
+  },
+  "findings": []
+}

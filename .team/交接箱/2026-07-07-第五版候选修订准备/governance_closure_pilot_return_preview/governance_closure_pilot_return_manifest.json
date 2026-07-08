@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-07-07T23:03:45",
+  "status": "governance_closure_pilot_return_preview_no_database_write",
+  "source_pilot_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_pilot_pack",
+  "source_closure_workbench_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_workbench",
+  "source_pilot_status": "governance_closure_pilot_pack_no_database_write",
+  "source_workbench_status": "governance_closure_workbench_no_database_write",
+  "readiness": "ready_for_governance_closure_preview",
+  "ready_for_governance_closure_preview": "yes",
+  "ready_for_lims_apply": "no",
+  "files": {
+    "manifest": "governance_closure_pilot_return_manifest.json",
+    "overview": "00-试点回填预览总览.md",
+    "mapping": "01-试点证据到源工作台映射.csv",
+    "source_preview": "02-拟回填源行预览.csv",
+    "missing_fields": "03-仍缺字段清单.csv",
+    "rerun_path": "04-复跑路径清单.md",
+    "readme": "README.md"
+  },
+  "counts": {
+    "pilot_evidence_rows": 5,
+    "mapping_rows": 5,
+    "source_preview_rows": 10,
+    "missing_field_rows": 0,
+    "ready_return_items": 5,
+    "blocking_return_items": 0,
+    "database_write_performed": 0
+  },
+  "source_counts": {
+    "pilot": {
+      "pilot_batches": 5,
+      "pilot_evidence_rows": 5,
+      "pilot_handoff_rows": 5,
+      "blocking_pilot_items": 5,
+      "pending_pilot_batches": 5,
+      "pending_pilot_evidence": 5,
+      "pending_pilot_handoffs": 5,
+      "database_write_performed": 0
+    },
+    "workbench": {
+      "gate_rows": 13,
+      "role_task_batches": 60,
+      "evidence_rows": 396,
+      "closure_rows": 396,
+      "blocking_closure_items": 392,
+      "open_blocking_items": 392,
+      "accepted_closures": 0,
+      "pending_closures": 396,
+      "database_write_performed": 0
+    }
+  },
+  "guardrails": [
+    "本回填预览只读取 governance_closure_pilot_pack 和 governance_closure_workbench，不写数据库。",
+    "本回填预览不修改 governance_closure_pilot_pack、governance_closure_workbench、governance_closure_decision_preview、governance_readiness_dashboard 或任何现用 Word 文件。",
+    "本回填预览不代表人工评审通过，不代表真实培训完成，不代表受控发布，不代表正式写库授权。",
+    "试点证据、关闭意见、复核人、日期、签核和交接均齐备后，才可由人工回填源工作台并重新生成治理关闭意见预览。",
+    "资质状态口径：已取得 CMA，CNAS 申请中；不得表述为已取得 CNAS。",
+    "以 LIMS 当前导出的 2022 程序清单作为现行程序目录。",
+    "jewelry-qms 仍为建设中系统，只进入实施计划、演练和治理准备材料，不写入质量手册正文。",
+    "NO_DATABASE_WRITE",
+    "NO_SOURCE_DOCUMENT_MODIFICATION",
+    "TEST_COMPLETION_NOT_PRODUCTION_EVIDENCE"
+  ],
+  "missing_field_rows": 0,
+  "ready_return_items": 5,
+  "blocking_return_items": 0,
+  "test_completion_note": "测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。",
+  "production_record": false
+}

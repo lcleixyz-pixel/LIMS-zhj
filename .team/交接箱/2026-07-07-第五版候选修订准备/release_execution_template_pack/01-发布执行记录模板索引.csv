@@ -1,0 +1,7 @@
+template_code,template_name,applicable_clauses,related_procedures,responsible_position,trigger_time,source_rehearsal_file,source_rehearsal_rows,field_count,required_field_count,review_status,markdown_file
+JL-REL-01,体系文件审批签核记录,8.2、8.3、8.4,XZTC/CX-08-2022；XZTC/CX-19-2022,文件管理员/质量负责人,候选文件或记录模板提交审核批准时,02-审批签核演练清单.csv,28,20,15,pending_human_review,templates/JL-REL-01-体系文件审批签核记录.md
+JL-REL-02,文件发布发放与现行状态确认记录,8.3、8.4,XZTC/CX-08-2022；XZTC/CX-19-2022,文件管理员,受控文件批准发布、发放、回收或现行状态确认时,01-发布对象清单.csv,65,20,15,pending_human_review,templates/JL-REL-02-文件发布发放与现行状态确认记录.md
+JL-REL-03,体系文件培训宣贯与理解确认记录,6.2、8.2、8.3、8.4,XZTC/CX-01-2022；XZTC/CX-01-02-2022；XZTC/CX-08-2022；XZTC/CX-19-2022,质量负责人/文件管理员/培训责任人,新文件发布、生效前或记录模板启用前,03-培训宣贯演练清单.csv,29,20,16,pending_human_review,templates/JL-REL-03-体系文件培训宣贯与理解确认记录.md
+JL-REL-04,旧版文件回收作废与留存记录,8.3、8.4,XZTC/CX-08-2022；XZTC/CX-19-2022,文件管理员,新版文件生效、旧版文件回收、作废留存或销毁时,04-旧版处置演练清单.csv,28,20,15,pending_human_review,templates/JL-REL-04-旧版文件回收作废与留存记录.md
+JL-REL-05,实施有效性检查与问题跟踪记录,8.6、8.8、8.9,XZTC/CX-18-2022；XZTC/CX-20-2022；XZTC/CX-21-2022,质量负责人/内审员/过程负责人,新版体系文件或记录模板试运行后、内审或管理评审输入前,07-实施有效性检查清单.csv,4,20,16,pending_human_review,templates/JL-REL-05-实施有效性检查与问题跟踪记录.md
+JL-REL-06,jewelry-qms试运行与适用性确认记录,7.11、8.3、8.4,XZTC/CX-08-2022；XZTC/CX-19-2022；XZTC/CX-26-2022,质量负责人/系统管理员/文件管理员,jewelry-qms 试运行、功能变更或拟纳入体系运行前,07-实施有效性检查清单.csv,4,20,16,pending_human_review,templates/JL-REL-06-jewelry-qms试运行与适用性确认记录.md

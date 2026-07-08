@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-07-07T23:17:38",
+  "status": "governance_closure_pilot_source_update_rehearsal_no_write",
+  "source_pilot_return_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_pilot_return_preview",
+  "source_closure_workbench_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_workbench",
+  "source_pilot_return_status": "governance_closure_pilot_return_preview_no_database_write",
+  "source_workbench_status": "governance_closure_workbench_no_database_write",
+  "readiness": "ready_for_source_workbench_update",
+  "ready_for_source_workbench_update": "yes",
+  "ready_for_governance_closure_preview": "yes",
+  "ready_for_lims_apply": "no",
+  "files": {
+    "manifest": "governance_closure_pilot_source_update_manifest.json",
+    "overview": "00-源工作台回填补丁预演总览.md",
+    "patch_preview": "01-源工作台回填补丁预览.csv",
+    "blocked_patches": "02-阻断补丁清单.csv",
+    "manual_instructions": "03-人工回填操作说明.md",
+    "readme": "README.md"
+  },
+  "counts": {
+    "source_preview_rows": 10,
+    "missing_field_rows": 0,
+    "patch_rows": 55,
+    "ready_patch_rows": 55,
+    "blocked_patch_rows": 0,
+    "manual_update_candidate_rows": 55,
+    "source_workbench_modified": 0,
+    "database_write_performed": 0
+  },
+  "source_counts": {
+    "pilot_return": {
+      "pilot_evidence_rows": 5,
+      "mapping_rows": 5,
+      "source_preview_rows": 10,
+      "missing_field_rows": 55,
+      "ready_return_items": 0,
+      "blocking_return_items": 5,
+      "database_write_performed": 0
+    },
+    "workbench": {
+      "gate_rows": 13,
+      "role_task_batches": 60,
+      "evidence_rows": 396,
+      "closure_rows": 396,
+      "blocking_closure_items": 392,
+      "open_blocking_items": 392,
+      "accepted_closures": 0,
+      "pending_closures": 396,
+      "database_write_performed": 0
+    }
+  },
+  "guardrails": [
+    "本补丁预演只读取 governance_closure_pilot_return_preview 和 governance_closure_workbench，不写数据库。",
+    "本补丁预演不修改 governance_closure_pilot_return_preview，不修改 governance_closure_workbench，不修改 governance_closure_decision_preview、governance_readiness_dashboard 或任何现用 Word 文件。",
+    "本补丁预演不代表人工评审通过，不代表真实培训完成，不代表受控发布，不代表正式写库授权。",
+    "本补丁预演只显示人工将来可能回填的源表字段；缺字段或阻断项未清零时不得回填源工作台。",
+    "资质状态口径：已取得 CMA，CNAS 申请中；不得表述为已取得 CNAS。",
+    "以 LIMS 当前导出的 2022 程序清单作为现行程序目录。",
+    "jewelry-qms 仍为建设中系统，只进入实施计划、演练和治理准备材料，不写入质量手册正文。",
+    "NO_DATABASE_WRITE",
+    "NO_SOURCE_DOCUMENT_MODIFICATION",
+    "TEST_COMPLETION_NOT_PRODUCTION_EVIDENCE"
+  ],
+  "blocked_patch_rows": 0,
+  "missing_field_rows": 0,
+  "ready_patch_rows": 55,
+  "manual_update_candidate_rows": 55,
+  "test_completion_note": "测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。",
+  "production_record": false
+}

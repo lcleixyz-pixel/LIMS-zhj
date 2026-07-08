@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-07-07T13:04:22",
+  "release_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/controlled_release_rehearsal",
+  "stage_dir": ".team/交接箱/2026-07-07-第五版候选修订准备",
+  "preimport_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_preimport_package",
+  "status": "passed",
+  "counts": {
+    "release_objects": 65,
+    "approval_items": 28,
+    "training_items": 29,
+    "obsolete_items": 28,
+    "position_gates": 5,
+    "effectiveness_items": 4,
+    "candidate_manual_objects": 1,
+    "current_procedure_references": 37,
+    "candidate_record_template_documents": 26,
+    "attachment_form_pending": 1,
+    "findings": 0
+  },
+  "findings": []
+}

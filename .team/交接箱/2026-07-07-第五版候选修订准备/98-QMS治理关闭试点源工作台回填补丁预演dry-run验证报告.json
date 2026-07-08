@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-07-07T23:34:00",
+  "rehearsal_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_pilot_source_update_rehearsal",
+  "status": "passed",
+  "readiness": "source_update_blocked_by_pilot_return",
+  "ready_for_source_workbench_update": "no",
+  "ready_for_governance_closure_preview": "no",
+  "ready_for_lims_apply": "no",
+  "counts": {
+    "source_preview_rows": 10,
+    "missing_field_rows": 55,
+    "patch_rows": 55,
+    "ready_patch_rows": 0,
+    "blocked_patch_rows": 55,
+    "manual_update_candidate_rows": 0,
+    "source_workbench_modified": 0,
+    "database_write_performed": 0,
+    "findings": 0
+  },
+  "findings": []
+}

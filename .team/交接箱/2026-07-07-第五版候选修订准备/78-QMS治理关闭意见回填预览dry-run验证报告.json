@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-07-07T21:56:15",
+  "preview_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_decision_preview",
+  "status": "passed",
+  "readiness": "blocked_by_open_closures",
+  "ready_for_governance_readiness_refresh": "no",
+  "ready_for_lims_apply": "no",
+  "counts": {
+    "decision_items": 396,
+    "proposed_closures": 0,
+    "not_proposed": 396,
+    "accepted_for_preview": 0,
+    "invalid_closures": 0,
+    "missing_required_fields": 0,
+    "blocking_items": 392,
+    "database_write_performed": 0,
+    "findings": 0
+  },
+  "findings": []
+}

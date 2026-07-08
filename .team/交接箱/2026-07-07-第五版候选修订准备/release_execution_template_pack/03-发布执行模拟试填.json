@@ -1,0 +1,512 @@
+[
+  {
+    "template": {
+      "template_code": "JL-REL-01",
+      "template_name": "体系文件审批签核记录",
+      "applicable_clauses": "8.2、8.3、8.4",
+      "related_procedures": "XZTC/CX-08-2022；XZTC/CX-19-2022",
+      "responsible_position": "文件管理员/质量负责人",
+      "trigger_time": "候选文件或记录模板提交审核批准时",
+      "source_rehearsal_file": "02-审批签核演练清单.csv",
+      "source_rehearsal_rows": 28,
+      "specific_fields": [
+        {
+          "key": "release_item_id",
+          "label": "发布对象编号",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "object_doc_number",
+          "label": "文件或模板编号",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "review_summary",
+          "label": "审核意见摘要",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "approver_roles",
+          "label": "审批岗位",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "approval_result",
+          "label": "批准结论",
+          "type": "select",
+          "required": true,
+          "default": "pending",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "effective_date",
+          "label": "拟生效日期",
+          "type": "date",
+          "required": false,
+          "default": "待人工确认",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        }
+      ]
+    },
+    "field_values": {
+      "record_number": "SIM-JL-REL-01-20260707-001",
+      "record_name": "体系文件审批签核记录",
+      "applicable_clause": "8.2、8.3、8.4",
+      "related_procedure": "XZTC/CX-08-2022；XZTC/CX-19-2022",
+      "responsible_position": "文件管理员/质量负责人",
+      "trigger_time": "候选文件或记录模板提交审核批准时",
+      "reviewer": "待人工确认",
+      "approval_status": "pending; SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "evidence_reference": "02-审批签核演练清单.csv",
+      "storage_location": "待人工确认",
+      "retention_period": "待人工确认",
+      "confidentiality_level": "待确认",
+      "correction_rule": "保留原始信息、更正原因、更正日期、责任人和复核痕迹。",
+      "not_real_record_marker": "SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "release_item_id": "模拟：发布对象编号待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "object_doc_number": "模拟：文件或模板编号待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "review_summary": "模拟：审核意见摘要待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "approver_roles": "模拟：审批岗位待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "approval_result": "pending",
+      "effective_date": "模拟：拟生效日期待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD"
+    },
+    "markdown_file": "templates/JL-REL-01-体系文件审批签核记录.md"
+  },
+  {
+    "template": {
+      "template_code": "JL-REL-02",
+      "template_name": "文件发布发放与现行状态确认记录",
+      "applicable_clauses": "8.3、8.4",
+      "related_procedures": "XZTC/CX-08-2022；XZTC/CX-19-2022",
+      "responsible_position": "文件管理员",
+      "trigger_time": "受控文件批准发布、发放、回收或现行状态确认时",
+      "source_rehearsal_file": "01-发布对象清单.csv",
+      "source_rehearsal_rows": 65,
+      "specific_fields": [
+        {
+          "key": "distribution_scope",
+          "label": "发放范围",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "recipient_role",
+          "label": "接收岗位",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "issue_method",
+          "label": "发放方式",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "receipt_status",
+          "label": "接收确认状态",
+          "type": "select",
+          "required": true,
+          "default": "pending",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "current_status_check",
+          "label": "现行状态核查结论",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "old_version_link",
+          "label": "旧版处置关联编号",
+          "type": "text",
+          "required": false,
+          "default": "待人工确认",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        }
+      ]
+    },
+    "field_values": {
+      "record_number": "SIM-JL-REL-02-20260707-001",
+      "record_name": "文件发布发放与现行状态确认记录",
+      "applicable_clause": "8.3、8.4",
+      "related_procedure": "XZTC/CX-08-2022；XZTC/CX-19-2022",
+      "responsible_position": "文件管理员",
+      "trigger_time": "受控文件批准发布、发放、回收或现行状态确认时",
+      "reviewer": "待人工确认",
+      "approval_status": "pending; SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "evidence_reference": "01-发布对象清单.csv",
+      "storage_location": "待人工确认",
+      "retention_period": "待人工确认",
+      "confidentiality_level": "待确认",
+      "correction_rule": "保留原始信息、更正原因、更正日期、责任人和复核痕迹。",
+      "not_real_record_marker": "SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "distribution_scope": "模拟：发放范围待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "recipient_role": "模拟：接收岗位待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "issue_method": "模拟：发放方式待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "receipt_status": "模拟：接收确认状态待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "current_status_check": "模拟：现行状态核查结论待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "old_version_link": "模拟：旧版处置关联编号待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD"
+    },
+    "markdown_file": "templates/JL-REL-02-文件发布发放与现行状态确认记录.md"
+  },
+  {
+    "template": {
+      "template_code": "JL-REL-03",
+      "template_name": "体系文件培训宣贯与理解确认记录",
+      "applicable_clauses": "6.2、8.2、8.3、8.4",
+      "related_procedures": "XZTC/CX-01-2022；XZTC/CX-01-02-2022；XZTC/CX-08-2022；XZTC/CX-19-2022",
+      "responsible_position": "质量负责人/文件管理员/培训责任人",
+      "trigger_time": "新文件发布、生效前或记录模板启用前",
+      "source_rehearsal_file": "03-培训宣贯演练清单.csv",
+      "source_rehearsal_rows": 29,
+      "specific_fields": [
+        {
+          "key": "training_topic",
+          "label": "培训主题",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "trainee_group",
+          "label": "培训对象",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "training_method",
+          "label": "培训方式",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "comprehension_check",
+          "label": "理解确认方式",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "questions_follow_up",
+          "label": "问题与跟踪",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "trainer",
+          "label": "培训人",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        }
+      ]
+    },
+    "field_values": {
+      "record_number": "SIM-JL-REL-03-20260707-001",
+      "record_name": "体系文件培训宣贯与理解确认记录",
+      "applicable_clause": "6.2、8.2、8.3、8.4",
+      "related_procedure": "XZTC/CX-01-2022；XZTC/CX-01-02-2022；XZTC/CX-08-2022；XZTC/CX-19-2022",
+      "responsible_position": "质量负责人/文件管理员/培训责任人",
+      "trigger_time": "新文件发布、生效前或记录模板启用前",
+      "reviewer": "待人工确认",
+      "approval_status": "pending; SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "evidence_reference": "03-培训宣贯演练清单.csv",
+      "storage_location": "待人工确认",
+      "retention_period": "待人工确认",
+      "confidentiality_level": "待确认",
+      "correction_rule": "保留原始信息、更正原因、更正日期、责任人和复核痕迹。",
+      "not_real_record_marker": "SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "training_topic": "模拟：培训主题待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "trainee_group": "模拟：培训对象待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "training_method": "模拟：培训方式待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "comprehension_check": "模拟：理解确认方式待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "questions_follow_up": "模拟：问题与跟踪待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "trainer": "模拟：培训人待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD"
+    },
+    "markdown_file": "templates/JL-REL-03-体系文件培训宣贯与理解确认记录.md"
+  },
+  {
+    "template": {
+      "template_code": "JL-REL-04",
+      "template_name": "旧版文件回收作废与留存记录",
+      "applicable_clauses": "8.3、8.4",
+      "related_procedures": "XZTC/CX-08-2022；XZTC/CX-19-2022",
+      "responsible_position": "文件管理员",
+      "trigger_time": "新版文件生效、旧版文件回收、作废留存或销毁时",
+      "source_rehearsal_file": "04-旧版处置演练清单.csv",
+      "source_rehearsal_rows": 28,
+      "specific_fields": [
+        {
+          "key": "obsolete_object",
+          "label": "作废对象",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "old_version",
+          "label": "旧版版本/编号",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "recycle_method",
+          "label": "回收或作废方式",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "retained_copy_location",
+          "label": "作废留存位置",
+          "type": "text",
+          "required": false,
+          "default": "待人工确认",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "disposal_result",
+          "label": "处置结果",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "verifier",
+          "label": "验证人",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        }
+      ]
+    },
+    "field_values": {
+      "record_number": "SIM-JL-REL-04-20260707-001",
+      "record_name": "旧版文件回收作废与留存记录",
+      "applicable_clause": "8.3、8.4",
+      "related_procedure": "XZTC/CX-08-2022；XZTC/CX-19-2022",
+      "responsible_position": "文件管理员",
+      "trigger_time": "新版文件生效、旧版文件回收、作废留存或销毁时",
+      "reviewer": "待人工确认",
+      "approval_status": "pending; SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "evidence_reference": "04-旧版处置演练清单.csv",
+      "storage_location": "待人工确认",
+      "retention_period": "待人工确认",
+      "confidentiality_level": "待确认",
+      "correction_rule": "保留原始信息、更正原因、更正日期、责任人和复核痕迹。",
+      "not_real_record_marker": "SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "obsolete_object": "模拟：作废对象待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "old_version": "模拟：旧版版本/编号待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "recycle_method": "模拟：回收或作废方式待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "retained_copy_location": "模拟：作废留存位置待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "disposal_result": "模拟：处置结果待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "verifier": "模拟：验证人待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD"
+    },
+    "markdown_file": "templates/JL-REL-04-旧版文件回收作废与留存记录.md"
+  },
+  {
+    "template": {
+      "template_code": "JL-REL-05",
+      "template_name": "实施有效性检查与问题跟踪记录",
+      "applicable_clauses": "8.6、8.8、8.9",
+      "related_procedures": "XZTC/CX-18-2022；XZTC/CX-20-2022；XZTC/CX-21-2022",
+      "responsible_position": "质量负责人/内审员/过程负责人",
+      "trigger_time": "新版体系文件或记录模板试运行后、内审或管理评审输入前",
+      "source_rehearsal_file": "07-实施有效性检查清单.csv",
+      "source_rehearsal_rows": 4,
+      "specific_fields": [
+        {
+          "key": "process_checked",
+          "label": "检查过程",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "sample_scope",
+          "label": "抽查范围",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "acceptance_criteria",
+          "label": "验收准则",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "findings",
+          "label": "发现问题",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "action_required",
+          "label": "需采取措施",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "closure_status",
+          "label": "关闭状态",
+          "type": "select",
+          "required": true,
+          "default": "pending",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        }
+      ]
+    },
+    "field_values": {
+      "record_number": "SIM-JL-REL-05-20260707-001",
+      "record_name": "实施有效性检查与问题跟踪记录",
+      "applicable_clause": "8.6、8.8、8.9",
+      "related_procedure": "XZTC/CX-18-2022；XZTC/CX-20-2022；XZTC/CX-21-2022",
+      "responsible_position": "质量负责人/内审员/过程负责人",
+      "trigger_time": "新版体系文件或记录模板试运行后、内审或管理评审输入前",
+      "reviewer": "待人工确认",
+      "approval_status": "pending; SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "evidence_reference": "07-实施有效性检查清单.csv",
+      "storage_location": "待人工确认",
+      "retention_period": "待人工确认",
+      "confidentiality_level": "待确认",
+      "correction_rule": "保留原始信息、更正原因、更正日期、责任人和复核痕迹。",
+      "not_real_record_marker": "SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "process_checked": "模拟：检查过程待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "sample_scope": "模拟：抽查范围待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "acceptance_criteria": "模拟：验收准则待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "findings": "模拟：发现问题待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "action_required": "模拟：需采取措施待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "closure_status": "模拟：关闭状态待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD"
+    },
+    "markdown_file": "templates/JL-REL-05-实施有效性检查与问题跟踪记录.md"
+  },
+  {
+    "template": {
+      "template_code": "JL-REL-06",
+      "template_name": "jewelry-qms试运行与适用性确认记录",
+      "applicable_clauses": "7.11、8.3、8.4",
+      "related_procedures": "XZTC/CX-08-2022；XZTC/CX-19-2022；XZTC/CX-26-2022",
+      "responsible_position": "质量负责人/系统管理员/文件管理员",
+      "trigger_time": "jewelry-qms 试运行、功能变更或拟纳入体系运行前",
+      "source_rehearsal_file": "07-实施有效性检查清单.csv",
+      "source_rehearsal_rows": 4,
+      "specific_fields": [
+        {
+          "key": "system_function",
+          "label": "系统功能",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "validation_scope",
+          "label": "适用性确认范围",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "access_control_check",
+          "label": "权限控制检查",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "audit_trail_check",
+          "label": "审计追踪检查",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "backup_restore_check",
+          "label": "备份恢复检查",
+          "type": "text",
+          "required": true,
+          "default": "",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        },
+        {
+          "key": "go_live_recommendation",
+          "label": "纳入体系运行建议",
+          "type": "select",
+          "required": true,
+          "default": "pending",
+          "review_focus": "需人工确认字段含义、填写责任、保存和复核要求。"
+        }
+      ]
+    },
+    "field_values": {
+      "record_number": "SIM-JL-REL-06-20260707-001",
+      "record_name": "jewelry-qms试运行与适用性确认记录",
+      "applicable_clause": "7.11、8.3、8.4",
+      "related_procedure": "XZTC/CX-08-2022；XZTC/CX-19-2022；XZTC/CX-26-2022",
+      "responsible_position": "质量负责人/系统管理员/文件管理员",
+      "trigger_time": "jewelry-qms 试运行、功能变更或拟纳入体系运行前",
+      "reviewer": "待人工确认",
+      "approval_status": "pending; SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "evidence_reference": "07-实施有效性检查清单.csv",
+      "storage_location": "待人工确认",
+      "retention_period": "待人工确认",
+      "confidentiality_level": "待确认",
+      "correction_rule": "保留原始信息、更正原因、更正日期、责任人和复核痕迹。",
+      "not_real_record_marker": "SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "system_function": "模拟：系统功能待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "validation_scope": "模拟：适用性确认范围待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "access_control_check": "模拟：权限控制检查待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "audit_trail_check": "模拟：审计追踪检查待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "backup_restore_check": "模拟：备份恢复检查待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "go_live_recommendation": "模拟：纳入体系运行建议待按真实发布执行填写。SIMULATED_TRIAL_NOT_REAL_RECORD"
+    },
+    "markdown_file": "templates/JL-REL-06-jewelry-qms试运行与适用性确认记录.md"
+  }
+]

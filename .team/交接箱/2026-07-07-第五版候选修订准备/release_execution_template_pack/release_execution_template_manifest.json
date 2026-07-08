@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-07-07T13:13:17",
+  "stage_dir": ".team/交接箱/2026-07-07-第五版候选修订准备",
+  "release_rehearsal_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/controlled_release_rehearsal",
+  "release_execution_template_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/release_execution_template_pack",
+  "status": "release_execution_templates_no_database_write",
+  "guardrails": [
+    "本包仅用于受控发布执行记录模板评审和 LIMS 字段配置准备，不写数据库。",
+    "本包不代表第五版候选稿、记录模板、培训记录、旧版处置或 jewelry-qms 已经批准、受控发布或正式运行。",
+    "模拟试填均带 SIMULATED_TRIAL_NOT_REAL_RECORD 标识，不得作为真实运行记录。",
+    "资质状态按已取得 CMA、CNAS 申请中处理；不得写成已取得 CNAS。",
+    "jewelry-qms 仍为建设中系统，仅在实施计划、试运行和适用性确认模板中出现，不写入质量手册正文。"
+  ],
+  "counts": {
+    "templates": 6,
+    "fields": 120,
+    "trial_instances": 6,
+    "template_markdown_files": 6,
+    "source_release_objects": 65,
+    "source_approval_items": 28,
+    "source_training_items": 29,
+    "source_obsolete_items": 28,
+    "source_effectiveness_items": 4
+  },
+  "files": {
+    "overview": "00-发布执行记录模板总览.md",
+    "template_index": "01-发布执行记录模板索引.csv",
+    "field_detail": "02-发布执行字段明细.csv",
+    "trial_csv": "03-发布执行模拟试填.csv",
+    "trial_json": "03-发布执行模拟试填.json",
+    "manifest": "release_execution_template_manifest.json",
+    "readme": "README.md"
+  }
+}
