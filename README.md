@@ -15,6 +15,7 @@ LIMS-zhj/
 │   ├── PROJECT_COMPARISON.md
 │   ├── DEPLOYMENT.md
 │   ├── VERSIONING.md
+│   ├── BRANCH_GOVERNANCE.md
 │   ├── JEWELRY_QMS_GUIDE.md
 │   ├── QMS_V2_2_ROADMAP.md
 │   ├── QMS_PLANNING_CENTER_GUIDE.md
@@ -58,6 +59,7 @@ LIMS-zhj/
 | [docs/PROJECT_COMPARISON.md](docs/PROJECT_COMPARISON.md) | FlinkISO 与 FlinkISO Lite 功能对比 |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | ThinkPHP 8 主项目部署指南 |
 | [docs/VERSIONING.md](docs/VERSIONING.md) | Git 分支、标签、提交规范 |
+| [docs/BRANCH_GOVERNANCE.md](docs/BRANCH_GOVERNANCE.md) | 远端分支台账、合并状态和清理建议 |
 | [docs/JEWELRY_QMS_GUIDE.md](docs/JEWELRY_QMS_GUIDE.md) | 体系文件适配、模板、审批流与模块使用 |
 | [docs/QMS_V2_2_ROADMAP.md](docs/QMS_V2_2_ROADMAP.md) | Jewelry QMS v2.2 分阶段开发路线图 |
 | [docs/QMS_PLANNING_CENTER_GUIDE.md](docs/QMS_PLANNING_CENTER_GUIDE.md) | 体系策划中心、无编号要素、条款库与追溯矩阵 |

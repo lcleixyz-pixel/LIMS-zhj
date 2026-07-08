@@ -10,6 +10,7 @@
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 开发者、质量负责人 | 系统边界、技术架构、模块和审批逻辑 |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | 运维、部署人员 | ThinkPHP 8 部署、数据库、Web 服务器和故障排查 |
 | [VERSIONING.md](VERSIONING.md) | 开发者、协作者 | Git 分支、提交、标签和禁提交内容 |
+| [BRANCH_GOVERNANCE.md](BRANCH_GOVERNANCE.md) | 项目负责人、协作者、AI 代理 | 远端分支台账、合并状态、归档分支和清理建议 |
 | [REMOTE_UPLOAD.md](REMOTE_UPLOAD.md) | 协作者 | 远程仓库上传和协作说明 |
 
 ## 2. 体系策划与追溯
