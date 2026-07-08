@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-07-07T22:08:55",
+  "status": "passed",
+  "output_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_readiness_refresh_preview",
+  "counts": {
+    "gate_rows": 13,
+    "task_preview_rows": 396,
+    "accepted_task_closures": 0,
+    "refreshed_blocking_tasks": 392,
+    "refreshed_blocking_gates": 11,
+    "database_write_performed": 0
+  },
+  "readiness": "blocked_by_refresh_open_items",
+  "ready_for_lims_apply": "no",
+  "findings": []
+}

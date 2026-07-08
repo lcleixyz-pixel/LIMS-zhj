@@ -1,0 +1,361 @@
+{
+  "generated_at": "2026-07-07T06:14:11",
+  "lims_root": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj",
+  "package_root": "/Users/lc.leixyz/Desktop/qms/全量交付包-20260706",
+  "manual_path": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/knowledge/internal/manual/XZTC_SC-质量手册_第四版.md",
+  "clause_coverage": {
+    "expected_count": 29,
+    "found_count": 29,
+    "missing": []
+  },
+  "card_bridge": {
+    "manual_card_ref_count": 0,
+    "manual_card_refs": [],
+    "package_card_count": 313,
+    "unknown_manual_refs": []
+  },
+  "procedure_bridge": {
+    "manual_count": 30,
+    "exported_count": 37,
+    "exact_matches": [],
+    "manual_only": [
+      "XZTC/CX-01-02-2018",
+      "XZTC/CX-01-2018",
+      "XZTC/CX-02-2018",
+      "XZTC/CX-03-02-2018",
+      "XZTC/CX-05-2018",
+      "XZTC/CX-06-2018",
+      "XZTC/CX-07-2018",
+      "XZTC/CX-08-2018",
+      "XZTC/CX-09-2018",
+      "XZTC/CX-11-2018",
+      "XZTC/CX-12-2018",
+      "XZTC/CX-13-2018",
+      "XZTC/CX-14-2018",
+      "XZTC/CX-15-2018",
+      "XZTC/CX-16-2018",
+      "XZTC/CX-17-2018",
+      "XZTC/CX-19-2018",
+      "XZTC/CX-20-2018",
+      "XZTC/CX-21-2018",
+      "XZTC/CX-22-2018",
+      "XZTC/CX-23-2018",
+      "XZTC/CX-26-2018",
+      "XZTC/CX-27-2018",
+      "XZTC/CX-28-2018",
+      "XZTC/CX-29-2018",
+      "XZTC/CX-30-2018",
+      "XZTC/CX-31-2018",
+      "XZTC/CX-32-2018",
+      "XZTC/CX-33-2018",
+      "XZTC/CX-35-2018"
+    ],
+    "exported_only": [
+      "XZTC/CX-01-02-2022",
+      "XZTC/CX-01-2022",
+      "XZTC/CX-02-2022",
+      "XZTC/CX-03-02-2022",
+      "XZTC/CX-03-2022",
+      "XZTC/CX-04-2022",
+      "XZTC/CX-05-2022",
+      "XZTC/CX-06-2022",
+      "XZTC/CX-07-02-2022",
+      "XZTC/CX-07-2022",
+      "XZTC/CX-08-2022",
+      "XZTC/CX-09-2022",
+      "XZTC/CX-11-2022",
+      "XZTC/CX-12-2022",
+      "XZTC/CX-13-2022",
+      "XZTC/CX-14-2022",
+      "XZTC/CX-15-2022",
+      "XZTC/CX-16-2022",
+      "XZTC/CX-17-2022",
+      "XZTC/CX-18-2022",
+      "XZTC/CX-19-2022",
+      "XZTC/CX-20-2022",
+      "XZTC/CX-21-2022",
+      "XZTC/CX-22-2022",
+      "XZTC/CX-23-2022",
+      "XZTC/CX-24-2022",
+      "XZTC/CX-25-2022",
+      "XZTC/CX-26-2022",
+      "XZTC/CX-27-2022",
+      "XZTC/CX-28-2022",
+      "XZTC/CX-29-2022",
+      "XZTC/CX-30-2022",
+      "XZTC/CX-31-2022",
+      "XZTC/CX-32-2022",
+      "XZTC/CX-33-2022",
+      "XZTC/CX-34-2022",
+      "XZTC/CX-35-2022"
+    ],
+    "year_mismatches": [
+      {
+        "base": "XZTC/CX-01",
+        "manual": "XZTC/CX-01-2018",
+        "exported": "XZTC/CX-01-2022"
+      },
+      {
+        "base": "XZTC/CX-01-02",
+        "manual": "XZTC/CX-01-02-2018",
+        "exported": "XZTC/CX-01-02-2022"
+      },
+      {
+        "base": "XZTC/CX-02",
+        "manual": "XZTC/CX-02-2018",
+        "exported": "XZTC/CX-02-2022"
+      },
+      {
+        "base": "XZTC/CX-03-02",
+        "manual": "XZTC/CX-03-02-2018",
+        "exported": "XZTC/CX-03-02-2022"
+      },
+      {
+        "base": "XZTC/CX-05",
+        "manual": "XZTC/CX-05-2018",
+        "exported": "XZTC/CX-05-2022"
+      },
+      {
+        "base": "XZTC/CX-06",
+        "manual": "XZTC/CX-06-2018",
+        "exported": "XZTC/CX-06-2022"
+      },
+      {
+        "base": "XZTC/CX-07",
+        "manual": "XZTC/CX-07-2018",
+        "exported": "XZTC/CX-07-2022"
+      },
+      {
+        "base": "XZTC/CX-08",
+        "manual": "XZTC/CX-08-2018",
+        "exported": "XZTC/CX-08-2022"
+      },
+      {
+        "base": "XZTC/CX-09",
+        "manual": "XZTC/CX-09-2018",
+        "exported": "XZTC/CX-09-2022"
+      },
+      {
+        "base": "XZTC/CX-11",
+        "manual": "XZTC/CX-11-2018",
+        "exported": "XZTC/CX-11-2022"
+      },
+      {
+        "base": "XZTC/CX-12",
+        "manual": "XZTC/CX-12-2018",
+        "exported": "XZTC/CX-12-2022"
+      },
+      {
+        "base": "XZTC/CX-13",
+        "manual": "XZTC/CX-13-2018",
+        "exported": "XZTC/CX-13-2022"
+      },
+      {
+        "base": "XZTC/CX-14",
+        "manual": "XZTC/CX-14-2018",
+        "exported": "XZTC/CX-14-2022"
+      },
+      {
+        "base": "XZTC/CX-15",
+        "manual": "XZTC/CX-15-2018",
+        "exported": "XZTC/CX-15-2022"
+      },
+      {
+        "base": "XZTC/CX-16",
+        "manual": "XZTC/CX-16-2018",
+        "exported": "XZTC/CX-16-2022"
+      },
+      {
+        "base": "XZTC/CX-17",
+        "manual": "XZTC/CX-17-2018",
+        "exported": "XZTC/CX-17-2022"
+      },
+      {
+        "base": "XZTC/CX-19",
+        "manual": "XZTC/CX-19-2018",
+        "exported": "XZTC/CX-19-2022"
+      },
+      {
+        "base": "XZTC/CX-20",
+        "manual": "XZTC/CX-20-2018",
+        "exported": "XZTC/CX-20-2022"
+      },
+      {
+        "base": "XZTC/CX-21",
+        "manual": "XZTC/CX-21-2018",
+        "exported": "XZTC/CX-21-2022"
+      },
+      {
+        "base": "XZTC/CX-22",
+        "manual": "XZTC/CX-22-2018",
+        "exported": "XZTC/CX-22-2022"
+      },
+      {
+        "base": "XZTC/CX-23",
+        "manual": "XZTC/CX-23-2018",
+        "exported": "XZTC/CX-23-2022"
+      },
+      {
+        "base": "XZTC/CX-26",
+        "manual": "XZTC/CX-26-2018",
+        "exported": "XZTC/CX-26-2022"
+      },
+      {
+        "base": "XZTC/CX-27",
+        "manual": "XZTC/CX-27-2018",
+        "exported": "XZTC/CX-27-2022"
+      },
+      {
+        "base": "XZTC/CX-28",
+        "manual": "XZTC/CX-28-2018",
+        "exported": "XZTC/CX-28-2022"
+      },
+      {
+        "base": "XZTC/CX-29",
+        "manual": "XZTC/CX-29-2018",
+        "exported": "XZTC/CX-29-2022"
+      },
+      {
+        "base": "XZTC/CX-30",
+        "manual": "XZTC/CX-30-2018",
+        "exported": "XZTC/CX-30-2022"
+      },
+      {
+        "base": "XZTC/CX-31",
+        "manual": "XZTC/CX-31-2018",
+        "exported": "XZTC/CX-31-2022"
+      },
+      {
+        "base": "XZTC/CX-32",
+        "manual": "XZTC/CX-32-2018",
+        "exported": "XZTC/CX-32-2022"
+      },
+      {
+        "base": "XZTC/CX-33",
+        "manual": "XZTC/CX-33-2018",
+        "exported": "XZTC/CX-33-2022"
+      },
+      {
+        "base": "XZTC/CX-35",
+        "manual": "XZTC/CX-35-2018",
+        "exported": "XZTC/CX-35-2022"
+      }
+    ],
+    "exported_not_referenced_by_base": [
+      "XZTC/CX-03-2022",
+      "XZTC/CX-04-2022",
+      "XZTC/CX-07-02-2022",
+      "XZTC/CX-18-2022",
+      "XZTC/CX-24-2022",
+      "XZTC/CX-25-2022",
+      "XZTC/CX-34-2022"
+    ]
+  },
+  "basis": {
+    "stale": [
+      {
+        "id": "basis-cnas-g003-2018",
+        "severity": "high",
+        "message": "现用手册出现 CNAS-CL01-G003:2018；应核对并替换为 CNAS-CL01-G003:2021 及 2023 第一次修订口径。",
+        "hits": [
+          {
+            "line": 1002,
+            "match": "CNAS-CL01-G003:2018"
+          }
+        ]
+      },
+      {
+        "id": "basis-rbt-045-2020",
+        "severity": "high",
+        "message": "现用手册出现 RB/T 045-2020；全国标准信息公共服务平台显示其已于 2024-11-26 废止。",
+        "hits": [
+          {
+            "line": 1582,
+            "match": "RBT 045-2020"
+          }
+        ]
+      }
+    ],
+    "recognized_current": [
+      {
+        "pattern": "CNAS-CL01-G001:2024",
+        "message": "已出现 CNAS-CL01-G001:2024。",
+        "count": 1
+      },
+      {
+        "pattern": "《检验检测机构资质认定评审准则》（2023年版）",
+        "message": "已出现 CMA 2023 年版评审准则口径。",
+        "count": 11
+      },
+      {
+        "pattern": "CNAS-CL01-A015:2018",
+        "message": "已出现珠宝玉石、贵金属检测领域 CNAS 应用说明。",
+        "count": 1
+      }
+    ]
+  },
+  "sampling_findings": [
+    {
+      "id": "sampling-mixed-current-and-conditional",
+      "severity": "medium",
+      "line": 886,
+      "message": "7.3 抽样条款混写了当前不开展抽样和条件性抽样控制，建议拆成当前规则与启用条件。"
+    }
+  ],
+  "package_profile_findings": [
+    {
+      "id": "package-fictional-org",
+      "severity": "medium",
+      "message": "工程包仍包含虚构机构画像。",
+      "hits": [
+        {
+          "line": 24,
+          "match": "星辰宝玉石检测有限公司"
+        },
+        {
+          "line": 24,
+          "match": "虚构"
+        },
+        {
+          "line": 212,
+          "match": "虚构"
+        }
+      ]
+    },
+    {
+      "id": "package-single-site",
+      "severity": "medium",
+      "message": "工程包假设为单一固定场所，而现用手册为多场所。",
+      "hits": [
+        {
+          "line": 24,
+          "match": "单一固定场所"
+        },
+        {
+          "line": 50,
+          "match": "单一固定场所"
+        },
+        {
+          "line": 71,
+          "match": "单一固定场所"
+        }
+      ]
+    },
+    {
+      "id": "package-future-lims",
+      "severity": "medium",
+      "message": "工程包把 LIMS 写成未来状态，但当前项目已存在 jewelry-qms 治理系统。",
+      "hits": [
+        {
+          "line": 147,
+          "match": "未来引入 LIMS"
+        }
+      ]
+    }
+  ],
+  "risk_summary": {
+    "high": 4,
+    "medium": 4,
+    "low": 0
+  }
+}

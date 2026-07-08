@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-07-07T21:56:07",
+  "status": "governance_closure_decision_preview_no_database_write",
+  "source_workbench_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_workbench",
+  "readiness": "ready_for_governance_readiness_refresh",
+  "ready_for_governance_readiness_refresh": "yes",
+  "ready_for_lims_apply": "no",
+  "files": {
+    "manifest": "governance_closure_decision_preview_manifest.json",
+    "overview": "00-治理关闭意见回填预览总览.md",
+    "decision_preview": "01-拟关闭决策预览.csv",
+    "blocking_items": "02-仍阻断关闭项.csv",
+    "gate_summary": "03-按闸门关闭统计.csv",
+    "readme": "README.md"
+  },
+  "counts": {
+    "decision_items": 396,
+    "proposed_closures": 396,
+    "not_proposed": 0,
+    "accepted_for_preview": 396,
+    "invalid_closures": 0,
+    "missing_required_fields": 0,
+    "blocking_items": 0,
+    "database_write_performed": 0
+  },
+  "source_counts": {
+    "gate_rows": 13,
+    "role_task_batches": 60,
+    "evidence_rows": 396,
+    "closure_rows": 396,
+    "blocking_closure_items": 392,
+    "open_blocking_items": 392,
+    "accepted_closures": 0,
+    "pending_closures": 396,
+    "database_write_performed": 0
+  },
+  "allowed_closure_statuses": [
+    "closed",
+    "not_applicable",
+    "waived",
+    "pending",
+    "rejected"
+  ],
+  "guardrails": [
+    "本预览包只读取 governance_closure_workbench 中的证据采集和拟关闭回填意见，不写数据库。",
+    "本预览包不修改 governance_closure_workbench、governance_readiness_dashboard、人工评审包、第二阶段复核工作台或任何现用 Word 文件。",
+    "本预览包不代表人工评审通过，不代表真实培训完成，不代表受控发布，不代表正式写库授权。",
+    "所有空白、pending、rejected、缺证据、缺意见、缺复核人或缺日期的阻断项保持阻断。",
+    "资质状态口径：已取得 CMA，CNAS 申请中；不得表述为已取得 CNAS。",
+    "以 LIMS 当前导出的 2022 程序清单作为现行程序目录。",
+    "jewelry-qms 仍为建设中系统，只进入实施计划、演练和治理准备材料，不写入质量手册正文。",
+    "NO_DATABASE_WRITE",
+    "NO_SOURCE_DOCUMENT_MODIFICATION",
+    "TEST_COMPLETION_NOT_PRODUCTION_EVIDENCE"
+  ],
+  "blocking_items": 0,
+  "invalid_closures": 0,
+  "missing_required_fields": 0,
+  "test_completion_note": "测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。",
+  "production_record": false,
+  "proposed_closures": 396,
+  "not_proposed": 0,
+  "accepted_for_preview": 396
+}

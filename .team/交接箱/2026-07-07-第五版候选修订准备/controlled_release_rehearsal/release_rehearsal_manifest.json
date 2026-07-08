@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-07-07T12:59:58",
+  "stage_dir": ".team/交接箱/2026-07-07-第五版候选修订准备",
+  "preimport_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_preimport_package",
+  "release_rehearsal_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/controlled_release_rehearsal",
+  "status": "release_rehearsal_no_database_write",
+  "guardrails": [
+    "本演练包只用于受控发布、培训、旧版处置和实施有效性检查的准备，不写数据库。",
+    "本演练包不代表第五版候选稿、记录模板或 jewelry-qms 已经审核批准或受控发布。",
+    "资质状态按已取得 CMA、CNAS 申请中处理；不得写成已取得 CNAS。",
+    "现行程序目录以 LIMS 当前导出的 2022 程序清单为准。",
+    "jewelry-qms 目前只作为建设中系统，不写入手册正文，仅写入实施计划。"
+  ],
+  "counts": {
+    "release_objects": 65,
+    "approval_items": 28,
+    "training_items": 29,
+    "obsolete_items": 28,
+    "position_gates": 5,
+    "effectiveness_items": 4,
+    "candidate_manual_objects": 1,
+    "current_procedure_references": 37,
+    "candidate_record_template_documents": 26,
+    "attachment_form_pending": 1
+  },
+  "files": {
+    "overview": "00-受控发布演练总览.md",
+    "release_objects": "01-发布对象清单.csv",
+    "approval_rehearsal": "02-审批签核演练清单.csv",
+    "training_rehearsal": "03-培训宣贯演练清单.csv",
+    "obsolete_disposition": "04-旧版处置演练清单.csv",
+    "lims_governance_matrix": "05-LIMS治理动作矩阵.md",
+    "position_gates": "06-口径闸门检查表.csv",
+    "effectiveness_checks": "07-实施有效性检查清单.csv",
+    "manifest": "release_rehearsal_manifest.json",
+    "readme": "README.md"
+  }
+}

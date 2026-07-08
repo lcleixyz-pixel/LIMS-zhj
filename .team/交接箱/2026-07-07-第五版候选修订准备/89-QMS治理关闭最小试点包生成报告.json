@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-07-07T22:47:13",
+  "pilot_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_pilot_pack",
+  "status": "passed",
+  "readiness": "pilot_pending_human_evidence",
+  "ready_for_governance_closure_preview": "no",
+  "ready_for_lims_apply": "no",
+  "counts": {
+    "pilot_batches": 5,
+    "pilot_evidence_rows": 5,
+    "pilot_handoff_rows": 5,
+    "blocking_pilot_items": 5,
+    "pending_pilot_batches": 5,
+    "pending_pilot_evidence": 5,
+    "pending_pilot_handoffs": 5,
+    "database_write_performed": 0
+  },
+  "findings": []
+}

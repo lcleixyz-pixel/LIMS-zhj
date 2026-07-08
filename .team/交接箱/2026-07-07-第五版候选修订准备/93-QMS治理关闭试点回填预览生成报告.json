@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-07-07T23:03:45",
+  "preview_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_pilot_return_preview",
+  "status": "passed",
+  "readiness": "pilot_return_blocked_by_missing_fields",
+  "ready_for_governance_closure_preview": "no",
+  "ready_for_lims_apply": "no",
+  "counts": {
+    "pilot_evidence_rows": 5,
+    "mapping_rows": 5,
+    "source_preview_rows": 10,
+    "missing_field_rows": 55,
+    "ready_return_items": 0,
+    "blocking_return_items": 5,
+    "database_write_performed": 0
+  },
+  "findings": []
+}

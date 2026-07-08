@@ -1,0 +1,14 @@
+gate_id,gate_group,gate_name,owner_role,source_total_items,source_blocking_items,task_rows,accepted_task_closures,open_blocking_tasks_after_refresh,refreshed_gate_status,ready_for_refresh,source_path,not_imported,not_real_record
+GR-01,候选包结构,第五版候选文件、模板和追溯矩阵结构可识别,文件管理员/质量负责人,153,0,0,0,0,closed,yes,lims_preimport_package/preimport_manifest.json,yes,yes
+GR-02,人工评审,候选手册、记录模板、05-02 归属和 apply 前闸门人工评审,最高管理者/质量负责人/文件管理员,67,67,67,67,0,closed,yes,human_review_workbench/decision_update_template.csv,yes,yes
+GR-03,记录模板字段,26 个候选记录模板字段逐项确认,文件管理员/质量负责人/对应过程负责人,437,437,26,26,0,closed,yes,record_template_field_catalog/01-模板字段索引.csv,yes,yes
+GR-04,质量手册换版,XZTC/SC 第五版候选手册修订/换版路径确认,最高管理者/质量负责人/文件管理员,5,5,5,5,0,closed,yes,manual_revision_path_pack/04-人工决策闸门.csv,yes,yes
+GR-05,受控发布,审批签核、发布发放和旧版处置演练确认,文件管理员/质量负责人/最高管理者,28,28,28,28,0,closed,yes,controlled_release_rehearsal/02-审批签核演练清单.csv,yes,yes
+GR-06,发布执行记录,6 类发布执行记录候选模板人工确认,文件管理员/质量负责人/系统管理员,6,6,6,6,0,closed,yes,release_execution_template_pack/01-发布执行记录模板索引.csv,yes,yes
+GR-07,人员学习,岗位学习任务和学习证据确认,质量负责人/文件管理员/培训责任人,88,84,88,88,0,closed,yes,staff_training_implementation_pack/01-岗位学习任务矩阵.csv,yes,yes
+GR-08,理解确认,12 道理解确认题和人员理解证据,质量负责人/文件管理员/培训责任人,12,12,12,12,0,closed,yes,staff_training_implementation_pack/03-理解确认题库.csv,yes,yes
+GR-09,问题反馈,问题反馈与修订回填闭环,质量负责人/文件管理员/对应过程负责人,8,8,8,8,0,closed,yes,staff_training_implementation_pack/04-问题反馈与修订回填模板.csv,yes,yes
+GR-10,第一阶段预览,LIMS 第一阶段写库行级预览人工复核,文件管理员/系统管理员/质量负责人,95,95,1,1,0,closed,yes,lims_write_preview_package/write_preview_manifest.json,yes,yes
+GR-11,第二阶段复核,手册块和块级链接人工复核,质量负责人/技术负责人/文件管理员,154,154,154,154,0,closed,yes,stage2_structured_review_workbench/05-人工复核意见回填模板.csv,yes,yes
+GR-12,第二阶段回填预览,第二阶段复核意见回填预览无阻断,质量负责人/文件管理员/系统管理员,154,154,0,0,0,closed,yes,stage2_structured_review_decision_preview/stage2_review_decision_preview_manifest.json,yes,yes
+GR-13,用户授权,正式 apply 前用户明确授权,用户/总控,1,1,1,1,0,closed,yes,.team/任务板.md,yes,yes

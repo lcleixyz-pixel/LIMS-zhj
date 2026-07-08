@@ -1,0 +1,47 @@
+{
+  "generated_at": "2026-07-08T00:12:13",
+  "status": "governance_closure_pilot_operator_completion_simulation_no_write",
+  "source_workbook_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_pilot_operator_workbook",
+  "source_workbook_status": "governance_closure_pilot_operator_workbook_no_write",
+  "source_workbook_readiness": "operator_workbook_pending_human_execution",
+  "readiness": "operator_completion_simulation_ready_for_return_preview",
+  "ready_for_pilot_return_preview": "yes",
+  "ready_for_source_workbench_update": "no",
+  "ready_for_lims_apply": "no",
+  "is_simulated": 1,
+  "simulation_marker": "SIMULATED_COMPLETION_NOT_REAL_EXECUTION",
+  "files": {
+    "manifest": "governance_closure_pilot_operator_completion_simulation_manifest.json",
+    "overview": "00-模拟完成总览.md",
+    "master": "01-模拟完成主清单.csv",
+    "field_checklist": "02-模拟逐字段完成清单.csv",
+    "handoff_checklist": "03-模拟签核交接完成表.csv",
+    "rerun": "04-复跑验证提示.md",
+    "readme": "README.md",
+    "task_card_dir": "task_cards"
+  },
+  "counts": {
+    "pilot_items": 5,
+    "field_fill_items": 55,
+    "handoff_check_items": 5,
+    "task_cards": 5,
+    "pending_workbook_items": 0,
+    "pending_field_items": 0,
+    "pending_handoff_items": 0,
+    "simulated_completion_rows": 65,
+    "simulation_marker_rows": 65,
+    "source_missing_fields": 55,
+    "source_blocked_patches": 55,
+    "source_workbench_modified": 0,
+    "database_write_performed": 0
+  },
+  "guardrails": [
+    "本包只读取 governance_closure_pilot_operator_workbook，不写数据库。",
+    "本包不修改 governance_closure_pilot_operator_workbook、试点包、源工作台、治理关闭工作台或任何现用 Word 文件。",
+    "本包为模拟完成，不代表真实执行完成，不代表人工评审通过，不代表真实培训完成，不代表受控发布。",
+    "本包只用于验证未来人工补齐后的命令链路能否识别人工执行工作簿闸门为可回填预览。",
+    "资质状态口径：已取得 CMA，CNAS 申请中；不得表述为已取得 CNAS。",
+    "以 LIMS 当前导出的 2022 程序清单作为现行程序目录。",
+    "jewelry-qms 仍为建设中系统，只进入实施计划、演练和治理准备材料，不写入质量手册正文。"
+  ]
+}

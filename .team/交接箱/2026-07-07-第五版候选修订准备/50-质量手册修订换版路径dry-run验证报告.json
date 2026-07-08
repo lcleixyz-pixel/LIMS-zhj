@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-07-07T20:10:30",
+  "pack_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/manual_revision_path_pack",
+  "status": "passed",
+  "counts": {
+    "existing_manual_rows": 1,
+    "revision_gates": 9,
+    "lims_action_preview_rows": 5,
+    "human_decision_gates": 5,
+    "pending_human_decisions": 5,
+    "findings": 0
+  },
+  "findings": []
+}

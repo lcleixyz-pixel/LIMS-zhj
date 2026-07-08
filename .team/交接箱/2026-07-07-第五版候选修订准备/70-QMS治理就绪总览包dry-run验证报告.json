@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-07-07T21:34:46",
+  "dashboard_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_readiness_dashboard",
+  "status": "passed",
+  "readiness": "blocked_by_governance_open_items",
+  "ready_for_lims_apply": "no",
+  "counts": {
+    "gate_rows": 13,
+    "blocking_gates": 12,
+    "human_task_rows": 396,
+    "blocking_tasks": 392,
+    "database_write_performed": 0,
+    "findings": 0
+  },
+  "findings": []
+}

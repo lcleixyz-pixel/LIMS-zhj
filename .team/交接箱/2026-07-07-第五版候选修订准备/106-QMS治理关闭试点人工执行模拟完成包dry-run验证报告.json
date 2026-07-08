@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-07-08T00:12:20",
+  "simulation_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_pilot_operator_completion_simulation",
+  "status": "passed",
+  "readiness": "operator_completion_simulation_ready_for_return_preview",
+  "ready_for_pilot_return_preview": "yes",
+  "ready_for_source_workbench_update": "no",
+  "ready_for_lims_apply": "no",
+  "is_simulated": 1,
+  "counts": {
+    "pilot_items": 5,
+    "field_fill_items": 55,
+    "handoff_check_items": 5,
+    "task_cards": 5,
+    "pending_workbook_items": 0,
+    "pending_field_items": 0,
+    "pending_handoff_items": 0,
+    "simulated_completion_rows": 65,
+    "simulation_marker_rows": 65,
+    "source_missing_fields": 55,
+    "source_blocked_patches": 55,
+    "source_workbench_modified": 0,
+    "database_write_performed": 0,
+    "findings": 0
+  },
+  "findings": []
+}

@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-07-07T20:56:51",
+  "preview_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/stage2_structured_review_decision_preview",
+  "status": "passed",
+  "readiness": "no_proposed_decisions",
+  "counts": {
+    "decision_rows": 154,
+    "proposed_decisions": 0,
+    "not_proposed": 154,
+    "pending_decisions": 0,
+    "accepted_for_preview": 0,
+    "invalid_decisions": 0,
+    "missing_review_comments": 0,
+    "blocking_items": 154,
+    "database_write_performed": 0,
+    "scope_summary_rows": 4,
+    "findings": 0
+  },
+  "findings": []
+}

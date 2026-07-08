@@ -1,0 +1,6 @@
+gate_id,topic,expected_position,evidence_file,check_method,status,blocking_if_failed
+POS-01,资质状态,已取得 CMA，CNAS 申请中,08-拍板确认与起草口径.md；10-质量手册第五版候选稿.md,手册可写 CMA 已取得和 CNAS 申请中；不得出现已取得 CNAS 的事实表述,locked,yes
+POS-02,现行程序目录,以 LIMS 当前导出的 2022 程序清单作为现行程序目录,12-支持性程序目录-2022版.md；lims_preimport_package/documents_preimport.csv,37 个现行程序按 reference_existing_current 匹配；05-02 作为编号附件/表单分流,locked,yes
+POS-03,jewelry-qms 手册正文边界,建设中系统，不写入手册正文,10-质量手册第五版候选稿.md；14-jewelry-qms实施计划与验证方案.md,手册正文不得出现 jewelry-qms；实施计划可出现并声明建设中,locked,yes
+POS-04,受控发布状态,当前全部仍为候选/演练，不代表批准发布,controlled_release_rehearsal/release_rehearsal_manifest.json,release_allowed_now 必须全为 no；approval human_decision 必须 pending,locked,yes
+POS-05,数据库写入边界,本包和 dry-run 均不写数据库,README.md；命令层 dry-run 报告,不得包含 SQL/DB 产物；apply 仍须人审通过和用户明确授权,locked,yes

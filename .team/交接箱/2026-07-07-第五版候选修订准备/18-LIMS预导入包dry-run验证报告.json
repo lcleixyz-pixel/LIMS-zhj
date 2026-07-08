@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-07-07T13:04:33",
+  "package_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_preimport_package",
+  "stage_dir": ".team/交接箱/2026-07-07-第五版候选修订准备",
+  "lims_root": ".",
+  "status": "passed",
+  "counts": {
+    "documents": 65,
+    "structured_documents": 65,
+    "record_form_templates": 26,
+    "traceability_rows": 29,
+    "manual_blocks": 29,
+    "external_sources": 4,
+    "findings": 0
+  },
+  "findings": []
+}

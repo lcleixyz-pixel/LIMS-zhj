@@ -1,0 +1,12 @@
+gate_id,gate_name,gate_type,current_evidence,human_decision,required_before_apply,reviewer_role,scope,blocking_if_unresolved,review_note
+GATE-01,候选修订包门禁,automated_evidence,"17-候选修订包验证报告.json: passed, findings=0",approved,yes,Codex dry-run/文件管理员复核,候选手册条款、编号、资质状态、jewelry-qms 边界。,yes,自动证据只能证明候选包可检查，不代表已获人工批准。
+GATE-02,LIMS 预导入包结构 dry-run,automated_evidence,"18-LIMS预导入包dry-run验证报告.json: passed, findings=0",approved,yes,Codex dry-run/文件管理员复核,CSV/JSON 结构、编号、候选状态和人工闸门。,yes,自动证据只能证明候选包可检查，不代表已获人工批准。
+GATE-03,记录模板模拟试填,automated_evidence,"20-记录模板试填dry-run验证报告.json: passed, findings=0",approved,yes,Codex dry-run/文件管理员复核,3 个代表性模板可模拟试填，且不作为真实记录。,yes,自动证据只能证明候选包可检查，不代表已获人工批准。
+GATE-04,记录模板全量模拟试填,automated_evidence,"25-记录模板全量试填dry-run验证报告.json: passed, findings=0",approved,yes,Codex dry-run/文件管理员复核,26 个候选记录模板均可形成模拟试填实例，且不作为真实记录。,yes,自动证据只能证明候选包可检查，不代表已获人工批准。
+GATE-05,LIMS 命令层 dry-run,automated_evidence,"21-LIMS预导入命令dry-run报告.json: passed, findings=0",approved,yes,Codex dry-run/文件管理员复核,37 个现行程序匹配，记录模板仍为候选待创建。,yes,自动证据只能证明候选包可检查，不代表已获人工批准。
+GATE-06,未确认 apply 阻断,automated_evidence,"22-LIMS预导入apply闸门验证报告.json: blocked, findings=1",approved,yes,Codex dry-run/文件管理员复核,未带人工确认时必须阻断写库。,yes,自动证据只能证明候选包可检查，不代表已获人工批准。
+GATE-07,候选手册人工评审,human_review,pending_human_review,approved,yes,文件管理员/质量负责人/最高管理者,核对组织事实、职责、正文口径和修订说明。,yes,人工评审包，不写数据库，不代表受控批准。
+GATE-08,26 个记录模板字段评审,human_review,pending_human_review,approved,yes,文件管理员/相关过程负责人/质量负责人,核实现用表单、字段、签核、保存期限和保密等级。,yes,人工评审包，不写数据库，不代表受控批准。
+GATE-09,05-02 编号附件/表单归属,human_review,pending_human_review,approved,yes,文件管理员/设备管理员/技术负责人,决定归入程序附件、记录模板、历史附件或不导入。,yes,人工评审包，不写数据库，不代表受控批准。
+GATE-10,外来依据台账人工查新,human_review,pending_human_review,approved,yes,文件管理员/质量负责人,复核来源、版本、查新周期和是否纳入受控外来文件。,yes,人工评审包，不写数据库，不代表受控批准。
+GATE-11,用户明确授权 apply,human_review,pending_human_review,approved,yes,用户/最高管理者授权角色,只有明确批准后才可运行 --apply --ack-human-reviewed。,yes,人工评审包，不写数据库，不代表受控批准。

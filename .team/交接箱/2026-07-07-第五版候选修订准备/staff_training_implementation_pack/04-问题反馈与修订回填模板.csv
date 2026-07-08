@@ -1,0 +1,9 @@
+feedback_id,feedback_topic,source_material,issue_type,responsible_role,proposed_change,human_decision,review_comment,linked_review_item,blocking_if_unresolved,not_real_record
+FB-001,第五版候选手册正文事实错误或职责不匹配,10-质量手册第五版候选稿.md,manual_clause,待人工分配,,no_change,测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。,,yes,yes
+FB-002,第四版到第五版修订说明需补充,11-第四版到第五版候选修订说明.md,manual_revision,待人工分配,,no_change,测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。,,yes,yes
+FB-003,2022 程序目录或 05-02 归属有疑问,12-支持性程序目录-2022版.md,procedure_catalog,待人工分配,,no_change,测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。,,yes,yes
+FB-004,候选记录模板字段需新增/删除/改名,record_template_field_catalog/02-字段级明细.csv,record_template_field,待人工分配,,no_change,测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。,,yes,yes
+FB-005,保存期限、保密等级或保存位置待确认,record_template_field_catalog/02-字段级明细.csv,record_control,待人工分配,,no_change,测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。,,yes,yes
+FB-006,质量手册修订/换版路径需调整,manual_revision_path_pack/04-人工决策闸门.csv,manual_revision_path,待人工分配,,no_change,测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。,,yes,yes
+FB-007,受控发布、培训或旧版处置安排需调整,controlled_release_rehearsal/03-培训宣贯演练清单.csv,controlled_release,待人工分配,,no_change,测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。,,yes,yes
+FB-008,jewelry-qms 试运行边界或系统字段需调整,14-jewelry-qms实施计划与验证方案.md,lims_trial,待人工分配,,no_change,测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。,,yes,yes

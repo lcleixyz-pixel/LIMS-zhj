@@ -1,0 +1,2 @@
+doc_number,candidate_title,candidate_version,preview_action,existing_match,existing_status,candidate_status,candidate_publish,source_stage_file,change_reason,import_mode,revision_route_decision,lims_current_control_path,no_write_marker
+XZTC/SC,质量手册（第五版候选稿）,第五版候选稿,plan_existing_document_revision,yes,published,draft,0,10-质量手册第五版候选稿.md,第四版依据、程序目录、抽样、记录证据链和 LIMS 治理边界候选修订。,manual_review_then_revision_flow,existing_document_revision_required,/document/revise?id=<existing_documents.id>,NO_DATABASE_WRITE_REHEARSAL_ONLY
