@@ -1,0 +1,49 @@
+{
+  "generated_at": "2026-07-07T20:56:46",
+  "status": "stage2_review_decision_preview_no_database_write",
+  "readiness": "no_proposed_decisions",
+  "source_workbench_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/stage2_structured_review_workbench",
+  "source_workbench_status": "stage2_structured_review_workbench_no_database_write",
+  "preview_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/stage2_structured_review_decision_preview",
+  "guardrails": [
+    "本预览包只校验 stage2_structured_review_workbench/05-人工复核意见回填模板.csv 的拟回填意见，不写数据库。",
+    "本预览包不修改 stage2_structured_review_workbench/ 中的任何文件或人工决策。",
+    "本预览包不代表第二阶段已导入，不代表人工评审通过、受控发布或正式写库授权。",
+    "所有空白或 pending 决策保持阻断，真实意见需人工填写、复核并另行授权。",
+    "资质状态口径：已取得 CMA，CNAS 申请中；不得表述为已取得 CNAS。",
+    "jewelry-qms 仍为建设中系统，只进入实施计划、演练和治理准备材料，不写入质量手册正文。"
+  ],
+  "files": {
+    "manifest": "stage2_review_decision_preview_manifest.json",
+    "overview": "00-第二阶段结构化复核意见回填预览总览.md",
+    "decision_preview": "01-拟回填决策预览.csv",
+    "blocking_items": "02-仍阻断项清单.csv",
+    "scope_summary": "03-按范围统计.csv",
+    "readme": "README.md"
+  },
+  "counts": {
+    "decision_rows": 154,
+    "proposed_decisions": 0,
+    "not_proposed": 154,
+    "pending_decisions": 0,
+    "accepted_for_preview": 0,
+    "invalid_decisions": 0,
+    "missing_review_comments": 0,
+    "blocking_items": 154,
+    "database_write_performed": 0
+  },
+  "workbench_counts": {
+    "structured_documents_preview_rows": 65,
+    "block_review_rows": 29,
+    "link_review_rows": 125,
+    "clause_summary_rows": 29,
+    "target_backreference_rows": 64,
+    "decision_rows": 154,
+    "pending_decisions": 154,
+    "procedure_document_links": 93,
+    "attachment_form_document_links": 2,
+    "record_form_template_links": 30,
+    "unresolved_targets": 0,
+    "database_write_performed": 0
+  }
+}

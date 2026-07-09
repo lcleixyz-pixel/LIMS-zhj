@@ -1,0 +1,187 @@
+{
+    "status": "passed",
+    "generated_at": "2026-07-09 10:25:59",
+    "scope": {
+        "company_id": "seed-company",
+        "element_filter": null,
+        "type_filter": null
+    },
+    "summary": {
+        "total_events": 5,
+        "by_type": {
+            "nonconformity": 1,
+            "customer_complaint": 1,
+            "capa": 1,
+            "compliance_check_failure": 1,
+            "audit_finding": 1
+        },
+        "elements_with_events": 1,
+        "unlinked_events": 3
+    },
+    "events": [
+        {
+            "event_type": "nonconformity",
+            "element_id": null,
+            "element_key": null,
+            "clause": null,
+            "evidence": {
+                "id": "nc-1",
+                "number": "NC-2026-001",
+                "company_id": "seed-company",
+                "source": "test",
+                "description": "采样记录缺签字",
+                "severity": "major",
+                "status": "open",
+                "capa_id": null,
+                "identified_date": "2026-07-01"
+            }
+        },
+        {
+            "event_type": "customer_complaint",
+            "element_id": null,
+            "element_key": null,
+            "clause": null,
+            "evidence": {
+                "id": "cp-1",
+                "number": "CP-2026-001",
+                "company_id": "seed-company",
+                "customer_name": "客户A",
+                "description": "报告交付延迟",
+                "status": "investigating",
+                "capa_id": null,
+                "received_date": "2026-07-02"
+            }
+        },
+        {
+            "event_type": "capa",
+            "element_id": null,
+            "element_key": null,
+            "clause": null,
+            "evidence": {
+                "id": "capa-1",
+                "number": "CAPA-2026-001",
+                "company_id": "seed-company",
+                "source_type": "nonconformity",
+                "description": "针对NC-1的纠正与预防措施",
+                "root_cause": null,
+                "status": "implementing",
+                "due_date": null
+            }
+        },
+        {
+            "event_type": "compliance_check_failure",
+            "element_id": "el-ry",
+            "element_key": "人员",
+            "clause": "6.2",
+            "evidence": {
+                "id": "res-1",
+                "check_code": "CC-01",
+                "check_name": "人员资质检查",
+                "status": "fail",
+                "fail_count": 1,
+                "warning_count": 0,
+                "fail_items": "[\"无上岗证\"]",
+                "checked_at": "2026-07-09 10:00:00"
+            }
+        },
+        {
+            "event_type": "audit_finding",
+            "element_id": "el-ry",
+            "element_key": "人员",
+            "clause": "6.2",
+            "evidence": {
+                "id": "af-1",
+                "number": "AF-2026-001",
+                "finding_type": "major",
+                "description": "内审发现:人员培训记录缺失",
+                "status": "open",
+                "capa_id": null
+            }
+        }
+    ],
+    "by_element": {
+        "_unlinked": [
+            {
+                "event_type": "nonconformity",
+                "element_id": null,
+                "element_key": null,
+                "clause": null,
+                "evidence": {
+                    "id": "nc-1",
+                    "number": "NC-2026-001",
+                    "company_id": "seed-company",
+                    "source": "test",
+                    "description": "采样记录缺签字",
+                    "severity": "major",
+                    "status": "open",
+                    "capa_id": null,
+                    "identified_date": "2026-07-01"
+                }
+            },
+            {
+                "event_type": "customer_complaint",
+                "element_id": null,
+                "element_key": null,
+                "clause": null,
+                "evidence": {
+                    "id": "cp-1",
+                    "number": "CP-2026-001",
+                    "company_id": "seed-company",
+                    "customer_name": "客户A",
+                    "description": "报告交付延迟",
+                    "status": "investigating",
+                    "capa_id": null,
+                    "received_date": "2026-07-02"
+                }
+            },
+            {
+                "event_type": "capa",
+                "element_id": null,
+                "element_key": null,
+                "clause": null,
+                "evidence": {
+                    "id": "capa-1",
+                    "number": "CAPA-2026-001",
+                    "company_id": "seed-company",
+                    "source_type": "nonconformity",
+                    "description": "针对NC-1的纠正与预防措施",
+                    "root_cause": null,
+                    "status": "implementing",
+                    "due_date": null
+                }
+            }
+        ],
+        "人员": [
+            {
+                "event_type": "compliance_check_failure",
+                "element_id": "el-ry",
+                "element_key": "人员",
+                "clause": "6.2",
+                "evidence": {
+                    "id": "res-1",
+                    "check_code": "CC-01",
+                    "check_name": "人员资质检查",
+                    "status": "fail",
+                    "fail_count": 1,
+                    "warning_count": 0,
+                    "fail_items": "[\"无上岗证\"]",
+                    "checked_at": "2026-07-09 10:00:00"
+                }
+            },
+            {
+                "event_type": "audit_finding",
+                "element_id": "el-ry",
+                "element_key": "人员",
+                "clause": "6.2",
+                "evidence": {
+                    "id": "af-1",
+                    "number": "AF-2026-001",
+                    "finding_type": "major",
+                    "description": "内审发现:人员培训记录缺失",
+                    "status": "open",
+                    "capa_id": null
+                }
+            }
+        ]
+    }
+}

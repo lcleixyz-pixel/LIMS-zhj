@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-07-07T07:05:47",
+  "stage_dir": ".team/交接箱/2026-07-07-第五版候选修订准备",
+  "preimport_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_preimport_package",
+  "review_pack_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/human_review_pack",
+  "status": "human_review_required_no_database_write",
+  "boundary": [
+    "本包仅用于人工评审和导入前决策，不写数据库。",
+    "本包不代表第五版候选稿已经审核、批准或发布。",
+    "所有 human_decision 初始为 pending；未人工确认前不得 apply。"
+  ],
+  "counts": {
+    "manual_clause_review_items": 29,
+    "record_template_review_items": 26,
+    "attachment_disposition_items": 1,
+    "preapply_gates": 11
+  },
+  "expected_clauses": [
+    "4.1",
+    "4.2",
+    "5",
+    "6.1",
+    "6.2",
+    "6.3",
+    "6.4",
+    "6.5",
+    "6.6",
+    "7.1",
+    "7.2",
+    "7.3",
+    "7.4",
+    "7.5",
+    "7.6",
+    "7.7",
+    "7.8",
+    "7.9",
+    "7.10",
+    "7.11",
+    "8.1",
+    "8.2",
+    "8.3",
+    "8.4",
+    "8.5",
+    "8.6",
+    "8.7",
+    "8.8",
+    "8.9"
+  ],
+  "files": {
+    "manual_clause_review": "manual_clause_review_checklist.csv",
+    "record_template_review": "record_template_review_checklist.csv",
+    "attachment_disposition": "attachment_form_disposition.csv",
+    "preapply_gate_register": "preapply_gate_register.csv",
+    "review_guide": "人工评审操作说明.md",
+    "manifest": "human_review_manifest.json"
+  },
+  "review_status": "approved",
+  "approved_items": 67,
+  "pending_items": 0,
+  "rejected_items": 0,
+  "ready_for_lims_apply": "yes",
+  "test_completion_note": "测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。",
+  "production_record": false,
+  "guardrails": [
+    "NO_DATABASE_WRITE",
+    "NO_SOURCE_DOCUMENT_MODIFICATION",
+    "TEST_COMPLETION_NOT_PRODUCTION_EVIDENCE"
+  ]
+}

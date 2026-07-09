@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-07-07T22:26:13",
+  "output_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_execution_pack",
+  "status": "passed",
+  "readiness": "blocked_by_unsigned_execution",
+  "ready_for_governance_closure_preview": "no",
+  "ready_for_lims_apply": "no",
+  "counts": {
+    "execution_batches": 60,
+    "signature_rows": 50,
+    "handoff_checks": 60,
+    "route_rows": 396,
+    "source_closure_items": 396,
+    "blocking_route_items": 392,
+    "pending_signature_rows": 50,
+    "pending_handoff_checks": 60,
+    "pending_route_items": 396,
+    "database_write_performed": 0
+  }
+}

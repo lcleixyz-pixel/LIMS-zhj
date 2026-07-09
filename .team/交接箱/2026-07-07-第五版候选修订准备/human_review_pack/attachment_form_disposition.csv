@@ -1,0 +1,2 @@
+review_item_id,review_type,doc_number,title,source_stage_file,related_clauses,related_record_templates,disposition_options,recommended_disposition,human_decision,reviewer_role,blocking_if_unresolved,review_note
+ATTACHMENT-XZTC/CX-05-02-2022,attachment_form_disposition,XZTC/CX-05-02-2022,仪器设备计量溯源结果确认表,现用文件/程序文件/程序文件2022/05-02-2022仪器设备计量溯源结果确认表.docx,6.4；6.5,JL-6.4-01；JL-6.5-01,程序附件；记录模板；历史附件保留；作废不导入；待补录为受控文件,pending_human_review,approved,文件管理员/设备管理员/技术负责人/质量负责人,yes,该编号已从现行程序匹配中分流；正式写库前必须确认归属。

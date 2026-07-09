@@ -1,0 +1,61 @@
+{
+  "generated_at": "2026-07-07T22:47:13",
+  "status": "governance_closure_pilot_pack_no_database_write",
+  "source_execution_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_execution_pack",
+  "source_execution_status": "governance_closure_execution_pack_no_database_write",
+  "selection_rule": "blocking_count asc, task_count asc, suggested_sequence asc; only blocking batches are selected.",
+  "readiness": "ready_for_governance_closure_preview",
+  "ready_for_governance_closure_preview": "yes",
+  "ready_for_lims_apply": "no",
+  "files": {
+    "manifest": "governance_closure_pilot_manifest.json",
+    "overview": "00-治理关闭最小试点总览.md",
+    "pilot_batches": "01-试点批次选择.csv",
+    "pilot_evidence": "02-试点证据填写页.csv",
+    "pilot_handoff": "03-试点签核交接页.csv",
+    "rerun_commands": "04-试点复跑命令清单.md",
+    "readme": "README.md"
+  },
+  "counts": {
+    "pilot_batches": 5,
+    "pilot_evidence_rows": 5,
+    "pilot_handoff_rows": 5,
+    "blocking_pilot_items": 0,
+    "pending_pilot_batches": 0,
+    "pending_pilot_evidence": 0,
+    "pending_pilot_handoffs": 0,
+    "database_write_performed": 0
+  },
+  "source_counts": {
+    "execution_batches": 60,
+    "signature_rows": 50,
+    "handoff_checks": 60,
+    "route_rows": 396,
+    "source_closure_items": 396,
+    "blocking_route_items": 392,
+    "pending_signature_rows": 50,
+    "pending_handoff_checks": 60,
+    "pending_route_items": 396,
+    "database_write_performed": 0
+  },
+  "guardrails": [
+    "本试点包只读取 governance_closure_execution_pack 选择少量试点批次，不写数据库。",
+    "本试点包不修改 governance_closure_execution_pack、governance_closure_workbench、governance_closure_decision_preview、governance_readiness_dashboard 或任何现用 Word 文件。",
+    "本试点包不代表人工评审通过，不代表真实培训完成，不代表受控发布，不代表正式写库授权。",
+    "所有试点证据、签核和交接默认 pending；只有人工补齐证据、意见、复核人和日期后才可回到治理关闭工作台。",
+    "资质状态口径：已取得 CMA，CNAS 申请中；不得表述为已取得 CNAS。",
+    "以 LIMS 当前导出的 2022 程序清单作为现行程序目录。",
+    "jewelry-qms 仍为建设中系统，只进入实施计划、演练和治理准备材料，不写入质量手册正文。",
+    "NO_DATABASE_WRITE",
+    "NO_SOURCE_DOCUMENT_MODIFICATION",
+    "TEST_COMPLETION_NOT_PRODUCTION_EVIDENCE"
+  ],
+  "pending_pilot_batches": 0,
+  "pending_evidence_items": 0,
+  "pending_handoff_items": 0,
+  "pending_pilot_evidence": 0,
+  "pending_pilot_handoffs": 0,
+  "blocking_pilot_items": 0,
+  "test_completion_note": "测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。",
+  "production_record": false
+}

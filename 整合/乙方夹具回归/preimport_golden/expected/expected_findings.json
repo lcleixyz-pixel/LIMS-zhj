@@ -1,0 +1,6 @@
+{
+  "_doc": "乙方侧预导入金样 dry-run 的钉定基线。finding_ids=该固定夹具 dry-run 后应出现的发现项 id 集合(按 id 排序)。空数组=期望 0 发现项。改平台接口/校验逻辑导致 dry-run 发现项变化 → 回归飘红(契约§五)。",
+  "status_observed": "passed",
+  "finding_ids": [],
+  "_verification": "2026-07-09 本机已用 smoke_dbfree/fixture(DB-free 冒烟夹具)实跑 dry-run,确认 status=passed、findings=0、runner 输出 ALL GREEN。canonical fixture/(1 行实码)的完整 run(含 existingRows 去 DB 重)仍需 MySQL 环境;其 CSV 层校验已用 Python 复刻四项 check 模拟为 0 发现项,目标基线同为空。首次在 MySQL 环境跑通 canonical fixture 后,可再次 `--pin` 复核。"
+}

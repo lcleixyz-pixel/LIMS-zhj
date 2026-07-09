@@ -1,0 +1,10 @@
+gate_id,topic,iso_17025_clause,owner_role,required_decision,current_status,blocking_if_unresolved,evidence_or_source
+MR-01,确认 XZTC/SC 既有 published 受控文件存在,8.3,文件管理员,使用既有文件修订/换版路径，不新增同编号草稿,passed_by_write_preview,yes,lims_write_preview_package/01-documents-draft-preview.csv
+MR-02,确认第五版候选手册正文和修订说明,"8.2,8.3",质量负责人/最高管理者,批准、退回修订、暂缓或拒绝,pending_human_review,yes,10-质量手册第五版候选稿.md; 11-第四版到第五版候选修订说明.md
+MR-03,确认版本标识、生效日期和修订编号策略,8.3,文件管理员/质量负责人,确认第五版、A/0 或组织现行版本规则的映射,pending_human_review,yes,现用文件控制程序; LIMS documents.version/revision 字段
+MR-04,确认审核批准岗位和签核证据,8.3,最高管理者/质量负责人,确认编制、审核、批准、发布日期和生效日期,pending_human_review,yes,human_review_pack; controlled_release_rehearsal
+MR-05,确认第四版作废回收、留存和防误用措施,"8.3,8.4",文件管理员,确认旧版状态识别、作废回收、保留期限和可追溯记录,pending_human_review,yes,controlled_release_rehearsal/04-旧版处置演练清单.csv
+MR-06,确认宣贯培训和人员可获得适用文件,"8.2.5,8.3",质量负责人/文件管理员,确认培训对象、培训证据和生效前完成条件,pending_human_review,yes,controlled_release_rehearsal/03-培训宣贯演练清单.csv
+MR-07,确认 LIMS 修订动作和电子记录边界,"7.11,8.3,8.4",系统管理员/文件管理员/质量负责人,确认是否通过 /document/revise?id=<existing_documents.id> 发起修订,pending_human_review,yes,jewelry-qms/app/controller/Document.php revise; document_revisions table
+MR-08,确认结构化文件和条款追溯关系影响,"7.11,8.3",质量负责人/文件管理员/系统管理员,确认修订后是否刷新结构化块、追溯关系和人工复核任务,pending_human_review,yes,qms_structured_documents; qms_document_blocks; qms_document_block_links
+MR-09,确认本包不写库、不发布、不替代人工批准,"7.11,8.3,8.4",Codex/文件管理员,保留预演边界,passed_guardrail,yes,manual_revision_path_manifest.json

@@ -1,0 +1,21 @@
+{
+  "package_type": "lims_preimport_package",
+  "suite_version": "1.21a",
+  "contract_version": "v0.9-draft",
+  "package_version": "golden-v1.0",
+  "description": "乙方侧固定夹具包(契约§五双侧金样·乙方侧)。最小可过 dry-run 0-finding;内容为虚构示例,仅供 dry-run 回归,不得作为正式预导入包 apply。",
+  "counts": {
+    "documents": 1,
+    "structured_documents": 1,
+    "record_form_templates": 1,
+    "traceability_rows": 1,
+    "manual_blocks": 1,
+    "external_sources": 1
+  },
+  "guardrails": [
+    "本包为固定金样夹具,内容为最小虚构示例,仅供 dry-run 回归",
+    "模拟完成不得冒充真实执行(与平台 SIMULATED_COMPLETION 阻断同源)",
+    "改接口不升契约=双侧金样应飘红(契约§五)"
+  ],
+  "generated_at": "2026-07-09T00:00:00+08:00"
+}

@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-07-07T21:46:53",
+  "status": "passed",
+  "output_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/governance_closure_workbench",
+  "counts": {
+    "gate_rows": 13,
+    "role_task_batches": 60,
+    "evidence_rows": 396,
+    "closure_rows": 396,
+    "blocking_closure_items": 392,
+    "open_blocking_items": 392,
+    "accepted_closures": 0,
+    "pending_closures": 396,
+    "database_write_performed": 0
+  },
+  "readiness": "blocked_by_open_closures",
+  "ready_for_governance_readiness_refresh": "no",
+  "ready_for_lims_apply": "no",
+  "findings": []
+}

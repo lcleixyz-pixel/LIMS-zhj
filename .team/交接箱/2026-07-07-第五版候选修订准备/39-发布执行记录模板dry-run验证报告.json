@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-07-07T13:13:17",
+  "template_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/release_execution_template_pack",
+  "release_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/controlled_release_rehearsal",
+  "status": "passed",
+  "counts": {
+    "templates": 6,
+    "fields": 120,
+    "trial_instances": 6,
+    "template_markdown_files": 6,
+    "source_release_objects": 65,
+    "source_approval_items": 28,
+    "source_training_items": 29,
+    "source_obsolete_items": 28,
+    "source_effectiveness_items": 4,
+    "findings": 0
+  },
+  "findings": []
+}

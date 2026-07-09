@@ -1,0 +1,15 @@
+gate_id,task_group,decision_rows,proposed_closures,not_proposed,accepted_for_preview,invalid_closures,missing_required_fields,blocking_items
+GR-02,attachment_form_disposition,1,0,1,0,0,0,0
+GR-02,manual_clause,29,0,29,0,0,0,0
+GR-02,preapply_gate,11,0,11,0,0,0,0
+GR-02,record_template,26,0,26,0,0,0,0
+GR-03,record_template_field_confirmation,26,0,26,0,0,0,0
+GR-04,manual_revision_decision,5,0,5,0,0,0,0
+GR-05,controlled_release_approval,28,0,28,0,0,0,0
+GR-06,release_execution_template_review,6,0,6,0,0,0,0
+GR-07,staff_learning_task,88,0,88,0,0,0,0
+GR-08,comprehension_question,12,0,12,0,0,0,0
+GR-09,feedback_closure,8,0,8,0,0,0,0
+GR-10,write_preview_review,1,0,1,0,0,0,0
+GR-11,stage2_structured_review,154,0,154,0,0,0,0
+GR-13,user_authorization,1,0,1,0,0,0,0

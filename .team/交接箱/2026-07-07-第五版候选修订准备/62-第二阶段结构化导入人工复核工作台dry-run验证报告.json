@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-07-07T20:49:41",
+  "workbench_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/stage2_structured_review_workbench",
+  "status": "passed",
+  "counts": {
+    "block_review_rows": 29,
+    "link_review_rows": 125,
+    "clause_summary_rows": 29,
+    "target_backreference_rows": 64,
+    "decision_rows": 154,
+    "pending_decisions": 154,
+    "procedure_document_links": 93,
+    "attachment_form_document_links": 2,
+    "record_form_template_links": 30,
+    "unresolved_targets": 0,
+    "database_write_performed": 0,
+    "block_review_pending": 29,
+    "link_review_pending": 125,
+    "summary_review_pending": 29,
+    "target_review_pending": 64,
+    "findings": 0
+  },
+  "findings": []
+}

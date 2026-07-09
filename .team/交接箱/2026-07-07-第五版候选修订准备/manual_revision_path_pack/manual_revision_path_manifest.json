@@ -1,0 +1,43 @@
+{
+  "generated_at": "2026-07-07T19:58:32",
+  "status": "manual_revision_path_no_database_write",
+  "stage_dir": ".team/交接箱/2026-07-07-第五版候选修订准备",
+  "preimport_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_preimport_package",
+  "write_preview_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_write_preview_package",
+  "output_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/manual_revision_path_pack",
+  "target_doc_number": "XZTC/SC",
+  "guardrails": [
+    "本包只用于确认 XZTC/SC 质量手册第五版候选稿的修订/换版路径，不写数据库。",
+    "本包不代表人工评审通过、文件批准、受控发布或写库授权。",
+    "XZTC/SC 已存在同编号 published 受控文件，候选稿不得按同编号新增草稿直接写入。",
+    "真实修订应走既有文件修订/换版治理路径，并保留旧版、修订原因、审批和发布证据。",
+    "资质状态口径：已取得 CMA，CNAS 申请中；不得表述为已取得 CNAS。",
+    "jewelry-qms 仍为建设中系统，只进入实施计划、演练和治理准备材料，不写入质量手册正文。",
+    "NO_DATABASE_WRITE",
+    "NO_SOURCE_DOCUMENT_MODIFICATION",
+    "TEST_COMPLETION_NOT_PRODUCTION_EVIDENCE"
+  ],
+  "files": {
+    "manifest": "manual_revision_path_manifest.json",
+    "overview": "00-质量手册修订换版路径总览.md",
+    "existing_manual": "01-既有质量手册记录核对.csv",
+    "revision_checklist": "02-修订换版路径闸门清单.csv",
+    "lims_action_preview": "03-LIMS修订动作预览.csv",
+    "human_decision_gates": "04-人工决策闸门.csv",
+    "lims_action_notes": "05-LIMS修订动作说明.md",
+    "readme": "README.md"
+  },
+  "counts": {
+    "existing_manual_rows": 1,
+    "revision_gates": 9,
+    "lims_action_preview_rows": 5,
+    "human_decision_gates": 5,
+    "pending_human_decisions": 0,
+    "database_write_performed": 0
+  },
+  "pending_human_decisions": 0,
+  "approved_human_decisions": 20,
+  "ready_for_lims_apply": "yes",
+  "test_completion_note": "测试完成态：按用户授权作为真人审核完成，用于链路验证，不代表生产受控发布记录。",
+  "production_record": false
+}

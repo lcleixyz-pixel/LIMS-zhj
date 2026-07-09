@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(unzip -l \"C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\实验室体系技能套装-v1.16.zip\")",
+      "Bash(mkdir -p /tmp/lab_v16)",
+      "Read(//tmp/**)",
+      "Bash(unzip -o \"C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\实验室体系技能套装-v1.16.zip\")",
+      "Bash(mkdir -p /tmp/lab_v14)",
+      "Bash(unzip -o \"C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\实验室体系技能套装-v1.14.zip\")",
+      "Bash(python /tmp/extract_zip.py \"C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\实验室体系技能套装-v1.16.zip\" /tmp/lab_v16_clean)",
+      "Bash(python *)",
+      "Bash(python golden/run_golden_test.py)",
+      "Bash(find 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/skills' -name *.py -type f)",
+      "Bash(python 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/skills/lab-qms-builder/scripts/validate.py' --json 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden/要素模板-设备主题-v1.0.md')",
+      "Bash(python 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/scripts/manual_check.py' --json 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden/质量手册-工作版-v1.0.md' 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden')",
+      "Bash(python 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/scripts/assemble_strip.py' --json --check 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden/质量手册-工作版-v1.0.md' 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden/质量手册-发布版-v1.0.md')",
+      "Bash(python 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/scripts/skeleton_check.py' 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden/质量手册-工作版-v1.0.md')",
+      "Bash(python 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/scripts/compliance_check.py' --json --profile builder 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden/要素模板-设备主题-v1.0.md')",
+      "Bash(python 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/scripts/coverage_check.py' --json 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden/质量手册-工作版-v1.0.md' 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden/程序汇编-工作版-v1.0.md' 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden/要素模板-设备主题-v1.0.md')",
+      "Bash(python 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/scripts/quality_gate.py' --json 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden/要素模板-设备主题-v1.0.md')",
+      "Bash(python 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/skills/lab-qms-compiler/scripts/run_all_gates.py' --base-dir 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/golden')",
+      "Bash(python 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/skills/lab-profile-interviewer/scripts/profile_check.py' --json 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/实测产物/槽号记-P1.md')",
+      "Bash(python 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/skills/lab-profile-interviewer/scripts/five_pack_check.py' --json 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/实测产物')",
+      "Bash(python 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/scripts/skeleton_check.py' 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/实测产物/质量手册-阅读样稿-v0.1.md' --facts 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/实测产物/槽号记-P1.md')",
+      "Bash(python -c 'import json; d=json.load\\(open\\(r'\\\\''C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/skills/lab-qms-engineer/test-prompts.json'\\\\'','\\\\''r'\\\\'',encoding='\\\\''utf-8'\\\\''\\)\\); print\\(f'\\\\''{len\\(d\\)} 条'\\\\''\\)')",
+      "Bash(python -c 'import json; d=json.load\\(open\\(r'\\\\''C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/skills/lab-profile-interviewer/test-prompts.json'\\\\'','\\\\''r'\\\\'',encoding='\\\\''utf-8'\\\\''\\)\\); print\\(f'\\\\''{len\\(d\\)} 条'\\\\''\\)')",
+      "Bash(python -c 'import json; d=json.load\\(open\\(r'\\\\''C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/skills/lab-qms-builder/test-prompts.json'\\\\'','\\\\''r'\\\\'',encoding='\\\\''utf-8'\\\\''\\)\\); print\\(f'\\\\''{len\\(d\\)} 条'\\\\''\\)')",
+      "Bash(python -c 'import json; d=json.load\\(open\\(r'\\\\''C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/skills/lab-qms-compiler/test-prompts.json'\\\\'','\\\\''r'\\\\'',encoding='\\\\''utf-8'\\\\''\\)\\); print\\(f'\\\\''{len\\(d\\)} 条'\\\\''\\)')",
+      "Bash(python -c 'import json; d=json.load\\(open\\(r'\\\\''C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/test-prompts-integration.json'\\\\'','\\\\''r'\\\\'',encoding='\\\\''utf-8'\\\\''\\)\\); print\\(f'\\\\''{len\\(d\\)} 条'\\\\''\\)')",
+      "Bash(PYTHONIOENCODING=utf-8 python *)",
+      "Bash(grep -E '^\\\\s*[-|]\\\\s*\\\\*{0,2}K-' 'C:\\\\Users\\\\Martyr\\\\OneDrive\\\\桌面\\\\参考\\\\lab_v16_clean/实测产物/要素模板-人员-v1.0.md')",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'score={d[\\\\\"extra\\\\\"][\\\\\"total_score\\\\\"]} passed={d[\\\\\"passed\\\\\"]}'\\); print\\(json.dumps\\(d['extra']['field_completeness'], ensure_ascii=False\\)\\)\")",
+      "Bash(grep *)"
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-07-07T12:43:35",
+  "workbench_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/human_review_workbench",
+  "status": "passed",
+  "counts": {
+    "decision_items_total": 67,
+    "manual_clause_items": 29,
+    "record_template_items": 26,
+    "attachment_disposition_items": 1,
+    "preapply_gate_items": 11,
+    "findings": 0
+  },
+  "findings": []
+}

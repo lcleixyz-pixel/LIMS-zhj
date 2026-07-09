@@ -1,0 +1,6 @@
+handback_handoff_id,workbook_item_id,pilot_handoff_id,pilot_batch_id,execution_batch_id,owner_role,assigned_person,reviewer,planned_finish_date,actual_finish_date,signature_status,handoff_status,required_fields,handback_status,blocks_apply,real_execution_required,not_imported,not_lims_record_yet
+GCPOH-H001,GCPOW-001,GCPH-001,GCPB-001,GCEB-002,业务受理/技术负责人,测试审核人,测试复核人,,2026-07-08,completed,completed,evidence_reference | evidence_summary | closure_comment | reviewer | review_date,completed,no,yes,yes,yes
+GCPOH-H002,GCPOW-002,GCPH-002,GCPB-002,GCEB-003,全体影响检测活动人员,测试审核人,测试复核人,,2026-07-08,completed,completed,evidence_reference | evidence_summary | closure_comment | reviewer | review_date,completed,no,yes,yes,yes
+GCPOH-H003,GCPOW-003,GCPH-003,GCPB-003,GCEB-004,内审组长,测试审核人,测试复核人,,2026-07-08,completed,completed,evidence_reference | evidence_summary | closure_comment | reviewer | review_date,completed,no,yes,yes,yes
+GCPOH-H004,GCPOW-004,GCPH-004,GCPB-004,GCEB-005,原记录人员/复核人员,测试审核人,测试复核人,,2026-07-08,completed,completed,evidence_reference | evidence_summary | closure_comment | reviewer | review_date,completed,no,yes,yes,yes
+GCPOH-H005,GCPOW-005,GCPH-005,GCPB-005,GCEB-006,复核人/授权签字人,测试审核人,测试复核人,,2026-07-08,completed,completed,evidence_reference | evidence_summary | closure_comment | reviewer | review_date,completed,no,yes,yes,yes

@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-07-07T12:48:49",
+  "catalog_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/record_template_field_catalog",
+  "preimport_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_preimport_package",
+  "trial_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/record_template_full_trial_pack",
+  "status": "passed",
+  "counts": {
+    "record_templates": 26,
+    "field_detail_rows": 437,
+    "human_confirmation_fields": 437,
+    "template_markdown_files": 26,
+    "findings": 0
+  },
+  "findings": []
+}

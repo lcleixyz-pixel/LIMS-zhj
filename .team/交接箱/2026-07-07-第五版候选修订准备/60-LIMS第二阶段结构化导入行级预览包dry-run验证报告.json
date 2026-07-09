@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-07-07T20:40:32",
+  "preview_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_stage2_write_preview_package",
+  "status": "passed",
+  "counts": {
+    "structured_documents_preview_rows": 65,
+    "document_blocks_preview_rows": 29,
+    "document_block_links_preview_rows": 125,
+    "procedure_document_links": 93,
+    "attachment_form_document_links": 2,
+    "record_form_template_links": 30,
+    "manual_revision_dependency_rows": 155,
+    "unresolved_targets": 0,
+    "findings": 0
+  },
+  "findings": []
+}

@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-07-07T06:54:55",
+  "package_status": "preimport_draft_no_database_write",
+  "stage_dir": ".team/交接箱/2026-07-07-第五版候选修订准备",
+  "lims_root": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj",
+  "output_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_preimport_package",
+  "boundary": [
+    "本包仅用于 LIMS 治理预导入评审，不写数据库。",
+    "第五版候选手册仍为候选草案，未经审核批准不得作为受控文件执行。",
+    "jewelry-qms 仍按建设中系统处理，正式纳入前需完成功能确认。"
+  ],
+  "counts": {
+    "documents": 65,
+    "structured_documents": 65,
+    "record_form_templates": 26,
+    "traceability_rows": 29,
+    "manual_blocks": 29,
+    "external_sources": 4,
+    "current_2022_catalog_codes": 38,
+    "current_2022_procedure_codes": 37,
+    "current_2022_attachment_form_codes": 1
+  },
+  "files": {
+    "documents": "documents_preimport.csv",
+    "structured_documents": "structured_documents_preimport.csv",
+    "record_form_templates": "record_form_templates_preimport.csv",
+    "traceability_matrix": "traceability_matrix_preimport.csv",
+    "manual_blocks": "manual_blocks_preimport.csv",
+    "external_sources": "external_sources_preimport.csv"
+  },
+  "source_files": [
+    "10-质量手册第五版候选稿.md",
+    "12-支持性程序目录-2022版.md",
+    "13-记录模板包-候选清单.md",
+    "15-条款程序记录LIMS验证矩阵.md",
+    "16-依据现行性复核记录.md",
+    "knowledge/internal/procedures/PROCEDURE_FILE_MANIFEST.json"
+  ],
+  "expected_clauses": [
+    "4.1",
+    "4.2",
+    "5",
+    "6.1",
+    "6.2",
+    "6.3",
+    "6.4",
+    "6.5",
+    "6.6",
+    "7.1",
+    "7.2",
+    "7.3",
+    "7.4",
+    "7.5",
+    "7.6",
+    "7.7",
+    "7.8",
+    "7.9",
+    "7.10",
+    "7.11",
+    "8.1",
+    "8.2",
+    "8.3",
+    "8.4",
+    "8.5",
+    "8.6",
+    "8.7",
+    "8.8",
+    "8.9"
+  ]
+}

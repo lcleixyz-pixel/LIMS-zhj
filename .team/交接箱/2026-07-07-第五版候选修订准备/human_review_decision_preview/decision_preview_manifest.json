@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-07-07T12:34:43",
+  "status": "decision_preview_no_database_write",
+  "readiness": "no_proposed_decisions",
+  "stage_dir": ".team/交接箱/2026-07-07-第五版候选修订准备",
+  "decision_csv": ".team/交接箱/2026-07-07-第五版候选修订准备/human_review_workbench/decision_update_template.csv",
+  "output_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/human_review_decision_preview",
+  "boundary": [
+    "本预览包只校验 decision_update_template.csv 的拟回填意见，不写数据库。",
+    "本预览包不修改 human_review_pack/ 中的任何 human_decision。",
+    "本预览包不能作为 qms:preimport-package --review-dir 使用。",
+    "本预览包不代表第五版候选稿、记录模板或 LIMS 预导入包已经审核批准。",
+    "正式回填仍需要人工确认、受控修订记录和用户明确授权。"
+  ],
+  "counts": {
+    "decision_items_total": 67,
+    "proposed_changes": 0,
+    "no_proposed_change": 67,
+    "proposed_approved": 0,
+    "proposed_unapproved": 0,
+    "missing_comment": 0,
+    "invalid_decision": 0,
+    "attachment_schema_decisions": 0,
+    "approved_candidates": 0,
+    "blocking_after_preview": 67,
+    "high_issues": 0,
+    "medium_issues": 0
+  },
+  "status_counts": {
+    "no_proposed_change": 67
+  },
+  "files": {
+    "overview": "01-决策回填预览总览.md",
+    "status_preview": "02-待处理与异常预览.md",
+    "source_impact": "03-源文件影响预览.md",
+    "validation_csv": "decision_update_validation.csv",
+    "overlay_preview": "review_pack_overlay_preview_not_for_import.csv",
+    "manifest": "decision_preview_manifest.json",
+    "readme": "README.md"
+  }
+}

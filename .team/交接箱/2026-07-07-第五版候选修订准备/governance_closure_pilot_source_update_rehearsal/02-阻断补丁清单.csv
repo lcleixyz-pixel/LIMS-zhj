@@ -1,0 +1,1 @@
+patch_id,return_item_id,closure_item_id,target_file,target_row_key,target_field,current_value,proposed_value,proposed_value_source,patch_action,update_ready,block_reason,ready_for_manual_source_update,not_imported,not_real_record,no_source_modified

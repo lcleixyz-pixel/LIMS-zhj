@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-07-07T12:43:22",
+  "review_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/human_review_pack",
+  "preimport_dir": ".team/交接箱/2026-07-07-第五版候选修订准备/lims_preimport_package",
+  "status": "passed",
+  "counts": {
+    "manual_clause_review_items": 29,
+    "record_template_review_items": 26,
+    "attachment_disposition_items": 1,
+    "preapply_gates": 11,
+    "findings": 0
+  },
+  "findings": []
+}

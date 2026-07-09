@@ -1,0 +1,4 @@
+action,target_table,document_role,doc_number,title,version,source_status,status,markdown_path,review_note
+revision_candidate,qms_structured_documents,quality_manual,XZTC/SC,质量手册（第五版候选稿）,第五版候选稿,draft,draft,10-质量手册第五版候选稿.md,第四版依据、程序目录、抽样、记录证据链和 LIMS 治理边界候选修订。
+reference_existing_current,qms_structured_documents,procedure,XZTC/CX-02-2022,设施与环境条件控制和维护程序,2022,current,structured,procedures/XZTC_CX-02-2022.md,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。
+candidate_record_template_document,qms_structured_documents,record_form,JL-01-01,水质采样记录,候选,draft,draft,13-记录模板包-候选清单.md,第五版候选手册记录证据链候选模板。

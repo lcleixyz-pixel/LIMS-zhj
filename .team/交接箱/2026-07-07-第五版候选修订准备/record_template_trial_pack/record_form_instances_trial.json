@@ -1,0 +1,514 @@
+[
+  {
+    "trial_marker": "SIMULATED_TRIAL_NOT_REAL_RECORD",
+    "generated_at": "2026-07-07T07:03:24",
+    "source_template_csv": "lims_preimport_package/record_form_templates_preimport.csv",
+    "template_code": "JL-4.1-01",
+    "template_name": "公正性风险识别与处置记录",
+    "status": "draft",
+    "review_status": "trial_only_pending_human_review",
+    "applicable_clauses": "4.1、8.5",
+    "procedure_doc_numbers": "XZTC/CX-07-02-2022；XZTC/CX-07-2022；XZTC/CX-17-2022；XZTC/CX-18-2022；XZTC/CX-32-2022",
+    "responsible_position": "质量负责人",
+    "trigger_time": "年度识别、岗位变化、客户关系变化、投诉或外部压力出现时",
+    "field_values_json": "{\"record_number\":\"SIM-JL-4.1-01-20260707-001\",\"record_name\":\"公正性风险识别与处置记录\",\"applicable_clause\":\"4.1、8.5\",\"related_procedure\":\"XZTC/CX-07-02-2022；XZTC/CX-07-2022；XZTC/CX-17-2022；XZTC/CX-18-2022；XZTC/CX-32-2022\",\"responsible_position\":\"质量负责人\",\"trigger_time\":\"年度识别、岗位变化、客户关系变化、投诉或外部压力出现时\",\"reviewer\":\"待人工确认\",\"storage_location\":\"待人工确认\",\"retention_period\":\"待人工确认\",\"confidentiality_level\":\"待确认\",\"correction_rule\":\"保留原始信息、更正原因、更正日期、责任人和复核痕迹；本试填为模拟数据，不作为正式更正规则。SIMULATED_TRIAL_NOT_REAL_RECORD\",\"specific_01_993a520f\":\"模拟：客户与检测人员存在熟人关系，真实运行时应按公正性风险准则核实。\",\"specific_02_e146c853\":\"模拟：样品受理、检测安排、结果复核。\",\"specific_03_a90f1e55\":\"模拟：中，待质量负责人按真实风险准则确认。\",\"specific_04_569b1741\":\"模拟：相关人员回避、增加独立复核、记录客户沟通。\",\"specific_05_0fe0b81e\":\"模拟：质量负责人/相关岗位待确认。\",\"specific_06_9d33da6a\":\"模拟：待一个运行周期后评价；本记录仅验证字段可填性。\"}",
+    "missing_human_inputs": "保存位置；保存期限；保密等级；现用表单一致性；责任岗位签核规则",
+    "markdown_file": "JL-4.1-01-公正性风险识别与处置记录-试填.md",
+    "import_allowed": "no",
+    "review_note": "模拟试填，不作为真实运行记录，不得导入生产库，不得作为受控记录。",
+    "field_values": {
+      "record_number": "SIM-JL-4.1-01-20260707-001",
+      "record_name": "公正性风险识别与处置记录",
+      "applicable_clause": "4.1、8.5",
+      "related_procedure": "XZTC/CX-07-02-2022；XZTC/CX-07-2022；XZTC/CX-17-2022；XZTC/CX-18-2022；XZTC/CX-32-2022",
+      "responsible_position": "质量负责人",
+      "trigger_time": "年度识别、岗位变化、客户关系变化、投诉或外部压力出现时",
+      "reviewer": "待人工确认",
+      "storage_location": "待人工确认",
+      "retention_period": "待人工确认",
+      "confidentiality_level": "待确认",
+      "correction_rule": "保留原始信息、更正原因、更正日期、责任人和复核痕迹；本试填为模拟数据，不作为正式更正规则。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "specific_01_993a520f": "模拟：客户与检测人员存在熟人关系，真实运行时应按公正性风险准则核实。",
+      "specific_02_e146c853": "模拟：样品受理、检测安排、结果复核。",
+      "specific_03_a90f1e55": "模拟：中，待质量负责人按真实风险准则确认。",
+      "specific_04_569b1741": "模拟：相关人员回避、增加独立复核、记录客户沟通。",
+      "specific_05_0fe0b81e": "模拟：质量负责人/相关岗位待确认。",
+      "specific_06_9d33da6a": "模拟：待一个运行周期后评价；本记录仅验证字段可填性。"
+    },
+    "field_schema": [
+      {
+        "key": "record_number",
+        "label": "记录编号",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "record_name",
+        "label": "记录名称",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "applicable_clause",
+        "label": "适用条款",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "4.1、8.5"
+      },
+      {
+        "key": "related_procedure",
+        "label": "关联程序",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "XZTC/CX-07-02-2022；XZTC/CX-07-2022；XZTC/CX-17-2022；XZTC/CX-18-2022；XZTC/CX-32-2022"
+      },
+      {
+        "key": "responsible_position",
+        "label": "填写责任",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "质量负责人"
+      },
+      {
+        "key": "trigger_time",
+        "label": "形成时机",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "年度识别、岗位变化、客户关系变化、投诉或外部压力出现时"
+      },
+      {
+        "key": "reviewer",
+        "label": "复核/批准",
+        "type": "text",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "storage_location",
+        "label": "保存位置",
+        "type": "text",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "retention_period",
+        "label": "保存期限",
+        "type": "text",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "confidentiality_level",
+        "label": "保密等级",
+        "type": "select",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "options": [
+          "普通",
+          "内部",
+          "客户敏感",
+          "待确认"
+        ]
+      },
+      {
+        "key": "correction_rule",
+        "label": "更正规则",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "specific_01_993a520f",
+        "label": "风险来源",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_02_e146c853",
+        "label": "影响活动",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_03_a90f1e55",
+        "label": "风险等级",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_04_569b1741",
+        "label": "措施",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_05_0fe0b81e",
+        "label": "责任人",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_06_9d33da6a",
+        "label": "有效性评价",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      }
+    ]
+  },
+  {
+    "trial_marker": "SIMULATED_TRIAL_NOT_REAL_RECORD",
+    "generated_at": "2026-07-07T07:03:24",
+    "source_template_csv": "lims_preimport_package/record_form_templates_preimport.csv",
+    "template_code": "JL-7.1-01",
+    "template_name": "合同评审记录",
+    "status": "draft",
+    "review_status": "trial_only_pending_human_review",
+    "applicable_clauses": "7.1",
+    "procedure_doc_numbers": "XZTC/CX-08-2022；XZTC/CX-09-2022；XZTC/CX-12-2022",
+    "responsible_position": "业务受理/技术负责人",
+    "trigger_time": "接受检测任务前及合同变更时",
+    "field_values_json": "{\"record_number\":\"SIM-JL-7.1-01-20260707-001\",\"record_name\":\"合同评审记录\",\"applicable_clause\":\"7.1\",\"related_procedure\":\"XZTC/CX-08-2022；XZTC/CX-09-2022；XZTC/CX-12-2022\",\"responsible_position\":\"业务受理/技术负责人\",\"trigger_time\":\"接受检测任务前及合同变更时\",\"reviewer\":\"待人工确认\",\"storage_location\":\"待人工确认\",\"retention_period\":\"待人工确认\",\"confidentiality_level\":\"待确认\",\"correction_rule\":\"保留原始信息、更正原因、更正日期、责任人和复核痕迹；本试填为模拟数据，不作为正式更正规则。SIMULATED_TRIAL_NOT_REAL_RECORD\",\"specific_01_93df5d13\":\"模拟：客户要求出具珠宝玉石检测报告，报告内容和交付时限待真实委托确认。\",\"specific_02_b77e2ac8\":\"模拟：采用现行有效标准方法，具体标准编号待业务记录确认。\",\"specific_03_eb9d53ce\":\"模拟：人员、设备、环境和授权范围待真实受理时核查。\",\"specific_04_c5ca3950\":\"模拟：检测人员、仪器、复核人员和报告授权人待排班确认。\",\"specific_05_6a0b5360\":\"模拟：按约定周期完成；如变更应重新评审并通知客户。\",\"specific_06_8825db7b\":\"模拟：如需符合性声明，应先约定技术规范和决策规则。\",\"specific_07_82bf9384\":\"模拟：合同变更时重新评审并传达相关岗位。\"}",
+    "missing_human_inputs": "保存位置；保存期限；保密等级；现用表单一致性；责任岗位签核规则",
+    "markdown_file": "JL-7.1-01-合同评审记录-试填.md",
+    "import_allowed": "no",
+    "review_note": "模拟试填，不作为真实运行记录，不得导入生产库，不得作为受控记录。",
+    "field_values": {
+      "record_number": "SIM-JL-7.1-01-20260707-001",
+      "record_name": "合同评审记录",
+      "applicable_clause": "7.1",
+      "related_procedure": "XZTC/CX-08-2022；XZTC/CX-09-2022；XZTC/CX-12-2022",
+      "responsible_position": "业务受理/技术负责人",
+      "trigger_time": "接受检测任务前及合同变更时",
+      "reviewer": "待人工确认",
+      "storage_location": "待人工确认",
+      "retention_period": "待人工确认",
+      "confidentiality_level": "待确认",
+      "correction_rule": "保留原始信息、更正原因、更正日期、责任人和复核痕迹；本试填为模拟数据，不作为正式更正规则。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "specific_01_93df5d13": "模拟：客户要求出具珠宝玉石检测报告，报告内容和交付时限待真实委托确认。",
+      "specific_02_b77e2ac8": "模拟：采用现行有效标准方法，具体标准编号待业务记录确认。",
+      "specific_03_eb9d53ce": "模拟：人员、设备、环境和授权范围待真实受理时核查。",
+      "specific_04_c5ca3950": "模拟：检测人员、仪器、复核人员和报告授权人待排班确认。",
+      "specific_05_6a0b5360": "模拟：按约定周期完成；如变更应重新评审并通知客户。",
+      "specific_06_8825db7b": "模拟：如需符合性声明，应先约定技术规范和决策规则。",
+      "specific_07_82bf9384": "模拟：合同变更时重新评审并传达相关岗位。"
+    },
+    "field_schema": [
+      {
+        "key": "record_number",
+        "label": "记录编号",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "record_name",
+        "label": "记录名称",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "applicable_clause",
+        "label": "适用条款",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "7.1"
+      },
+      {
+        "key": "related_procedure",
+        "label": "关联程序",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "XZTC/CX-08-2022；XZTC/CX-09-2022；XZTC/CX-12-2022"
+      },
+      {
+        "key": "responsible_position",
+        "label": "填写责任",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "业务受理/技术负责人"
+      },
+      {
+        "key": "trigger_time",
+        "label": "形成时机",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "接受检测任务前及合同变更时"
+      },
+      {
+        "key": "reviewer",
+        "label": "复核/批准",
+        "type": "text",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "storage_location",
+        "label": "保存位置",
+        "type": "text",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "retention_period",
+        "label": "保存期限",
+        "type": "text",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "confidentiality_level",
+        "label": "保密等级",
+        "type": "select",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "options": [
+          "普通",
+          "内部",
+          "客户敏感",
+          "待确认"
+        ]
+      },
+      {
+        "key": "correction_rule",
+        "label": "更正规则",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "specific_01_93df5d13",
+        "label": "客户要求",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_02_b77e2ac8",
+        "label": "方法",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_03_eb9d53ce",
+        "label": "能力",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_04_c5ca3950",
+        "label": "资源",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_05_6a0b5360",
+        "label": "时限",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_06_8825db7b",
+        "label": "符合性声明",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_07_82bf9384",
+        "label": "变更",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      }
+    ]
+  },
+  {
+    "trial_marker": "SIMULATED_TRIAL_NOT_REAL_RECORD",
+    "generated_at": "2026-07-07T07:03:24",
+    "source_template_csv": "lims_preimport_package/record_form_templates_preimport.csv",
+    "template_code": "JL-8.8-01",
+    "template_name": "内审计划、检查表与整改验证记录",
+    "status": "draft",
+    "review_status": "trial_only_pending_human_review",
+    "applicable_clauses": "8.8",
+    "procedure_doc_numbers": "XZTC/CX-15-2022；XZTC/CX-16-2022；XZTC/CX-19-2022；XZTC/CX-20-2022",
+    "responsible_position": "内审组长",
+    "trigger_time": "年度内审、专项内审时",
+    "field_values_json": "{\"record_number\":\"SIM-JL-8.8-01-20260707-001\",\"record_name\":\"内审计划、检查表与整改验证记录\",\"applicable_clause\":\"8.8\",\"related_procedure\":\"XZTC/CX-15-2022；XZTC/CX-16-2022；XZTC/CX-19-2022；XZTC/CX-20-2022\",\"responsible_position\":\"内审组长\",\"trigger_time\":\"年度内审、专项内审时\",\"reviewer\":\"待人工确认\",\"storage_location\":\"待人工确认\",\"retention_period\":\"待人工确认\",\"confidentiality_level\":\"待确认\",\"correction_rule\":\"保留原始信息、更正原因、更正日期、责任人和复核痕迹；本试填为模拟数据，不作为正式更正规则。SIMULATED_TRIAL_NOT_REAL_RECORD\",\"specific_01_d0eec577\":\"模拟：覆盖质量手册 4.1 至 8.9 相关过程，真实范围由年度内审方案确认。\",\"specific_02_1a26633d\":\"模拟：CNAS-CL01、CMA 现行评审准则、质量手册和程序文件。\",\"specific_03_523e40a0\":\"模拟：发现记录字段保存期限待确认，需由文件管理员补充。\",\"specific_04_180acae9\":\"模拟：暂按观察项处理；真实内审应按证据判定不符合等级。\",\"specific_05_c89ed65a\":\"模拟：补充保存期限、复核职责和电子记录更正规则。\",\"specific_06_80144e2e\":\"模拟：整改完成后由内审员复核；本记录仅验证模板字段可承接闭环。\"}",
+    "missing_human_inputs": "保存位置；保存期限；保密等级；现用表单一致性；责任岗位签核规则",
+    "markdown_file": "JL-8.8-01-内审计划、检查表与整改验证记录-试填.md",
+    "import_allowed": "no",
+    "review_note": "模拟试填，不作为真实运行记录，不得导入生产库，不得作为受控记录。",
+    "field_values": {
+      "record_number": "SIM-JL-8.8-01-20260707-001",
+      "record_name": "内审计划、检查表与整改验证记录",
+      "applicable_clause": "8.8",
+      "related_procedure": "XZTC/CX-15-2022；XZTC/CX-16-2022；XZTC/CX-19-2022；XZTC/CX-20-2022",
+      "responsible_position": "内审组长",
+      "trigger_time": "年度内审、专项内审时",
+      "reviewer": "待人工确认",
+      "storage_location": "待人工确认",
+      "retention_period": "待人工确认",
+      "confidentiality_level": "待确认",
+      "correction_rule": "保留原始信息、更正原因、更正日期、责任人和复核痕迹；本试填为模拟数据，不作为正式更正规则。SIMULATED_TRIAL_NOT_REAL_RECORD",
+      "specific_01_d0eec577": "模拟：覆盖质量手册 4.1 至 8.9 相关过程，真实范围由年度内审方案确认。",
+      "specific_02_1a26633d": "模拟：CNAS-CL01、CMA 现行评审准则、质量手册和程序文件。",
+      "specific_03_523e40a0": "模拟：发现记录字段保存期限待确认，需由文件管理员补充。",
+      "specific_04_180acae9": "模拟：暂按观察项处理；真实内审应按证据判定不符合等级。",
+      "specific_05_c89ed65a": "模拟：补充保存期限、复核职责和电子记录更正规则。",
+      "specific_06_80144e2e": "模拟：整改完成后由内审员复核；本记录仅验证模板字段可承接闭环。"
+    },
+    "field_schema": [
+      {
+        "key": "record_number",
+        "label": "记录编号",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "record_name",
+        "label": "记录名称",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "applicable_clause",
+        "label": "适用条款",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "8.8"
+      },
+      {
+        "key": "related_procedure",
+        "label": "关联程序",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "XZTC/CX-15-2022；XZTC/CX-16-2022；XZTC/CX-19-2022；XZTC/CX-20-2022"
+      },
+      {
+        "key": "responsible_position",
+        "label": "填写责任",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "内审组长"
+      },
+      {
+        "key": "trigger_time",
+        "label": "形成时机",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "default": "年度内审、专项内审时"
+      },
+      {
+        "key": "reviewer",
+        "label": "复核/批准",
+        "type": "text",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "storage_location",
+        "label": "保存位置",
+        "type": "text",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "retention_period",
+        "label": "保存期限",
+        "type": "text",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "confidentiality_level",
+        "label": "保密等级",
+        "type": "select",
+        "required": false,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。",
+        "options": [
+          "普通",
+          "内部",
+          "客户敏感",
+          "待确认"
+        ]
+      },
+      {
+        "key": "correction_rule",
+        "label": "更正规则",
+        "type": "text",
+        "required": true,
+        "note": "候选模板通用字段，正式启用前需由文件管理员确认。"
+      },
+      {
+        "key": "specific_01_d0eec577",
+        "label": "审核范围",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_02_1a26633d",
+        "label": "准则",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_03_523e40a0",
+        "label": "发现",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_04_180acae9",
+        "label": "不符合",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_05_c89ed65a",
+        "label": "整改",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      },
+      {
+        "key": "specific_06_80144e2e",
+        "label": "验证",
+        "type": "text",
+        "required": true,
+        "note": "来自候选记录模板清单的关键字段，需与现用表单或试填结果复核。"
+      }
+    ]
+  }
+]

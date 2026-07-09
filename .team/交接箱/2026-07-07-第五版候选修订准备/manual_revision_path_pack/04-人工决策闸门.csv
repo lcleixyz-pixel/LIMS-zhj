@@ -1,0 +1,6 @@
+decision_id,decision_topic,responsible_role,decision_status,allowed_values,blocking_if_unresolved,review_material
+MRD-01,第五版候选手册是否可进入修订/换版流程,最高管理者/质量负责人,approved,approved/pass/accepted/通过/批准; needs_revision; rejected; deferred,yes,10-质量手册第五版候选稿.md; 11-第四版到第五版候选修订说明.md
+MRD-02,版本标识与生效日期策略,文件管理员/质量负责人,approved,approved; needs_revision; deferred,yes,documents.version; documents.revision; 文件控制程序
+MRD-03,第四版作废回收和留存策略,文件管理员,approved,approved; needs_revision; deferred,yes,controlled_release_rehearsal/04-旧版处置演练清单.csv
+MRD-04,LIMS 修订入口和结构化同步动作,系统管理员/文件管理员,approved,approved; needs_revision; deferred,yes,03-LIMS修订动作预览.csv
+MRD-05,受控发布、培训宣贯和实施有效性检查,质量负责人/文件管理员,approved,approved; needs_revision; deferred,yes,controlled_release_rehearsal; release_execution_template_pack
