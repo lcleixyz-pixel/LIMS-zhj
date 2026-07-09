@@ -44,8 +44,32 @@ fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 const target = resolveTarget(inputUrl);
 let browser;
 
+function resolveChromiumExecutable() {
+  const fromEnv = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+    || process.env.CHROMIUM_PATH
+    || '';
+  if (fromEnv && fs.existsSync(fromEnv)) {
+    return fromEnv;
+  }
+  for (const candidate of ['/usr/bin/chromium-browser', '/usr/bin/chromium']) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
+
 try {
-  browser = await chromium.launch({ headless: true });
+  const executablePath = resolveChromiumExecutable();
+  const launchOptions = {
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+  };
+  if (executablePath) {
+    launchOptions.executablePath = executablePath;
+  }
+
+  browser = await chromium.launch(launchOptions);
   const page = await browser.newPage({ viewport: { width: 1240, height: 1754 } });
 
   await page.goto(target, { waitUntil: 'networkidle' });

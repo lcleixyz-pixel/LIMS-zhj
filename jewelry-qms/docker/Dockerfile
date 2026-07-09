@@ -7,9 +7,22 @@ RUN composer install --no-interaction --prefer-dist
 FROM composer:2.8
 
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
-    COMPOSER_CACHE_DIR=/tmp/composer-cache
+    COMPOSER_CACHE_DIR=/tmp/composer-cache \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-RUN docker-php-ext-install pdo_mysql
+# Node + system Chromium：记录表格 PDF 由 app 内 PdfRenderService 直接调用 node 脚本
+RUN apk add --no-cache \
+      nodejs \
+      npm \
+      chromium \
+      nss \
+      freetype \
+      harfbuzz \
+      ca-certificates \
+      ttf-freefont \
+      font-noto-cjk \
+    && docker-php-ext-install pdo_mysql
 
 WORKDIR /app
 

@@ -80,10 +80,12 @@ docker compose down -v
 docker compose up --build
 ```
 
-PDF 渲染依赖 Playwright，默认不随主应用镜像安装。需要单独验证 PDF 输出时执行：
+PDF 渲染：Docker `app` 镜像已内置 Node.js 与系统 Chromium，页面「生成 PDF」在容器内直接调用 `scripts/render-record-pdf.mjs`。首次启动若 `node_modules` 卷为空，entrypoint 会自动 `npm ci`。
+
+独立 Playwright 镜像仍可用于脚本冒烟（可选）：
 
 ```bash
-docker compose --profile pdf run --rm pdf
+docker compose --profile pdf run --rm pdf node scripts/render-record-pdf.mjs smoke
 ```
 
 ## 数据库初始化

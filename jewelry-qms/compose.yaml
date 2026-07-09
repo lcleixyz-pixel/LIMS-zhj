@@ -17,8 +17,11 @@ services:
       DB_CHARSET: utf8mb4
       DEFAULT_LANG: zh-cn
       COMPOSER_CACHE_DIR: /tmp/composer-cache
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/chromium-browser
     ports:
       - "8010:8000"
+    shm_size: "256mb"
     volumes:
       - .:/app
       - ../docs:/docs:ro
@@ -27,6 +30,7 @@ services:
       - ../现用文件:/现用文件:ro
       - ./docker/.env.docker:/app/.env:ro
       - vendor:/app/vendor
+      - node_modules:/app/node_modules
       - composer_cache:/tmp/composer-cache
 
   pdf:
