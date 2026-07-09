@@ -1,0 +1,41 @@
+action,target_table,level,doc_number,title,version,status,publish,source_stage_file,change_reason,import_mode
+revision_candidate,documents,1,XZTC/SC,质量手册（第五版候选稿）,第五版候选稿,draft,0,10-质量手册第五版候选稿.md,第四版依据、程序目录、抽样、记录证据链和 LIMS 治理边界候选修订。,manual_review_then_revision_flow
+reference_existing_current,documents,2,XZTC/CX-01-2022,人员培训程序,2022,published,1,现用文件/程序文件/程序文件2022/01-2022人员培训程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-01-02-2022,人员管理程序,2022,published,1,现用文件/程序文件/程序文件2022/01-02-2022人员管理程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-02-2022,设施与环境条件控制和维护程序,2022,published,1,现用文件/程序文件/程序文件2022/02-2022设施与环境条件控制和维护程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-03-2022,仪器设备管理程序,2022,published,1,现用文件/程序文件/程序文件2022/03-2022仪器设备管理程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-03-02-2022,标准物质管理程序,2022,published,1,现用文件/程序文件/程序文件2022/03-02-2022标准物质管理程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-04-2022,仪器设备和标准物质期间核查程序,2022,published,1,现用文件/程序文件/程序文件2022/04-2022仪器设备和标准物质期间核查程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-05-2022,实现测量可溯源程序,2022,published,1,现用文件/程序文件/程序文件2022/05-2022实现测量可溯源程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-06-2022,保护客户机密信息程序,2022,published,1,现用文件/程序文件/程序文件2022/06-2022保护客户机密信息程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-07-2022,确保公正性程序,2022,published,1,现用文件/程序文件/程序文件2022/07-2022确保公正性程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-07-02-2022,防止商业贿赂程序,2022,published,1,现用文件/程序文件/程序文件2022/07-02-2022防止商业贿赂程序.doc,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-08-2022,文件控制程序,2022,published,1,现用文件/程序文件/程序文件2022/08-2022文件控制程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-09-2022,客户要求、标书、合同评审程序,2022,published,1,现用文件/程序文件/程序文件2022/09-2022客户要求、标书、合同评审程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-11-2022,外部支持服务和供应品管理程序,2022,published,1,现用文件/程序文件/程序文件2022/11-2022外部支持服务和供应品管理程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-12-2022,服务客户程序,2022,published,1,现用文件/程序文件/程序文件2022/12-2022服务客户程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-13-2022,内部沟通程序,2022,published,1,现用文件/程序文件/程序文件2022/13-2022内部沟通程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-14-2022,处理投诉程序,2022,published,1,现用文件/程序文件/程序文件2022/14-2022处理投诉程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-15-2022,不符合检测工作管理程序,2022,published,1,现用文件/程序文件/程序文件2022/15-2022不符合检测工作管理程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-16-2022,实施纠正措施程序,2022,published,1,现用文件/程序文件/程序文件2022/16-2022实施纠正措施程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-17-2022,实施预防措施程序,2022,published,1,现用文件/程序文件/程序文件2022/17-2022实施预防措施程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-18-2022,改进控制程序,2022,published,1,现用文件/程序文件/程序文件2022/18-2022改进控制程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-19-2022,记录控制程序,2022,published,1,现用文件/程序文件/程序文件2022/19-2022记录控制程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-20-2022,内部管理体系审核程序,2022,published,1,现用文件/程序文件/程序文件2022/20-2022内部管理体系审核程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-21-2022,管理评审程序,2022,published,1,现用文件/程序文件/程序文件2022/21-2022管理评审程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-22-2022,检测方法的选择与确认程序,2022,published,1,现用文件/程序文件/程序文件2022/22-2022检测方法的选择与确认程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-23-2022,允许方法偏离控制程序,2022,published,1,现用文件/程序文件/程序文件2022/23-2022允许方法偏离控制程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-24-2022,开展新项目评审程序,2022,published,1,现用文件/程序文件/程序文件2022/24-2022开展新项目评审程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-25-2022,检测工作控制程序,2022,published,1,现用文件/程序文件/程序文件2022/25-2022检测工作控制程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-26-2022,计算机文件及数据控制程序,2022,published,1,现用文件/程序文件/程序文件2022/26-2022计算机文件及数据控制程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-27-2022,测量不确定度的评审控制程序,2022,published,1,现用文件/程序文件/程序文件2022/27-2022测量不确定度的评审控制程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-28-2022,样品处置和管理程序,2022,published,1,现用文件/程序文件/程序文件2022/28-2022样品处置和管理程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-29-2022,结果报告管理程序,2022,published,1,现用文件/程序文件/程序文件2022/29-2022结果报告管理程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-30-2022,检测结果质量控制及能力验证程序,2022,published,1,现用文件/程序文件/程序文件2022/30-2022检测结果质量控制及能力验证程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-31-2022,检测工作的监督程序,2022,published,1,现用文件/程序文件/程序文件2022/31-2022检测工作的监督程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-32-2022,风险评估控制程序,2022,published,1,现用文件/程序文件/程序文件2022/32-2022风险评估控制程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-33-2022,内务与安全管理程序,2022,published,1,现用文件/程序文件/程序文件2022/33-2022内务与安全管理程序.docx,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-34-2022,内部监控管理程序,2022,published,1,现用文件/程序文件/程序文件2022/34-2022内部监控管理程序.doc,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_current,documents,2,XZTC/CX-35-2022,抽样控制程序,2022,published,1,现用文件/程序文件/程序文件2022/35-2022抽样控制程序.doc,用户确认以 LIMS 当前导出的 2022 程序清单作为现行程序目录。,match_or_upsert_after_file_control_review
+reference_existing_attachment_form,documents,4,XZTC/CX-05-02-2022,仪器设备计量溯源结果确认表,2022,draft,0,现用文件/程序文件/程序文件2022/05-02-2022仪器设备计量溯源结果确认表.docx,LIMS 导出 2022 清单中的编号附件/表单；不作为程序文件自动匹配，需人工确认归入记录模板或程序附件。,attachment_form_review_then_record_template_or_document
+candidate_record_template_document,documents,4,JL-01-01,水质采样记录,候选,draft,0,13-记录模板包-候选清单.md,第五版候选手册记录证据链候选模板。,record_template_review_then_create

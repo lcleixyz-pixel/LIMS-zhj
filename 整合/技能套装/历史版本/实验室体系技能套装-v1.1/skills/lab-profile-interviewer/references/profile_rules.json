@@ -1,0 +1,86 @@
+{
+  "version": "1.0",
+  "description": "答卷一致性互检规则。domain 字段用于换领域时过滤：仅加载 applies_to 包含当前领域的规则。",
+  "domain": "珠宝玉石/贵金属(A015)",
+  "max_question_number": 49,
+  "fragile_thresholds": {
+    "authorized_signatories_per_site": 2,
+    "diamond_master_stones_min": {"unset": 7, "mounted": 5},
+    "min_staff_per_module": 2
+  },
+  "rules": [
+    {
+      "id": "R1",
+      "description": "答做切工分级但设备清单无切工测量仪（或反之）",
+      "applies_to": ["珠宝玉石/贵金属(A015)"],
+      "check_type": "FAIL",
+      "condition": "has(9,'做') and no(9,'不做') and no(20,'切工','切割测量','切工测量')",
+      "fail_message": "R1: 答做切工分级(题9),但设备清单(题20)无切工测量仪",
+      "warn_message": "R1: 不做切工分级却有切工仪——确认是否预留扩项(题13)",
+      "note": "正则会匹配'切工''切割测量仪''切工测量仪'等变体"
+    },
+    {
+      "id": "R2",
+      "description": "做钻石分级但比色石数量不足或未答",
+      "applies_to": ["珠宝玉石/贵金属(A015)"],
+      "check_type": "FAIL",
+      "condition": "has(8,'做') and no(8,'不做')",
+      "fail_message": "R2: 做钻石分级(题8)但比色石数量(题21)未答",
+      "warn_message": null,
+      "fragile_message": "比色石={n}粒(恰为最低值{need}粒)",
+      "min_stones_unset": 7,
+      "min_stones_mounted": 5
+    },
+    {
+      "id": "R3",
+      "description": "做贵金属检测但无标样",
+      "applies_to": ["珠宝玉石/贵金属(A015)"],
+      "check_type": "FAIL",
+      "condition": "has(10,'做') and no(10,'不做') and no(22,'有')",
+      "fail_message": "R3: 做贵金属检测(题10)但标样(题22)未答'有'"
+    },
+    {
+      "id": "R4",
+      "description": "存在内部校准→G004 整章启用",
+      "applies_to": ["all"],
+      "check_type": "WARN",
+      "condition": "has(23,'自校','自己校','部分')",
+      "warn_message": "R4: 存在内部校准→G004整章启用(C4翻转),需人员/方法/不确定度配套"
+    },
+    {
+      "id": "R5",
+      "description": "多场所→每场所需≥2名签字人,核对分布（支持中文数字'二个''两个'）",
+      "applies_to": ["all"],
+      "check_type": "WARN",
+      "condition": "regex_multi_site",
+      "warn_message": "R5: 多场所→每场所≥2名签字人,核对题14分布(C5翻转)",
+      "patterns": ["(\\d+)\\s*个", "[二两三四五六七八九十]\\s*个"]
+    },
+    {
+      "id": "R6",
+      "description": "一人多职→核对投诉审批与内审回避矩阵是否闭合",
+      "applies_to": ["all"],
+      "check_type": "WARN",
+      "condition": "has(15,'兼','一人')",
+      "warn_message": "R6: 一人多职→核对投诉审批与内审回避矩阵是否闭合"
+    },
+    {
+      "id": "R7",
+      "description": "授权签字人数恰为每场所最低值→脆弱达标登记",
+      "applies_to": ["all"],
+      "check_type": "FRAGILE",
+      "condition": "regex_signatory_fragile",
+      "fragile_message": "授权签字人={n}名(恰为每场所最低值{threshold}名)",
+      "threshold_per_site": 2
+    },
+    {
+      "id": "R8",
+      "description": "任一检测模块仅1人可顶岗→单点故障警示",
+      "applies_to": ["all"],
+      "check_type": "FRAGILE",
+      "condition": "q46_single_point",
+      "fragile_message": "模块'{module}'仅1人可顶岗→单点故障(休假即停摆,人员比对无法开展)",
+      "note": "需要从题46答案中解析各模块人数"
+    }
+  ]
+}

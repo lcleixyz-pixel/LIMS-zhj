@@ -1,0 +1,13 @@
+{
+  "package_type": "lims_preimport_package",
+  "package_version": "smoke-dbfree-v1.0",
+  "description": "DB-free 冒烟夹具:documents/external_sources 空、record模板doc_number留空,使 existingRows 短路不查库;仅供证明运行器+基础校验端到端可跑,非正式金样。",
+  "counts": {
+    "documents": 0,
+    "structured_documents": 0,
+    "record_form_templates": 1,
+    "traceability_rows": 1,
+    "manual_blocks": 1,
+    "external_sources": 0
+  }
+}

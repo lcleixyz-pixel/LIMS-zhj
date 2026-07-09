@@ -1,0 +1,85 @@
+[
+  {
+    "id": 1,
+    "name": "从零启动全链路",
+    "description": "模拟从无到有建一套CNAS+CMA双体系,跨四个技能完整走一遍",
+    "steps": [
+      {"role": "user", "say": "我们是一家珠宝检测实验室,只有CMA,想申请CNAS。9个人,单场所。从零开始建一套双体系吧"},
+      {"role": "expect", "skill": "engineer", "action": "读总台账→无→建空台账→路由interviewer全量采访"},
+      {"role": "user", "say": "(配合回答全部47题,关键答案:做鉴定+钻石分级,不做切工,授权签字人2名,有CGC证3人,2022年版旧手册)"},
+      {"role": "expect", "skill": "interviewer", "action": "出五件套→engineer验收→F卡登记→builder下工单"},
+      {"role": "expect", "skill": "builder", "action": "逐主题构建底稿→validate全绿→语义签→engineer收→compiler总装"},
+      {"role": "expect", "skill": "compiler", "action": "三闸全绿→语义签字→发布版→工程师验收入账"},
+      {"role": "expect", "skill": "engineer", "action": "总台账全部主题≥已发布→宣布进入运行期→建运行台账"}
+    ]
+  },
+  {
+    "id": 2,
+    "name": "存量体检→修补→回跑",
+    "description": "已有旧手册和程序文件,先体检再修补,验证卡六+卡六联动builder回跑",
+    "steps": [
+      {"role": "user", "say": "我们有2022年的质量手册和37份程序文件,帮审一下能不能用"},
+      {"role": "expect", "skill": "engineer", "action": "触发卡六存量体检→收文登记→简版画像→五级判定→出体检报告"},
+      {"role": "user", "say": "体检报告说人员章节缺了G001 6.2.2的劳动关系要求,帮我补上"},
+      {"role": "expect", "skill": "engineer", "action": "体检缺口→转builder工单(补人员底稿)→builder补条款升版→validate重跑"},
+      {"role": "expect", "skill": "builder", "action": "点名册追加G001 6.2.2→新K卡→合并条款补句→对账单更新"},
+      {"role": "expect", "skill": "compiler", "action": "回跑受影响章节→重跑三闸→发布版升版"},
+      {"role": "expect", "skill": "engineer", "action": "验收回跑产物→总台账更新→体检报告标记缺口已关闭"}
+    ]
+  },
+  {
+    "id": 3,
+    "name": "换版全局响应链",
+    "description": "G001换版→冻结→世系分析→受影响底稿升版→回跑→解冻",
+    "steps": [
+      {"role": "user", "say": "CNAS刚发布了G001的2026版,替换2024版,我们文件要怎么改"},
+      {"role": "expect", "skill": "engineer", "action": "🛑停点3触发→冻结所有主题'最新'声明→路由builder做世系分析"},
+      {"role": "expect", "skill": "builder", "action": "G001:2026与2024逐条diff→世系分析(消亡/迁移/吸收)→受影响K卡清单→受影响主题清单"},
+      {"role": "expect", "skill": "engineer", "action": "按builder受影响清单→逐主题退状态'构建中'→生成回跑工单"},
+      {"role": "expect", "skill": "compiler", "action": "所有受影响章节回跑→重跑三闸→新发布版"},
+      {"role": "expect", "skill": "engineer", "action": "世系分析完成→受影响主题恢复推进→总台账事件日志记'G001换版响应'→解冻"}
+    ]
+  },
+  {
+    "id": 4,
+    "name": "CAPA完整流程",
+    "description": "内审发现不符合→开CAPA→原因分析(why×5)→纠正→纠正措施→有效性验证→关闭。验证纠正与纠正措施分列",
+    "steps": [
+      {"role": "user", "say": "内审发现设备期间核查记录缺了6个月,开个CAPA"},
+      {"role": "expect", "skill": "engineer", "action": "触发ops-playbooks卡四CAPA→登记台账(编号/来源/事实描述/违反条款回链)"},
+      {"role": "user", "say": "原因:设备管理员离职后接替的人不知道要做期间核查"},
+      {"role": "expect", "skill": "engineer", "action": "CAPA台账记原因分析(追问框架why×5:为什么没人知道?→培训缺失→为什么没培训?→交接流程没规定)"},
+      {"role": "expect", "skill": "engineer", "action": "纠正(就事论事):补做6个月期间核查记录。纠正措施(防再发):修订CX-02设备管理程序加交接清单模板"},
+      {"role": "expect", "skill": "engineer", "action": "纠正与纠正措施分列→涉文件修改的开builder工单→CAPA关联工单号→有效性验证时间差(措施落地后再验)→验证前状态最高'措施已落实',不得直接'关闭'"},
+      {"role": "user", "say": "3个月后验证,期间核查记录连续无缺"},
+      {"role": "expect", "skill": "engineer", "action": "有效性验证通过→CAPA状态→'关闭'→关联工单链全部关闭→总台账事件日志记'CAPA-xx已关闭'"}
+    ]
+  },
+  {
+    "id": 5,
+    "name": "管理评审(8.9)",
+    "description": "年度管评:输入包9项逐项点收→议程会议→输出决议→跟踪关闭。缺项显式标'本期无输入'",
+    "steps": [
+      {"role": "user", "say": "今年该做管理评审了,帮我准备"},
+      {"role": "expect", "skill": "engineer", "action": "触发ops-playbooks卡三管评→按CL01 8.9.2逐项收集输入包(9项:内外因素/方针目标/内审/CAPA/PT质控/投诉/资源/风险/上期跟踪)"},
+      {"role": "expect", "skill": "engineer", "action": "每项输入标来源文件路径+摘要+点收状态(✅有/⚠本期无)。缺项禁止跳过,必须显式标'本期无输入'"},
+      {"role": "user", "say": "内审有3个一般不符合还没关,能力验证有一个不满意项,资源方面设备预算不够"},
+      {"role": "expect", "skill": "engineer", "action": "管评输入包如实记录→议程按输入包排→输出决议:每条决议含责任人+期限+验证方式(不是'加强管理'式口号)"},
+      {"role": "expect", "skill": "engineer", "action": "涉体系文件修改的决议→自动开CAPA→按变更传播矩阵下builder工单。决议跟踪表逐条盯到关闭,未关闭项自动成为下期输入"},
+      {"role": "expect", "skill": "engineer", "action": "管评结论(方针是否延续/资源是否增配)只列选项与影响,不代管理层拍板。管评记录入总台账事件日志"}
+    ]
+  },
+  {
+    "id": 6,
+    "name": "迎审冲刺(三层核验)",
+    "description": "评审日期确定→三层就绪核验(文件覆盖≠签字≠运行)→差距清单→举证清单→未决项清零→迎审就绪报告",
+    "steps": [
+      {"role": "user", "say": "下个月CNAS来复评,帮我看看还差什么"},
+      {"role": "expect", "skill": "engineer", "action": "触发ops-playbooks卡五迎审冲刺→三层就绪核验逐层出证:①文件覆盖层(对账单可测项100%✅+普查闭合100%)②签字层(全部主题语义签齐+三闸全绿)③运行层(≥6个月记录+最近内审+管评完成+CAPA无逾期)"},
+      {"role": "expect", "skill": "engineer", "action": "三层不得互相顶替(🛑停点4:文件覆盖✅≠运行符合)。强制查新一次(卡一),确认书架无未响应变更"},
+      {"role": "expect", "skill": "engineer", "action": "出差距清单(按影响评审结论程度排序)→汇编举证清单(以interviewer证据随答为底+内审抽样记录→按评审现场动线排序)"},
+      {"role": "expect", "skill": "engineer", "action": "未决项清零:逐项处置(关闭/降级观察项+如实口径——不包装单人多岗)→出迎审就绪报告(三层结论+差距+补救工单链+明示文件覆盖≠运行符合)"},
+      {"role": "expect", "skill": "engineer", "action": "举证清单含:每项证据的文件名+存放位置+对应条款号,评审员可以直接按清单翻阅"}
+    ]
+  }
+]

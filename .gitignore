@@ -47,3 +47,11 @@ jewelry-qms/public/uploads/*
 
 # Node (if any)
 node_modules/
+
+# LIMS-zhj 版权红线与工作副本排除（2026-07-09）
+# 外部文件依据：CNAS/GBT/RBT 标准原文，版权所有，永不入仓（见《项目总体规划》第七条）
+整合/外部文件依据/
+# __work_lims：本地解压的工作副本（含 composer.phar 等二进制）
+整合/__work_lims/
+# 归档：MinerU 转换中间产物与 docx 备份大文件，非源文件
+整合/归档/
