@@ -7,6 +7,12 @@ if [[ ! -d vendor/topthink ]]; then
   composer install --no-interaction --prefer-dist
 fi
 
+# PDF 渲染依赖：容器内 Node 模块（与宿主机隔离的 named volume）
+if [[ ! -x node_modules/.bin/playwright ]] && [[ -f package.json ]]; then
+  echo "[jewelry-qms] installing npm dependencies for PDF render..."
+  npm ci --omit=dev
+fi
+
 if [[ "${WAIT_FOR_DB:-1}" != "0" ]]; then
   php -r '
   $host = getenv("DB_HOST") ?: "db";

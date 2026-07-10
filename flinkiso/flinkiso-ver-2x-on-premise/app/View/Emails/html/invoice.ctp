@@ -1,1 +1,0 @@
-<?php echo $message = nl2br($invoice['Invoice']['email_body']);?>

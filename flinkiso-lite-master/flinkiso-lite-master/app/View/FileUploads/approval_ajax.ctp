@@ -1,1 +1,0 @@
-<?php echo $this->element('approval_ajax',array('record_id'=>$this->request->params['pass']['0'])); ?>
