@@ -61,3 +61,9 @@ node_modules/
 flinkiso/
 flinkiso-lite-master/
 jewelry-qms-legacy/
+
+# 参考资料版权拆分（2026-07-11）：标准原文/体系原件移至本地 LIMS-zhj-参考-private/，永不入仓（规划第七条红线）
+参考/
+
+# 演练备份dump含真实机构数据，不入仓（2026-07-11）
+**/backup-*.sql
