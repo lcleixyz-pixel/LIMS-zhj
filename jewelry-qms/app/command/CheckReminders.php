@@ -14,8 +14,8 @@ class CheckReminders extends Command
     protected function configure(): void
     {
         $this->setName('check:reminders')
-            ->addOption('type', null, Option::VALUE_OPTIONAL, '提醒类型：all、calibration、capa、doc_review、competency', 'all')
-            ->setDescription('检查 QMS 校准、CAPA、文件评审和能力到期提醒');
+            ->addOption('type', null, Option::VALUE_OPTIONAL, '提醒类型：all、calibration、capa、doc_review、competency、equipment_verification、audit_schedule、source_freshness', 'all')
+            ->setDescription('检查 QMS 校准、CAPA、文件评审、能力到期、期间核查、内审节点、标准查新提醒');
     }
 
     protected function execute(Input $input, Output $output): int
