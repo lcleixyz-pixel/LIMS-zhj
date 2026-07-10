@@ -1,1 +1,0 @@
-<?php echo $this->element('add_kra'); ?>

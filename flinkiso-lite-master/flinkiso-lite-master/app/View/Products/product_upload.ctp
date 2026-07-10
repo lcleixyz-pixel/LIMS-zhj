@@ -1,1 +1,0 @@
-<?php echo $this->element('upload-edit', array('usersId' => $this->request->params['pass'][0], 'recordId' => $this->request->params['pass'][1])); ?>

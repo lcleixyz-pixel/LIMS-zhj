@@ -55,3 +55,9 @@ node_modules/
 整合/__work_lims/
 # 归档：MinerU 转换中间产物与 docx 备份大文件，非源文件
 整合/归档/
+
+# 仓库拆分：参考系统已移至 LIMS-zhj-reference 归档仓（2026-07-09）
+# 防止这些目录被误重新加入主仓
+flinkiso/
+flinkiso-lite-master/
+jewelry-qms-legacy/

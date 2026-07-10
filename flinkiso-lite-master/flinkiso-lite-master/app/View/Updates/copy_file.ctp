@@ -1,1 +1,0 @@
-<?php echo $this->element('copy_file',array('val'=>$message)); ?>

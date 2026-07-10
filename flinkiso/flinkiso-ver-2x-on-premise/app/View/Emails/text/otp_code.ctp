@@ -1,1 +1,0 @@
-<?php echo $message = $otp_code ?>

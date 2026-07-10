@@ -1,8 +1,0 @@
-.idea
-*.iml
-*.log
-*.min.*
-docs
-dist
-bower_components
-node_modules
