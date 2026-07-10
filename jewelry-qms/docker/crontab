@@ -1,0 +1,4 @@
+# jewelry-qms 周期任务定时（B1 容器内 busybox crond，2026-07-11）
+# 每天 08:00 跑全量提醒检查，结果写 /tmp/reminders.log
+# 改时间点：改下面这行的小时数（0-23），重建容器生效
+0 8 * * * cd /app && php think check:reminders --type=all >> /tmp/reminders.log 2>&1
