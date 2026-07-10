@@ -13,6 +13,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1 \
 
 # Node + system Chromium：记录表格 PDF 由 app 内 PdfRenderService 直接调用 node 脚本
 RUN apk add --no-cache \
+      tzdata \
       nodejs \
       npm \
       chromium \
@@ -22,7 +23,10 @@ RUN apk add --no-cache \
       ca-certificates \
       ttf-freefont \
       font-noto-cjk \
-    && docker-php-ext-install pdo_mysql
+    && docker-php-ext-install pdo_mysql \
+    && ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone \
+    && printf 'date.timezone=Asia/Shanghai\n' > /usr/local/etc/php/conf.d/timezone.ini
 
 WORKDIR /app
 
