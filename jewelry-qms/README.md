@@ -1,8 +1,6 @@
 # Jewelry QMS
 
-珠宝检测实验室质量管理系统，面向 CMA/CNAS 与 ISO/IEC 17025 质量体系信息化。当前目录是仓库主交付物，技术栈为 ThinkPHP 8 + PHP 8.1+，服务端渲染页面位于 `app/view`，公开入口为 `public/`。
-
-CakePHP 2.x 旧版归档位于仓库根目录 `jewelry-qms-legacy/`，不再作为主运行版本。
+珠宝检测实验室质量管理系统，面向 CMA/CNAS 与 ISO/IEC 17025 质量体系信息化。当前目录是仓库唯一现行应用，技术栈为 ThinkPHP 8 + PHP 8.1+，服务端渲染页面位于 `app/view`，公开入口为 `public/`。历史参考系统已拆至独立归档仓，不属于本应用运行依赖。
 
 ## 功能模块
 
@@ -73,7 +71,7 @@ docker compose run --rm app php tests/record_forms_instance_smoke.php
 docker compose run --rm app php tests/record_forms_schema_smoke.php
 ```
 
-容器内使用 `docker/.env.docker` 覆盖数据库连接，避免修改本机 `.env`。Compose 会把仓库父级的 `docs/`、`参考/`、`现用文件/` 以只读方式挂入容器，供结构化文档和 DOCX 解析相关流程读取。如需重建数据库：
+容器内使用 `docker/.env.docker` 覆盖数据库连接，避免修改本机 `.env`。Compose 会把仓库父级的 `docs/`、`knowledge/`、`现用文件/` 等目录按配置挂入容器，供结构化文档和 DOCX 解析相关流程读取。如需重建数据库：
 
 ```bash
 docker compose down -v
