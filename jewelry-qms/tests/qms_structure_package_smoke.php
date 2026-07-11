@@ -99,6 +99,7 @@ $impactBlock = Db::name('qms_document_blocks')
     ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
     ->where('sd.doc_number', 'XZTC/CX-26-2022')
     ->where('b.block_type', 'record_requirement')
+    ->where('b.stable_key', 'procedure:xztc_cx_26_2022:record:xztc_bg_26_01')
     ->where('b.soft_delete', 0)
     ->field('b.id,b.title,b.stable_key,sd.id structured_document_id,sd.document_role,sd.doc_number,sd.title document_title,sd.version')
     ->find();
