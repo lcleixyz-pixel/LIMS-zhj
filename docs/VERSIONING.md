@@ -88,13 +88,12 @@ docs: 对齐 ThinkPHP 8 部署说明
 
 ## 5. 变更记录
 
-在项目根目录维护 `CHANGELOG.md`。发生以下变更时应同步更新：
+日常变更与版本发布采用双台账分工：
 
-- 业务功能变化
-- 数据库结构变化
-- 部署方式变化
-- 版本号变化
-- 重要修复或安全调整
+- `docs/变更台账.md`：唯一日常主台账。每次已批准并完成验证的变更逐条追加，记录级别、批准、测试、commit 和部署状态。
+- `CHANGELOG.md`：版本发布汇总。平时只保留 `[Unreleased]` 提示；发布新版本号时，从日常台账选择对使用者有影响的大项，按主题归拢一次。
+
+不得要求同一项日常变更在两个文件中逐行重复。版本号、发布日期和 Git 标签形成时，必须同步更新 `CHANGELOG.md`、`config/qms.php`、README 版本表和 `docs/VERSIONING.md`。
 
 ## 6. 勿提交内容
 
@@ -138,6 +137,6 @@ git push -u origin <branch-name>
 
 1. 从可信来源覆盖对应子目录。
 2. 单独提交，例如 `chore: update flinkiso-lite reference to 2026-05-21`。
-3. 在 `CHANGELOG.md` 记录来源、版本和目的。
+3. 在 `docs/变更台账.md` 记录来源、版本和目的；若随新版本发布，再汇总到 `CHANGELOG.md`。
 
 避免把参考项目大规模覆盖与 `jewelry-qms` 功能开发混在同一提交中。
