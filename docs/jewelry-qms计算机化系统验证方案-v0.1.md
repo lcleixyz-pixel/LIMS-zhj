@@ -32,7 +32,7 @@ jewelry-qms 是基于 ThinkPHP 8 + MySQL 8 + Docker 的实验室质量管理系�
 | **7.11.3 b)** | 防篡改和丢失 | 字段级审计、结构化变更归档快照、内容哈希；A2 备份恢复演练通过 | `qms_field_audit_smoke`、`qms_structured_document_archive_smoke`、`qms_external_change_event_smoke`、`qms_structured_source_refresh_smoke` + A2 记录 | 审计＋归档＋演练 | ✅ |
 | **7.11.3 c)** | 在符合规定的环境中运行 | Docker 可复现部署（compose.yaml + Dockerfile） | （非测试，部署证据） | 部署手册 | ✅（引用 `QMS_OPERATIONS_RUNBOOK.md`） |
 | **7.11.3 d)** | 以确保数据完整性的方式维护 | 记录表 schema 校验、保真度、前向链、可追溯 | `record_forms_schema_smoke`、`record_forms_*_fidelity_smoke`(3)、`record_form_forward_chain_smoke`、`qms_runtime_evidence_traceability_smoke` 等 17 个 | 数据完整性测试 | ✅ |
-| **7.11.3 e)** | 系统失效的紧急措施及纠正措施记录 | （无直接冒烟测试） | — | — | ❌ 待补：灾难恢复／应急条款 |
+| **7.11.3 e)** | 系统失效的紧急措施及纠正措施记录 | RUNBOOK 章节 10 应急响应（宕机处置/数据恢复/手工记录/纠正措施/联系） | — | 文档＋演练 | ✅（2026-07-11 补齐） |
 | **7.11.4** | 异地或外部供应商管理 | 本系统机构自部署、不托管 | — | 不适用声明 | N/A（注明） |
 | **7.11.5** | 员工易于获取说明书、手册、参考数据 | 运维手册、记录模板字段字典、岗位卡 | （文档证据） | 文档 | ✅（可获取性由文控分发保证） |
 | **7.11.6** | 计算和数据传送的适当系统检查 | 外部源处理管道、打印渲染、仪表盘导出 | `qms_external_source_*_smoke`(4)、`record_forms_print_smoke`、`qms_dashboard_export_smoke`、`qms_external_basis_structure_smoke` | 数据交换测试 | ✅ |
@@ -66,3 +66,4 @@ CL01 7.11 共 6 条主条款、7.11.3 五项子要求，目前：**直接满足 
 | v0.1 | 2026-07-10 | 初版：78 测试映射 7.11，列出待补证据清单 |
 | v0.1.1 | 2026-07-11 | A2 备份恢复、A3 权限矩阵演练完成；7.11.3 a/b 升为已演练；记录 3 项权限策略偏差 |
 | v0.1.2 | 2026-07-11 | B 组周期任务引擎验收通过（定时提醒 7 类 + 本月待办页）；记入待补证据清单第 5 项 |
+| v0.1.3 | 2026-07-11 | 7.11.3 e 应急条款补齐（RUNBOOK 章节 10）；canWrite 归一化 bug 修复（staff 填记录真正生效） |
