@@ -16,6 +16,7 @@ Route::group(function () {
     Route::get('/', 'Dashboard/index');
     Route::rule('dashboard/index', 'Dashboard/index');
     Route::get('dashboard/keepAlive', 'Dashboard/keepAlive');
+    Route::rule('calendar/index', 'Calendar/index');
     Route::get('compliance/index', 'Compliance/index');
     Route::post('compliance/refresh', 'Compliance/refresh');
     Route::get('compliance/dimension', 'Compliance/dimension');

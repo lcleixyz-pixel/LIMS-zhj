@@ -750,12 +750,6 @@ class RecordFormInstance extends BaseController
             }
         }
 
-        foreach ($columns as $column) {
-            if (($column['key'] ?? '') === 'name') {
-                return 'name';
-            }
-        }
-
         return '';
     }
 

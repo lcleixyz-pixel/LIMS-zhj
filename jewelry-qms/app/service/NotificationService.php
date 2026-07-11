@@ -3,11 +3,14 @@ declare(strict_types=1);
 
 namespace app\service;
 
+use app\model\AuditSchedule;
 use app\model\Capa;
 use app\model\CompetencyRecord;
 use app\model\Document;
 use app\model\Equipment;
+use app\model\EquipmentMaintenance;
 use app\model\Notification;
+use app\model\QmsSource;
 use app\model\User;
 use think\facade\Config;
 use think\facade\Db;
@@ -220,6 +223,95 @@ class NotificationService
         return $count;
     }
 
+    public static function checkEquipmentVerificationDue(): int
+    {
+        $days = (int) Config::get('qms.notification.equipment_verification_days', 30);
+        $dueDate = date('Y-m-d', strtotime("+{$days} days"));
+        $items = EquipmentMaintenance::where('soft_delete', 0)
+            ->where('maintenance_type', 'verification')
+            ->whereNotNull('next_due_date')
+            ->where('next_due_date', '<=', $dueDate)
+            ->select();
+
+        $count = 0;
+        $userIds = self::roleUserIds('quality_manager');
+        foreach ($items as $item) {
+            self::notifyUsers(
+                '期间核查到期提醒',
+                "期间核查计划将于 {$item->next_due_date} 到期",
+                'calibration',
+                $userIds,
+                'equipment_maintenance',
+                'view',
+                $item->id,
+                $item->next_due_date,
+                'equipment_verification_due:' . $item->id . ':' . self::monthPeriod((string)$item->next_due_date)
+            );
+            $count++;
+        }
+
+        return $count;
+    }
+
+    public static function checkAuditScheduleDue(): int
+    {
+        $days = (int) Config::get('qms.notification.audit_schedule_days', 30);
+        $dueDate = date('Y-m-d', strtotime("+{$days} days"));
+        $items = AuditSchedule::where('soft_delete', 0)
+            ->where('status', 'planned')
+            ->where('audit_date', '<=', $dueDate)
+            ->select();
+
+        $count = 0;
+        $userIds = self::roleUserIds('quality_manager');
+        foreach ($items as $item) {
+            self::notifyUsers(
+                '内审节点到期提醒',
+                "内审年度计划节点将于 {$item->audit_date} 到期",
+                'audit',
+                $userIds,
+                'audit_schedule',
+                'view',
+                $item->id,
+                $item->audit_date,
+                'audit_schedule_due:' . $item->id . ':' . self::monthPeriod((string)$item->audit_date)
+            );
+            $count++;
+        }
+
+        return $count;
+    }
+
+    public static function checkSourceFreshnessDue(): int
+    {
+        $days = (int) Config::get('qms.notification.source_freshness_days', 30);
+        $dueDate = date('Y-m-d', strtotime("+{$days} days"));
+        $items = QmsSource::where('soft_delete', 0)
+            ->where('status', 'published')
+            ->whereNotNull('next_freshness_due')
+            ->where('next_freshness_due', '<=', $dueDate)
+            ->select();
+
+        $count = 0;
+        $userIds = self::roleUserIds('quality_manager');
+        foreach ($items as $item) {
+            self::notifyUsers(
+                '标准查新到期提醒',
+                "依据 {$item->source_code} {$item->name} 将于 {$item->next_freshness_due} 到期查新",
+                'general',
+                $userIds,
+                'planning/sources',
+                'index',
+                $item->id,
+                $item->next_freshness_due,
+                'source_freshness_due:' . $item->id . ':' . self::monthPeriod((string)$item->next_freshness_due)
+            );
+            $count++;
+        }
+
+        return $count;
+    }
+
     public static function runReminderChecks(string $type = 'all'): array
     {
         $checks = [
@@ -227,6 +319,9 @@ class NotificationService
             'capa' => fn (): int => self::checkCapaOverdue(),
             'doc_review' => fn (): int => self::checkDocumentReviewDue(),
             'competency' => fn (): int => self::checkCompetencyDue(),
+            'equipment_verification' => fn (): int => self::checkEquipmentVerificationDue(),
+            'audit_schedule' => fn (): int => self::checkAuditScheduleDue(),
+            'source_freshness' => fn (): int => self::checkSourceFreshnessDue(),
         ];
 
         if ($type !== 'all' && !isset($checks[$type])) {

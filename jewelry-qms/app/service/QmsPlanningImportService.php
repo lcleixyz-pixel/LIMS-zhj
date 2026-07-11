@@ -71,7 +71,8 @@ class QmsPlanningImportService
                 'file_name' => basename($source['relative_path']),
                 'file_type' => strtolower((string)pathinfo($source['relative_path'], PATHINFO_EXTENSION)),
                 'absolute_path' => $absolutePath,
-                'status' => 'published',
+                'file_present' => is_file($absolutePath),
+                'status' => is_file($absolutePath) ? 'published' : 'missing_local_reference',
                 'review_status' => 'published',
             ];
         }

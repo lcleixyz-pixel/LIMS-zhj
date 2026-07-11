@@ -38,4 +38,13 @@ if [[ "${WAIT_FOR_DB:-1}" != "0" ]]; then
   '
 fi
 
+# B1 周期任务（2026-07-11）：容器内 busybox crond，每天 08:00 跑 check:reminders
+if [[ -f docker/crontab ]]; then
+  mkdir -p /etc/crontabs
+  cp docker/crontab /etc/crontabs/root
+  chmod 600 /etc/crontabs/root
+  crond -b -l 2
+  echo "[jewelry-qms] crond started — daily check:reminders at 08:00 (log: /tmp/reminders.log)"
+fi
+
 exec "$@"

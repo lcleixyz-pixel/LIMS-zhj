@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>专业稳重 · 仪表盘原型</title>
+<style>
+  :root{
+    --qms-primary:#1e3a5f;       /* 深蓝主色：顶栏/标题/主按钮 */
+    --qms-primary-2:#2c5282;     /* 辅助蓝：链接/强调 */
+    --qms-ink:#2d3748;           /* 主文字深灰 */
+    --qms-ink-2:#718096;         /* 次文字灰 */
+    --qms-bg:#f5f7fa;            /* 页面底浅灰 */
+    --qms-line:#e2e8f0;          /* 细边框 */
+    --qms-card:#ffffff;
+    --qms-ok:#2f855a; --qms-warn:#b7791f; --qms-bad:#c53030;
+    --qms-radius:5px;
+    --qms-shadow:0 1px 2px rgba(30,58,95,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--qms-bg);color:var(--qms-ink);font-size:14px;line-height:1.6}
+  /* 顶栏 */
+  .topbar{background:var(--qms-primary);color:#fff;padding:0 24px;height:54px;display:flex;align-items:center;gap:28px}
+  .topbar .brand{font-weight:600;font-size:16px;letter-spacing:.5px}
+  .topbar nav a{color:rgba(255,255,255,.78);text-decoration:none;font-size:13px;margin-right:20px}
+  .topbar nav a.on,.topbar nav a:hover{color:#fff}
+  .topbar .right{margin-left:auto;font-size:13px;color:rgba(255,255,255,.85)}
+  /* 主体 */
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 24px}
+  .crumb{color:var(--qms-ink-2);font-size:12px;margin-bottom:14px}
+  h1{font-size:19px;font-weight:600;margin:0 0 2px;color:var(--qms-primary)}
+  .sub{color:var(--qms-ink-2);font-size:13px;margin-bottom:20px}
+  /* 统计卡 */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  .stat{background:var(--qms-card);border:1px solid var(--qms-line);border-radius:var(--qms-radius);box-shadow:var(--qms-shadow);padding:16px 18px}
+  .stat .n{font-size:26px;font-weight:600;color:var(--qms-primary);line-height:1.1}
+  .stat .l{font-size:12px;color:var(--qms-ink-2);margin-top:6px}
+  .stat .d{font-size:11px;color:var(--qms-bad);margin-top:6px}
+  /* 卡片容器 */
+  .card{background:var(--qms-card);border:1px solid var(--qms-line);border-radius:var(--qms-radius);box-shadow:var(--qms-shadow);margin-bottom:18px}
+  .card-h{padding:13px 18px;border-bottom:1px solid var(--qms-line);display:flex;align-items:center;font-weight:600;color:var(--qms-primary);font-size:14px}
+  .card-h .more{margin-left:auto;font-size:12px;color:var(--qms-primary-2);text-decoration:none;font-weight:400}
+  .card-b{padding:6px 18px}
+  /* 表格 */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:#eef2f7;color:var(--qms-ink);font-weight:600;text-align:left;padding:10px 12px;border-bottom:1px solid var(--qms-line);font-size:12px}
+  td{padding:11px 12px;border-bottom:1px solid var(--qms-line)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#f7fafc}
+  /* 徽章 */
+  .badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:500;line-height:1.7}
+  .b-ok{background:#e6f4ec;color:var(--qms-ok)}
+  .b-warn{background:#fdf3e3;color:var(--qms-warn)}
+  .b-bad{background:#fde8e8;color:var(--qms-bad)}
+  .b-gray{background:#eef2f7;color:var(--qms-ink-2)}
+  /* 按钮 */
+  .btn{display:inline-block;padding:6px 14px;border-radius:var(--qms-radius);font-size:13px;text-decoration:none;border:1px solid transparent;cursor:pointer}
+  .btn-pri{background:var(--qms-primary);color:#fff}
+  .btn-out{background:#fff;color:var(--qms-primary);border-color:var(--qms-line)}
+  .row{display:flex;gap:8px;margin:14px 0 4px}
+  .note{margin-top:24px;padding:14px 16px;background:#eef4fb;border-left:3px solid var(--qms-primary);border-radius:0 var(--qms-radius) var(--qms-radius) 0;font-size:12px;color:var(--qms-ink)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="brand">实验室 QMS 工作台</span>
+  <nav>
+    <a class="on" href="#">仪表盘</a>
+    <a href="#">本月待办</a>
+    <a href="#">文件控制</a>
+    <a href="#">记录填报</a>
+    <a href="#">内审管评</a>
+  </nav>
+  <span class="right">质量负责人 张 · 2026年7月</span>
+</div>
+
+<div class="wrap">
+  <div class="crumb">首页 / 仪表盘</div>
+  <h1>仪表盘</h1>
+  <div class="sub">机构运营概览 · 截至 2026-07-11</div>
+
+  <div class="stats">
+    <div class="stat"><div class="n">42</div><div class="l">受控体系文件</div><div class="d">2 件待复核</div></div>
+    <div class="stat"><div class="n">26</div><div class="l">记录模板</div></div>
+    <div class="stat"><div class="n">5</div><div class="l">本月到期待办</div><div class="d">1 件已逾期</div></div>
+    <div class="stat"><div class="n">3</div><div class="l">临期提醒（30天内）</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">本月体系待办 <a class="more" href="#">查看全部 →</a></div>
+    <div class="card-b" style="padding:0">
+      <table>
+        <thead><tr><th>事项</th><th>类型</th><th>到期日</th><th>剩余</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>UV-Vis 分光光度计期间核查</td><td>期间核查</td><td>2026-07-12</td><td>1 天</td><td><span class="badge b-warn">即将到期</span></td></tr>
+          <tr><td>2026 年内审计划（第三季度）</td><td>内审节点</td><td>2026-07-18</td><td>7 天</td><td><span class="badge b-ok">正常</span></td></tr>
+          <tr><td>GB/T 18043 标准查新</td><td>标准查新</td><td>2026-07-05</td><td>已逾期</td><td><span class="badge b-bad">逾期</span></td></tr>
+          <tr><td>人员能力确认（李某）</td><td>人员能力</td><td>2026-07-25</td><td>14 天</td><td><span class="badge b-ok">正常</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="row">
+    <a class="btn btn-pri" href="#">新建记录</a>
+    <a class="btn btn-out" href="#">发起 CAPA</a>
+    <a class="btn btn-out" href="#">导出月报</a>
+  </div>
+
+  <div class="note">
+    <strong>这是「专业稳重」风格的仪表盘原型。</strong>深蓝顶栏定基调，浅灰底+白卡+细边框，信息密度适中但不挤，留白比现在多。状态徽章克制（绿/黄/红只给状态用）。字体用系统无衬线，干净。你觉得这个方向对不对？哪里要调（配色更深/更浅、卡片更紧凑/更松）告诉我。
+  </div>
+</div>
+</body>
+</html>

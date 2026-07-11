@@ -223,6 +223,8 @@ class CurrentFilesSeedService
             'document_controller' => '资料管理员',
             'sample_manager' => '样品管理员',
             'testing_staff' => '检测师',
+            'testing_assistant' => '检测辅助',
+            'support_staff' => '其他支持人员',
             'comment_interpreter' => '意见解释人',
         ];
         $rows = [];
