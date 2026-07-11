@@ -380,3 +380,81 @@ body {
 .record-form-row-action {
     width: 88px;
 }
+
+/* ===== 专业稳重主题（UI 翻新 2026-07-11）=====
+   配色变量 + 关键元素稳重化覆盖。原有样式保留，本段可整体删除回滚。
+   深蓝顶栏 / 浅灰底白卡 / 细边框 / 克制状态徽章 / 系统字体 */
+:root{
+    --qms-primary:#1e3a5f;
+    --qms-primary-2:#2c5282;
+    --qms-primary-dark:#163050;
+    --qms-ink:#2d3748;
+    --qms-ink-2:#718096;
+    --qms-bg:#f5f7fa;
+    --qms-line:#e2e8f0;
+    --qms-ok:#2f855a;
+    --qms-warn:#b7791f;
+    --qms-bad:#c53030;
+    --bs-primary:#1e3a5f;
+}
+
+/* 全局底色与文字 */
+body{ background:var(--qms-bg) !important; color:var(--qms-ink); font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif; }
+
+/* 顶栏：黑 → 深蓝（navbar-dark bg-dark 是 layout 现有 class，覆盖即可，不改 view） */
+.navbar-dark.bg-dark{ background:var(--qms-primary) !important; box-shadow:0 1px 0 rgba(0,0,0,.08); }
+.navbar-dark .navbar-brand{ color:#fff; font-weight:600; letter-spacing:.3px; }
+.navbar-dark .nav-link{ color:rgba(255,255,255,.78); }
+.navbar-dark .nav-link:hover,.navbar-dark .nav-link.active,.navbar-dark .nav-item.show .nav-link{ color:#fff; }
+.navbar-dark .dropdown-menu{ border-color:var(--qms-line); }
+.navbar-dark .dropdown-item:hover{ background:#eef2f7; }
+
+/* 链接与按钮主色 → 深蓝 */
+a{ color:var(--qms-primary-2); }
+a:hover{ color:var(--qms-primary-dark); }
+.btn-primary{ background:var(--qms-primary); border-color:var(--qms-primary); }
+.btn-primary:hover,.btn-primary:focus{ background:var(--qms-primary-dark); border-color:var(--qms-primary-dark); }
+.btn-outline-primary{ color:var(--qms-primary); border-color:var(--qms-primary); }
+.btn-outline-primary:hover{ background:var(--qms-primary); border-color:var(--qms-primary); color:#fff; }
+.bg-primary{ background:var(--qms-primary) !important; }   /* login header 等自动跟随 */
+
+/* 卡片：细边框、小圆角、微阴影 */
+.card{ border-color:var(--qms-line); border-radius:5px; box-shadow:0 1px 2px rgba(30,58,95,.06) !important; }
+.card-header{ background:#eef2f7; border-bottom-color:var(--qms-line); color:var(--qms-primary); font-weight:600; }
+.card-header.bg-primary{ background:var(--qms-primary) !important; color:#fff; }
+
+/* 表格：表头浅蓝灰、行 hover、弱化斑马 */
+.table{ font-size:13px; color:var(--qms-ink); }
+.table thead th{ background:#eef2f7; color:var(--qms-ink); border-color:var(--qms-line); font-weight:600; }
+.table-striped tbody tr:nth-of-type(odd){ background:#fafbfc; }
+.table-hover tbody tr:hover{ background:#f7fafc; }
+.table td,.table th{ border-color:var(--qms-line); }
+
+/* 状态徽章克制：浅底深字（替代原鲜艳实心） */
+.badge{ font-weight:500; padding:.3em .55em; border-radius:4px; }
+.badge-status-draft{ background:#eef2f7 !important; color:var(--qms-ink-2) !important; }
+.badge-status-review{ background:#e6f0fa !important; color:var(--qms-primary-2) !important; }
+.badge-status-approved,.badge-status-effective,.badge-status-generated,
+.badge-status-accepted,.badge-status-current,.badge-status-archived,
+.badge-status-rendered,.badge-status-pass{ background:#e6f4ec !important; color:var(--qms-ok) !important; }
+.badge-status-open,.badge-status-pending,.badge-status-under-review,
+.badge-status-warning,.badge-status-due{ background:#fdf3e3 !important; color:var(--qms-warn) !important; }
+.badge-status-obsolete,.badge-status-rejected,.badge-status-missing,
+.badge-status-fail,.badge-status-insufficient{ background:#fde8e8 !important; color:var(--qms-bad) !important; }
+.badge.bg-danger{ background:#fde8e8 !important; color:var(--qms-bad) !important; }
+.badge.bg-warning{ background:#fdf3e3 !important; color:var(--qms-warn) !important; }
+.badge.bg-warning.text-dark{ color:var(--qms-warn) !important; }
+.badge.bg-success{ background:#e6f4ec !important; color:var(--qms-ok) !important; }
+.badge.bg-primary{ background:#e6f0fa !important; color:var(--qms-primary-2) !important; }
+
+/* 页面标题与正文 → 深蓝标题、深灰正文、灰次文字 */
+.qms-page-header h4,.qms-section-title{ color:var(--qms-primary); }
+.qms-kpi-value,.qms-info-value{ color:var(--qms-ink); font-variant-numeric:tabular-nums; }
+.qms-kpi-label,.qms-info-label,.qms-empty-state{ color:var(--qms-ink-2); }
+.qms-review-note summary{ color:var(--qms-primary-2); }
+.qms-manual-entry summary{ color:var(--qms-primary-2); }
+.qms-upload-preview,.qms-method-panel,.qms-source-check-form,.qms-clause-original-text{ background:#fafbfc; border-color:var(--qms-line); }
+
+/* 表单 */
+.form-control:focus,.form-select:focus{ border-color:var(--qms-primary-2); box-shadow:0 0 0 .2rem rgba(44,82,130,.15); }
+.required::after{ color:var(--qms-bad); }
