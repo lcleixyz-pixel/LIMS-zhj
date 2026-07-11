@@ -37,7 +37,8 @@ class RbacService
         $role = Session::get('user.role', 'staff');
         $controller = self::normalizeController($controller);
         if ($role === 'staff') {
-            return in_array($controller, ['complaint', 'document'], true);
+            // staff 可写：投诉、查阅文件、填写记录（员工日常填记录是预期行为，非"管理"）
+            return in_array($controller, ['complaint', 'document', 'record_form_instance'], true);
         }
 
         return self::canAccess($controller);
