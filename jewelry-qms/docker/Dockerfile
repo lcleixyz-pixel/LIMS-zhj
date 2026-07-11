@@ -17,6 +17,7 @@ RUN apk add --no-cache \
       nodejs \
       npm \
       chromium \
+      poppler-utils \
       nss \
       freetype \
       harfbuzz \
