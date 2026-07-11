@@ -36,9 +36,16 @@ class RbacService
     {
         $role = Session::get('user.role', 'staff');
         $controller = self::normalizeController($controller);
+
+        // 体系文件类写操作（新建/编辑/删除文件）：仅 admin 和 quality_manager（2026-07-11 收紧）
+        $documentWriteControllers = ['document', 'doc_category', 'doc_template'];
+        if (in_array($controller, $documentWriteControllers, true)) {
+            return in_array($role, ['admin', 'quality_manager'], true);
+        }
+
         if ($role === 'staff') {
-            // staff 可写：投诉、查阅文件、填写记录（员工日常填记录是预期行为，非"管理"）
-            return in_array($controller, ['complaint', 'document', 'record_form_instance'], true);
+            // staff 可写：投诉、填写记录（日常行为，非"管理"）；体系文件另由上面规则拦
+            return in_array($controller, ['complaint', 'record_form_instance'], true);
         }
 
         return self::canAccess($controller);
