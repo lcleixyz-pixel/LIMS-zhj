@@ -75,7 +75,7 @@ foreach ($review['items'] as $item) {
 
 assert_true(isset($itemsByKey['XZTC/BG-22-01::XZTC_BG-22-01-A_0']), 'BG-22-01 packet exists under composite identity');
 assert_true(isset($itemsByKey['XZTC/BG-22-02::XZTC_BG-22-02-A_0']), 'BG-22-02 packet exists under composite identity');
-assert_true(isset($itemsByKey['XZTC/BG-22-03::待定-22-01-A_0']), 'Draft standard list is canonicalized under BG-22-03 composite identity');
+assert_true(isset($itemsByKey['XZTC/BG-22-03::XZTC_BG-22-03-A_0']), 'Standard list uses the canonical BG-22-03 composite identity');
 
 $bg2201 = $itemsByKey['XZTC/BG-22-01::XZTC_BG-22-01-A_0'];
 assert_same('ready_for_rebuild', $bg2201['decision'], 'BG-22-01 is ready for reconstruction from CX-22 evidence');
@@ -85,8 +85,8 @@ assert_true($bg2201['manual']['found'], 'BG-22-01 has manual/element context');
 assert_true(in_array('field_identity', $bg2201['field_obligations'], true), 'BG-22-01 carries identity field obligation');
 assert_true(in_array('signature_chain', $bg2201['field_obligations'], true), 'BG-22-01 carries signature-chain obligation');
 
-$bg2203 = $itemsByKey['XZTC/BG-22-03::待定-22-01-A_0'];
-assert_same('待定-22-01', $bg2203['original_doc_number'], 'BG-22-03 keeps provisional original number');
+$bg2203 = $itemsByKey['XZTC/BG-22-03::XZTC_BG-22-03-A_0'];
+assert_same('XZTC/BG-22-03', $bg2203['original_doc_number'], 'BG-22-03 keeps its canonical controlled number');
 assert_same('ready_for_rebuild', $bg2203['decision'], 'BG-22-03 standard validity list is ready for reconstruction');
 assert_contains('qms_sources', implode(' ', $bg2203['external_register_boundaries']), 'BG-22-03 explains qms_sources freshness handoff');
 
