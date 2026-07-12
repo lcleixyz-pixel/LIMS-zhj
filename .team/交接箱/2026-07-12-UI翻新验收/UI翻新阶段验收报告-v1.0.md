@@ -1,8 +1,8 @@
 # UI 翻新阶段验收报告
 
-> 日期：2026-07-12  
-> 验收对象：commit `9f4d762`（UI 翻新 Step 1：全局专业稳重主题）  
-> 依据：`docs/superpowers/specs/2026-07-11-UI翻新-design.md`  
+> 日期：2026-07-12
+> 验收对象：commit `9f4d762`（UI 翻新 Step 1：全局专业稳重主题）
+> 依据：`docs/superpowers/specs/2026-07-11-UI翻新-design.md`
 > 结论：**Step 1 通过；UI 翻新整体未完成。**
 
 ## 一、验收范围
