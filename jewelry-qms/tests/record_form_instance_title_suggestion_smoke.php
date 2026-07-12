@@ -89,3 +89,5 @@ assert_true(str_contains($controllerSource, 'suggested_record_title'), 'Create f
 $createViewSource = file_get_contents(dirname(__DIR__) . '/app/view/record_form_instance/create.html') ?: '';
 assert_true(str_contains($createViewSource, 'name="record_year"'), 'Create page exposes a record year selector');
 assert_true(str_contains($createViewSource, '建议编号'), 'Create page displays the suggested instance number');
+
+echo "record_form_instance_title_suggestion_smoke passed\n";

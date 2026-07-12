@@ -55,6 +55,6 @@ assert_contains('qms-dashboard-chart', $css, 'Dashboard chart CSS is present');
 assert_true(method_exists(CrudBase::class, 'exportCsv'), 'CrudBase supports exportCsv');
 assert_contains('exportCsv', $crudBase, 'CrudBase contains exportCsv method');
 assert_contains('$path/exportCsv', $route, 'CRUD routes expose exportCsv');
-assert_contains('导出CSV', $dashboardView . (string)file_get_contents($root . '/app/view/document/index.html'), 'At least one visible CSV export action exists');
+assert_contains('设备台账 CSV', $dashboardView, 'Dashboard exposes a visible equipment CSV export action');
 
 echo "qms_dashboard_export_smoke passed\n";
