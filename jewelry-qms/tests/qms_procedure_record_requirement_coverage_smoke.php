@@ -30,6 +30,9 @@ function assert_contains(string $needle, string $haystack, string $message): voi
 
 function cleanup_procedure_record_coverage_smoke(string $documentId, string $docNumber): void
 {
+    Db::name('qms_document_block_links')->where('block_id', 'smoke-prc-record-coverage-block')->delete();
+    Db::name('qms_document_blocks')->where('id', 'smoke-prc-record-coverage-block')->delete();
+    Db::name('qms_structured_documents')->where('id', 'smoke-prc-record-coverage-struct')->delete();
     $structuredIds = Db::name('qms_structured_documents')->where('document_id', $documentId)->column('id');
     if ($structuredIds !== []) {
         $blockIds = Db::name('qms_document_blocks')->whereIn('structured_document_id', $structuredIds)->column('id');

@@ -22,33 +22,36 @@ class RbacService
             return true;
         }
 
-        $controller = self::normalizeController($controller);
-        foreach ($allowed as $item) {
-            if (self::normalizeController((string)$item) === $controller) {
-                return true;
-            }
-        }
-
-        return false;
+        return self::controllerIn($controller, $allowed);
     }
 
     public static function canWrite(string $controller): bool
     {
         $role = Session::get('user.role', 'staff');
-        $controller = self::normalizeController($controller);
-
         // 体系文件类写操作（新建/编辑/删除文件）：仅 admin 和 quality_manager（2026-07-11 收紧）
         $documentWriteControllers = ['document', 'doc_category', 'doc_template'];
-        if (in_array($controller, $documentWriteControllers, true)) {
+        if (self::controllerIn($controller, $documentWriteControllers)) {
             return in_array($role, ['admin', 'quality_manager'], true);
         }
 
         if ($role === 'staff') {
             // staff 可写：投诉、填写记录（日常行为，非"管理"）；体系文件另由上面规则拦
-            return in_array($controller, ['complaint', 'record_form_instance'], true);
+            return self::controllerIn($controller, ['complaint', 'record_form_instance']);
         }
 
         return self::canAccess($controller);
+    }
+
+    private static function controllerIn(string $controller, array $controllers): bool
+    {
+        $controller = self::normalizeController($controller);
+        foreach ($controllers as $candidate) {
+            if (self::normalizeController((string)$candidate) === $controller) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function normalizeController(string $controller): string

@@ -117,7 +117,7 @@ Db::execute("CREATE TABLE IF NOT EXISTS `equipment_transfers` (
 $companyId = (string)Config::get('qms.company_id');
 Db::execute(
     "INSERT IGNORE INTO `sites` (`id`, `company_id`, `code`, `name`, `site_type`, `status`, `sort_order`, `publish`, `soft_delete`, `created`)
-     VALUES ('00000000-0000-0000-0000-000000000070', ?, 'MAIN', '主场所', 'main', 'active', 0, 1, 0, NOW())",
+     VALUES ('00000000-0000-0000-0000-000000000170', ?, 'MAIN', '主场所', 'main', 'active', 0, 1, 0, NOW())",
     [$companyId]
 );
 

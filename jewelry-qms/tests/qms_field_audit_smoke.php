@@ -64,7 +64,7 @@ function cleanup_field_audit_smoke(string $documentId, string $capaId): void
 $root = dirname(__DIR__);
 $schema = (string)file_get_contents($root . '/database/jewelry_qms.sql');
 $migration = (string)file_get_contents($root . '/database/migrations/20260529_field_change_logs.sql');
-$baseModelSource = (string)file_get_contents($root . '/app/Model/BaseModel.php');
+$baseModelSource = (string)file_get_contents($root . '/app/model/BaseModel.php');
 $serviceSource = (string)file_get_contents($root . '/app/service/FieldAuditService.php');
 
 foreach ([$schema, $migration] as $source) {

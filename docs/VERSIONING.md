@@ -2,15 +2,16 @@
 
 ## 1. 仓库模型
 
-本工作区采用单仓库（Monorepo）管理：
+本仓库采用单一现行应用加配套文档/知识资产的结构：
 
 - `jewelry-qms/`：主开发目录，ThinkPHP 8 珠宝检测实验室 QMS
-- `jewelry-qms-legacy/`：CakePHP 旧版归档
-- `flinkiso/`：FlinkISO On-Premise 参考快照
-- `flinkiso-lite-master/`：FlinkISO Lite 参考快照
-- `docs/`：跨项目文档
+- `docs/`：架构、部署、验证、操作和版本说明
+- `knowledge/`：知识索引与系统生成导出
+- `现用文件/`：机构现用体系文件，按受控边界处理
+- `整合/`：契约、技能套装和整合材料
+- `.team/`：作战室协作和交接材料
 
-参考项目目录视为只读快照。主项目开发、部署和版本说明均以 `jewelry-qms/` 当前代码为准。
+FlinkISO、FlinkISO Lite 和 CakePHP legacy 参考代码已拆至独立归档仓，不再是本仓目录。主项目开发、部署和版本说明均以 `jewelry-qms/` 当前代码为准。
 
 ## 2. 分支策略
 
@@ -80,7 +81,8 @@ scope 示例：
 
 - `jewelry-qms`
 - `docs`
-- `flinkiso-lite`
+- `rbac`
+- `verify`
 
 示例：
 
@@ -91,13 +93,12 @@ docs: 对齐 ThinkPHP 8 部署说明
 
 ## 5. 变更记录
 
-在项目根目录维护 `CHANGELOG.md`。发生以下变更时应同步更新：
+日常变更与版本发布采用双台账分工：
 
-- 业务功能变化
-- 数据库结构变化
-- 部署方式变化
-- 版本号变化
-- 重要修复或安全调整
+- `docs/变更台账.md`：唯一日常主台账。每次已批准并完成验证的变更逐条追加，记录级别、批准、测试、commit 和部署状态。
+- `CHANGELOG.md`：版本发布汇总。平时只保留 `[Unreleased]` 提示；发布新版本号时，从日常台账选择对使用者有影响的大项，按主题归拢一次。
+
+不得要求同一项日常变更在两个文件中逐行重复。版本号、发布日期和 Git 标签形成时，必须同步更新 `CHANGELOG.md`、`config/qms.php`、README 版本表和 `docs/VERSIONING.md`。
 
 ## 6. 勿提交内容
 
@@ -107,7 +108,6 @@ docs: 对齐 ThinkPHP 8 部署说明
 - `jewelry-qms/vendor/`
 - `jewelry-qms/runtime/*`
 - `jewelry-qms/public/uploads/*`
-- 参考项目旧版 `tmp/cache`、`tmp/logs`、`webroot/files` 运行产物
 - 含真实密码的本地配置
 - 大型临时压缩包
 
@@ -135,12 +135,12 @@ git commit -m "docs: align documentation with ThinkPHP 8 project"
 git push -u origin <branch-name>
 ```
 
-## 8. 参考项目更新策略
+## 8. 参考项目边界
 
-参考项目目录视为只读快照。若确需更新：
+参考代码不再回填主仓。若确需更新独立归档仓：
 
-1. 从可信来源覆盖对应子目录。
-2. 单独提交，例如 `chore: update flinkiso-lite reference to 2026-05-21`。
-3. 在 `CHANGELOG.md` 记录来源、版本和目的。
+1. 在独立归档仓核对来源、许可证和版本。
+2. 与 `jewelry-qms` 功能开发分开提交。
+3. 只有形成适用于主项目的原创分析结论时，才把不含第三方源码的说明材料带回 `docs/参考分析/`。
 
-避免把参考项目大规模覆盖与 `jewelry-qms` 功能开发混在同一提交中。
+禁止把第三方参考源码、标准原件或旧系统运行产物重新提交到主仓。

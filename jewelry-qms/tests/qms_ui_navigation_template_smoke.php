@@ -74,7 +74,7 @@ assert_true(
 assert_true(
     str_contains($layoutView, '记录模板') &&
     str_contains($layoutView, '模板复核') &&
-    str_contains($layoutView, '填写实例'),
+    str_contains($layoutView, '填写记录'),
     'Record navigation labels should be business-facing'
 );
 assert_true(

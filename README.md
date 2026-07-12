@@ -1,84 +1,83 @@
-# FlinkISO 珠宝检测实验室 QMS 工作区
+# LIMS-zhj · 珠宝检测实验室 QMS
 
-本仓库为单体工作区（Monorepo），包含两个 FlinkISO 参考项目，以及基于对比分析后定制的珠宝检测实验室质量管理系统 `jewelry-qms`。
+本仓库的主交付物是 `jewelry-qms`：面向珠宝/宝玉石检测实验室的中文质量管理系统，技术栈为 ThinkPHP 8、MySQL 8 和 Docker。系统用于体系文件、记录填报、内审、管理评审、CAPA、设备、培训、供应商、投诉及质量体系证据管理。
 
-适用于：在已有独立检测业务系统（LIMS）的前提下，为满足 CMA/CNAS 与 ISO/IEC 17025 要求建设信息化质量管理体系。
+当前应用版本为 **2.1.0**。`2.2.0` 尚未发布，也没有对应 Git 标签。
+
+## 当前边界
+
+- `jewelry-qms/` 是唯一现行应用，只增强、不替换。
+- 生产/现用数据库默认不直接写；迁移、演练和批量操作必须先在测试环境验证并取得授权。
+- `knowledge/internal/` 是系统生成的导出层，不作为手工编辑正式体系文件的入口。
+- 早期 FlinkISO、FlinkISO Lite 和 CakePHP legacy 参考代码已从主仓拆出。历史与版权边界见 [REFERENCE_ARCHIVE.md](REFERENCE_ARCHIVE.md) 和 [REFERENCE_DOCS_NOTICE.md](REFERENCE_DOCS_NOTICE.md)。
+- 第五版质量手册治理演练仍冻结，待一次真实内审后再继续，不属于当前运行系统发布范围。
 
 ## 仓库结构
 
 ```text
 LIMS-zhj/
-├── README.md
-├── CHANGELOG.md
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── PROJECT_COMPARISON.md
-│   ├── DEPLOYMENT.md
-│   ├── VERSIONING.md
-│   ├── BRANCH_GOVERNANCE.md
-│   ├── JEWELRY_QMS_GUIDE.md
-│   ├── QMS_V2_2_ROADMAP.md
-│   ├── QMS_PLANNING_CENTER_GUIDE.md
-│   ├── QMS_TRACEABILITY_DATA_MODEL.md
-│   ├── QMS_DOCUMENT_STRUCTURING_GUIDE.md
-│   ├── QMS_RECORD_FORMS_GUIDE.md
-│   ├── QMS_OPERATIONS_RUNBOOK.md
-│   └── REMOTE_UPLOAD.md
-├── flinkiso/                          # 参考项目 A：FlinkISO On-Premise 2.2.42
-│   └── flinkiso-ver-2x-on-premise/
-├── flinkiso-lite-master/              # 参考项目 B：FlinkISO Lite
-│   └── flinkiso-lite-master/
-├── jewelry-qms/                       # 主交付物：ThinkPHP 8 珠宝检测实验室 QMS
-└── jewelry-qms-legacy/                # CakePHP 2.x 旧版归档
+├── jewelry-qms/        # ThinkPHP 8 现行应用
+├── docs/               # 架构、部署、验证、版本与操作说明
+├── knowledge/          # 知识索引和系统生成导出
+├── 现用文件/            # 机构现用文件，只按受控边界处理
+├── 整合/                # 契约、技能套装和整合材料
+├── .team/              # 作战室：当前战役、任务、日志与交接箱
+├── CHANGELOG.md        # 发布版本汇总
+└── README.md
 ```
 
-| 子项目 | 角色 | 技术栈 | 说明 |
-|--------|------|--------|------|
-| `jewelry-qms` | 生产定制主项目 | ThinkPHP 8 + PHP 8.1+ | 中文 17025 QMS，SSR 模板，Web 入口 `public/` |
-| `jewelry-qms-legacy` | 归档对照 | CakePHP 2.x | 迁移前代码备份，不再作为主运行版本 |
-| `flinkiso/.../on-premise` | 参考快照 | CakePHP 2.10.24 | 企业本地版，ONLYOFFICE、PDF、动态表单、计费等参考能力 |
-| `flinkiso-lite-master/...` | 参考快照 | CakePHP 2.3.6 | CAPA、培训、供应商、内审等模块参考 |
+## 本机快速启动
 
-## 快速开始（Jewelry QMS）
+需要先启动 Docker Desktop，然后执行：
 
-1. 准备 PHP 8.1+、Composer、MySQL。
-2. 进入 `jewelry-qms` 执行 `composer install`。
-3. 创建数据库并导入 `jewelry-qms/database/jewelry_qms.sql`。
-4. 复制 `jewelry-qms/.example.env` 为 `.env`，配置数据库连接；业务参数位于 `config/qms.php`。
-5. 开发启动：`php think run`；生产部署时 Web 根目录指向 `jewelry-qms/public`。
-6. 默认账号：`admin` / `password`，首次登录后必须修改。
+```bash
+cd "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/jewelry-qms"
+docker compose up --build
+```
 
-详细步骤见 [jewelry-qms/README.md](jewelry-qms/README.md) 与 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。
+浏览器访问 `http://127.0.0.1:8010`。
 
-## 文档索引
+默认管理员账号仅用于首次本机初始化：`admin / password`。首次登录后应立即修改密码，不能用于生产环境。
 
-| 文档 | 内容 |
-|------|------|
-| [docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md) | 全部说明文档入口和推荐阅读顺序 |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 系统边界、技术架构、模块与审批实现 |
-| [docs/PROJECT_COMPARISON.md](docs/PROJECT_COMPARISON.md) | FlinkISO 与 FlinkISO Lite 功能对比 |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | ThinkPHP 8 主项目部署指南 |
-| [docs/VERSIONING.md](docs/VERSIONING.md) | Git 分支、标签、提交规范 |
-| [docs/BRANCH_GOVERNANCE.md](docs/BRANCH_GOVERNANCE.md) | 远端分支台账、合并状态和清理建议 |
-| [docs/JEWELRY_QMS_GUIDE.md](docs/JEWELRY_QMS_GUIDE.md) | 体系文件适配、模板、审批流与模块使用 |
-| [docs/QMS_V2_2_ROADMAP.md](docs/QMS_V2_2_ROADMAP.md) | Jewelry QMS v2.2 分阶段开发路线图 |
-| [docs/QMS_PLANNING_CENTER_GUIDE.md](docs/QMS_PLANNING_CENTER_GUIDE.md) | 体系策划中心、无编号要素、条款库与追溯矩阵 |
-| [docs/QMS_TRACEABILITY_DATA_MODEL.md](docs/QMS_TRACEABILITY_DATA_MODEL.md) | 体系策划数据模型和追溯关系 |
-| [docs/QMS_DOCUMENT_STRUCTURING_GUIDE.md](docs/QMS_DOCUMENT_STRUCTURING_GUIDE.md) | 文件 Markdown 结构化、块级追溯与系统包输出 |
-| [docs/QMS_RECORD_FORMS_GUIDE.md](docs/QMS_RECORD_FORMS_GUIDE.md) | 记录表格 schema、程序记录要求和运行证据 |
-| [docs/QMS_OPERATIONS_RUNBOOK.md](docs/QMS_OPERATIONS_RUNBOOK.md) | 本机运行、初始化、验证和运行产物清理 |
-| [docs/REMOTE_UPLOAD.md](docs/REMOTE_UPLOAD.md) | 远程仓库与协作说明 |
+停止服务：
 
-## 版权与参考项目声明
+```bash
+docker compose down
+```
 
-- FlinkISO / FlinkISO Lite：版权归 Techmentis Global Services Pvt Ltd，本仓库中的副本仅作技术参考与对比。
-- `jewelry-qms`：为本工作区定制成果，可按实验室内部许可使用与二次开发。
+`docker compose down -v` 会删除本地数据库卷，不属于日常停止命令，执行前必须确认。
 
-## 版本
+## 常用验证
 
-| 组件 | 当前版本 | 说明 |
-|------|----------|------|
-| 工作区 | 2.1.0 | ThinkPHP 8 主项目 + P1 业务深化 |
-| jewelry-qms | 2.1.0 | CAPA、内审、管评、RBAC、通知、导入、仪表盘等 P1 能力 |
+```bash
+cd jewelry-qms
+docker compose exec app php tests/rbac_controller_normalization_smoke.php
+docker compose exec app php tests/qms_ui_navigation_template_smoke.php
+```
 
-历史初始标签 `v1.0.0` 表示首次纳入参考项目和 Jewelry QMS 初版。版本记录见 [CHANGELOG.md](CHANGELOG.md) 与 [docs/VERSIONING.md](docs/VERSIONING.md)。
+较大变更按 [系统变更控制规定](docs/jewelry-qms系统变更控制规定-v0.1.md) 执行，并把逐项结果写入 [变更台账](docs/变更台账.md)。`CHANGELOG.md` 仅在发布版本号时汇总。
+
+## 文档入口
+
+| 文档 | 用途 |
+|---|---|
+| [文档总览](docs/DOCUMENTATION_INDEX.md) | 推荐阅读顺序与全部入口 |
+| [应用 README](jewelry-qms/README.md) | 模块、配置、目录与生产安全提醒 |
+| [部署说明](docs/DEPLOYMENT.md) | 部署、数据库和 Web 服务配置 |
+| [运行手册](docs/QMS_OPERATIONS_RUNBOOK.md) | 本机运行、验证、维护与系统失效应急 |
+| [计算机化系统验证方案](docs/jewelry-qms计算机化系统验证方案-v1.0.md) | CL01 7.11 验证证据与结论 |
+| [版本管理](docs/VERSIONING.md) | 分支、版本、台账和标签规则 |
+| [远端分支治理](docs/BRANCH_GOVERNANCE.md) | 远端分支状态、合并记录和清理建议 |
+| [当前战役](.team/当前战役.md) | 作战室唯一进度指挥文件 |
+
+## 版本状态
+
+| 对象 | 当前状态 |
+|---|---|
+| 应用版本 | 2.1.0 |
+| 最新 Git 标签 | v1.0.0（历史标签，与当前应用版本不同步） |
+| 2.2.0 | 未发布、未打标签 |
+| 日常变更真值 | `docs/变更台账.md` |
+| 发布汇总 | `CHANGELOG.md` |
+
+发布新版本前，必须同时校准 `jewelry-qms/config/qms.php`、README、`docs/VERSIONING.md`、`CHANGELOG.md` 和 Git 标签，不能只改其中一个文件。
