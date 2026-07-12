@@ -1,5 +1,14 @@
+<div class="qms-page-header">
+    <div>
+        <h4>填写记录 · {$template.name}</h4>
+        <small class="text-muted">按模板字段填写，保存草稿后可编辑、打印、导出 PDF</small>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/record_form_template/view?id={$template.id}" class="btn btn-sm btn-outline-secondary">返回模板</a>
+    </div>
+</div>
+
 <div class="card">
-    <div class="card-header"><h5 class="mb-0">填写记录 - {$template.name}</h5></div>
     <div class="card-body">
         <form method="post" action="/record_form_instance/create?template_id={$template.id}">
             <div class="row g-3 mb-3">
