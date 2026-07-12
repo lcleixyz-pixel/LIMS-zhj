@@ -1,15 +1,19 @@
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">填写实例</h5>
-        <div class="d-flex gap-2">
-            <a href="/record_form_instance/reviewDashboard?year=2025" class="btn btn-sm btn-outline-success">2025运行确认</a>
-            <a href="/record_form_template/index" class="btn btn-sm btn-primary">选择模板填写</a>
-        </div>
+<div class="qms-page-header">
+    <div>
+        <h4>填写记录</h4>
+        <small class="text-muted">已填写的记录实例 · 可查看、编辑、打印、导出 PDF</small>
     </div>
+    <div class="qms-page-actions">
+        <a href="/record_form_instance/reviewDashboard?year=2025" class="btn btn-sm btn-outline-success">2025 运行确认</a>
+        <a href="/record_form_template/index" class="btn btn-sm btn-primary">选择模板填写</a>
+    </div>
+</div>
+
+<div class="card">
     <div class="card-body">
-        <form method="get" action="/record_form_instance/index" class="row g-2 mb-3">
+        <form method="get" action="/record_form_instance/index" class="row g-2 mb-3 qms-filter-form">
             <div class="col-md-6">
-                <input type="text" name="keyword" value="{$filter.keyword|default=''}" class="form-control form-control-sm" placeholder="记录标题或编号">
+                <input type="text" name="keyword" value="{$filter.keyword|default=''}" class="form-control form-control-sm" placeholder="搜索记录标题或编号">
             </div>
             <div class="col-md-2">
                 <button class="btn btn-sm btn-outline-primary w-100" type="submit">筛选</button>
@@ -38,10 +42,10 @@
                         <td>{if $item.template_name}{$item.template_name}{else}{$item.template.name|default=$item.template_id}{/if}</td>
                         <td>
                             {if $item.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
-                            {elseif $item.status == 'generated'}<span class="badge bg-info">已生成</span>
-                            {elseif $item.status == 'locked'}<span class="badge bg-secondary">已归档</span>
+                            {elseif $item.status == 'generated'}<span class="badge badge-status-generated">已生成</span>
+                            {elseif $item.status == 'locked'}<span class="badge badge-status-archived">已归档</span>
                             {elseif $item.status == 'voided'}<span class="badge badge-status-obsolete">已作废</span>
-                            {else}<span class="badge bg-secondary">{$item.status}</span>{/if}
+                            {else}<span class="badge badge-status-draft">{$item.status}</span>{/if}
                         </td>
                         <td>{$item.created|default='-'}</td>
                         <td>
