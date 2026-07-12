@@ -1,79 +1,73 @@
+<!-- 页头 -->
+<div class="qms-page-header">
+    <div>
+        <h4>仪表盘</h4>
+        <small class="text-muted">机构运营概览 · {:date('Y-m-d')}</small>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/record_form_instance/create?template_id=" class="btn btn-sm btn-primary">新建记录</a>
+        <a href="/calendar/index" class="btn btn-sm btn-outline-primary">本月待办</a>
+    </div>
+</div>
+
+<!-- 主统计卡（关键状态，4 张） -->
 <div class="row mb-4">
     <div class="col-md-3 mb-3">
-        <div class="card stat-card card-primary">
+        <div class="card qms-kpi-card h-100">
             <div class="card-body">
-                <h6 class="text-muted">体系文件总数</h6>
-                <h3>{$stats.docCount|default=0}</h3>
-                <a href="/document/index" class="small">查看全部 &raquo;</a>
+                <div class="qms-kpi-label">体系文件总数</div>
+                <div class="qms-kpi-value">{$stats.docCount|default=0}</div>
+                {if $stats.pendingReview > 0}<div class="qms-kpi-label" style="color:var(--qms-warn);margin-top:6px">{$stats.pendingReview} 件待审核</div>{/if}
+                <a href="/document/index" class="small text-decoration-none">查看全部 →</a>
             </div>
         </div>
     </div>
     <div class="col-md-3 mb-3">
-        <div class="card stat-card card-warning">
+        <div class="card qms-kpi-card h-100">
             <div class="card-body">
-                <h6 class="text-muted">待审核文件</h6>
-                <h3>{$stats.pendingReview|default=0}</h3>
-                <a href="/document/index" class="small">去审核 &raquo;</a>
+                <div class="qms-kpi-label">即将到期校准（30 天）</div>
+                <div class="qms-kpi-value">{$stats.calibrationExpiring|default=0}</div>
+                <a href="/equipment/index?due=1" class="small text-decoration-none">查看到期 →</a>
             </div>
         </div>
     </div>
     <div class="col-md-3 mb-3">
-        <div class="card stat-card card-success">
+        <div class="card qms-kpi-card h-100">
             <div class="card-body">
-                <h6 class="text-muted">设备总数</h6>
-                <h3>{$stats.equipmentCount|default=0}</h3>
-                <a href="/equipment/index" class="small">设备台账 &raquo;</a>
+                <div class="qms-kpi-label">进行中 CAPA</div>
+                <div class="qms-kpi-value">{$stats.activeCapa|default=0}</div>
+                {if $stats.overdueCapa > 0}<div class="qms-kpi-label" style="color:var(--qms-bad);margin-top:6px">{$stats.overdueCapa} 件超期</div>{/if}
+                <a href="/capa/index" class="small text-decoration-none">CAPA 管理 →</a>
             </div>
         </div>
     </div>
     <div class="col-md-3 mb-3">
-        <div class="card stat-card card-danger">
+        <div class="card qms-kpi-card h-100">
             <div class="card-body">
-                <h6 class="text-muted">即将到期校准</h6>
-                <h3>{$stats.calibrationExpiring|default=0}</h3>
-                <a href="/equipment/index?due=1" class="small">查看到期 &raquo;</a>
+                <div class="qms-kpi-label">未关闭投诉 / 不符合</div>
+                <div class="qms-kpi-value">{$stats.openComplaints|default=0} <span style="font-size:14px;color:var(--qms-ink-2)">/ {$stats.openNc|default=0}</span></div>
+                <a href="/complaint/index" class="small text-decoration-none">投诉管理 →</a>
             </div>
         </div>
     </div>
 </div>
-<div class="row mb-4">
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card card-info">
-            <div class="card-body">
-                <h6 class="text-muted">进行中CAPA</h6>
-                <h3>{$stats.activeCapa|default=0}</h3>
-                <a href="/capa/index" class="small">CAPA管理 &raquo;</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card card-secondary">
-            <div class="card-body">
-                <h6 class="text-muted">未关闭审核发现</h6>
-                <h3>{$stats.openFindings|default=0}</h3>
-                <a href="/audit_finding/index" class="small">审核发现 &raquo;</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card card-warning">
-            <div class="card-body">
-                <h6 class="text-muted">未关闭投诉</h6>
-                <h3>{$stats.openComplaints|default=0}</h3>
-                <a href="/complaint/index" class="small">投诉管理 &raquo;</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card stat-card card-danger">
-            <div class="card-body">
-                <h6 class="text-muted">超期CAPA</h6>
-                <h3>{$stats.overdueCapa|default=0}</h3>
-                <a href="/capa/index" class="small">立即处理 &raquo;</a>
-            </div>
+
+<!-- 质量状态汇总（其余指标，紧凑） -->
+<div class="card mb-4">
+    <div class="card-header">质量状态汇总</div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col"><div class="qms-kpi-value" style="font-size:22px">{$stats.equipmentCount|default=0}</div><div class="qms-kpi-label">设备总数</div></div>
+            <div class="col"><div class="qms-kpi-value" style="font-size:22px">{$stats.openFindings|default=0}</div><div class="qms-kpi-label">未关闭审核发现</div></div>
+            <div class="col"><div class="qms-kpi-value" style="font-size:22px">{$stats.auditPlanCount|default=0}</div><div class="qms-kpi-label">内审计划</div></div>
+            <div class="col"><div class="qms-kpi-value" style="font-size:22px">{$stats.pendingReviews|default=0}</div><div class="qms-kpi-label">计划中管评</div></div>
+            <div class="col"><div class="qms-kpi-value" style="font-size:22px">{$stats.trainingCount|default=0}</div><div class="qms-kpi-label">培训活动</div></div>
+            <div class="col"><div class="qms-kpi-value" style="font-size:22px">{$stats.overdueActions|default=0}</div><div class="qms-kpi-label">逾期管评决议</div></div>
         </div>
     </div>
 </div>
+
+<!-- 趋势图（4 个 echarts，保留） -->
 <div class="row mb-4">
     <div class="col-md-6 mb-3">
         <div class="card h-100">
@@ -101,15 +95,19 @@
     </div>
 </div>
 
+<!-- 待办 + 校准到期看板 -->
 <div class="row">
     <div class="col-md-5">
         <div class="card mb-3">
-            <div class="card-header"><h6 class="mb-0">待办事项</h6></div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">待办事项</h6>
+                <a href="/calendar/index" class="small text-decoration-none">本月待办 →</a>
+            </div>
             <div class="card-body">
                 {volist name="todos" id="todo"}
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span>{$todo.title}</span>
-                    <a href="{$todo.url}" class="badge bg-primary">{$todo.count}</a>
+                    <a href="{$todo.url}" class="badge bg-primary text-decoration-none">{$todo.count}</a>
                 </div>
                 {/volist}
                 {empty name="todos"}
@@ -120,8 +118,8 @@
     </div>
     <div class="col-md-7">
         <div class="card">
-            <div class="card-header d-flex justify-content-between">
-                <h6 class="mb-0">校准到期看板（30天内）</h6>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">校准到期看板（30 天内）</h6>
                 <a href="/equipment/index?due=1" class="btn btn-sm btn-outline-primary">查看全部</a>
             </div>
             <div class="card-body p-0">
@@ -150,13 +148,15 @@
         </div>
     </div>
 </div>
+
+<!-- 数据导出 -->
 <div class="card mt-3">
     <div class="card-header"><h6 class="mb-0">数据导出</h6></div>
     <div class="card-body d-flex flex-wrap gap-2">
-        <a href="/equipment/exportCsv" class="btn btn-sm btn-outline-primary">设备台账导出CSV</a>
-        <a href="/capa/exportCsv" class="btn btn-sm btn-outline-primary">CAPA导出CSV</a>
-        <a href="/training/exportCsv" class="btn btn-sm btn-outline-primary">培训活动导出CSV</a>
-        <a href="/audit_finding/exportCsv" class="btn btn-sm btn-outline-primary">审核发现导出CSV</a>
+        <a href="/equipment/exportCsv" class="btn btn-sm btn-outline-primary">设备台账 CSV</a>
+        <a href="/capa/exportCsv" class="btn btn-sm btn-outline-primary">CAPA CSV</a>
+        <a href="/training/exportCsv" class="btn btn-sm btn-outline-primary">培训活动 CSV</a>
+        <a href="/audit_finding/exportCsv" class="btn btn-sm btn-outline-primary">审核发现 CSV</a>
     </div>
 </div>
 
