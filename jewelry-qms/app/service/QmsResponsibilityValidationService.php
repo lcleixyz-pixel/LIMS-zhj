@@ -412,16 +412,15 @@ final class QmsResponsibilityValidationService
             ->where('ea.status', 'active')
             ->where('ea.publish', 1)
             ->where('ea.soft_delete', 0)
-            ->where(static function ($query) use ($today): void {
-                $query->whereNull('ea.appointed_at')->whereOr('ea.appointed_at', '<=', $today);
-            })
+            ->whereNotNull('ea.appointed_at')
+            ->where('ea.appointed_at', '<=', $today)
             ->where(static function ($query) use ($today): void {
                 $query->whereNull('ea.valid_until')->whereOr('ea.valid_until', '>=', $today);
             })
             ->where('e.company_id', $companyId)
             ->where('e.publish', 1)
             ->where('e.soft_delete', 0)
-            ->field('ea.employee_id,ea.position_id,ea.position_name,ea.source_kind,p.code position_code')
+            ->field('ea.employee_id,ea.source_kind,p.code position_code')
             ->order('ea.employee_id,ea.id')
             ->select()
             ->toArray();
@@ -432,14 +431,10 @@ final class QmsResponsibilityValidationService
         ];
         foreach ($appointments as $appointment) {
             $employeeId = (string)$appointment['employee_id'];
-            $positionId = trim((string)($appointment['position_id'] ?? ''));
             $positionCode = trim((string)($appointment['position_code'] ?? ''));
-            $positionName = trim((string)($appointment['position_name'] ?? ''));
 
-            $isGeneralManager = $positionCode === 'company_general_manager'
-                || ($positionId === '' && $positionName === '公司总经理');
             if (
-                $isGeneralManager
+                $positionCode === 'company_general_manager'
                 && (string)$appointment['source_kind'] === 'corporate_evidence'
             ) {
                 $owners['company_general_manager'][$employeeId] = true;

@@ -359,6 +359,7 @@ catalog_in_transaction(function (): void {
 
     // Approval-owner appointments must be current role appointments from the correct governance source.
     foreach ([
+        ['label' => '缺少生效日', 'overrides' => ['appointed_at' => null]],
         ['label' => '未来生效', 'overrides' => ['appointed_at' => date('Y-m-d', strtotime('+1 day'))]],
         ['label' => '已经过期', 'overrides' => ['valid_until' => date('Y-m-d', strtotime('-1 day'))]],
         ['label' => '非岗位任命', 'overrides' => ['appointment_type' => 'authorization']],
@@ -379,6 +380,15 @@ catalog_in_transaction(function (): void {
             $invalidOwnerCase['label'] . '的总经理任命不构成有效批准主体'
         );
     }
+
+    validation_reset($versionId);
+    $nameOnlyGmId = validation_employee($companyId, $siteId, '仅名称总经理');
+    validation_appointment($companyId, $nameOnlyGmId, '', '公司总经理', 'corporate_evidence');
+    $nameOnlyGmOwner = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+    catalog_assert(
+        validation_has_code($nameOnlyGmOwner, 'company_general_manager_identity_missing'),
+        'Company GM name without the standard position id does not authorize approval'
+    );
 
     validation_reset($versionId);
     $obsoleteGmId = validation_employee($companyId, $siteId, '岗位已废止总经理');
