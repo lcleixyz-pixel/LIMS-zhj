@@ -224,6 +224,9 @@ final class QmsManualProcedureAlignmentService
         $found = [];
         foreach (glob(rtrim($procedureDir, '/\\') . DIRECTORY_SEPARATOR . '*.md') ?: [] as $path) {
             $text = self::readText($path);
+            if (!str_starts_with($text, "---\n")) {
+                continue;
+            }
             $frontmatter = self::parseFrontmatter($text);
             $docNumber = trim((string)($frontmatter['doc_number'] ?? ''));
             if ($docNumber === '' || !in_array($docNumber, $pilotNumbers, true)) {
@@ -299,14 +302,14 @@ final class QmsManualProcedureAlignmentService
             if (isset($result[$section])) {
                 continue;
             }
-            $pattern = '/^#{1,6}\h+' . preg_quote($section, '/') . '(?:\h|$).*$/mu';
+            $pattern = '/^(?:#{1,6}\h+)?' . preg_quote($section, '/') . '(?:\h|$).*$/mu';
             $count = preg_match_all($pattern, $text, $matches, PREG_OFFSET_CAPTURE);
             if ($count !== 1) {
                 throw new RuntimeException('手册章节定位次数不是 1：' . $section . '，实际 ' . (int)$count);
             }
             $offset = (int)$matches[0][0][1];
             $end = strlen($text);
-            if (preg_match('/^#{1,6}\h+.+$/mu', $text, $next, PREG_OFFSET_CAPTURE, $offset + strlen((string)$matches[0][0][0])) === 1) {
+            if (preg_match('/^(?:#{1,6}\h+.+|[1-8](?:\.[0-9]+){0,4}(?:\h|$).*)$/mu', $text, $next, PREG_OFFSET_CAPTURE, $offset + strlen((string)$matches[0][0][0])) === 1) {
                 $end = (int)$next[0][1];
             }
             $result[$section] = [
