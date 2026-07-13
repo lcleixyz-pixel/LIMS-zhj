@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace app\service;
 
+use DomainException;
 use think\facade\Config;
 use think\facade\Db;
 
@@ -89,35 +90,86 @@ class QmsPositionAliasService
 
     public static function seedCatalog(): array
     {
-        $companyId = (string)Config::get('qms.company_id');
+        return self::withSeededCatalogLock(
+            static fn (string $companyId, array $positions): array => $positions
+        );
+    }
+
+    public static function withSeededCatalogLock(callable $callback, ?string $companyId = null): mixed
+    {
+        $companyId = $companyId ?? (string)Config::get('qms.company_id');
+
+        return Db::transaction(static function () use ($callback, $companyId): mixed {
+            $company = Db::name('companies')
+                ->where('id', $companyId)
+                ->where('soft_delete', 0)
+                ->lock(true)
+                ->find();
+            if (!$company) {
+                throw new DomainException('当前公司不存在或已删除，不能在无锁状态初始化岗位与责任链。');
+            }
+
+            $positions = self::seedCatalogForLockedCompany($companyId);
+
+            return $callback($companyId, $positions);
+        });
+    }
+
+    private static function seedCatalogForLockedCompany(string $companyId): array
+    {
         $now = date('Y-m-d H:i:s');
         $positions = [];
 
         foreach (self::defaultDefinitions() as $code => $definition) {
-            $row = Db::name('qms_positions')->where('code', $code)->find();
-            $positionId = (string)($row['id'] ?? qms_uuid());
-            $payload = [
-                'company_id' => $companyId,
-                'code' => $code,
-                'name' => (string)$definition['name'],
-                'source' => self::SOURCE_SCOPE,
-                'review_status' => 'published',
-                'publish' => 1,
-                'soft_delete' => 0,
-                'modified' => $now,
-            ];
+            $row = Db::name('qms_positions')
+                ->where('company_id', $companyId)
+                ->where('code', $code)
+                ->lock(true)
+                ->find();
+            $positionId = '';
+            $positionName = (string)$definition['name'];
             if ($row) {
-                Db::name('qms_positions')->where('id', $positionId)->update($payload);
+                $positionId = (string)$row['id'];
+                $positionName = (string)$row['name'];
+                if ((string)($row['source'] ?? '') === self::SOURCE_SCOPE) {
+                    $positionName = (string)$definition['name'];
+                    Db::name('qms_positions')
+                        ->where('company_id', $companyId)
+                        ->where('id', $positionId)
+                        ->update([
+                            'name' => $positionName,
+                            'source' => self::SOURCE_SCOPE,
+                            'review_status' => 'published',
+                            'publish' => 1,
+                            'soft_delete' => 0,
+                            'modified' => $now,
+                        ]);
+                }
             } else {
-                Db::name('qms_positions')->insert(array_merge($payload, [
+                $globalConflict = Db::name('qms_positions')->where('code', $code)->lock(true)->find();
+                if ($globalConflict) {
+                    throw new DomainException(
+                        '岗位代码 ' . $code . '已归属其他公司，现有 UNIQUE(code) 约束下无法安全补齐。'
+                    );
+                }
+                $positionId = qms_uuid();
+                Db::name('qms_positions')->insert([
                     'id' => $positionId,
+                    'company_id' => $companyId,
+                    'code' => $code,
+                    'name' => $positionName,
+                    'source' => self::SOURCE_SCOPE,
+                    'review_status' => 'published',
+                    'publish' => 1,
+                    'soft_delete' => 0,
                     'created' => $now,
-                ]));
+                    'modified' => $now,
+                ]);
             }
             $positions[$code] = [
                 'id' => $positionId,
                 'code' => $code,
-                'name' => (string)$definition['name'],
+                'name' => $positionName,
             ];
 
             foreach ((array)$definition['aliases'] as $alias => $status) {
@@ -126,6 +178,7 @@ class QmsPositionAliasService
                     ->where('alias', (string)$alias)
                     ->where('source_scope', self::SOURCE_SCOPE)
                     ->where('site_scope_key', self::SITE_SCOPE_KEY)
+                    ->lock(true)
                     ->find();
                 $aliasId = (string)($aliasRow['id'] ?? qms_uuid());
                 $aliasPayload = [
@@ -142,7 +195,10 @@ class QmsPositionAliasService
                     'modified' => $now,
                 ];
                 if ($aliasRow) {
-                    Db::name('qms_position_aliases')->where('id', $aliasId)->update($aliasPayload);
+                    Db::name('qms_position_aliases')
+                        ->where('company_id', $companyId)
+                        ->where('id', $aliasId)
+                        ->update($aliasPayload);
                 } else {
                     Db::name('qms_position_aliases')->insert(array_merge($aliasPayload, [
                         'id' => $aliasId,
@@ -166,6 +222,7 @@ class QmsPositionAliasService
             ->where('a.source_scope', self::SOURCE_SCOPE)
             ->where('a.site_scope_key', self::SITE_SCOPE_KEY)
             ->where('a.soft_delete', 0)
+            ->where('p.company_id', $companyId)
             ->where('p.soft_delete', 0)
             ->field('a.alias,a.confirmation_status,a.source_scope,a.site_scope_key,p.id position_id,p.code position_code,p.name position_name')
             ->order('p.code,a.alias')

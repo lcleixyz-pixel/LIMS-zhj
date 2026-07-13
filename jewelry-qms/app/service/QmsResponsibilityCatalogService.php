@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace app\service;
 
 use DomainException;
-use think\facade\Config;
 use think\facade\Db;
 
 class QmsResponsibilityCatalogService
@@ -13,22 +12,22 @@ class QmsResponsibilityCatalogService
 
     public static function createInitialDraft(): array
     {
-        return Db::transaction(static fn (): array => self::createInitialDraftInTransaction());
+        return QmsPositionAliasService::withSeededCatalogLock(
+            static fn (string $companyId, array $positions): array => self::createInitialDraftInTransaction($companyId, $positions)
+        );
     }
 
-    private static function createInitialDraftInTransaction(): array
+    private static function createInitialDraftInTransaction(string $companyId, array $positions): array
     {
-        $positions = QmsPositionAliasService::seedCatalog();
-        $companyId = (string)Config::get('qms.company_id');
-
         $existing = Db::name('qms_responsibility_chain_versions')
             ->where('company_id', $companyId)
             ->where('chain_code', self::CHAIN_CODE)
             ->where('version_no', 1)
             ->where('soft_delete', 0)
+            ->lock(true)
             ->find();
         if ($existing) {
-            return self::versionSummary((string)$existing['id']);
+            return self::versionSummary((string)$existing['id'], $companyId);
         }
 
         $effective = Db::name('qms_responsibility_chain_versions')
@@ -36,6 +35,7 @@ class QmsResponsibilityCatalogService
             ->where('chain_code', self::CHAIN_CODE)
             ->where('status', 'effective')
             ->where('soft_delete', 0)
+            ->lock(true)
             ->find();
         if ($effective) {
             throw new DomainException('核心治理责任链已有有效版本，不得重新创建 v1 草案。');
@@ -109,7 +109,7 @@ class QmsResponsibilityCatalogService
             }
         }
 
-        return self::versionSummary($versionId);
+        return self::versionSummary($versionId, $companyId);
     }
 
     private static function activityDefinitions(): array
@@ -221,11 +221,13 @@ class QmsResponsibilityCatalogService
         ];
     }
 
-    private static function versionSummary(string $versionId): array
+    private static function versionSummary(string $versionId, string $companyId): array
     {
         $version = Db::name('qms_responsibility_chain_versions')
             ->where('id', $versionId)
+            ->where('company_id', $companyId)
             ->where('soft_delete', 0)
+            ->lock(true)
             ->find();
         if (!$version) {
             throw new DomainException('责任链版本不存在。');
@@ -233,12 +235,14 @@ class QmsResponsibilityCatalogService
 
         $activities = Db::name('qms_responsibility_activities')
             ->alias('a')
-            ->leftJoin('qms_activity_responsibilities r', 'r.activity_id = a.id AND r.soft_delete = 0')
+            ->leftJoin('qms_activity_responsibilities r', 'r.activity_id = a.id AND r.company_id = a.company_id AND r.soft_delete = 0')
             ->where('a.chain_version_id', $versionId)
+            ->where('a.company_id', $companyId)
             ->where('a.soft_delete', 0)
             ->field('a.id,a.activity_code,a.name,a.sort_order,COUNT(r.id) responsibility_count')
             ->group('a.id,a.activity_code,a.name,a.sort_order')
             ->order('a.sort_order')
+            ->lock(true)
             ->select()
             ->toArray();
 

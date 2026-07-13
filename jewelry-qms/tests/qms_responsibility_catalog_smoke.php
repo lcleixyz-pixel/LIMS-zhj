@@ -11,6 +11,79 @@ use app\model\QmsResponsibilityActivity;
 use think\facade\Db;
 
 catalog_in_transaction(function (): void {
+    $position = Db::name('qms_positions')->where('code', 'quality_manager')->find();
+    $positionId = (string)($position['id'] ?? qms_uuid());
+    $customFields = [
+        'company_id' => catalog_company_id(),
+        'code' => 'quality_manager',
+        'name' => '人工维护的质量岗',
+        'source' => 'manual_governance',
+        'review_status' => 'obsolete',
+        'publish' => 0,
+        'soft_delete' => 1,
+    ];
+    if ($position) {
+        Db::name('qms_positions')->where('id', $positionId)->update($customFields);
+    } else {
+        Db::name('qms_positions')->insert(array_merge($customFields, [
+            'id' => $positionId,
+            'created' => date('Y-m-d H:i:s'),
+            'modified' => date('Y-m-d H:i:s'),
+        ]));
+    }
+
+    $positions = QmsPositionAliasService::seedCatalog();
+    $after = Db::name('qms_positions')->where('id', $positionId)->find();
+    catalog_assert(($positions['quality_manager']['id'] ?? '') === $positionId, 'Custom current-company position id is reused');
+    foreach ($customFields as $field => $expected) {
+        catalog_assert(($after[$field] ?? null) === $expected, 'Custom position field is preserved: ' . $field);
+    }
+});
+
+catalog_in_transaction(function (): void {
+    $otherCompanyId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+    Db::name('companies')->insert([
+        'id' => $otherCompanyId,
+        'name' => '跨公司冲突测试机构',
+        'publish' => 1,
+        'soft_delete' => 0,
+        'created' => date('Y-m-d H:i:s'),
+        'modified' => date('Y-m-d H:i:s'),
+    ]);
+    $position = Db::name('qms_positions')->where('code', 'supervisor')->find();
+    $positionId = (string)($position['id'] ?? qms_uuid());
+    $foreignFields = [
+        'company_id' => $otherCompanyId,
+        'code' => 'supervisor',
+        'name' => '其他公司监督员',
+        'source' => 'foreign_governance',
+        'review_status' => 'published',
+        'publish' => 1,
+        'soft_delete' => 0,
+    ];
+    if ($position) {
+        Db::name('qms_positions')->where('id', $positionId)->update($foreignFields);
+    } else {
+        Db::name('qms_positions')->insert(array_merge($foreignFields, [
+            'id' => $positionId,
+            'created' => date('Y-m-d H:i:s'),
+            'modified' => date('Y-m-d H:i:s'),
+        ]));
+    }
+
+    $blocked = false;
+    try {
+        QmsPositionAliasService::seedCatalog();
+    } catch (\DomainException $exception) {
+        $blocked = true;
+    }
+    catalog_assert($blocked, 'A position code owned by another company fails closed');
+    $after = Db::name('qms_positions')->where('id', $positionId)->find();
+    catalog_assert(($after['company_id'] ?? '') === $otherCompanyId, 'Foreign position ownership is never transferred');
+    catalog_assert(($after['name'] ?? '') === '其他公司监督员', 'Foreign position name is never overwritten');
+});
+
+catalog_in_transaction(function (): void {
     $definitions = QmsPositionAliasService::defaultDefinitions();
     catalog_assert(count($definitions) === 13, 'Twelve legacy positions plus company GM are defined');
     catalog_assert(
