@@ -7,6 +7,8 @@ use RuntimeException;
 
 final class QmsManualProcedureAlignmentService
 {
+    private const STATUSES = ['consistent', 'conflict', 'missing', 'review_required', 'not_applicable'];
+
     private const RULES = [
         'policy_polarity',
         'minimum_duration',
@@ -37,6 +39,44 @@ final class QmsManualProcedureAlignmentService
             ]),
             'procedures' => $procedures,
         ]);
+    }
+
+    public static function check(array $inputs, array $trace): array
+    {
+        $findings = [];
+        foreach ((array)$inputs['requirements'] as $requirement) {
+            $candidate = self::candidateForRequirement($requirement, $trace);
+            $procedureNumber = (string)$candidate['procedure_number'];
+            $procedure = (array)($inputs['procedures'][$procedureNumber] ?? []);
+            if ($procedure === []) {
+                throw new RuntimeException('候选程序未加载：' . $procedureNumber);
+            }
+
+            $finding = match ((string)$requirement['rule']) {
+                'policy_polarity' => self::checkPolicyPolarity($requirement, $procedure),
+                'minimum_duration' => self::checkMinimumDuration($requirement, $procedure),
+                'internal_version_rule' => self::checkInternalVersionRule($requirement, $procedure),
+                default => null,
+            };
+            if ($finding === null) {
+                continue;
+            }
+            $finding['trace_source'] = (string)$candidate['trace_source'];
+            $finding['manual_locator'] = self::manualLocator($inputs, (string)$requirement['manual_section']);
+            $finding['input_hashes'] = [
+                'manual' => (string)$inputs['manual']['sha256'],
+                'procedure' => (string)$procedure['sha256'],
+            ];
+            $findings[] = $finding;
+        }
+
+        return [
+            'schema_version' => '1.0',
+            'pilot_id' => (string)$inputs['pilot_id'],
+            'findings' => $findings,
+            'trace_gaps' => [],
+            'blockers' => [],
+        ];
     }
 
     private static function readJson(string $path): array
@@ -243,5 +283,219 @@ final class QmsManualProcedureAlignmentService
         }
 
         return $result;
+    }
+
+    private static function candidateForRequirement(array $requirement, array $trace): array
+    {
+        $section = (string)$requirement['manual_section'];
+        $matches = [];
+        foreach ((array)($trace['links'] ?? []) as $link) {
+            $linkedSection = trim((string)($link['manual_section'] ?? ''));
+            if ($linkedSection === '') {
+                continue;
+            }
+            if ($section === $linkedSection || str_starts_with($section, $linkedSection . '.')) {
+                $matches[] = $link;
+            }
+        }
+        usort($matches, static fn (array $left, array $right): int => strlen((string)$right['manual_section']) <=> strlen((string)$left['manual_section']));
+        $targets = array_values((array)$requirement['fallback_targets']);
+        foreach ($matches as $match) {
+            if (in_array((string)$match['procedure_number'], $targets, true)) {
+                return [
+                    'procedure_number' => (string)$match['procedure_number'],
+                    'trace_source' => 'formal_link',
+                ];
+            }
+        }
+
+        return [
+            'procedure_number' => (string)$targets[0],
+            'trace_source' => 'fallback_target',
+        ];
+    }
+
+    private static function checkPolicyPolarity(array $requirement, array $procedure): array
+    {
+        $text = (string)$procedure['text'];
+        $sentences = self::matchingSentences($text, '/手写|划改/u');
+        if ($sentences === []) {
+            return self::finding($requirement, $procedure, 'missing');
+        }
+        foreach ($sentences as $sentence) {
+            if (preg_match('/(?:不允许|不得|禁止)[^。；\n]{0,16}(?:手写|划改|改动)/u', (string)$sentence['text']) === 1) {
+                return self::finding($requirement, $procedure, 'conflict', $sentence, ['polarity' => 'prohibit']);
+            }
+        }
+        foreach ($sentences as $sentence) {
+            if (preg_match('/允许[^。；\n]{0,16}(?:手写|划改)/u', (string)$sentence['text']) === 1) {
+                return self::finding($requirement, $procedure, 'consistent', $sentence, ['polarity' => 'allow_with_authorization']);
+            }
+        }
+
+        return self::finding($requirement, $procedure, 'review_required', $sentences[0], ['polarity' => 'ambiguous']);
+    }
+
+    private static function checkMinimumDuration(array $requirement, array $procedure): array
+    {
+        $text = (string)$procedure['text'];
+        $pattern = '/人员调离或设备停止使用后[^。；\n]{0,100}?再保存\s*([0-9一二三四五六七八九十]+)\s*年/u';
+        $count = preg_match_all($pattern, $text, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        if ($count === false || $count === 0) {
+            return self::finding($requirement, $procedure, 'missing');
+        }
+        $values = [];
+        $evidence = [];
+        foreach ($matches as $match) {
+            $years = self::normalizeSmallNumber((string)$match[1][0]);
+            if ($years === null) {
+                return self::finding($requirement, $procedure, 'review_required', [
+                    'text' => (string)$match[0][0],
+                    'offset' => (int)$match[0][1],
+                ], ['years' => null]);
+            }
+            $values[$years] = true;
+            $evidence[] = ['text' => (string)$match[0][0], 'offset' => (int)$match[0][1], 'years' => $years];
+        }
+        if (count($values) !== 1) {
+            return self::finding($requirement, $procedure, 'review_required', $evidence[0], [
+                'years' => array_map('intval', array_keys($values)),
+            ]);
+        }
+        $observedYears = (int)array_key_first($values);
+        $expectedYears = (int)$requirement['expected']['years'];
+
+        return self::finding(
+            $requirement,
+            $procedure,
+            $observedYears < $expectedYears ? 'conflict' : 'consistent',
+            $evidence[0],
+            ['years' => $observedYears, 'condition' => (string)$requirement['expected']['condition']]
+        );
+    }
+
+    private static function checkInternalVersionRule(array $requirement, array $procedure): array
+    {
+        $text = (string)$procedure['text'];
+        $bodyPattern = '/修改\s*(\d+)\s*次以上[^。；\n]{0,100}?换成第\s*(\d+)\s*版(?:本)?第\s*(\d+)\s*次/u';
+        $appendixPattern = '/超过第?\s*(\d+)\s*次[^。；\n]{0,100}?升级为第?\s*([0-9一二三四五六七八九十]+)\s*版/u';
+        $bodyMatched = preg_match($bodyPattern, $text, $body, PREG_OFFSET_CAPTURE) === 1;
+        $appendixMatched = preg_match($appendixPattern, $text, $appendix, PREG_OFFSET_CAPTURE) === 1;
+        if (!$bodyMatched && !$appendixMatched) {
+            return self::finding($requirement, $procedure, 'missing');
+        }
+        if (!$bodyMatched || !$appendixMatched) {
+            $row = $bodyMatched ? $body : $appendix;
+            return self::finding($requirement, $procedure, 'review_required', [
+                'text' => (string)$row[0][0],
+                'offset' => (int)$row[0][1],
+            ]);
+        }
+        $appendixVersion = self::normalizeSmallNumber((string)$appendix[2][0]);
+        if ($appendixVersion === null) {
+            return self::finding($requirement, $procedure, 'review_required', [
+                'text' => (string)$appendix[0][0],
+                'offset' => (int)$appendix[0][1],
+            ]);
+        }
+        $observed = [
+            'body' => [
+                'threshold' => (int)$body[1][0],
+                'target_version' => (int)$body[2][0],
+                'target_revision' => (int)$body[3][0],
+            ],
+            'appendix' => [
+                'threshold' => (int)$appendix[1][0],
+                'target_version' => $appendixVersion,
+            ],
+        ];
+        $consistent = $observed['body']['threshold'] === $observed['appendix']['threshold']
+            && $observed['body']['target_version'] === $observed['appendix']['target_version'];
+        $evidence = [
+            'text' => '正文：' . trim((string)$body[0][0]) . '；附录：' . trim((string)$appendix[0][0]),
+            'offset' => (int)$body[0][1],
+            'extra_offset' => (int)$appendix[0][1],
+        ];
+
+        return self::finding($requirement, $procedure, $consistent ? 'consistent' : 'conflict', $evidence, $observed);
+    }
+
+    private static function finding(
+        array $requirement,
+        array $procedure,
+        string $status,
+        ?array $evidence = null,
+        array $observed = []
+    ): array {
+        if (!in_array($status, self::STATUSES, true)) {
+            throw new RuntimeException('未知校验状态：' . $status);
+        }
+        $line = $evidence === null ? null : self::lineNumber((string)$procedure['text'], (int)($evidence['offset'] ?? 0));
+        $locator = (string)$procedure['path'];
+        if ($line !== null) {
+            $locator .= ':' . $line;
+            if (isset($evidence['extra_offset'])) {
+                $locator .= ',' . self::lineNumber((string)$procedure['text'], (int)$evidence['extra_offset']);
+            }
+        }
+
+        return [
+            'finding_id' => (string)$requirement['id'],
+            'status' => $status,
+            'severity' => (string)($requirement['severity'] ?? 'medium'),
+            'rule' => (string)$requirement['rule'],
+            'manual_section' => (string)$requirement['manual_section'],
+            'manual_locator' => '',
+            'procedure_number' => (string)$procedure['doc_number'],
+            'procedure_locator' => $locator,
+            'expected' => (array)$requirement['expected'],
+            'observed' => $observed,
+            'evidence_excerpt' => trim((string)($evidence['text'] ?? '')),
+            'suggestion' => (string)($requirement['suggestion'] ?? ''),
+            'trace_source' => '',
+            'input_hashes' => [],
+        ];
+    }
+
+    private static function matchingSentences(string $text, string $pattern): array
+    {
+        $sentences = [];
+        if (preg_match_all('/[^。；\n]*[。；]?/u', $text, $matches, PREG_OFFSET_CAPTURE) === false) {
+            return [];
+        }
+        foreach ($matches[0] as $match) {
+            $sentence = trim((string)$match[0]);
+            if ($sentence !== '' && preg_match($pattern, $sentence) === 1) {
+                $sentences[] = ['text' => $sentence, 'offset' => (int)$match[1]];
+            }
+        }
+
+        return $sentences;
+    }
+
+    private static function normalizeSmallNumber(string $value): ?int
+    {
+        $value = trim($value);
+        if (ctype_digit($value)) {
+            return (int)$value;
+        }
+        $map = ['零' => 0, '一' => 1, '二' => 2, '三' => 3, '四' => 4, '五' => 5, '六' => 6, '七' => 7, '八' => 8, '九' => 9, '十' => 10];
+
+        return $map[$value] ?? null;
+    }
+
+    private static function lineNumber(string $text, int $offset): int
+    {
+        return substr_count(substr($text, 0, max(0, $offset)), "\n") + 1;
+    }
+
+    private static function manualLocator(array $inputs, string $section): string
+    {
+        $lines = (array)($inputs['manual']['lines'][$section] ?? []);
+        if ($lines === []) {
+            return (string)$inputs['manual']['resolved_path'];
+        }
+
+        return (string)$inputs['manual']['resolved_path'] . ':' . (int)$lines['start'] . '-' . (int)$lines['end'];
     }
 }

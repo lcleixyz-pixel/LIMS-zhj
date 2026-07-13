@@ -29,6 +29,16 @@ function alignment_expect_exception(callable $callback, string $messagePart): vo
     alignment_assert(false, 'Expected exception containing: ' . $messagePart);
 }
 
+function alignment_index_by_id(array $findings): array
+{
+    $indexed = [];
+    foreach ($findings as $finding) {
+        $indexed[(string)$finding['finding_id']] = $finding;
+    }
+
+    return $indexed;
+}
+
 $fixture = __DIR__ . '/fixtures/qms_manual_procedure_alignment';
 $loaded = QmsManualProcedureAlignmentService::loadInputs(
     $fixture . '/pilot-spec.json',
@@ -49,4 +59,32 @@ alignment_expect_exception(
     '缺少 schema_version'
 );
 
-echo "qms_manual_procedure_alignment_rules_smoke input contract passed\n";
+$traceSnapshot = json_decode((string)file_get_contents($fixture . '/trace-snapshot.json'), true);
+alignment_assert(is_array($traceSnapshot), 'Trace snapshot is valid JSON');
+
+$result = QmsManualProcedureAlignmentService::check($loaded, $traceSnapshot);
+$findings = alignment_index_by_id($result['findings']);
+
+alignment_assert($findings['Y14']['status'] === 'conflict', 'Y14 detects allow/prohibit conflict');
+alignment_assert($findings['Y14']['procedure_number'] === 'XZTC/CX-08-2022', 'Y14 routes to CX-08');
+alignment_assert(str_contains((string)$findings['Y14']['evidence_excerpt'], '不允许进行手写改动'), 'Y14 keeps contrary evidence');
+
+alignment_assert($findings['Y15']['status'] === 'conflict', 'Y15 detects 6-year versus 3-year conflict');
+alignment_assert($findings['Y15']['expected']['years'] === 6, 'Y15 keeps expected years');
+alignment_assert($findings['Y15']['observed']['years'] === 3, 'Y15 extracts observed years');
+
+alignment_assert($findings['Y17']['status'] === 'conflict', 'Y17 detects internal version-rule conflict');
+alignment_assert($findings['Y17']['observed']['body']['threshold'] === 5, 'Y17 parses body threshold');
+alignment_assert($findings['Y17']['observed']['appendix']['threshold'] === 10, 'Y17 parses appendix threshold');
+
+$consistent = $loaded;
+$consistent['procedures']['XZTC/CX-08-2022']['text'] = str_replace(
+    '本公司的管理体系文件不允许进行手写改动。',
+    '本公司的管理体系文件允许授权手写划改，但不允许擦涂。',
+    (string)$consistent['procedures']['XZTC/CX-08-2022']['text']
+);
+$consistentResult = QmsManualProcedureAlignmentService::check($consistent, $traceSnapshot);
+$consistentFindings = alignment_index_by_id($consistentResult['findings']);
+alignment_assert($consistentFindings['Y14']['status'] === 'consistent', 'Y14 does not treat the erasure prohibition as a handwritten-change prohibition');
+
+echo "qms_manual_procedure_alignment_rules_smoke deterministic rules passed\n";
