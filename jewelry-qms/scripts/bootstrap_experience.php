@@ -22,9 +22,9 @@ Session::set('user', [
     'role' => 'admin',
 ]);
 
-$existing = RecordFormTemplate::where('soft_delete', 0)->count();
+$existing = RecordFormTemplate::count();
 if ($existing > 0) {
-    echo "[jewelry-qms] experience bootstrap skipped: {$existing} active templates already exist\n";
+    echo "[jewelry-qms] experience bootstrap skipped: {$existing} templates already exist\n";
     exit(0);
 }
 

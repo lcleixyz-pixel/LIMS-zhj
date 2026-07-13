@@ -33,7 +33,7 @@ if (!is_file($migrationInitPath)) {
 
 $bootstrap = (string)file_get_contents($bootstrapPath);
 $migrationInit = (string)file_get_contents($migrationInitPath);
-assert_contains("where('soft_delete', 0)->count()", $bootstrap, 'template seed is guarded by an empty-table check');
+assert_contains('RecordFormTemplate::count()', $bootstrap, 'template seed is guarded by a true empty-table check');
 assert_contains('RecordFormFixtureService::seed()', $bootstrap, 'stable built-in templates are seeded');
 assert_contains('/qms-migrations/*.sql', $migrationInit, 'all migrations are applied in filename order');
 
