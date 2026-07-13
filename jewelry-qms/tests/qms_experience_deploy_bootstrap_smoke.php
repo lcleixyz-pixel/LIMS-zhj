@@ -37,4 +37,11 @@ assert_contains("where('soft_delete', 0)->count()", $bootstrap, 'template seed i
 assert_contains('RecordFormFixtureService::seed()', $bootstrap, 'stable built-in templates are seeded');
 assert_contains('/qms-migrations/*.sql', $migrationInit, 'all migrations are applied in filename order');
 
+$lock = json_decode((string)file_get_contents($root . '/package-lock.json'), true, 512, JSON_THROW_ON_ERROR);
+$playwrightVersion = (string)($lock['packages']['node_modules/playwright']['version'] ?? '0.0.0');
+if (version_compare($playwrightVersion, '1.55.1', '<')) {
+    fwrite(STDERR, "Assertion failed: Playwright {$playwrightVersion} includes GHSA-7mvr-c777-76hp\n");
+    exit(1);
+}
+
 echo "qms experience deploy bootstrap smoke passed\n";
