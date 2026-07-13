@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "links": [
+    {"manual_section": "8.3", "procedure_number": "XZTC/CX-08-2022", "relation_type": "supporting"},
+    {"manual_section": "8.4", "procedure_number": "XZTC/CX-19-2022", "relation_type": "supporting"},
+    {"manual_section": "8.8", "procedure_number": "XZTC/CX-20-2022", "relation_type": "supporting"},
+    {"manual_section": "8.9", "procedure_number": "XZTC/CX-21-2022", "relation_type": "supporting"}
+  ],
+  "unlinked_pilot_procedures": ["XZTC/CX-32-2022"]
+}
