@@ -21,16 +21,6 @@ class QmsResponsibilityCatalogService
         $positions = QmsPositionAliasService::seedCatalog();
         $companyId = (string)Config::get('qms.company_id');
 
-        $effective = Db::name('qms_responsibility_chain_versions')
-            ->where('company_id', $companyId)
-            ->where('chain_code', self::CHAIN_CODE)
-            ->where('status', 'effective')
-            ->where('soft_delete', 0)
-            ->find();
-        if ($effective) {
-            throw new DomainException('核心治理责任链已有有效版本，不得重新创建 v1 草案。');
-        }
-
         $existing = Db::name('qms_responsibility_chain_versions')
             ->where('company_id', $companyId)
             ->where('chain_code', self::CHAIN_CODE)
@@ -39,6 +29,16 @@ class QmsResponsibilityCatalogService
             ->find();
         if ($existing) {
             return self::versionSummary((string)$existing['id']);
+        }
+
+        $effective = Db::name('qms_responsibility_chain_versions')
+            ->where('company_id', $companyId)
+            ->where('chain_code', self::CHAIN_CODE)
+            ->where('status', 'effective')
+            ->where('soft_delete', 0)
+            ->find();
+        if ($effective) {
+            throw new DomainException('核心治理责任链已有有效版本，不得重新创建 v1 草案。');
         }
 
         $now = date('Y-m-d H:i:s');

@@ -128,13 +128,29 @@ catalog_in_transaction(function (): void {
     catalog_assert($bareManagerMentions === [], 'Legacy structure parsing does not auto-confirm bare manager');
 
     Db::name('qms_responsibility_chain_versions')->where('id', (string)$version['id'])->update(['status' => 'effective']);
+    $effectiveV1 = QmsResponsibilityCatalogService::createInitialDraft();
+    catalog_assert($effectiveV1['id'] === $version['id'], 'An effective version one remains idempotent');
+    catalog_assert($effectiveV1['status'] === 'effective', 'Existing effective version one is returned as-is');
+
+    Db::name('qms_responsibility_chain_versions')->where('id', (string)$version['id'])->update(['soft_delete' => 1]);
+    Db::name('qms_responsibility_chain_versions')->insert([
+        'id' => qms_uuid(),
+        'company_id' => catalog_company_id(),
+        'chain_code' => 'core_governance',
+        'version_no' => 2,
+        'status' => 'effective',
+        'publish' => 1,
+        'soft_delete' => 0,
+        'created' => date('Y-m-d H:i:s'),
+        'modified' => date('Y-m-d H:i:s'),
+    ]);
     $blocked = false;
     try {
         QmsResponsibilityCatalogService::createInitialDraft();
     } catch (\DomainException $exception) {
         $blocked = true;
     }
-    catalog_assert($blocked, 'An effective version blocks recreating version one');
+    catalog_assert($blocked, 'Another effective version blocks recreating missing version one');
 });
 
 echo "qms_responsibility_catalog_smoke passed\n";
