@@ -77,6 +77,26 @@ alignment_assert($findings['Y17']['status'] === 'conflict', 'Y17 detects interna
 alignment_assert($findings['Y17']['observed']['body']['threshold'] === 5, 'Y17 parses body threshold');
 alignment_assert($findings['Y17']['observed']['appendix']['threshold'] === 10, 'Y17 parses appendix threshold');
 
+alignment_assert(isset($findings['Y18']), 'Y18 finding is produced');
+alignment_assert($findings['Y18']['status'] === 'conflict', 'Y18 detects body/records mismatch');
+alignment_assert(
+    in_array('管理评审计划表', $findings['Y18']['observed']['missing_from_records'], true),
+    'Y18 lists the management-review plan as missing'
+);
+alignment_assert(
+    in_array('XZTC/BG-20-02', $findings['Y18']['observed']['unexpected_record_codes'], true),
+    'Y18 lists the internal-audit record code as unexpected'
+);
+
+alignment_assert(isset($findings['Y13-CX20']), 'CX-20 responsibility finding is produced');
+alignment_assert($findings['Y13-CX20']['status'] === 'conflict', 'CX-20 clear responsibility conflict is detected');
+alignment_assert($findings['Y13-CX21']['status'] === 'review_required', 'CX-21 unconfirmed general-manager alias is not guessed');
+alignment_assert($findings['Y13-CX32']['status'] === 'review_required', 'CX-32 unknown manager aliases require review');
+alignment_assert(
+    in_array('公司总经理', $findings['Y13-CX21']['observed']['unconfirmed_aliases'], true),
+    'CX-21 reports the unconfirmed general-manager alias'
+);
+
 $consistent = $loaded;
 $consistent['procedures']['XZTC/CX-08-2022']['text'] = str_replace(
     '本公司的管理体系文件不允许进行手写改动。',

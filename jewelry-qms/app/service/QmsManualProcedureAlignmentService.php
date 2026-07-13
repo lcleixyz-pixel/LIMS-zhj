@@ -56,6 +56,8 @@ final class QmsManualProcedureAlignmentService
                 'policy_polarity' => self::checkPolicyPolarity($requirement, $procedure),
                 'minimum_duration' => self::checkMinimumDuration($requirement, $procedure),
                 'internal_version_rule' => self::checkInternalVersionRule($requirement, $procedure),
+                'record_reference_consistency' => self::checkRecordReferenceConsistency($requirement, $procedure),
+                'responsibility_chain' => self::checkResponsibilityChain($requirement, $procedure),
                 default => null,
             };
             if ($finding === null) {
@@ -418,6 +420,156 @@ final class QmsManualProcedureAlignmentService
         ];
 
         return self::finding($requirement, $procedure, $consistent ? 'consistent' : 'conflict', $evidence, $observed);
+    }
+
+    private static function checkRecordReferenceConsistency(array $requirement, array $procedure): array
+    {
+        $text = (string)$procedure['text'];
+        $recordSection = self::extractHeadingSection($text, '记录');
+        if ($recordSection === null) {
+            return self::finding($requirement, $procedure, 'missing');
+        }
+        $body = substr($text, 0, (int)$recordSection['offset']);
+        $bodyRecords = self::extractNamedRecords($body);
+        $listedRecords = self::extractNamedRecords((string)$recordSection['text']);
+        $listedNames = array_fill_keys(array_column($listedRecords, 'name'), true);
+        $missingNames = [];
+        foreach ($bodyRecords as $record) {
+            if (!isset($listedNames[(string)$record['name']])) {
+                $missingNames[(string)$record['name']] = true;
+            }
+        }
+        $expectedPrefix = (string)($requirement['expected']['record_code_prefix'] ?? '');
+        $unexpectedCodes = [];
+        foreach ($listedRecords as $record) {
+            $code = (string)$record['code'];
+            if ($code !== '' && $expectedPrefix !== '' && !str_starts_with($code, $expectedPrefix)) {
+                $unexpectedCodes[$code] = true;
+            }
+        }
+        $observed = [
+            'missing_from_records' => array_keys($missingNames),
+            'unexpected_record_codes' => array_keys($unexpectedCodes),
+            'listed_records' => array_values(array_unique(array_column($listedRecords, 'name'))),
+        ];
+        $status = ($observed['missing_from_records'] !== [] || $observed['unexpected_record_codes'] !== [])
+            ? 'conflict'
+            : 'consistent';
+
+        return self::finding($requirement, $procedure, $status, [
+            'text' => trim((string)$recordSection['text']),
+            'offset' => (int)$recordSection['offset'],
+        ], $observed);
+    }
+
+    private static function checkResponsibilityChain(array $requirement, array $procedure): array
+    {
+        $text = (string)$procedure['text'];
+        $action = trim((string)($requirement['activity'] ?? $requirement['action'] ?? ''));
+        $subject = trim((string)($requirement['subject'] ?? ''));
+        $rolePattern = '(?:公司总经理|办公室主任|办公室负责人|质量负责人|实验室主任|最高管理者|技术负责人|总经理|经理)';
+        $roles = [];
+        $evidenceRows = [];
+
+        if ($action !== '') {
+            $quotedAction = preg_quote($action, '/');
+            $beforePattern = '/(?<role>' . $rolePattern . ')[^。；\n]{0,40}?' . $quotedAction . '/u';
+            if (preg_match_all($beforePattern, $text, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE) !== false) {
+                foreach ($matches as $match) {
+                    $roles[(string)$match['role'][0]] = true;
+                    $evidenceRows[] = ['text' => (string)$match[0][0], 'offset' => (int)$match[0][1]];
+                }
+            }
+            if (str_starts_with($action, '批准')) {
+                $object = mb_substr($action, 2);
+                if ($object !== '') {
+                    $afterPattern = '/' . preg_quote($object, '/') . '[^。；\n]{0,30}?(?:经|由)?\s*(?<role>' . $rolePattern . ')\s*批准/u';
+                    if (preg_match_all($afterPattern, $text, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE) !== false) {
+                        foreach ($matches as $match) {
+                            $roles[(string)$match['role'][0]] = true;
+                            $evidenceRows[] = ['text' => (string)$match[0][0], 'offset' => (int)$match[0][1]];
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($roles === []) {
+            $subjectPattern = str_contains($subject, '内部审核')
+                ? '/内部审核|内审/u'
+                : (str_contains($subject, '管理评审') ? '/管理评审/u' : '/风险/u');
+            foreach (self::matchingSentences($text, $subjectPattern) as $sentence) {
+                if (preg_match('/批准|审批|制定|编制|主持/u', (string)$sentence['text']) !== 1) {
+                    continue;
+                }
+                if (preg_match_all('/' . $rolePattern . '/u', (string)$sentence['text'], $roleMatches) === false) {
+                    continue;
+                }
+                foreach ($roleMatches[0] as $role) {
+                    $roles[(string)$role] = true;
+                }
+                $evidenceRows[] = $sentence;
+            }
+        }
+
+        $roleNames = array_keys($roles);
+        $unconfirmedAliases = array_values(array_intersect(
+            $roleNames,
+            ['公司总经理', '总经理', '经理', '最高管理者', '办公室负责人']
+        ));
+        $expectedRole = $requirement['expected']['role'] ?? null;
+        if ($roleNames === []) {
+            $status = 'missing';
+        } elseif ($expectedRole === null || $unconfirmedAliases !== [] || count($roleNames) > 1) {
+            $status = 'review_required';
+        } elseif (!in_array((string)$expectedRole, $roleNames, true)) {
+            $status = 'conflict';
+        } else {
+            $status = 'consistent';
+        }
+        $firstEvidence = $evidenceRows[0] ?? null;
+        if ($firstEvidence !== null && count($evidenceRows) > 1) {
+            $firstEvidence['text'] = implode('；', array_values(array_unique(array_map(
+                static fn (array $row): string => trim((string)$row['text']),
+                $evidenceRows
+            ))));
+        }
+
+        return self::finding($requirement, $procedure, $status, $firstEvidence, [
+            'roles' => $roleNames,
+            'unconfirmed_aliases' => $unconfirmedAliases,
+            'activity' => $action,
+        ]);
+    }
+
+    private static function extractHeadingSection(string $text, string $heading): ?array
+    {
+        $pattern = '/^#{1,6}\h+' . preg_quote($heading, '/') . '\h*\n(?<body>.*?)(?=^#{1,6}\h+|\z)/msu';
+        if (preg_match($pattern, $text, $match, PREG_OFFSET_CAPTURE) !== 1) {
+            return null;
+        }
+
+        return [
+            'text' => (string)$match['body'][0],
+            'offset' => (int)$match[0][1],
+        ];
+    }
+
+    private static function extractNamedRecords(string $text): array
+    {
+        $rows = [];
+        $pattern = '/《([^》\n]{2,80}?(?:表|报告|记录))》(?:\s+([A-Z]+\/BG-[0-9-]+))?/u';
+        if (preg_match_all($pattern, $text, $matches, PREG_SET_ORDER) === false) {
+            return [];
+        }
+        foreach ($matches as $match) {
+            $rows[] = [
+                'name' => trim((string)$match[1]),
+                'code' => trim((string)($match[2] ?? '')),
+            ];
+        }
+
+        return $rows;
     }
 
     private static function finding(
