@@ -84,6 +84,12 @@ final class QmsResponsibilityValidationService
                 $severity,
                 '尚无由公司治理证据登记的有效公司总经理身份。'
             );
+        } elseif (count($owners['company_general_manager']) > 1) {
+            $issues[] = self::issue(
+                'approval_owner_ambiguous',
+                $severity,
+                '存在多个不同人员的有效公司总经理身份，无法唯一确定批准主体。'
+            );
         }
 
         $requiresLabDirector = self::hasLabDirectorApprovedAssignments(
@@ -95,6 +101,12 @@ final class QmsResponsibilityValidationService
                 'approval_owner_missing',
                 $severity,
                 '存在需实验室主任批准的实名岗位或活动角色，但尚无有效实验室主任任命。'
+            );
+        } elseif ($requiresLabDirector && count($owners['lab_director']) > 1) {
+            $issues[] = self::issue(
+                'approval_owner_ambiguous',
+                $severity,
+                '存在多个不同人员的有效实验室主任任命，无法唯一确定批准主体。'
             );
         }
 
@@ -114,13 +126,14 @@ final class QmsResponsibilityValidationService
 
         self::sortIssues($issues);
         $result = self::result($issues);
+        $isDraft = (string)$version['status'] === 'draft';
 
         return [
             'version_id' => $versionId,
             'mode' => $mode,
             'result' => $result,
-            'can_save' => true,
-            'can_submit' => $result === 'pass',
+            'can_save' => $isDraft,
+            'can_submit' => $isDraft && $result === 'pass',
             'issues' => $issues,
             'checked_at' => date(DATE_ATOM),
         ];
@@ -232,8 +245,20 @@ final class QmsResponsibilityValidationService
         }
 
         $snapshot = (array)$assignment['competence_snapshot'];
-        $competencyIds = self::stringIds($snapshot['competency_record_ids'] ?? []);
-        $certificateIds = self::stringIds($snapshot['certificate_ids'] ?? []);
+        $competencyEvidence = self::strictEvidenceIds($snapshot, 'competency_record_ids');
+        $certificateEvidence = self::strictEvidenceIds($snapshot, 'certificate_ids');
+        $competencyIds = $competencyEvidence['ids'];
+        $certificateIds = $certificateEvidence['ids'];
+        if ($competencyEvidence['malformed'] || $certificateEvidence['malformed']) {
+            $issues[] = self::issue(
+                'competence_evidence_not_found',
+                $severity,
+                '资格证据引用格式无效；证据字段必须是仅包含非空标量 ID 的数组。',
+                $responsibility,
+                $assignment
+            );
+            return;
+        }
         if ($competencyIds === [] && $certificateIds === []) {
             $issues[] = self::issue(
                 'competence_evidence_missing',
@@ -374,14 +399,25 @@ final class QmsResponsibilityValidationService
 
     private static function approvalOwners(string $companyId): array
     {
+        $today = date('Y-m-d');
         $appointments = Db::name('employee_appointments')
             ->alias('ea')
             ->join('employees e', 'e.id = ea.employee_id AND e.company_id = ea.company_id')
-            ->leftJoin('qms_positions p', 'p.id = ea.position_id AND p.company_id = ea.company_id AND p.publish = 1 AND p.soft_delete = 0')
+            ->leftJoin(
+                'qms_positions p',
+                "p.id = ea.position_id AND p.company_id = ea.company_id AND p.review_status = 'published' AND p.publish = 1 AND p.soft_delete = 0"
+            )
             ->where('ea.company_id', $companyId)
+            ->where('ea.appointment_type', 'role')
             ->where('ea.status', 'active')
             ->where('ea.publish', 1)
             ->where('ea.soft_delete', 0)
+            ->where(static function ($query) use ($today): void {
+                $query->whereNull('ea.appointed_at')->whereOr('ea.appointed_at', '<=', $today);
+            })
+            ->where(static function ($query) use ($today): void {
+                $query->whereNull('ea.valid_until')->whereOr('ea.valid_until', '>=', $today);
+            })
             ->where('e.company_id', $companyId)
             ->where('e.publish', 1)
             ->where('e.soft_delete', 0)
@@ -408,7 +444,10 @@ final class QmsResponsibilityValidationService
             ) {
                 $owners['company_general_manager'][$employeeId] = true;
             }
-            if ($positionCode === 'lab_director') {
+            if (
+                $positionCode === 'lab_director'
+                && (string)$appointment['source_kind'] === 'responsibility_chain'
+            ) {
                 $owners['lab_director'][$employeeId] = true;
             }
         }
@@ -654,6 +693,33 @@ final class QmsResponsibilityValidationService
         }
 
         return array_keys($ids);
+    }
+
+    private static function strictEvidenceIds(array $snapshot, string $key): array
+    {
+        if (!array_key_exists($key, $snapshot)) {
+            return ['ids' => [], 'malformed' => false];
+        }
+        if (!is_array($snapshot[$key])) {
+            return ['ids' => [], 'malformed' => true];
+        }
+
+        $ids = [];
+        $malformed = false;
+        foreach ($snapshot[$key] as $id) {
+            if (!is_scalar($id)) {
+                $malformed = true;
+                continue;
+            }
+            $id = trim((string)$id);
+            if ($id === '') {
+                $malformed = true;
+                continue;
+            }
+            $ids[$id] = true;
+        }
+
+        return ['ids' => array_keys($ids), 'malformed' => $malformed];
     }
 
     private static function decodeJson(mixed $value): array

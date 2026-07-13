@@ -103,9 +103,10 @@ function validation_appointment(
     string $employeeId,
     string $positionId,
     string $positionName,
-    string $sourceKind = 'responsibility_chain'
+    string $sourceKind = 'responsibility_chain',
+    array $overrides = []
 ): string {
-    return responsibility_fixture_row('employee_appointments', [
+    return responsibility_fixture_row('employee_appointments', array_merge([
         'company_id' => $companyId,
         'employee_id' => $employeeId,
         'position_id' => $positionId,
@@ -118,7 +119,7 @@ function validation_appointment(
         'valid_until' => null,
         'source_kind' => $sourceKind,
         'status' => 'active',
-    ]);
+    ], $overrides));
 }
 
 function validation_reset(string $versionId): void
@@ -287,6 +288,18 @@ catalog_in_transaction(function (): void {
     ]);
     $invalidEvidence = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
     catalog_assert(validation_has_code($invalidEvidence, 'competence_evidence_not_found'), 'Missing evidence reference is distinguished');
+    $validEvidenceId = validation_competency($companyId, $evidenceEmployeeId);
+    Db::name('qms_responsibility_assignments')->where('id', $evidenceAssignmentId)->update([
+        'competence_snapshot' => validation_snapshot(['competency_record_ids' => [$validEvidenceId, []]]),
+    ]);
+    $nestedEvidence = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+    catalog_assert(validation_has_code($nestedEvidence, 'competence_evidence_not_found'), 'A valid evidence id plus a nested malformed item is rejected');
+    Db::name('qms_responsibility_assignments')->where('id', $evidenceAssignmentId)->update([
+        'competence_snapshot' => validation_snapshot(['competency_record_ids' => $validEvidenceId]),
+    ]);
+    $nonArrayEvidence = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+    catalog_assert(validation_has_code($nonArrayEvidence, 'competence_evidence_not_found'), 'A non-array evidence field is rejected as malformed');
+    validation_assert_no_code($nonArrayEvidence, 'competence_evidence_missing', 'Malformed non-empty evidence is not misclassified as an empty snapshot');
 
     // Employee, site and dates are validated independently.
     validation_reset($versionId);
@@ -343,6 +356,90 @@ catalog_in_transaction(function (): void {
     ]);
     $labOwnerMissing = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
     catalog_assert(validation_has_code($labOwnerMissing, 'approval_owner_missing'), 'Non-lab assignment requires active lab director approval owner');
+
+    // Approval-owner appointments must be current role appointments from the correct governance source.
+    foreach ([
+        ['label' => '未来生效', 'overrides' => ['appointed_at' => date('Y-m-d', strtotime('+1 day'))]],
+        ['label' => '已经过期', 'overrides' => ['valid_until' => date('Y-m-d', strtotime('-1 day'))]],
+        ['label' => '非岗位任命', 'overrides' => ['appointment_type' => 'authorization']],
+    ] as $invalidOwnerCase) {
+        validation_reset($versionId);
+        $invalidGmId = validation_employee($companyId, $siteId, '无效总经理-' . $invalidOwnerCase['label']);
+        validation_appointment(
+            $companyId,
+            $invalidGmId,
+            (string)$positions['company_general_manager']['id'],
+            '公司总经理',
+            'corporate_evidence',
+            $invalidOwnerCase['overrides']
+        );
+        $invalidOwner = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+        catalog_assert(
+            validation_has_code($invalidOwner, 'company_general_manager_identity_missing'),
+            $invalidOwnerCase['label'] . '的总经理任命不构成有效批准主体'
+        );
+    }
+
+    validation_reset($versionId);
+    $obsoleteGmId = validation_employee($companyId, $siteId, '岗位已废止总经理');
+    validation_appointment($companyId, $obsoleteGmId, (string)$positions['company_general_manager']['id'], '公司总经理', 'corporate_evidence');
+    Db::name('qms_positions')->where('id', (string)$positions['company_general_manager']['id'])->update(['review_status' => 'obsolete']);
+    $obsoletePositionOwner = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+    catalog_assert(validation_has_code($obsoletePositionOwner, 'company_general_manager_identity_missing'), 'Obsolete GM position does not authorize approval');
+    Db::name('qms_positions')->where('id', (string)$positions['company_general_manager']['id'])->update(['review_status' => 'published']);
+
+    validation_reset($versionId);
+    $deletedGmId = validation_employee($companyId, $siteId, '岗位已删除总经理');
+    validation_appointment($companyId, $deletedGmId, (string)$positions['company_general_manager']['id'], '公司总经理', 'corporate_evidence');
+    Db::name('qms_positions')->where('id', (string)$positions['company_general_manager']['id'])->update(['soft_delete' => 1]);
+    $deletedPositionOwner = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+    catalog_assert(validation_has_code($deletedPositionOwner, 'company_general_manager_identity_missing'), 'Soft-deleted GM position does not authorize approval');
+    Db::name('qms_positions')->where('id', (string)$positions['company_general_manager']['id'])->update(['soft_delete' => 0]);
+
+    validation_reset($versionId);
+    $validGmId = validation_employee($companyId, $siteId, '有效总经理');
+    validation_appointment($companyId, $validGmId, (string)$positions['company_general_manager']['id'], '公司总经理', 'corporate_evidence');
+    $legacyLabId = validation_employee($companyId, $siteId, '旧文件实验室主任');
+    validation_appointment($companyId, $legacyLabId, (string)$positions['lab_director']['id'], '实验室主任', 'legacy_document');
+    validation_enable_required($responsibilities['ia_annual_plan']);
+    $legacySubjectId = validation_employee($companyId, $siteId, '旧主任审批受任人');
+    $legacySubjectEvidenceId = validation_competency($companyId, $legacySubjectId);
+    validation_assignment($responsibilities['ia_annual_plan'], $legacySubjectId, [
+        'competence_snapshot' => validation_snapshot(['competency_record_ids' => [$legacySubjectEvidenceId]]),
+    ]);
+    $legacyDirectorOwner = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+    catalog_assert(validation_has_code($legacyDirectorOwner, 'approval_owner_missing'), 'Legacy-document lab director is not a responsibility-chain approval owner');
+
+    // Distinct approval owners must be unique; duplicate rows for one person do not create false ambiguity.
+    validation_reset($versionId);
+    $singleGmId = validation_employee($companyId, $siteId, '重复任命同一总经理');
+    validation_appointment($companyId, $singleGmId, (string)$positions['company_general_manager']['id'], '公司总经理', 'corporate_evidence');
+    validation_appointment($companyId, $singleGmId, (string)$positions['company_general_manager']['id'], '公司总经理', 'corporate_evidence');
+    $sameGmTwice = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+    validation_assert_no_code($sameGmTwice, 'approval_owner_ambiguous', 'Duplicate appointments for the same GM employee are deduplicated');
+
+    $secondGmId = validation_employee($companyId, $siteId, '第二总经理');
+    validation_appointment($companyId, $secondGmId, (string)$positions['company_general_manager']['id'], '公司总经理', 'corporate_evidence');
+    $multipleGmOwners = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+    catalog_assert(validation_has_code($multipleGmOwners, 'approval_owner_ambiguous'), 'Multiple distinct GM approval owners are ambiguous');
+    catalog_assert($multipleGmOwners['can_submit'] === false, 'Ambiguous GM owners block submission');
+
+    validation_reset($versionId);
+    $uniqueGmId = validation_employee($companyId, $siteId, '唯一总经理');
+    validation_appointment($companyId, $uniqueGmId, (string)$positions['company_general_manager']['id'], '公司总经理', 'corporate_evidence');
+    foreach (['第一实验室主任', '第二实验室主任'] as $directorLabel) {
+        $directorId = validation_employee($companyId, $siteId, $directorLabel);
+        validation_appointment($companyId, $directorId, (string)$positions['lab_director']['id'], '实验室主任', 'responsibility_chain');
+    }
+    validation_enable_required($responsibilities['ia_annual_plan']);
+    $ambiguousLabSubjectId = validation_employee($companyId, $siteId, '多主任审批受任人');
+    $ambiguousLabEvidenceId = validation_competency($companyId, $ambiguousLabSubjectId);
+    validation_assignment($responsibilities['ia_annual_plan'], $ambiguousLabSubjectId, [
+        'competence_snapshot' => validation_snapshot(['competency_record_ids' => [$ambiguousLabEvidenceId]]),
+    ]);
+    $multipleLabOwners = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+    catalog_assert(validation_has_code($multipleLabOwners, 'approval_owner_ambiguous'), 'Multiple distinct lab director approval owners are ambiguous');
+    catalog_assert($multipleLabOwners['can_submit'] === false, 'Ambiguous lab director owners block submission');
 
     // Self approval uses active appointment identity, never RBAC role.
     validation_reset($versionId);
@@ -431,6 +528,22 @@ catalog_in_transaction(function (): void {
     Db::name('qms_activity_responsibilities')
         ->where('id', (string)$responsibilities['risk_verify']['id'])
         ->update(['rule_codes' => $responsibilities['risk_verify']['rule_codes']]);
+
+    // Only a draft version can be edited or submitted, even when validation has no issues.
+    validation_reset($versionId);
+    $statusGateGmId = validation_employee($companyId, $siteId, '版本状态门总经理');
+    validation_appointment($companyId, $statusGateGmId, (string)$positions['company_general_manager']['id'], '公司总经理', 'corporate_evidence');
+    $draftStatus = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+    catalog_assert($draftStatus['result'] === 'pass', 'Status-gate fixture is otherwise valid');
+    catalog_assert($draftStatus['can_save'] === true && $draftStatus['can_submit'] === true, 'Valid draft remains editable and submittable');
+    foreach (['effective', 'superseded', 'revoked'] as $closedStatus) {
+        Db::name('qms_responsibility_chain_versions')->where('id', $versionId)->update(['status' => $closedStatus]);
+        $closedVersion = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+        catalog_assert($closedVersion['result'] === 'pass', 'Closed version status does not add issue noise: ' . $closedStatus);
+        catalog_assert($closedVersion['can_save'] === false, 'Closed version cannot be edited: ' . $closedStatus);
+        catalog_assert($closedVersion['can_submit'] === false, 'Closed version cannot be submitted: ' . $closedStatus);
+    }
+    Db::name('qms_responsibility_chain_versions')->where('id', $versionId)->update(['status' => 'draft']);
 
     // Validation is stable and read-only: rows, statuses and modified timestamps remain untouched.
     $trackedResponsibilityIds = array_column($responsibilities, 'id');
