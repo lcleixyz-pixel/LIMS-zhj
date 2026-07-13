@@ -45,6 +45,8 @@ class Auth
             'user' => Session::get('user'),
             'systemTitle' => $qmsConfig['title'] ?? 'QMS',
             'systemVersion' => $qmsConfig['version'] ?? '1.0',
+            'environmentLabel' => $qmsConfig['environment_label'] ?? '',
+            'environmentNotice' => $qmsConfig['environment_notice'] ?? '',
             'notificationCount' => $notificationCount,
         ]);
 

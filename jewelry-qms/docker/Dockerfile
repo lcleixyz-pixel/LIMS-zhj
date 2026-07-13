@@ -32,6 +32,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 COPY . .
+RUN npm ci --omit=dev
 COPY --from=vendor /app/vendor /app/vendor
 
 COPY docker/entrypoint.sh /usr/local/bin/jewelry-qms-entrypoint

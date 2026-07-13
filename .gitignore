@@ -33,6 +33,7 @@ jewelry-qms/public/uploads/*
 **/Config/database.local.php
 .env
 .env.*
+!jewelry-qms/deploy/experience/.env.example
 
 # Logs and debug
 **/error_log
