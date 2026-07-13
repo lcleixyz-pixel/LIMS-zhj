@@ -185,6 +185,17 @@ catalog_in_transaction(function (): void {
         'Site from another company is blocked'
     );
 
+    Db::name('qms_activity_responsibilities')->where('id', (string)$namedDuty['id'])->update(['soft_delete' => 1]);
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityDraftService::removeAssignment((string)$assignment['id']),
+        'Soft-deleted responsibility blocks assignment removal'
+    );
+    catalog_assert(
+        (int)Db::name('qms_responsibility_assignments')->where('id', (string)$assignment['id'])->value('soft_delete') === 0,
+        'Blocked removal preserves the draft assignment'
+    );
+    Db::name('qms_activity_responsibilities')->where('id', (string)$namedDuty['id'])->update(['soft_delete' => 0]);
+
     Db::name('qms_responsibility_chain_versions')->where('id', $versionId)->update([
         'status' => 'effective',
         'effective_at' => date('Y-m-d H:i:s'),
@@ -216,6 +227,66 @@ catalog_in_transaction(function (): void {
         'Source version remains effective after cloning'
     );
     catalog_assert(QmsResponsibilityDraftService::contentHash((string)$clone['version']['id']) === $effectiveHash, 'Clone has the same business content hash');
+
+    $clonedNamedDuty = null;
+    foreach ($clone['responsibilities'] as $clonedResponsibility) {
+        if (
+            ($clonedResponsibility['activity_code'] ?? '') === ($namedDuty['activity_code'] ?? '')
+            && ($clonedResponsibility['step_code'] ?? '') === ($namedDuty['step_code'] ?? '')
+        ) {
+            $clonedNamedDuty = $clonedResponsibility;
+            break;
+        }
+    }
+    catalog_assert(is_array($clonedNamedDuty), 'Clone preserves the named responsibility business key');
+    $clonedScopedAssignment = Db::name('qms_responsibility_assignments')
+        ->where('responsibility_id', (string)$clonedNamedDuty['id'])
+        ->where('employee_id', $employeeId)
+        ->where('site_scope_key', $siteId)
+        ->where('soft_delete', 0)
+        ->find();
+    catalog_assert(is_array($clonedScopedAssignment), 'Clone contains the site-scoped named assignment');
+
+    $replacementSiteId = qms_uuid();
+    Db::name('sites')->where('id', $siteId)->update(['id' => $replacementSiteId]);
+    $replacementEmployeeId = responsibility_fixture_row('employees', [
+        'company_id' => $companyId,
+        'primary_site_id' => $replacementSiteId,
+        'employee_number' => (string)Db::name('employees')->where('id', $employeeId)->value('employee_number'),
+        'name' => '责任链同业务键替换人员',
+    ]);
+    Db::name('qms_responsibility_assignments')->where('id', (string)$clonedScopedAssignment['id'])->update([
+        'employee_id' => $replacementEmployeeId,
+        'site_id' => $replacementSiteId,
+        'site_scope_key' => $replacementSiteId,
+    ]);
+    catalog_assert(
+        QmsResponsibilityDraftService::contentHash((string)$clone['version']['id']) === $effectiveHash,
+        'Changing database UUIDs while keeping employee number and site code preserves the content hash'
+    );
+    Db::name('employees')->where('id', $replacementEmployeeId)->update(['employee_number' => null]);
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityDraftService::contentHash((string)$clone['version']['id']),
+        'Missing employee business key blocks stable content hashing'
+    );
+    Db::name('employees')->where('id', $replacementEmployeeId)->update(['employee_number' => 'DRAFT-BUSINESS-KEY-CHANGED']);
+    $missingSiteId = qms_uuid();
+    Db::name('qms_responsibility_assignments')->where('id', (string)$clonedScopedAssignment['id'])->update([
+        'site_id' => $missingSiteId,
+        'site_scope_key' => $missingSiteId,
+    ]);
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityDraftService::contentHash((string)$clone['version']['id']),
+        'Missing site business key blocks stable content hashing'
+    );
+    Db::name('qms_responsibility_assignments')->where('id', (string)$clonedScopedAssignment['id'])->update([
+        'site_id' => $replacementSiteId,
+        'site_scope_key' => $replacementSiteId,
+    ]);
+    catalog_assert(
+        QmsResponsibilityDraftService::contentHash((string)$clone['version']['id']) !== $effectiveHash,
+        'Changing the employee business key changes the content hash'
+    );
 
     $sameClone = QmsResponsibilityDraftService::cloneEffectiveVersion($versionId);
     catalog_assert($sameClone['version']['id'] === $clone['version']['id'], 'Cloning the same effective version is idempotent');

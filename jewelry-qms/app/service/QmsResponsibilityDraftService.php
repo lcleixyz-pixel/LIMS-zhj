@@ -245,6 +245,9 @@ final class QmsResponsibilityDraftService
                 ->where('ra.id', $assignmentId)
                 ->where('ra.company_id', $companyId)
                 ->where('ra.soft_delete', 0)
+                ->where('r.soft_delete', 0)
+                ->where('a.soft_delete', 0)
+                ->where('v.soft_delete', 0)
                 ->field('ra.id,ra.status,v.status version_status')
                 ->lock(true)
                 ->find();
@@ -439,9 +442,10 @@ final class QmsResponsibilityDraftService
             foreach ($activity['responsibilities'] as $responsibility) {
                 $assignments = [];
                 foreach ($responsibility['assignments'] as $assignment) {
+                    $businessKeys = self::assignmentBusinessKeys($assignment);
                     $assignments[] = [
-                        'employee_id' => (string)$assignment['employee_id'],
-                        'site_scope_key' => (string)$assignment['site_scope_key'],
+                        'person_business_key' => $businessKeys['person_business_key'],
+                        'site_business_key' => $businessKeys['site_business_key'],
                         'proposed_from' => (string)($assignment['proposed_from'] ?? ''),
                         'proposed_until' => (string)($assignment['proposed_until'] ?? ''),
                         'competence_snapshot' => self::normalizeValue((array)$assignment['competence_snapshot']),
@@ -478,6 +482,27 @@ final class QmsResponsibilityDraftService
         );
 
         return hash('sha256', self::stableJson($content));
+    }
+
+    private static function assignmentBusinessKeys(array $assignment): array
+    {
+        $employeeNumber = trim((string)($assignment['employee_number'] ?? ''));
+        if ($employeeNumber === '') {
+            throw new DomainException('人员绑定缺少 employee_number，无法生成稳定的责任链内容哈希。');
+        }
+
+        $siteBusinessKey = self::GLOBAL_SITE_SCOPE;
+        if ((string)($assignment['site_scope_key'] ?? '') !== self::GLOBAL_SITE_SCOPE) {
+            $siteBusinessKey = trim((string)($assignment['site_code'] ?? ''));
+            if ($siteBusinessKey === '') {
+                throw new DomainException('指定场所的人员绑定缺少 site_code，无法生成稳定的责任链内容哈希。');
+            }
+        }
+
+        return [
+            'person_business_key' => $employeeNumber,
+            'site_business_key' => $siteBusinessKey,
+        ];
     }
 
     private static function responsibilityContext(string $responsibilityId, string $companyId, bool $lock): array
