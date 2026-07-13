@@ -244,9 +244,9 @@ final class QmsClauseRemediationService
         if ($csv === false) {
             throw new RuntimeException('无法写入 CSV：' . $csvPath);
         }
-        fputcsv($csv, ['状态', '依据', '条款号', '标题', '定位', 'SHA-256', '处置说明']);
+        fputcsv($csv, ['状态', '依据', '条款号', '标题', '定位', 'SHA-256', '处置说明'], ',', '"', '\\');
         foreach ((array)$plan['rows'] as $row) {
-            fputcsv($csv, [(string)$row['status'], (string)$row['source_code'], (string)$row['clause_number'], (string)$row['title'], (string)$row['locator'], (string)$row['text_hash'], (string)$row['reason']]);
+            fputcsv($csv, [(string)$row['status'], (string)$row['source_code'], (string)$row['clause_number'], (string)$row['title'], (string)$row['locator'], (string)$row['text_hash'], (string)$row['reason']], ',', '"', '\\');
         }
         fclose($csv);
 
