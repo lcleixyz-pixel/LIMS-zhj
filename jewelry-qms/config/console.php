@@ -7,6 +7,7 @@ use app\command\CheckReminders;
 use app\command\ComplianceAssess;
 use app\command\CurrentFilesSeed;
 use app\command\QmsClauseRemediate;
+use app\command\QmsManualProcedureAlignmentCheck;
 use app\command\QmsPreimportPackage;
 use app\command\RecordFormRebuildSchema;
 use app\command\RecordFormReconstructionReview;
@@ -20,6 +21,7 @@ return [
         ComplianceAssess::class,
         CurrentFilesSeed::class,
         QmsClauseRemediate::class,
+        QmsManualProcedureAlignmentCheck::class,
         QmsPreimportPackage::class,
         RecordFormRebuildSchema::class,
         RecordFormReconstructionReview::class,
