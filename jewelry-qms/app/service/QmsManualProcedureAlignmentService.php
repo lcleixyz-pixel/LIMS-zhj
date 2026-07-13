@@ -80,9 +80,33 @@ final class QmsManualProcedureAlignmentService
             $findings[] = $finding;
         }
 
+        $counts = array_fill_keys(self::STATUSES, 0);
+        foreach ($findings as $finding) {
+            $counts[(string)$finding['status']]++;
+        }
+        $procedureInputs = [];
+        foreach ((array)$inputs['procedures'] as $procedure) {
+            $procedureInputs[] = [
+                'doc_number' => (string)$procedure['doc_number'],
+                'title' => (string)$procedure['title'],
+                'version' => (string)$procedure['version'],
+                'path' => (string)$procedure['path'],
+                'sha256' => (string)$procedure['sha256'],
+            ];
+        }
+
         return [
             'schema_version' => '1.0',
+            'generated_at' => date('Y-m-d H:i:s'),
             'pilot_id' => (string)$inputs['pilot_id'],
+            'manual' => [
+                'doc_number' => (string)$inputs['manual']['doc_number'],
+                'version' => (string)$inputs['manual']['version'],
+                'path' => (string)$inputs['manual']['resolved_path'],
+                'sha256' => (string)$inputs['manual']['sha256'],
+            ],
+            'procedure_inputs' => $procedureInputs,
+            'counts' => $counts,
             'findings' => $findings,
             'trace_gaps' => array_values(array_unique($traceGaps)),
             'blockers' => $blockers,
