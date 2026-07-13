@@ -6,6 +6,7 @@ use app\command\AiPurgeChat;
 use app\command\CheckReminders;
 use app\command\ComplianceAssess;
 use app\command\CurrentFilesSeed;
+use app\command\QmsClauseRemediate;
 use app\command\QmsPreimportPackage;
 use app\command\RecordFormRebuildSchema;
 use app\command\RecordFormReconstructionReview;
@@ -18,6 +19,7 @@ return [
         CheckReminders::class,
         ComplianceAssess::class,
         CurrentFilesSeed::class,
+        QmsClauseRemediate::class,
         QmsPreimportPackage::class,
         RecordFormRebuildSchema::class,
         RecordFormReconstructionReview::class,
