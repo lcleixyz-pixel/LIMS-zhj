@@ -63,7 +63,12 @@ class Login extends BaseController
             View::assign('error', '用户名或密码错误');
         }
 
-        View::assign('systemTitle', Config::get('qms.title', 'QMS'));
+        $qmsConfig = Config::get('qms', []);
+        View::assign([
+            'systemTitle' => $qmsConfig['title'] ?? 'QMS',
+            'environmentLabel' => $qmsConfig['environment_label'] ?? '',
+            'environmentNotice' => $qmsConfig['environment_notice'] ?? '',
+        ]);
 
         return View::fetch('login/index');
     }

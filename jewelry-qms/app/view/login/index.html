@@ -36,6 +36,17 @@
             box-shadow:0 12px 40px rgba(0,0,0,.22);
             overflow:hidden;
         }
+        .environment-banner{
+            padding:10px 16px;
+            text-align:center;
+            background:#fff3cd;
+            color:#664d03;
+            border-bottom:1px solid #ffecb5;
+            font-size:12px;
+            line-height:1.5;
+        }
+        .environment-banner strong,
+        .environment-banner span{ display:block; }
         .login-brand{
             padding:36px 32px 24px;
             text-align:center;
@@ -138,6 +149,12 @@
 </head>
 <body>
     <div class="login-card">
+        {if !empty($environmentLabel)}
+        <div class="environment-banner" role="alert">
+            <strong>{$environmentLabel}</strong>
+            <span>{$environmentNotice|default='禁止录入正式业务数据、客户资料或其他敏感信息'}</span>
+        </div>
+        {/if}
         <div class="login-brand">
             <div class="login-logo">QC</div>
             <h1>珠宝检测实验室 QMS</h1>

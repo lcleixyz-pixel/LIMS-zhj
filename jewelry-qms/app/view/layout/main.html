@@ -20,6 +20,12 @@
     data-qms-copilot-enabled="{if isset($qmsCopilotEnabled) && $qmsCopilotEnabled}1{else}0{/if}"
     data-qms-ai-configured="{if isset($qmsAiConfigured) && $qmsAiConfigured}1{else}0{/if}"
 >
+{if !empty($environmentLabel)}
+<div class="alert alert-warning rounded-0 border-0 border-bottom mb-0 py-2 text-center" role="alert">
+    <strong>{$environmentLabel}</strong>
+    {if !empty($environmentNotice)}<span class="ms-2">{$environmentNotice}</span>{/if}
+</div>
+{/if}
 <div class="container-fluid qms-header">
     <div class="row align-items-center py-2">
         <div class="col-md-3">

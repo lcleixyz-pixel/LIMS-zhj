@@ -3,6 +3,8 @@ return [
     'title' => '珠宝检测实验室质量管理系统',
     'version' => '2.1.0',
     'company_id' => '00000000-0000-0000-0000-000000000001',
+    'environment_label' => getenv('QMS_ENV_LABEL') ?: '',
+    'environment_notice' => getenv('QMS_ENV_NOTICE') ?: '',
 
     'docLevels' => [
         1 => '质量手册',
