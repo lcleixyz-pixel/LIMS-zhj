@@ -4,6 +4,12 @@
 
 两个 FlinkISO 目录仅作参考快照，`jewelry-qms-legacy/` 是 CakePHP 旧版归档，不作为生产部署入口。
 
+## 云端体验测试环境（非生产）
+
+用于员工体验、熟悉和模拟测试的云端环境，采用 Docker Compose、`127.0.0.1:18010` 回环绑定、宝塔 Nginx HTTPS 反向代理和 BasicAuth。它不等于正式生产部署，禁止录入正式检测业务数据、客户资料或其他敏感信息。
+
+部署、验证、快照、恢复演练、升级与回退说明见：[`jewelry-qms/deploy/experience/README.md`](../jewelry-qms/deploy/experience/README.md)。未经单独授权，不得上传镜像、修改宝塔或开放体验域名。
+
 ## 1. Jewelry QMS 环境要求
 
 | 组件 | 要求 |
