@@ -7,15 +7,17 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-jewelry_qms_experience}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-jewelry_qms}
       MYSQL_USER: ${MYSQL_USER:-jewelry_qms}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
       TZ: Asia/Shanghai
     volumes:
       - db_data:/var/lib/mysql
       - ../../database/jewelry_qms.sql:/docker-entrypoint-initdb.d/01-jewelry-qms.sql:ro
+      - ../../database/migrations:/qms-migrations:ro
+      - ./db-init/02-apply-migrations.sh:/docker-entrypoint-initdb.d/02-apply-migrations.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      test: ["CMD-SHELL", "test \"$$(mysql -h 127.0.0.1 -u\"$${MYSQL_USER}\" -p\"$${MYSQL_PASSWORD}\" \"$${MYSQL_DATABASE}\" -Nse \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$${MYSQL_DATABASE}' AND table_name='qms_external_change_events'\" 2>/dev/null)\" = 1"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -28,10 +30,10 @@ services:
         max-size: 10m
         max-file: "3"
 
-  app:
+  bootstrap:
     image: jewelry-qms-experience:${QMS_IMAGE_TAG:?QMS_IMAGE_TAG is required}
     platform: linux/amd64
-    restart: unless-stopped
+    restart: "no"
     depends_on:
       db:
         condition: service_healthy
@@ -40,7 +42,28 @@ services:
       TZ: Asia/Shanghai
       DB_TYPE: mysql
       DB_HOST: db
-      DB_NAME: ${MYSQL_DATABASE:-jewelry_qms_experience}
+      DB_NAME: ${MYSQL_DATABASE:-jewelry_qms}
+      DB_USER: ${MYSQL_USER:-jewelry_qms}
+      DB_PASS: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+      DB_PORT: "3306"
+      DB_CHARSET: utf8mb4
+    command: ["php", "scripts/bootstrap_experience.php"]
+    networks:
+      - qms_db_internal
+
+  app:
+    image: jewelry-qms-experience:${QMS_IMAGE_TAG:?QMS_IMAGE_TAG is required}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    environment:
+      APP_DEBUG: "false"
+      TZ: Asia/Shanghai
+      DB_TYPE: mysql
+      DB_HOST: db
+      DB_NAME: ${MYSQL_DATABASE:-jewelry_qms}
       DB_USER: ${MYSQL_USER:-jewelry_qms}
       DB_PASS: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
       DB_PORT: "3306"

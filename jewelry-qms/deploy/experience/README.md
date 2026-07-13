@@ -53,6 +53,10 @@ openssl rand -base64 36
 
 把两次随机结果分别填入 `MYSQL_PASSWORD` 和 `MYSQL_ROOT_PASSWORD`。不要复制到聊天或提交到 Git。`QMS_IMAGE_TAG` 必须改为本地验证记录中的实际 amd64 tag。
 
+`MYSQL_DATABASE` 应保持为 `jewelry_qms`，因为当前初始化 SQL 明确创建并使用该库名；体验环境依靠独立的 Compose 项目、网络和数据卷与其他环境隔离。
+
+首次创建数据库卷时，Compose 会先导入基础 SQL，再按文件名顺序应用 `database/migrations/` 中的迁移；随后一次性初始化服务会在模板表为空时装入 9 个内置样板。重复启动不会覆盖已存在的模板。
+
 ### 3.3 加载本机验证过的镜像包
 
 ```bash
