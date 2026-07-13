@@ -44,6 +44,8 @@ final class QmsManualProcedureAlignmentService
     public static function check(array $inputs, array $trace): array
     {
         $findings = [];
+        $traceGaps = array_values(array_unique(array_map('strval', (array)($trace['_unlinked'] ?? []))));
+        $blockers = array_values(array_unique(array_map('strval', (array)($trace['_blockers'] ?? []))));
         foreach ((array)$inputs['requirements'] as $requirement) {
             $candidate = self::candidateForRequirement($requirement, $trace);
             $procedureNumber = (string)$candidate['procedure_number'];
@@ -64,6 +66,12 @@ final class QmsManualProcedureAlignmentService
                 continue;
             }
             $finding['trace_source'] = (string)$candidate['trace_source'];
+            if ($finding['trace_source'] === 'fallback_target') {
+                $traceGaps[] = $procedureNumber;
+                if ($finding['status'] === 'consistent') {
+                    $finding['status'] = 'review_required';
+                }
+            }
             $finding['manual_locator'] = self::manualLocator($inputs, (string)$requirement['manual_section']);
             $finding['input_hashes'] = [
                 'manual' => (string)$inputs['manual']['sha256'],
@@ -76,8 +84,8 @@ final class QmsManualProcedureAlignmentService
             'schema_version' => '1.0',
             'pilot_id' => (string)$inputs['pilot_id'],
             'findings' => $findings,
-            'trace_gaps' => [],
-            'blockers' => [],
+            'trace_gaps' => array_values(array_unique($traceGaps)),
+            'blockers' => $blockers,
         ];
     }
 
@@ -291,22 +299,32 @@ final class QmsManualProcedureAlignmentService
     {
         $section = (string)$requirement['manual_section'];
         $matches = [];
-        foreach ((array)($trace['links'] ?? []) as $link) {
-            $linkedSection = trim((string)($link['manual_section'] ?? ''));
-            if ($linkedSection === '') {
+        foreach ($trace as $linkedSection => $rows) {
+            $linkedSection = trim((string)$linkedSection);
+            if ($linkedSection === '' || str_starts_with($linkedSection, '_')) {
                 continue;
             }
             if ($section === $linkedSection || str_starts_with($section, $linkedSection . '.')) {
-                $matches[] = $link;
+                foreach ((array)$rows as $row) {
+                    $matches[] = ['manual_section' => $linkedSection] + (array)$row;
+                }
             }
         }
-        usort($matches, static fn (array $left, array $right): int => strlen((string)$right['manual_section']) <=> strlen((string)$left['manual_section']));
+        $priority = ['formal_link' => 0, 'element_mapping' => 1];
+        usort($matches, static function (array $left, array $right) use ($priority): int {
+            $sectionOrder = strlen((string)$right['manual_section']) <=> strlen((string)$left['manual_section']);
+            if ($sectionOrder !== 0) {
+                return $sectionOrder;
+            }
+
+            return ($priority[(string)$left['trace_source']] ?? 9) <=> ($priority[(string)$right['trace_source']] ?? 9);
+        });
         $targets = array_values((array)$requirement['fallback_targets']);
         foreach ($matches as $match) {
             if (in_array((string)$match['procedure_number'], $targets, true)) {
                 return [
                     'procedure_number' => (string)$match['procedure_number'],
-                    'trace_source' => 'formal_link',
+                    'trace_source' => (string)$match['trace_source'],
                 ];
             }
         }

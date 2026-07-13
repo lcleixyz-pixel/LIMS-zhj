@@ -5,6 +5,7 @@ require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../app/common.php';
 
 use app\service\QmsManualProcedureAlignmentService;
+use app\service\QmsManualProcedureTraceService;
 
 function alignment_assert(bool $condition, string $message): void
 {
@@ -59,8 +60,8 @@ alignment_expect_exception(
     '缺少 schema_version'
 );
 
-$traceSnapshot = json_decode((string)file_get_contents($fixture . '/trace-snapshot.json'), true);
-alignment_assert(is_array($traceSnapshot), 'Trace snapshot is valid JSON');
+$traceSnapshot = QmsManualProcedureTraceService::fromSnapshot($fixture . '/trace-snapshot.json');
+alignment_assert($traceSnapshot['8.3'][0]['procedure_number'] === 'XZTC/CX-08-2022', 'Formal trace routes 8.3 to CX-08');
 
 $result = QmsManualProcedureAlignmentService::check($loaded, $traceSnapshot);
 $findings = alignment_index_by_id($result['findings']);
@@ -96,6 +97,8 @@ alignment_assert(
     in_array('公司总经理', $findings['Y13-CX21']['observed']['unconfirmed_aliases'], true),
     'CX-21 reports the unconfirmed general-manager alias'
 );
+alignment_assert($findings['Y13-CX32']['trace_source'] === 'fallback_target', 'CX-32 reports fallback trace source');
+alignment_assert(in_array('XZTC/CX-32-2022', $result['trace_gaps'], true), 'Trace gap is listed at report level');
 
 $consistent = $loaded;
 $consistent['procedures']['XZTC/CX-08-2022']['text'] = str_replace(
