@@ -110,7 +110,7 @@ final class QmsResponsibilityApprovalService
                 if ($employeeId === $gmId) {
                     throw new DomainException('公司总经理不得批准自己担任实验室主任。');
                 }
-                $directors = self::businessOwners(self::DIRECTOR_CODE, $companyId, true);
+                $directors = self::activeRoleOwnersAnySource(self::DIRECTOR_CODE, $companyId, true);
                 if ($directors !== [] && $directors !== [$employeeId]) {
                     throw new DomainException('已存在其他有效实验室主任。');
                 }
@@ -229,11 +229,12 @@ final class QmsResponsibilityApprovalService
             $assignments = self::versionAssignments($versionId, $companyId, true, ['draft']);
             $routes = self::approvalRoutes($assignments, $companyId, true);
             $now = date('Y-m-d H:i:s');
+            $submissionRound = qms_uuid();
             Db::name('qms_responsibility_approvals')
                 ->where('company_id', $companyId)->where('chain_version_id', $versionId)
-                ->where('soft_delete', 0)->update([
+                ->where('decision', 'pending')->where('soft_delete', 0)->update([
                     'soft_delete' => 1,
-                    'comments' => '前一轮签批历史，版本重新提交时关闭。',
+                    'comments' => '前一轮未闭合待签批记录，版本重新提交时关闭。',
                     'modified' => $now,
                     'modified_by' => (string)$user['id'],
                 ]);
@@ -254,7 +255,13 @@ final class QmsResponsibilityApprovalService
             }
 
             foreach ($routes as $route) {
-                $batchKey = self::batchKey($companyId, $versionId, (string)$route['approver_employee_id'], (string)$route['approver_position_code']);
+                $batchKey = self::batchKey(
+                    $companyId,
+                    $versionId,
+                    (string)$route['approver_employee_id'],
+                    (string)$route['approver_position_code'],
+                    $submissionRound
+                );
                 $existing = Db::name('qms_responsibility_approvals')
                     ->where('company_id', $companyId)->where('chain_version_id', $versionId)
                     ->where('assignment_id', (string)$route['assignment_id'])->where('decision', 'pending')->where('soft_delete', 0)
@@ -275,7 +282,7 @@ final class QmsResponsibilityApprovalService
                     'batch_key' => $batchKey,
                     'decision' => 'pending',
                     'version_hash' => $hash,
-                    'signature_metadata' => self::json([]),
+                    'signature_metadata' => self::json(['submission_round' => $submissionRound]),
                     'publish' => 1,
                     'soft_delete' => 0,
                     'created' => $now,
@@ -338,12 +345,25 @@ final class QmsResponsibilityApprovalService
                     throw new DomainException('签批记录与锁定版本哈希不一致。');
                 }
             }
+            $submissionRound = trim((string)(self::decodeJson($rows[0]['signature_metadata'] ?? null)['submission_round'] ?? ''));
+            if ($submissionRound === '') {
+                throw new DomainException('签批批次缺少提交轮次标识。');
+            }
+            foreach ($rows as $row) {
+                $rowRound = (string)(self::decodeJson($row['signature_metadata'] ?? null)['submission_round'] ?? '');
+                if ($rowRound !== $submissionRound) {
+                    throw new DomainException('同一签批批次混入了不同提交轮次。');
+                }
+            }
             if (!hash_equals((string)$version['content_hash'], QmsResponsibilityDraftService::contentHash($versionId))) {
                 throw new DomainException('责任链内容已在签批期间被篡改。');
             }
 
             $now = date('Y-m-d H:i:s');
-            $metadata = self::signatureMetadata($user, $approverCode, $decision);
+            $metadata = array_merge(
+                ['submission_round' => $submissionRound],
+                self::signatureMetadata($user, $approverCode, $decision)
+            );
             Db::name('qms_responsibility_approvals')->whereIn('id', array_column($rows, 'id'))->update([
                 'approver_user_id' => (string)$user['id'],
                 'decision' => $decision,
@@ -364,7 +384,7 @@ final class QmsResponsibilityApprovalService
                 ->where('approval_scope', 'assignment')->where('decision', 'pending')
                 ->where('publish', 1)->where('soft_delete', 0)->lock(true)->count();
             if ($pending === 0) {
-                self::activateVersion($version, $companyId, $user, $now);
+                self::activateVersion($version, $companyId, $user, $now, $submissionRound);
             }
 
             return [
@@ -391,7 +411,7 @@ final class QmsResponsibilityApprovalService
         if (!$position) {
             throw new DomainException('实验室主任标准岗位已失效。');
         }
-        $owners = self::businessOwners(self::DIRECTOR_CODE, $companyId, true);
+        $owners = self::activeRoleOwnersAnySource(self::DIRECTOR_CODE, $companyId, true);
         if ($owners !== [] && $owners !== [$employeeId]) {
             throw new DomainException('已存在其他有效实验室主任。');
         }
@@ -477,7 +497,13 @@ final class QmsResponsibilityApprovalService
         ]);
     }
 
-    private static function activateVersion(array $lockedVersion, string $companyId, array $user, string $now): void
+    private static function activateVersion(
+        array $lockedVersion,
+        string $companyId,
+        array $user,
+        string $now,
+        string $submissionRound
+    ): void
     {
         $versionId = (string)$lockedVersion['id'];
         $versions = Db::name('qms_responsibility_chain_versions')
@@ -491,9 +517,14 @@ final class QmsResponsibilityApprovalService
         if (!hash_equals((string)$lockedVersion['content_hash'], $currentHash)) {
             throw new DomainException('最终生效前版本内容哈希不一致。');
         }
-        $approvals = Db::name('qms_responsibility_approvals')
+        $approvalHistory = Db::name('qms_responsibility_approvals')
             ->where('company_id', $companyId)->where('chain_version_id', $versionId)
             ->where('approval_scope', 'assignment')->where('soft_delete', 0)->lock(true)->select()->toArray();
+        $approvals = array_values(array_filter(
+            $approvalHistory,
+            static fn (array $row): bool =>
+                (string)(self::decodeJson($row['signature_metadata'] ?? null)['submission_round'] ?? '') === $submissionRound
+        ));
         if ($approvals === [] || count(array_filter($approvals, static fn (array $row): bool => (string)$row['decision'] !== 'approved')) > 0) {
             throw new DomainException('版本仍有未批准任命。');
         }
@@ -741,17 +772,7 @@ final class QmsResponsibilityApprovalService
 
     private static function businessOwners(string $positionCode, string $companyId, bool $lock): array
     {
-        $today = date('Y-m-d');
-        $query = Db::name('employee_appointments')->alias('ea')
-            ->join('employees e', 'e.id=ea.employee_id AND e.company_id=ea.company_id')
-            ->join('qms_positions p', 'p.id=ea.position_id AND p.company_id=ea.company_id')
-            ->where('ea.company_id', $companyId)->where('ea.appointment_type', 'role')
-            ->where('ea.status', 'active')->where('ea.publish', 1)->where('ea.soft_delete', 0)
-            ->whereNotNull('ea.appointed_at')->where('ea.appointed_at', '<=', $today)
-            ->where(static function ($query) use ($today): void { $query->whereNull('ea.valid_until')->whereOr('ea.valid_until', '>=', $today); })
-            ->where('e.publish', 1)->where('e.soft_delete', 0)
-            ->where('p.code', $positionCode)
-            ->where('p.review_status', 'published')->where('p.publish', 1)->where('p.soft_delete', 0);
+        $query = self::activeRoleOwnerQuery($positionCode, $companyId);
         if ($positionCode === self::GM_CODE) {
             $query->where('ea.source_kind', 'corporate_evidence');
         } elseif ($positionCode === self::DIRECTOR_CODE) {
@@ -763,6 +784,33 @@ final class QmsResponsibilityApprovalService
         $ids = array_values(array_unique(array_map('strval', $query->order('ea.employee_id,ea.id')->column('ea.employee_id'))));
         sort($ids, SORT_STRING);
         return $ids;
+    }
+
+    private static function activeRoleOwnersAnySource(string $positionCode, string $companyId, bool $lock): array
+    {
+        $query = self::activeRoleOwnerQuery($positionCode, $companyId);
+        if ($lock) {
+            $query->lock(true);
+        }
+        $ids = array_values(array_unique(array_map('strval', $query->order('ea.employee_id,ea.id')->column('ea.employee_id'))));
+        sort($ids, SORT_STRING);
+        return $ids;
+    }
+
+    private static function activeRoleOwnerQuery(string $positionCode, string $companyId): mixed
+    {
+        $today = date('Y-m-d');
+        $query = Db::name('employee_appointments')->alias('ea')
+            ->join('employees e', 'e.id=ea.employee_id AND e.company_id=ea.company_id')
+            ->join('qms_positions p', 'p.id=ea.position_id AND p.company_id=ea.company_id')
+            ->where('ea.company_id', $companyId)->where('ea.appointment_type', 'role')
+            ->where('ea.status', 'active')->where('ea.publish', 1)->where('ea.soft_delete', 0)
+            ->whereNotNull('ea.appointed_at')->where('ea.appointed_at', '<=', $today)
+            ->where(static function ($query) use ($today): void { $query->whereNull('ea.valid_until')->whereOr('ea.valid_until', '>=', $today); })
+            ->where('e.publish', 1)->where('e.soft_delete', 0)
+            ->where('p.code', $positionCode)
+            ->where('p.review_status', 'published')->where('p.publish', 1)->where('p.soft_delete', 0);
+        return $query;
     }
 
     private static function uniqueBusinessOwner(string $positionCode, string $companyId, bool $lock): string
@@ -901,9 +949,17 @@ final class QmsResponsibilityApprovalService
         if (!$company) { throw new DomainException('当前公司不存在或已删除。'); }
     }
 
-    private static function batchKey(string $companyId, string $versionId, string $employeeId, string $positionCode): string
+    private static function batchKey(
+        string $companyId,
+        string $versionId,
+        string $employeeId,
+        string $positionCode,
+        string $submissionRound
+    ): string
     {
-        return hash('sha256', implode('|', ['responsibility', $companyId, $versionId, $employeeId, $positionCode]));
+        return hash('sha256', implode('|', [
+            'responsibility', $companyId, $versionId, $employeeId, $positionCode, $submissionRound,
+        ]));
     }
 
     private static function assertDecision(string $decision): void

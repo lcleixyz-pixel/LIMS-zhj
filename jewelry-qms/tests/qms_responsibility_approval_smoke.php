@@ -274,6 +274,42 @@ catalog_in_transaction(function (): void {
         'Rejected director bootstrap creates no appointment'
     );
     approval_session($admin['user']);
+    $positions = approval_positions($companyId);
+    $legacyDirector = approval_employee($companyId, 'LEGACY-DIRECTOR', true, 'staff');
+    $legacyDirectorAppointmentId = responsibility_fixture_row('employee_appointments', [
+        'company_id' => $companyId,
+        'employee_id' => (string)$legacyDirector['employee']['id'],
+        'position_id' => (string)$positions['lab_director']['id'],
+        'appointment_key' => 'LEGACY-DIRECTOR-' . qms_uuid(),
+        'appointment_type' => 'role',
+        'position_name' => '实验室主任',
+        'appointed_at' => date('Y-m-d'),
+        'source_kind' => 'legacy_document',
+        'status' => 'active',
+    ]);
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityApprovalService::requestLabDirectorAppointment((string)$director['employee']['id'], date('Y-m-d')),
+        'A different active legacy director blocks a new bootstrap request'
+    );
+    catalog_assert(
+        (int)Db::name('qms_responsibility_approvals')
+            ->where('approval_scope', 'governance_bootstrap')
+            ->where('subject_employee_id', (string)$director['employee']['id'])
+            ->where('decision', 'pending')->where('soft_delete', 0)->count() === 0,
+        'Blocked legacy director conflict creates no pending bootstrap'
+    );
+    Db::name('employee_appointments')->where('id', $legacyDirectorAppointmentId)->update(['status' => 'inactive']);
+    $sameCandidateLegacyId = responsibility_fixture_row('employee_appointments', [
+        'company_id' => $companyId,
+        'employee_id' => (string)$director['employee']['id'],
+        'position_id' => (string)$positions['lab_director']['id'],
+        'appointment_key' => 'LEGACY-SAME-DIRECTOR-' . qms_uuid(),
+        'appointment_type' => 'role',
+        'position_name' => '实验室主任',
+        'appointed_at' => date('Y-m-d'),
+        'source_kind' => 'legacy_document',
+        'status' => 'active',
+    ]);
     $bootstrap = QmsResponsibilityApprovalService::requestLabDirectorAppointment((string)$director['employee']['id'], date('Y-m-d'));
     catalog_assert(($bootstrap['approver_employee_id'] ?? '') === (string)$gm['employee']['id'], 'Director bootstrap routes to the unique GM');
 
@@ -283,6 +319,17 @@ catalog_in_transaction(function (): void {
         'Admin role alone cannot sign as GM'
     );
     approval_session($gm['user']);
+    Db::name('employee_appointments')->where('id', $legacyDirectorAppointmentId)->update(['status' => 'active']);
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityApprovalService::approveBootstrap((string)$bootstrap['id'], 'approved', '不应越过新出现的主任冲突'),
+        'A different active legacy director also blocks at final bootstrap approval'
+    );
+    catalog_assert(
+        Db::name('qms_responsibility_approvals')->where('id', (string)$bootstrap['id'])->value('decision') === 'pending'
+        && (int)Db::name('employee_appointments')->where('source_approval_id', (string)$bootstrap['id'])->count() === 0,
+        'Blocked bootstrap approval remains pending and creates no appointment'
+    );
+    Db::name('employee_appointments')->where('id', $legacyDirectorAppointmentId)->update(['status' => 'inactive']);
     $approvedBootstrap = QmsResponsibilityApprovalService::approveBootstrap((string)$bootstrap['id'], 'approved', '同意任命');
     catalog_assert(($approvedBootstrap['decision'] ?? '') === 'approved', 'Staff GM can approve the bootstrap');
     $directorAppointment = Db::name('employee_appointments')
@@ -291,6 +338,7 @@ catalog_in_transaction(function (): void {
         ->find();
     catalog_assert(($directorAppointment['source_kind'] ?? '') === 'responsibility_chain', 'Director appointment is chain sourced');
     catalog_assert(($directorAppointment['appointed_at'] ?? '') === date('Y-m-d'), 'Director appointment keeps requested effective date');
+    catalog_assert(Db::name('employee_appointments')->where('id', $sameCandidateLegacyId)->value('status') === 'active', 'Same-person legacy director evidence can coexist while controlled evidence is added');
     $bootstrapMetadata = json_decode((string)$approvedBootstrap['signature_metadata'], true);
     catalog_assert(($bootstrapMetadata['approved_as'] ?? '') === 'company_general_manager', 'Bootstrap signature records business identity');
     catalog_assert(($bootstrapMetadata['session_id'] ?? '') !== '', 'Bootstrap signature records session id');
@@ -321,12 +369,40 @@ catalog_in_transaction(function (): void {
     $directorBatch = approval_pending_for($versionId, (string)$director['employee']['id']);
     catalog_assert(!in_array('lab_director', $directorBatch['subject_position_codes'] ?? [], true), 'Director batch excludes lab director');
     catalog_assert(!in_array('company_general_manager', $directorBatch['subject_position_codes'] ?? [], true), 'Director batch excludes corporate GM');
+    foreach (array_merge($gmBatch['items'], $directorBatch['items']) as $item) {
+        foreach (['assignment_id', 'responsibility_id', 'employee_id', 'position_code', 'position_name', 'competence_snapshot', 'version_hash'] as $key) {
+            catalog_assert(array_key_exists($key, $item), 'Pending item contains evidence field ' . $key);
+        }
+        catalog_assert((string)$item['assignment_id'] !== '' && (string)$item['responsibility_id'] !== '' && (string)$item['employee_id'] !== '', 'Pending item links assignment, responsibility and employee');
+        catalog_assert((string)$item['position_code'] !== '' && (string)$item['position_name'] !== '', 'Pending item identifies a fixed position or activity role');
+        catalog_assert((string)$item['version_hash'] === (string)$submitted['content_hash'], 'Pending item is pinned to the locked version hash');
+    }
 
     approval_session($gm['user']);
+    $selfApprovalId = (string)$gmBatch['items'][0]['approval_id'];
+    $originalSubjectId = (string)Db::name('qms_responsibility_approvals')->where('id', $selfApprovalId)->value('subject_employee_id');
+    Db::name('qms_responsibility_approvals')->where('id', $selfApprovalId)->update(['subject_employee_id' => (string)$gm['employee']['id']]);
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityApprovalService::approveBatch((string)$gmBatch['batch_key'], 'approved', '签批阶段二次防自批'),
+        'Approval stage independently blocks a tampered self-approval row'
+    );
+    catalog_assert(
+        (int)Db::name('qms_responsibility_approvals')->where('batch_key', (string)$gmBatch['batch_key'])->where('decision', 'pending')->where('soft_delete', 0)->count() === count($gmBatch['items']),
+        'Self-approval block leaves the whole batch pending'
+    );
+    Db::name('qms_responsibility_approvals')->where('id', $selfApprovalId)->update(['subject_employee_id' => $originalSubjectId]);
     QmsResponsibilityApprovalService::approveBatch((string)$gmBatch['batch_key'], 'approved', '总经理批准');
     approval_session($director['user']);
     QmsResponsibilityApprovalService::approveBatch((string)$directorBatch['batch_key'], 'approved', '主任批准');
     catalog_assert(QmsResponsibilityApprovalService::versionStatus($versionId) === 'effective', 'Last approval activates the version');
+    $versionAssignmentCount = count(QmsResponsibilityDraftService::versionDetail($versionId)['assignments']);
+    catalog_assert(
+        (int)Db::name('qms_responsibility_assignments')->alias('ra')
+            ->join('qms_activity_responsibilities r', 'r.id=ra.responsibility_id')
+            ->join('qms_responsibility_activities a', 'a.id=r.activity_id')
+            ->where('a.chain_version_id', $versionId)->where('ra.status', 'active')->where('ra.soft_delete', 0)->count() === $versionAssignmentCount,
+        'Every submitted assignment becomes active on first activation'
+    );
     $chainAppointments = Db::name('employee_appointments')->where('source_chain_version_id', $versionId)->where('status', 'active')->select()->toArray();
     catalog_assert($chainAppointments !== [], 'Activation creates chain appointments');
     catalog_assert(count(array_filter($chainAppointments, static fn (array $row): bool => (string)$row['appointment_type'] === 'responsibility')) === 1, 'One prebound activity role creates one responsibility appointment');
@@ -340,6 +416,20 @@ catalog_in_transaction(function (): void {
     catalog_assert($fixedAppointmentCount < $fixedAssignmentCount, 'Repeated fixed duties are aggregated by employee, position, site and version');
     catalog_assert(count(array_filter($chainAppointments, static fn (array $row): bool => (string)$row['employee_id'] === (string)$gm['employee']['id'])) === 0, 'Corporate GM duty creates no reverse chain appointment');
     catalog_assert(count(array_filter($chainAppointments, static fn (array $row): bool => (string)$row['source_responsibility_id'] === (string)$prepared['dynamic_responsibility_id'])) === 0, 'Dynamic slots create no appointments even if corrupt input contains a direct row');
+    $hasAggregatedScope = false;
+    foreach ($chainAppointments as $appointment) {
+        catalog_assert((string)$appointment['source_chain_version_id'] === $versionId, 'Chain appointment references the effective version');
+        catalog_assert((string)$appointment['source_responsibility_id'] !== '' && (string)$appointment['source_approval_id'] !== '', 'Chain appointment carries non-empty responsibility and approval evidence');
+        catalog_assert((int)Db::name('qms_activity_responsibilities')->where('id', (string)$appointment['source_responsibility_id'])->count() === 1, 'Appointment responsibility evidence resolves to a real row');
+        catalog_assert((int)Db::name('qms_responsibility_approvals')->where('id', (string)$appointment['source_approval_id'])->where('decision', 'approved')->count() === 1, 'Appointment approval evidence resolves to an approved row');
+        $scope = json_decode((string)$appointment['appointment_scope'], true);
+        catalog_assert(is_array($scope) && ($scope['responsibility_ids'] ?? []) !== [] && ($scope['step_codes'] ?? []) !== [], 'Appointment scope lists all linked responsibilities and steps');
+        foreach ($scope['responsibility_ids'] as $scopeResponsibilityId) {
+            catalog_assert((int)Db::name('qms_activity_responsibilities')->where('id', (string)$scopeResponsibilityId)->count() === 1, 'Every aggregated responsibility id resolves');
+        }
+        $hasAggregatedScope = $hasAggregatedScope || count($scope['responsibility_ids']) > 1;
+    }
+    catalog_assert($hasAggregatedScope, 'At least one fixed appointment scope preserves multiple aggregated duties');
     $signatureRows = Db::name('qms_responsibility_approvals')->where('chain_version_id', $versionId)->where('decision', 'approved')->select()->toArray();
     foreach ($signatureRows as $signatureRow) {
         $metadata = json_decode((string)$signatureRow['signature_metadata'], true);
@@ -364,14 +454,54 @@ catalog_in_transaction(function (): void {
     approval_session($qualityManager['user']);
     QmsResponsibilityApprovalService::submitVersion($rejectId);
     $rejectBatch = approval_pending_for($rejectId, (string)$gm['employee']['id']);
+    $oldDirectorBatch = approval_pending_for($rejectId, (string)$director['employee']['id']);
     approval_session($gm['user']);
     QmsResponsibilityApprovalService::approveBatch((string)$rejectBatch['batch_key'], 'rejected', '退回修改');
     $rejectedVersion = Db::name('qms_responsibility_chain_versions')->where('id', $rejectId)->find();
     catalog_assert($rejectedVersion['status'] === 'draft' && $rejectedVersion['content_hash'] === null && $rejectedVersion['locked_at'] === null, 'Rejection unlocks the version');
+    $rejectAssignmentCount = count(QmsResponsibilityDraftService::versionDetail($rejectId)['assignments']);
+    catalog_assert(
+        (int)Db::name('qms_responsibility_assignments')->alias('ra')
+            ->join('qms_activity_responsibilities r', 'r.id=ra.responsibility_id')
+            ->join('qms_responsibility_activities a', 'a.id=r.activity_id')
+            ->where('a.chain_version_id', $rejectId)->where('ra.status', 'draft')->where('ra.soft_delete', 0)->count() === $rejectAssignmentCount,
+        'Rejection returns every current assignment to draft'
+    );
     catalog_assert((int)Db::name('qms_responsibility_approvals')->where('chain_version_id', $rejectId)->where('decision', 'pending')->where('soft_delete', 0)->count() === 0, 'Rejection leaves no readable pending approvals');
+    $oldRejectedApprovalId = (string)Db::name('qms_responsibility_approvals')
+        ->where('chain_version_id', $rejectId)->where('batch_key', (string)$rejectBatch['batch_key'])->where('decision', 'rejected')->value('id');
+    catalog_assert($oldRejectedApprovalId !== '', 'Rejected approval history remains identifiable');
+    catalog_assert(
+        (int)Db::name('qms_responsibility_approvals')->where('batch_key', (string)$oldDirectorBatch['batch_key'])->where('decision', 'pending')->where('soft_delete', 1)->count() === count($oldDirectorBatch['items']),
+        'Sibling pending approvals are soft-closed after rejection'
+    );
+
+    approval_session($qualityManager['user']);
+    $resubmittedReject = QmsResponsibilityApprovalService::submitVersion($rejectId);
+    $newRejectGmBatch = approval_pending_for($rejectId, (string)$gm['employee']['id']);
+    $newRejectDirectorBatch = approval_pending_for($rejectId, (string)$director['employee']['id']);
+    catalog_assert((string)$newRejectGmBatch['batch_key'] !== (string)$rejectBatch['batch_key'], 'Resubmission creates a new approval round and batch key');
+    catalog_assert((string)$newRejectDirectorBatch['batch_key'] !== (string)$oldDirectorBatch['batch_key'], 'Both approver batches use the new approval round');
+    catalog_assert(
+        Db::name('qms_responsibility_approvals')->where('id', $oldRejectedApprovalId)->value('decision') === 'rejected'
+        && (int)Db::name('qms_responsibility_approvals')->where('id', $oldRejectedApprovalId)->value('soft_delete') === 0,
+        'Old rejected decision remains visible as history after resubmission'
+    );
+    catalog_assert(
+        (int)Db::name('qms_responsibility_approvals')->where('batch_key', (string)$oldDirectorBatch['batch_key'])->where('decision', 'pending')->where('soft_delete', 1)->count() === count($oldDirectorBatch['items']),
+        'Old sibling pending rows remain closed and cannot reappear in pending batch reads'
+    );
+    catalog_assert((string)$resubmittedReject['content_hash'] !== '' && (string)$resubmittedReject['content_hash'] === (string)$newRejectGmBatch['items'][0]['version_hash'], 'Resubmitted round is pinned to its new locked hash');
+    approval_session($gm['user']);
+    QmsResponsibilityApprovalService::approveBatch((string)$newRejectGmBatch['batch_key'], 'approved', '重提后总经理批准');
+    approval_session($director['user']);
+    QmsResponsibilityApprovalService::approveBatch((string)$newRejectDirectorBatch['batch_key'], 'approved', '重提后主任批准');
+    catalog_assert(QmsResponsibilityApprovalService::versionStatus($rejectId) === 'effective', 'Old rejected history does not block resubmitted round final activation');
+    catalog_assert(QmsResponsibilityApprovalService::versionStatus($versionId) === 'superseded', 'Resubmitted version supersedes the first effective version');
+    $effectiveVersionId = $rejectId;
 
     // Hash tampering prevents approval.
-    $tamperClone = QmsResponsibilityDraftService::cloneEffectiveVersion($versionId);
+    $tamperClone = QmsResponsibilityDraftService::cloneEffectiveVersion($effectiveVersionId);
     $tamperId = (string)$tamperClone['version']['id'];
     approval_session($qualityManager['user']);
     QmsResponsibilityApprovalService::submitVersion($tamperId);
@@ -390,7 +520,7 @@ catalog_in_transaction(function (): void {
     Db::name('qms_responsibility_chain_versions')->where('id', $tamperId)->update(['soft_delete' => 1]);
 
     // A predictable conflict on the second generated appointment proves atomic rollback, then retry succeeds.
-    $v2 = QmsResponsibilityDraftService::cloneEffectiveVersion($versionId);
+    $v2 = QmsResponsibilityDraftService::cloneEffectiveVersion($effectiveVersionId);
     $v2Id = (string)$v2['version']['id'];
     approval_session($qualityManager['user']);
     QmsResponsibilityApprovalService::submitVersion($v2Id);
@@ -415,17 +545,26 @@ catalog_in_transaction(function (): void {
         'Second appointment conflict rolls the final approval transaction back'
     );
     catalog_assert(QmsResponsibilityApprovalService::versionStatus($v2Id) === 'pending_approval', 'Failed final activation leaves new version pending');
-    catalog_assert(QmsResponsibilityApprovalService::versionStatus($versionId) === 'effective', 'Failed final activation leaves old version effective');
+    catalog_assert(QmsResponsibilityApprovalService::versionStatus($effectiveVersionId) === 'effective', 'Failed final activation leaves old version effective');
     catalog_assert((int)Db::name('employee_appointments')->where('source_chain_version_id', $v2Id)->count() === 0, 'Failed final activation creates no new appointments');
     catalog_assert((int)Db::name('qms_responsibility_assignments')->alias('ra')->join('qms_activity_responsibilities r', 'r.id=ra.responsibility_id')->join('qms_responsibility_activities a', 'a.id=r.activity_id')->where('a.chain_version_id', $v2Id)->where('ra.status', 'pending_approval')->count() > 0, 'Failed activation leaves assignments pending');
-    catalog_assert((int)Db::name('employee_appointments')->where('source_chain_version_id', $versionId)->where('status', 'active')->count() > 0, 'Failed activation leaves old appointments active');
+    catalog_assert((int)Db::name('employee_appointments')->where('source_chain_version_id', $effectiveVersionId)->where('status', 'active')->count() > 0, 'Failed activation leaves old appointments active');
     catalog_assert(Db::name('qms_responsibility_approvals')->where('batch_key', (string)$v2DirectorBatch['batch_key'])->where('soft_delete', 0)->value('decision') === 'pending', 'Failed final signature remains pending');
 
     Db::name('employee_appointments')->where('id', $conflictId)->delete();
     QmsResponsibilityApprovalService::approveBatch((string)$v2DirectorBatch['batch_key'], 'approved', '重试通过');
     catalog_assert(QmsResponsibilityApprovalService::versionStatus($v2Id) === 'effective', 'Retry activates v2');
-    catalog_assert(QmsResponsibilityApprovalService::versionStatus($versionId) === 'superseded', 'Retry supersedes v1');
-    catalog_assert((int)Db::name('employee_appointments')->where('source_chain_version_id', $versionId)->where('status', 'revoked')->count() > 0, 'Retry revokes old chain appointments');
+    catalog_assert(QmsResponsibilityApprovalService::versionStatus($effectiveVersionId) === 'superseded', 'Retry supersedes the previous effective version');
+    $oldAssignmentTotal = count(QmsResponsibilityDraftService::versionDetail($effectiveVersionId)['assignments']);
+    catalog_assert(
+        (int)Db::name('qms_responsibility_assignments')->alias('ra')
+            ->join('qms_activity_responsibilities r', 'r.id=ra.responsibility_id')
+            ->join('qms_responsibility_activities a', 'a.id=r.activity_id')
+            ->where('a.chain_version_id', $effectiveVersionId)->where('ra.status', 'revoked')->where('ra.soft_delete', 0)->count() === $oldAssignmentTotal,
+        'Successful replacement revokes every assignment from the previous effective version'
+    );
+    catalog_assert((int)Db::name('employee_appointments')->where('source_chain_version_id', $effectiveVersionId)->where('status', 'revoked')->count() > 0, 'Retry revokes old chain appointments');
+    catalog_assert(Db::name('employee_appointments')->where('id', $legacyId)->value('status') === 'active', 'Supersession never revokes unrelated legacy appointments');
     catalog_assert((int)Db::name('employee_appointments')->where('source_kind', 'corporate_evidence')->where('status', 'active')->count() === 1, 'Corporate identity remains active after supersession');
 });
 
