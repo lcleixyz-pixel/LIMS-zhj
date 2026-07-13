@@ -144,6 +144,18 @@ class QmsPositionAliasService
                             'soft_delete' => 0,
                             'modified' => $now,
                         ]);
+                } elseif (
+                    (int)($row['soft_delete'] ?? 0) !== 0
+                    || (int)($row['publish'] ?? 0) !== 1
+                    || (string)($row['review_status'] ?? '') !== 'published'
+                ) {
+                    throw new DomainException(sprintf(
+                        '岗位代码 %s 的人工/旧治理记录无效（soft_delete=%d, publish=%d, review_status=%s），不得用于责任链。',
+                        $code,
+                        (int)($row['soft_delete'] ?? 0),
+                        (int)($row['publish'] ?? 0),
+                        (string)($row['review_status'] ?? '')
+                    ));
                 }
             } else {
                 $globalConflict = Db::name('qms_positions')->where('code', $code)->lock(true)->find();

@@ -17,10 +17,10 @@ catalog_in_transaction(function (): void {
         'company_id' => catalog_company_id(),
         'code' => 'quality_manager',
         'name' => '人工维护的质量岗',
-        'source' => 'manual_governance',
-        'review_status' => 'obsolete',
-        'publish' => 0,
-        'soft_delete' => 1,
+        'source' => 'user_governed',
+        'review_status' => 'published',
+        'publish' => 1,
+        'soft_delete' => 0,
     ];
     if ($position) {
         Db::name('qms_positions')->where('id', $positionId)->update($customFields);
@@ -38,7 +38,76 @@ catalog_in_transaction(function (): void {
     foreach ($customFields as $field => $expected) {
         catalog_assert(($after[$field] ?? null) === $expected, 'Custom position field is preserved: ' . $field);
     }
+
+    $version = QmsResponsibilityCatalogService::createInitialDraft();
+    catalog_assert(
+        (int)Db::name('qms_activity_responsibilities')->alias('r')
+            ->join('qms_responsibility_activities a', 'a.id = r.activity_id')
+            ->where('a.chain_version_id', (string)$version['id'])
+            ->where('r.fixed_position_id', $positionId)
+            ->where('r.soft_delete', 0)
+            ->count() > 0,
+        'Active custom position id is reused by fixed duties'
+    );
 });
+
+foreach ([
+    'soft_deleted' => ['soft_delete' => 1],
+    'unpublished' => ['publish' => 0],
+    'obsolete' => ['review_status' => 'obsolete'],
+] as $caseName => $invalidState) {
+    catalog_in_transaction(function () use ($caseName, $invalidState): void {
+        $position = Db::name('qms_positions')->where('code', 'quality_manager')->find();
+        $positionId = (string)($position['id'] ?? qms_uuid());
+        $invalidFields = array_merge([
+            'company_id' => catalog_company_id(),
+            'code' => 'quality_manager',
+            'name' => '人工维护但无效的质量岗',
+            'source' => 'user_governed',
+            'review_status' => 'published',
+            'publish' => 1,
+            'soft_delete' => 0,
+        ], $invalidState);
+        if ($position) {
+            Db::name('qms_positions')->where('id', $positionId)->update($invalidFields);
+        } else {
+            Db::name('qms_positions')->insert(array_merge($invalidFields, [
+                'id' => $positionId,
+                'created' => date('Y-m-d H:i:s'),
+                'modified' => date('Y-m-d H:i:s'),
+            ]));
+        }
+
+        $seedBlocked = false;
+        try {
+            QmsPositionAliasService::seedCatalog();
+        } catch (\DomainException $exception) {
+            $seedBlocked = str_contains($exception->getMessage(), 'quality_manager');
+        }
+        catalog_assert($seedBlocked, 'Invalid custom position blocks catalog seed: ' . $caseName);
+
+        $createBlocked = false;
+        try {
+            QmsResponsibilityCatalogService::createInitialDraft();
+        } catch (\DomainException $exception) {
+            $createBlocked = str_contains($exception->getMessage(), 'quality_manager');
+        }
+        catalog_assert($createBlocked, 'Invalid custom position blocks responsibility chain creation: ' . $caseName);
+
+        $after = Db::name('qms_positions')->where('id', $positionId)->find();
+        foreach ($invalidFields as $field => $expected) {
+            catalog_assert(($after[$field] ?? null) === $expected, 'Invalid custom position field is preserved: ' . $caseName . '/' . $field);
+        }
+        catalog_assert(
+            (int)Db::name('qms_responsibility_chain_versions')
+                ->where('company_id', catalog_company_id())
+                ->where('chain_code', 'core_governance')
+                ->where('soft_delete', 0)
+                ->count() === 0,
+            'Invalid custom position does not create a responsibility chain: ' . $caseName
+        );
+    });
+}
 
 catalog_in_transaction(function (): void {
     $otherCompanyId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
