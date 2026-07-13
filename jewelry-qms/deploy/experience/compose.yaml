@@ -1,0 +1,76 @@
+name: jewelry-qms-experience
+
+services:
+  db:
+    image: jewelry-qms-mysql:8.4-amd64
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-jewelry_qms_experience}
+      MYSQL_USER: ${MYSQL_USER:-jewelry_qms}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+      TZ: Asia/Shanghai
+    volumes:
+      - db_data:/var/lib/mysql
+      - ../../database/jewelry_qms.sql:/docker-entrypoint-initdb.d/01-jewelry-qms.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - qms_db_internal
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  app:
+    image: jewelry-qms-experience:${QMS_IMAGE_TAG:?QMS_IMAGE_TAG is required}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_DEBUG: "false"
+      TZ: Asia/Shanghai
+      DB_TYPE: mysql
+      DB_HOST: db
+      DB_NAME: ${MYSQL_DATABASE:-jewelry_qms_experience}
+      DB_USER: ${MYSQL_USER:-jewelry_qms}
+      DB_PASS: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+      DB_PORT: "3306"
+      DB_CHARSET: utf8mb4
+      DEFAULT_LANG: zh-cn
+      QMS_ENV_LABEL: 体验测试环境
+      QMS_ENV_NOTICE: 禁止录入正式业务数据、客户资料或其他敏感信息
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/chromium-browser
+    ports:
+      - "127.0.0.1:${QMS_HOST_PORT:-18010}:8000"
+    shm_size: "256mb"
+    volumes:
+      - runtime_data:/app/runtime
+      - uploads_data:/app/public/uploads
+    networks:
+      - qms_db_internal
+      - qms_edge
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  qms_db_internal:
+    internal: true
+  qms_edge:
+
+volumes:
+  db_data:
+  runtime_data:
+  uploads_data:
