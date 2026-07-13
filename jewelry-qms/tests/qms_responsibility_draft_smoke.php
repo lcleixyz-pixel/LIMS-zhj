@@ -31,10 +31,11 @@ catalog_in_transaction(function (): void {
         'status' => 'active',
         'sort_order' => 999,
     ]);
+    $employeeNumber = 'DRAFT-' . substr(qms_uuid(), 0, 8);
     $employeeId = responsibility_fixture_row('employees', [
         'company_id' => $companyId,
         'primary_site_id' => $siteId,
-        'employee_number' => 'DRAFT-' . substr(qms_uuid(), 0, 8),
+        'employee_number' => $employeeNumber,
         'name' => '责任链草案测试人员',
     ]);
     $competencyId = responsibility_fixture_row('competency_records', [
@@ -154,6 +155,30 @@ catalog_in_transaction(function (): void {
     );
     catalog_assert(($globalAssignment['id'] ?? '') !== '', 'Removed draft assignment can be restored idempotently');
 
+    $duplicateEmployeeId = responsibility_fixture_row('employees', [
+        'company_id' => $companyId,
+        'primary_site_id' => $siteId,
+        'employee_number' => $employeeNumber,
+        'name' => '责任链重复工号历史人员',
+    ]);
+    Db::name('employees')->where('id', $duplicateEmployeeId)->update(['soft_delete' => 1]);
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityDraftService::saveAssignment(
+            (string)$namedDuty['id'],
+            $employeeId,
+            $siteId,
+            '2026-07-15',
+            '2027-07-15',
+            []
+        ),
+        'Duplicate employee number in soft-deleted history blocks assignment save'
+    );
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityDraftService::contentHash($versionId),
+        'Duplicate employee number in soft-deleted history blocks content hashing'
+    );
+    Db::name('employees')->where('id', $duplicateEmployeeId)->delete();
+
     responsibility_assert_throws(
         fn () => QmsResponsibilityDraftService::saveAssignment((string)$namedDuty['id'], $employeeId, $siteId, '2026-07-15', '2026-07-14', []),
         'Invalid proposed date range is blocked'
@@ -196,6 +221,30 @@ catalog_in_transaction(function (): void {
     );
     Db::name('qms_activity_responsibilities')->where('id', (string)$namedDuty['id'])->update(['soft_delete' => 0]);
 
+    foreach (['draft', 'pending_approval', 'revoked', 'expired'] as $assignmentStatus) {
+        $nonActiveEmployeeId = responsibility_fixture_row('employees', [
+            'company_id' => $companyId,
+            'primary_site_id' => $siteId,
+            'employee_number' => strtoupper($assignmentStatus) . '-' . substr(qms_uuid(), 0, 8),
+            'name' => '责任链非有效绑定-' . $assignmentStatus,
+        ]);
+        $nonActiveAssignment = QmsResponsibilityDraftService::saveAssignment(
+            (string)$namedDuty['id'],
+            $nonActiveEmployeeId,
+            null,
+            '2026-07-14',
+            null,
+            []
+        );
+        Db::name('qms_responsibility_assignments')->where('id', (string)$nonActiveAssignment['id'])->update([
+            'status' => $assignmentStatus,
+        ]);
+    }
+    Db::name('qms_responsibility_assignments')->whereIn('id', [
+        (string)$assignment['id'],
+        (string)$globalAssignment['id'],
+    ])->update(['status' => 'active']);
+
     Db::name('qms_responsibility_chain_versions')->where('id', $versionId)->update([
         'status' => 'effective',
         'effective_at' => date('Y-m-d H:i:s'),
@@ -218,7 +267,12 @@ catalog_in_transaction(function (): void {
     catalog_assert(($clone['version']['replaces_version_id'] ?? '') === $versionId, 'Clone records the replaced version');
     catalog_assert(count($clone['activities'] ?? []) === 3, 'Clone contains all three activities');
     catalog_assert(count($clone['responsibilities'] ?? []) === 21, 'Clone contains all twenty-one duties');
-    catalog_assert(count($clone['assignments'] ?? []) === 2, 'Clone contains existing person assignments');
+    catalog_assert(count($clone['assignments'] ?? []) === 2, 'Clone contains active person assignments only');
+    $clonedEmployeeIds = array_map('strval', array_column($clone['assignments'], 'employee_id'));
+    sort($clonedEmployeeIds);
+    $expectedClonedEmployeeIds = [$employeeId, $secondEmployeeId];
+    sort($expectedClonedEmployeeIds);
+    catalog_assert($clonedEmployeeIds === $expectedClonedEmployeeIds, 'Draft, pending, revoked and expired assignments are not cloned');
     foreach ($clone['assignments'] as $clonedAssignment) {
         catalog_assert(($clonedAssignment['status'] ?? '') === 'draft', 'Cloned person assignment returns to draft');
     }
@@ -249,11 +303,10 @@ catalog_in_transaction(function (): void {
 
     $replacementSiteId = qms_uuid();
     Db::name('sites')->where('id', $siteId)->update(['id' => $replacementSiteId]);
-    $replacementEmployeeId = responsibility_fixture_row('employees', [
-        'company_id' => $companyId,
+    $replacementEmployeeId = qms_uuid();
+    Db::name('employees')->where('id', $employeeId)->update([
+        'id' => $replacementEmployeeId,
         'primary_site_id' => $replacementSiteId,
-        'employee_number' => (string)Db::name('employees')->where('id', $employeeId)->value('employee_number'),
-        'name' => '责任链同业务键替换人员',
     ]);
     Db::name('qms_responsibility_assignments')->where('id', (string)$clonedScopedAssignment['id'])->update([
         'employee_id' => $replacementEmployeeId,
@@ -264,6 +317,11 @@ catalog_in_transaction(function (): void {
         QmsResponsibilityDraftService::contentHash((string)$clone['version']['id']) === $effectiveHash,
         'Changing database UUIDs while keeping employee number and site code preserves the content hash'
     );
+    Db::name('qms_responsibility_assignments')->where('id', (string)$assignment['id'])->update([
+        'employee_id' => $replacementEmployeeId,
+        'site_id' => $replacementSiteId,
+        'site_scope_key' => $replacementSiteId,
+    ]);
     Db::name('employees')->where('id', $replacementEmployeeId)->update(['employee_number' => null]);
     responsibility_assert_throws(
         fn () => QmsResponsibilityDraftService::contentHash((string)$clone['version']['id']),
@@ -290,8 +348,42 @@ catalog_in_transaction(function (): void {
 
     $sameClone = QmsResponsibilityDraftService::cloneEffectiveVersion($versionId);
     catalog_assert($sameClone['version']['id'] === $clone['version']['id'], 'Cloning the same effective version is idempotent');
+
+    $versionCountBeforePendingRetry = (int)Db::name('qms_responsibility_chain_versions')
+        ->where('company_id', $companyId)
+        ->where('chain_code', 'core_governance')
+        ->count();
+    Db::name('qms_responsibility_chain_versions')->where('id', (string)$clone['version']['id'])->update([
+        'status' => 'pending_approval',
+    ]);
     responsibility_assert_throws(
-        fn () => QmsResponsibilityDraftService::cloneEffectiveVersion((string)$clone['version']['id']),
+        fn () => QmsResponsibilityDraftService::cloneEffectiveVersion($versionId),
+        'Pending-approval successor blocks another draft clone'
+    );
+    catalog_assert(
+        (int)Db::name('qms_responsibility_chain_versions')
+            ->where('company_id', $companyId)
+            ->where('chain_code', 'core_governance')
+            ->count() === $versionCountBeforePendingRetry,
+        'Blocked pending-approval retry does not create another version'
+    );
+
+    Db::name('qms_responsibility_chain_versions')->where('id', (string)$clone['version']['id'])->update([
+        'soft_delete' => 1,
+    ]);
+    $thirdVersion = QmsResponsibilityDraftService::cloneEffectiveVersion($versionId);
+    catalog_assert(($thirdVersion['version_no'] ?? 0) === 3, 'Soft-deleted v2 keeps its version number reserved and next clone becomes v3');
+    catalog_assert(($thirdVersion['replaces_version_id'] ?? '') === $versionId, 'New v3 still replaces the effective v1');
+    catalog_assert(count($thirdVersion['assignments'] ?? []) === 2, 'V3 also copies active source assignments only');
+    catalog_assert(
+        (int)Db::name('qms_responsibility_chain_versions')
+            ->where('company_id', $companyId)
+            ->where('chain_code', 'core_governance')
+            ->count() === 3,
+        'Version history retains v1, soft-deleted v2 and new v3'
+    );
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityDraftService::cloneEffectiveVersion((string)$thirdVersion['id']),
         'A non-effective version cannot be cloned'
     );
 });

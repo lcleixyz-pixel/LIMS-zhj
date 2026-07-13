@@ -167,6 +167,12 @@ final class QmsResponsibilityDraftService
             if (!$employee) {
                 throw new DomainException('人员不存在、未发布或不属于当前公司。');
             }
+            self::assertUniqueEmployeeNumber(
+                $companyId,
+                $employeeId,
+                (string)($employee['employee_number'] ?? ''),
+                true
+            );
 
             $siteScopeKey = self::GLOBAL_SITE_SCOPE;
             if ($siteId !== null && $siteId !== '') {
@@ -282,22 +288,31 @@ final class QmsResponsibilityDraftService
                 throw new DomainException('仅有效版本可克隆为下一个草案。');
             }
 
-            $existingDraft = Db::name('qms_responsibility_chain_versions')
+            $existingSuccessors = Db::name('qms_responsibility_chain_versions')
                 ->where('company_id', $companyId)
                 ->where('chain_code', (string)$source['chain_code'])
                 ->where('replaces_version_id', $versionId)
-                ->where('status', 'draft')
+                ->whereIn('status', ['draft', 'pending_approval'])
                 ->where('soft_delete', 0)
+                ->order('version_no')
                 ->lock(true)
-                ->find();
-            if ($existingDraft) {
-                return self::versionDetail((string)$existingDraft['id']);
+                ->select()
+                ->toArray();
+            foreach ($existingSuccessors as $successor) {
+                if ((string)$successor['status'] === 'pending_approval') {
+                    throw new DomainException('该有效版本已有待审批后继版本，不得再创建新草案。');
+                }
+            }
+            if (count($existingSuccessors) > 1) {
+                throw new DomainException('该有效版本存在多个未闭合后继草案，需先清理版本链。');
+            }
+            if ($existingSuccessors !== []) {
+                return self::versionDetail((string)$existingSuccessors[0]['id']);
             }
 
             $maxVersion = (int)Db::name('qms_responsibility_chain_versions')
                 ->where('company_id', $companyId)
                 ->where('chain_code', (string)$source['chain_code'])
-                ->where('soft_delete', 0)
                 ->lock(true)
                 ->max('version_no');
             $now = date('Y-m-d H:i:s');
@@ -393,7 +408,7 @@ final class QmsResponsibilityDraftService
                     ->whereIn('responsibility_id', array_keys($responsibilityMap))
                     ->where('company_id', $companyId)
                     ->where('soft_delete', 0)
-                    ->whereNotIn('status', ['revoked', 'expired'])
+                    ->where('status', 'active')
                     ->order('responsibility_id,employee_id,site_scope_key')
                     ->select()
                     ->toArray();
@@ -428,6 +443,9 @@ final class QmsResponsibilityDraftService
     public static function contentHash(string $versionId): string
     {
         $detail = self::versionDetail($versionId);
+        $hashableAssignmentStatuses = in_array((string)$detail['status'], ['draft', 'pending_approval'], true)
+            ? ['draft', 'pending_approval']
+            : ['active'];
         $content = [];
         foreach ($detail['activities'] as $activity) {
             $activityContent = [
@@ -442,6 +460,9 @@ final class QmsResponsibilityDraftService
             foreach ($activity['responsibilities'] as $responsibility) {
                 $assignments = [];
                 foreach ($responsibility['assignments'] as $assignment) {
+                    if (!in_array((string)$assignment['status'], $hashableAssignmentStatuses, true)) {
+                        continue;
+                    }
                     $businessKeys = self::assignmentBusinessKeys($assignment);
                     $assignments[] = [
                         'person_business_key' => $businessKeys['person_business_key'],
@@ -490,6 +511,12 @@ final class QmsResponsibilityDraftService
         if ($employeeNumber === '') {
             throw new DomainException('人员绑定缺少 employee_number，无法生成稳定的责任链内容哈希。');
         }
+        self::assertUniqueEmployeeNumber(
+            (string)($assignment['company_id'] ?? ''),
+            (string)($assignment['employee_id'] ?? ''),
+            $employeeNumber,
+            false
+        );
 
         $siteBusinessKey = self::GLOBAL_SITE_SCOPE;
         if ((string)($assignment['site_scope_key'] ?? '') !== self::GLOBAL_SITE_SCOPE) {
@@ -503,6 +530,29 @@ final class QmsResponsibilityDraftService
             'person_business_key' => $employeeNumber,
             'site_business_key' => $siteBusinessKey,
         ];
+    }
+
+    private static function assertUniqueEmployeeNumber(
+        string $companyId,
+        string $employeeId,
+        string $employeeNumber,
+        bool $lock
+    ): void {
+        $employeeNumber = trim($employeeNumber);
+        if ($companyId === '' || $employeeId === '' || $employeeNumber === '') {
+            throw new DomainException('人员绑定缺少可用的公司、人员或员工编号业务键。');
+        }
+
+        $query = Db::name('employees')
+            ->where('company_id', $companyId)
+            ->where('employee_number', $employeeNumber);
+        if ($lock) {
+            $query->lock(true);
+        }
+        $matchingIds = array_map('strval', $query->column('id'));
+        if (count($matchingIds) !== 1 || $matchingIds[0] !== $employeeId) {
+            throw new DomainException('员工编号必须在当前公司全部历史人员中唯一，含已软删除记录。');
+        }
     }
 
     private static function responsibilityContext(string $responsibilityId, string $companyId, bool $lock): array
