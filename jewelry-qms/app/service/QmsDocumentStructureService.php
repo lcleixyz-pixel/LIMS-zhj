@@ -4603,56 +4603,7 @@ class QmsDocumentStructureService
 
     private static function positionAliasDefinitions(): array
     {
-        return [
-            'lab_director' => [
-                'name' => '实验室主任',
-                'aliases' => ['实验室主任', '最高管理者'],
-            ],
-            'technical_manager' => [
-                'name' => '技术负责人',
-                'aliases' => ['技术负责人', '技术主管'],
-            ],
-            'quality_manager' => [
-                'name' => '质量负责人',
-                'aliases' => ['质量负责人', '质量主管'],
-            ],
-            'office_manager' => [
-                'name' => '办公室主任',
-                'aliases' => ['办公室主任', '办公室负责人', '办公室'],
-            ],
-            'document_controller' => [
-                'name' => '资料管理员',
-                'aliases' => ['资料管理员', '资料员', '文件管理员', '档案管理员'],
-            ],
-            'equipment_manager' => [
-                'name' => '设备管理员',
-                'aliases' => ['设备管理员', '仪器设备管理员'],
-            ],
-            'sample_manager' => [
-                'name' => '样品管理员',
-                'aliases' => ['样品管理员'],
-            ],
-            'testing_room_manager' => [
-                'name' => '检测室主任',
-                'aliases' => ['检测室主任'],
-            ],
-            'testing_staff' => [
-                'name' => '检测人员',
-                'aliases' => ['检测人员', '检测员'],
-            ],
-            'authorized_signatory' => [
-                'name' => '授权签字人',
-                'aliases' => ['授权签字人', '授权签字员'],
-            ],
-            'internal_auditor' => [
-                'name' => '内审员',
-                'aliases' => ['内审员', '内部审核员', '审核员'],
-            ],
-            'supervisor' => [
-                'name' => '监督员',
-                'aliases' => ['监督员'],
-            ],
-        ];
+        return QmsPositionAliasService::legacyDefinitions();
     }
 
     private static function splitMarkdownSections(string $markdown): array
