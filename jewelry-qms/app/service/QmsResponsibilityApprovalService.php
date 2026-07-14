@@ -474,6 +474,104 @@ final class QmsResponsibilityApprovalService
         return $routes;
     }
 
+    private static function assertApprovalEvidenceMatchesRoutes(
+        array $approvals,
+        array $expectedRoutes,
+        string $versionHash,
+        string $submissionRound,
+        string $companyId
+    ): void
+    {
+        if (count($approvals) !== count($expectedRoutes) || $approvals === []) {
+            throw new DomainException('本轮签批证据数量与当前任命路由不一致。');
+        }
+
+        $approvalByAssignment = [];
+        foreach ($approvals as $approval) {
+            $assignmentId = trim((string)($approval['assignment_id'] ?? ''));
+            if ($assignmentId === '' || isset($approvalByAssignment[$assignmentId])) {
+                throw new DomainException('本轮签批证据缺少任命标识或存在重复任命。');
+            }
+            $approvalByAssignment[$assignmentId] = $approval;
+        }
+
+        $expectedByAssignment = [];
+        foreach ($expectedRoutes as $route) {
+            $assignmentId = (string)$route['assignment_id'];
+            if ($assignmentId === '' || isset($expectedByAssignment[$assignmentId])) {
+                throw new DomainException('当前任命路由存在缺失或重复任命。');
+            }
+            $expectedByAssignment[$assignmentId] = $route;
+        }
+        if (array_keys($approvalByAssignment) !== array_keys($expectedByAssignment)) {
+            $actualIds = array_keys($approvalByAssignment);
+            $expectedIds = array_keys($expectedByAssignment);
+            sort($actualIds, SORT_STRING);
+            sort($expectedIds, SORT_STRING);
+            if ($actualIds !== $expectedIds) {
+                throw new DomainException('本轮签批证据与当前任命集不一致。');
+            }
+        }
+
+        foreach ($expectedByAssignment as $assignmentId => $route) {
+            $approval = $approvalByAssignment[$assignmentId] ?? null;
+            if (!$approval) {
+                throw new DomainException('当前任命缺少本轮签批证据。');
+            }
+            $actualPositionId = trim((string)($approval['subject_position_id'] ?? ''));
+            $expectedPositionId = trim((string)($route['subject_position_id'] ?? ''));
+            if (
+                (string)($approval['approval_scope'] ?? '') !== 'assignment'
+                || (string)($approval['subject_employee_id'] ?? '') !== (string)$route['subject_employee_id']
+                || $actualPositionId !== $expectedPositionId
+                || (string)($approval['approver_employee_id'] ?? '') !== (string)$route['approver_employee_id']
+                || (string)($approval['approver_position_code'] ?? '') !== (string)$route['approver_position_code']
+                || (string)($approval['decision'] ?? '') !== 'approved'
+                || !hash_equals($versionHash, (string)($approval['version_hash'] ?? ''))
+            ) {
+                throw new DomainException('本轮签批证据的对象、岗位、批准主体或版本哈希与当前路由不一致。');
+            }
+
+            $approverUserId = trim((string)($approval['approver_user_id'] ?? ''));
+            $signedAt = trim((string)($approval['signed_at'] ?? ''));
+            $metadata = self::decodeJson($approval['signature_metadata'] ?? null);
+            foreach ([
+                'submission_round', 'user_id', 'employee_id', 'session_id', 'user_role',
+                'approved_as', 'approver_position_code', 'decision', 'signed_at',
+            ] as $key) {
+                if (trim((string)($metadata[$key] ?? '')) === '') {
+                    throw new DomainException('签批签名元数据不完整：' . $key);
+                }
+            }
+            if (
+                $approverUserId === ''
+                || $signedAt === ''
+                || (string)$metadata['submission_round'] !== $submissionRound
+                || (string)$metadata['user_id'] !== $approverUserId
+                || (string)$metadata['employee_id'] !== (string)$route['approver_employee_id']
+                || (string)$metadata['approved_as'] !== (string)$route['approver_position_code']
+                || (string)$metadata['approver_position_code'] !== (string)$route['approver_position_code']
+                || (string)$metadata['decision'] !== 'approved'
+                || date('Y-m-d H:i:s', strtotime((string)$metadata['signed_at'])) !== $signedAt
+            ) {
+                throw new DomainException('签批人、业务身份、决定、轮次或签名时间证据不一致。');
+            }
+
+            $approverUser = Db::name('users')
+                ->where('id', $approverUserId)
+                ->where('company_id', $companyId)
+                ->where('employee_id', (string)$route['approver_employee_id'])
+                ->where('publish', 1)
+                ->where('soft_delete', 0)
+                ->lock(true)
+                ->find();
+            if (!$approverUser || (string)$approverUser['role'] !== (string)$metadata['user_role']) {
+                throw new DomainException('签批用户已失效或签名角色与当前用户不一致。');
+            }
+            self::assertPersistedSession($approverUserId, (string)$metadata['session_id'], true);
+        }
+    }
+
     private static function rejectVersion(string $versionId, string $companyId, string $batchKey, array $user, string $now): void
     {
         Db::name('qms_responsibility_approvals')
@@ -517,6 +615,12 @@ final class QmsResponsibilityApprovalService
         if (!hash_equals((string)$lockedVersion['content_hash'], $currentHash)) {
             throw new DomainException('最终生效前版本内容哈希不一致。');
         }
+        $assignments = self::versionAssignments($versionId, $companyId, true, ['pending_approval']);
+        $validation = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
+        if (($validation['result'] ?? '') !== 'pass') {
+            throw new DomainException('最终生效前责任链激活校验未通过。');
+        }
+        $expectedRoutes = self::approvalRoutes($assignments, $companyId, true);
         $approvalHistory = Db::name('qms_responsibility_approvals')
             ->where('company_id', $companyId)->where('chain_version_id', $versionId)
             ->where('approval_scope', 'assignment')->where('soft_delete', 0)->lock(true)->select()->toArray();
@@ -525,16 +629,13 @@ final class QmsResponsibilityApprovalService
             static fn (array $row): bool =>
                 (string)(self::decodeJson($row['signature_metadata'] ?? null)['submission_round'] ?? '') === $submissionRound
         ));
-        if ($approvals === [] || count(array_filter($approvals, static fn (array $row): bool => (string)$row['decision'] !== 'approved')) > 0) {
-            throw new DomainException('版本仍有未批准任命。');
-        }
-        foreach ($approvals as $approval) {
-            if (!hash_equals((string)$lockedVersion['content_hash'], (string)$approval['version_hash'])) {
-                throw new DomainException('批准记录的版本哈希不一致。');
-            }
-        }
-
-        $assignments = self::versionAssignments($versionId, $companyId, true, ['pending_approval']);
+        self::assertApprovalEvidenceMatchesRoutes(
+            $approvals,
+            $expectedRoutes,
+            (string)$lockedVersion['content_hash'],
+            $submissionRound,
+            $companyId
+        );
         $appointmentGroups = self::appointmentGroups($versionId, $assignments, $approvals);
         try {
             foreach ($appointmentGroups as $group) {
@@ -634,11 +735,12 @@ final class QmsResponsibilityApprovalService
                         'valid_until' => (string)($assignment['proposed_until'] ?? ''),
                         'source_responsibility_id' => (string)$assignment['responsibility_id'],
                         'source_approval_id' => (string)$approval['id'],
-                        'scope' => ['responsibility_ids' => [], 'step_codes' => []],
+                        'scope' => ['responsibility_ids' => [], 'step_codes' => [], 'approval_ids' => []],
                     ];
                 }
                 $groups[$groupKey]['scope']['responsibility_ids'][] = (string)$assignment['responsibility_id'];
                 $groups[$groupKey]['scope']['step_codes'][] = (string)$assignment['step_code'];
+                $groups[$groupKey]['scope']['approval_ids'][] = (string)$approval['id'];
                 if ((string)$assignment['proposed_from'] < (string)$groups[$groupKey]['appointed_at']) {
                     $groups[$groupKey]['appointed_at'] = (string)$assignment['proposed_from'];
                 }
@@ -664,6 +766,7 @@ final class QmsResponsibilityApprovalService
                     'scope' => [
                         'responsibility_ids' => [(string)$assignment['responsibility_id']],
                         'step_codes' => [(string)$assignment['step_code']],
+                        'approval_ids' => [(string)$approval['id']],
                         'activity_role_code' => (string)$assignment['activity_role_code'],
                     ],
                 ];
@@ -672,6 +775,7 @@ final class QmsResponsibilityApprovalService
         foreach ($groups as &$group) {
             sort($group['scope']['responsibility_ids'], SORT_STRING);
             sort($group['scope']['step_codes'], SORT_STRING);
+            sort($group['scope']['approval_ids'], SORT_STRING);
         }
         unset($group);
         uasort($groups, static fn (array $left, array $right): int => (string)$left['appointment_key'] <=> (string)$right['appointment_key']);
@@ -867,6 +971,7 @@ final class QmsResponsibilityApprovalService
             throw new DomainException('会话身份与当前有效用户映射不一致。');
         }
         self::activeEmployeeWithUser((string)$session['employee_id'], $companyId, false);
+        self::assertPersistedSession((string)$user['id'], (string)$session['session_id'], false);
         if ($roles !== [] && !in_array((string)$user['role'], $roles, true)) {
             throw new DomainException('当前用户角色无权执行该操作。');
         }
@@ -883,6 +988,21 @@ final class QmsResponsibilityApprovalService
             || (string)$current['employee_id'] !== (string)$expectedUser['employee_id']
         ) {
             throw new DomainException('写入前用户身份已变更或与会话不一致。');
+        }
+        self::assertPersistedSession((string)$current['id'], (string)$expectedUser['session_id'], $lock);
+    }
+
+    private static function assertPersistedSession(string $userId, string $sessionId, bool $lock): void
+    {
+        $query = Db::name('user_sessions')
+            ->where('id', $sessionId)
+            ->where('user_id', $userId)
+            ->whereNull('end_time');
+        if ($lock) {
+            $query->lock(true);
+        }
+        if (!$query->find()) {
+            throw new DomainException('当前会话不存在、已结束或不属于当前用户。');
         }
     }
 

@@ -25,13 +25,23 @@ $expectedApprovalPublicMethods = [
 sort($expectedApprovalPublicMethods, SORT_STRING);
 catalog_assert($approvalPublicMethods === $expectedApprovalPublicMethods, 'Approval service exposes only the seven agreed public interfaces');
 
-function approval_session(array $user): void
+function approval_session(array $user, string $state = 'active'): void
 {
+    $sessionId = 'SIG-' . substr(str_replace('-', '', qms_uuid()), 0, 20);
+    if ($state !== 'missing') {
+        Db::name('user_sessions')->insert([
+            'id' => $sessionId,
+            'user_id' => (string)$user['id'],
+            'start_time' => date('Y-m-d H:i:s'),
+            'end_time' => $state === 'ended' ? date('Y-m-d H:i:s') : null,
+            'ip_address' => '127.0.0.1',
+        ]);
+    }
     Session::set('user', [
         'id' => (string)$user['id'],
         'employee_id' => (string)($user['employee_id'] ?? ''),
         'role' => (string)$user['role'],
-        'session_id' => 'SIG-' . substr(qms_uuid(), 0, 8),
+        'session_id' => $sessionId,
     ]);
 }
 
@@ -198,6 +208,29 @@ catalog_in_transaction(function (): void {
     $gm = approval_employee($companyId, 'GM', true, 'staff');
     $director = approval_employee($companyId, 'DIRECTOR', true, 'staff');
     $noUser = approval_employee($companyId, 'NO-USER', false);
+
+    approval_session($admin['user'], 'missing');
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityApprovalService::registerCorporateIdentity([
+            'position_code' => 'company_general_manager',
+            'employee_id' => (string)$gm['employee']['id'],
+            'appointed_at' => date('Y-m-d'),
+            'source_document_number' => 'CORP-NO-SESSION',
+            'source_excerpt' => '不存在的会话不得写入',
+        ]),
+        'Missing persisted user session blocks writes'
+    );
+    approval_session($admin['user'], 'ended');
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityApprovalService::registerCorporateIdentity([
+            'position_code' => 'company_general_manager',
+            'employee_id' => (string)$gm['employee']['id'],
+            'appointed_at' => date('Y-m-d'),
+            'source_document_number' => 'CORP-ENDED-SESSION',
+            'source_excerpt' => '已结束的会话不得写入',
+        ]),
+        'Ended persisted user session blocks writes'
+    );
 
     approval_session($gm['user']);
     responsibility_assert_throws(
@@ -393,6 +426,53 @@ catalog_in_transaction(function (): void {
     Db::name('qms_responsibility_approvals')->where('id', $selfApprovalId)->update(['subject_employee_id' => $originalSubjectId]);
     QmsResponsibilityApprovalService::approveBatch((string)$gmBatch['batch_key'], 'approved', '总经理批准');
     approval_session($director['user']);
+
+    $atRiskItem = $directorBatch['items'][0];
+    Db::name('employees')->where('id', (string)$atRiskItem['employee_id'])->update(['publish' => 0]);
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityApprovalService::approveBatch((string)$directorBatch['batch_key'], 'approved', '人员失效时不得生效'),
+        'Final activation revalidates employee status under lock'
+    );
+    catalog_assert(
+        (int)Db::name('qms_responsibility_approvals')->where('batch_key', (string)$directorBatch['batch_key'])->where('decision', 'pending')->where('soft_delete', 0)->count() === count($directorBatch['items']),
+        'Employee invalidation rolls the final batch back to pending'
+    );
+    Db::name('employees')->where('id', (string)$atRiskItem['employee_id'])->update(['publish' => 1]);
+
+    $competencyIdAtRisk = (string)($atRiskItem['competence_snapshot']['competency_record_ids'][0] ?? '');
+    catalog_assert($competencyIdAtRisk !== '', 'Final validation fixture contains qualification evidence');
+    Db::name('competency_records')->where('id', $competencyIdAtRisk)->update(['soft_delete' => 1]);
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityApprovalService::approveBatch((string)$directorBatch['batch_key'], 'approved', '资格失效时不得生效'),
+        'Final activation revalidates qualification evidence under lock'
+    );
+    catalog_assert(
+        (int)Db::name('qms_responsibility_approvals')->where('batch_key', (string)$directorBatch['batch_key'])->where('decision', 'pending')->where('soft_delete', 0)->count() === count($directorBatch['items']),
+        'Qualification invalidation rolls the final batch back to pending'
+    );
+    Db::name('competency_records')->where('id', $competencyIdAtRisk)->update(['soft_delete' => 0]);
+
+    $approvedGmRow = Db::name('qms_responsibility_approvals')->where('id', (string)$gmBatch['items'][0]['approval_id'])->find();
+    $fakeApprovalId = qms_uuid();
+    $now = date('Y-m-d H:i:s');
+    Db::name('qms_responsibility_approvals')->insert(array_merge($approvedGmRow, [
+        'id' => $fakeApprovalId,
+        'batch_key' => hash('sha256', 'forged-other-batch|' . $versionId),
+        'comments' => '伪造的另一批已批准记录',
+        'created' => $now,
+        'modified' => $now,
+    ]));
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityApprovalService::approveBatch((string)$directorBatch['batch_key'], 'approved', '伪造批次存在时不得生效'),
+        'Final activation rejects an extra forged approved row from the same submission round'
+    );
+    catalog_assert(
+        Db::name('qms_responsibility_approvals')->where('id', $fakeApprovalId)->value('decision') === 'approved'
+        && (int)Db::name('qms_responsibility_approvals')->where('batch_key', (string)$directorBatch['batch_key'])->where('decision', 'pending')->where('soft_delete', 0)->count() === count($directorBatch['items']),
+        'Forged approval rejection rolls back only the attempted final signature'
+    );
+    Db::name('qms_responsibility_approvals')->where('id', $fakeApprovalId)->delete();
+
     QmsResponsibilityApprovalService::approveBatch((string)$directorBatch['batch_key'], 'approved', '主任批准');
     catalog_assert(QmsResponsibilityApprovalService::versionStatus($versionId) === 'effective', 'Last approval activates the version');
     $versionAssignmentCount = count(QmsResponsibilityDraftService::versionDetail($versionId)['assignments']);
@@ -423,10 +503,31 @@ catalog_in_transaction(function (): void {
         catalog_assert((int)Db::name('qms_activity_responsibilities')->where('id', (string)$appointment['source_responsibility_id'])->count() === 1, 'Appointment responsibility evidence resolves to a real row');
         catalog_assert((int)Db::name('qms_responsibility_approvals')->where('id', (string)$appointment['source_approval_id'])->where('decision', 'approved')->count() === 1, 'Appointment approval evidence resolves to an approved row');
         $scope = json_decode((string)$appointment['appointment_scope'], true);
-        catalog_assert(is_array($scope) && ($scope['responsibility_ids'] ?? []) !== [] && ($scope['step_codes'] ?? []) !== [], 'Appointment scope lists all linked responsibilities and steps');
+        catalog_assert(
+            is_array($scope)
+            && ($scope['responsibility_ids'] ?? []) !== []
+            && ($scope['step_codes'] ?? []) !== []
+            && ($scope['approval_ids'] ?? []) !== [],
+            'Appointment scope lists all linked responsibilities, steps and approvals'
+        );
+        $sortedApprovalIds = $scope['approval_ids'];
+        sort($sortedApprovalIds, SORT_STRING);
+        catalog_assert($sortedApprovalIds === $scope['approval_ids'], 'Appointment scope approval ids use stable sorting');
+        catalog_assert(count($scope['approval_ids']) === count($scope['responsibility_ids']), 'Every aggregated responsibility has approval evidence');
         foreach ($scope['responsibility_ids'] as $scopeResponsibilityId) {
             catalog_assert((int)Db::name('qms_activity_responsibilities')->where('id', (string)$scopeResponsibilityId)->count() === 1, 'Every aggregated responsibility id resolves');
         }
+        foreach ($scope['approval_ids'] as $scopeApprovalId) {
+            $scopeApproval = Db::name('qms_responsibility_approvals')->where('id', (string)$scopeApprovalId)->where('decision', 'approved')->find();
+            catalog_assert((bool)$scopeApproval, 'Every aggregated approval id resolves to an approved row');
+            $scopeAssignmentResponsibility = Db::name('qms_responsibility_assignments')
+                ->where('id', (string)$scopeApproval['assignment_id'])->value('responsibility_id');
+            catalog_assert(in_array((string)$scopeAssignmentResponsibility, $scope['responsibility_ids'], true), 'Every aggregated approval belongs to a responsibility in the same scope');
+        }
+        $primaryApproval = Db::name('qms_responsibility_approvals')->where('id', (string)$appointment['source_approval_id'])->find();
+        $primaryResponsibilityId = Db::name('qms_responsibility_assignments')
+            ->where('id', (string)$primaryApproval['assignment_id'])->value('responsibility_id');
+        catalog_assert((string)$primaryResponsibilityId === (string)$appointment['source_responsibility_id'], 'Primary responsibility and approval form one deterministic pair');
         $hasAggregatedScope = $hasAggregatedScope || count($scope['responsibility_ids']) > 1;
     }
     catalog_assert($hasAggregatedScope, 'At least one fixed appointment scope preserves multiple aggregated duties');
