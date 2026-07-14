@@ -27,8 +27,11 @@ final class QmsResponsibilityPresentationService
         ],
         'alignment' => [
             'conflict' => '存在冲突',
+            'missing' => '职责缺失',
             'review_required' => '需要人工确认',
             'aligned' => '一致',
+            'consistent' => '一致',
+            'not_applicable' => '不适用',
         ],
         'duty' => [
             'organize' => '组织',
@@ -228,6 +231,11 @@ final class QmsResponsibilityPresentationService
                 'alignment',
                 (string)($finding['status'] ?? '')
             );
+            $finding['finding_label'] = [
+                'Y13-CX20' => '内部审核职责对齐',
+                'Y13-CX21' => '管理评审职责对齐',
+                'Y13-CX32' => '风险管理职责对齐',
+            ][(string)($finding['finding_id'] ?? '')] ?? '职责对齐检查';
         }
         unset($finding);
         $alignment['findings'] = $findings;

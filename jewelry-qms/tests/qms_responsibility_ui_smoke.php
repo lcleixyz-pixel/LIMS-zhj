@@ -124,6 +124,18 @@ responsibility_ui_assert(
     !str_contains($view, '<th>来源版本</th>'),
     'Raw source version is not a primary effective-appointment column'
 );
+foreach (['文件对齐（辅助核验）', '只读辅助工具', '核验对象', '核验依据', '应承担职责的岗位', '文件中写明的岗位'] as $label) {
+    responsibility_ui_contains($label, $view, 'Alignment helper renders ' . $label);
+}
+responsibility_ui_contains('alignmentData.version.status_label', $view, 'Alignment version renders a Chinese status label');
+responsibility_ui_assert(
+    !str_contains($view, '<th>发现</th>'),
+    'Finding identifier is not a primary alignment column'
+);
+responsibility_ui_assert(
+    !str_contains($view, '<div class="small text-muted">{$finding.status}</div>'),
+    'Raw alignment status is not exposed in the primary result cell'
+);
 foreach (['structure', 'staffing', 'approval', 'effective', 'alignment'] as $mode) {
     responsibility_ui_contains('view=' . $mode, $view, 'Responsibility page exposes view ' . $mode);
 }
@@ -640,20 +652,21 @@ catalog_in_transaction(function () use ($app): void {
         responsibility_ui_contains($findingId, $effectiveHtml, 'Effective alignment HTML renders ' . $findingId);
     }
     foreach ([
-        'Y13-CX20' => '存在冲突',
-        'Y13-CX21' => '存在冲突',
-        'Y13-CX32' => '需要人工确认',
-    ] as $findingId => $statusLabel) {
+        'Y13-CX20' => ['内部审核职责对齐', '存在冲突'],
+        'Y13-CX21' => ['管理评审职责对齐', '存在冲突'],
+        'Y13-CX32' => ['风险管理职责对齐', '需要人工确认'],
+    ] as $findingId => [$findingLabel, $statusLabel]) {
         responsibility_ui_assert(
             preg_match(
-                '/<code>' . preg_quote($findingId, '/') . '<\/code>.*?<span class="badge [^"]+">'
-                    . preg_quote($statusLabel, '/') . '<\/span>.*?<\/tr>/su',
+                '/' . preg_quote($findingLabel, '/') . '.*?<span class="badge [^"]+">'
+                    . preg_quote($statusLabel, '/') . '<\/span>.*?<code>'
+                    . preg_quote($findingId, '/') . '<\/code>.*?<\/tr>/su',
                 $effectiveHtml
             ) === 1,
             $findingId . ' renders its expected status ' . $statusLabel
         );
     }
-    foreach (['期望岗位', '观察岗位', '来源责任项', 'baseline_hash'] as $label) {
+    foreach (['应承担职责的岗位', '文件中写明的岗位', '检查编号', '岗位编码', '基准校验标识'] as $label) {
         responsibility_ui_contains($label, $effectiveHtml, 'Alignment HTML exposes evidence field ' . $label);
     }
     responsibility_ui_contains('存在冲突', $effectiveHtml, 'Effective alignment HTML renders conflict status');
@@ -665,7 +678,7 @@ catalog_in_transaction(function () use ($app): void {
     responsibility_ui_assert((int)$draft['version_no'] === 2, 'Default-alignment scenario has a newer draft v2');
 
     $defaultAlignmentHtml = responsibility_ui_render_alignment($app, null, false);
-    responsibility_ui_contains('责任链：v1 / effective', $defaultAlignmentHtml, 'Alignment without version_id prefers latest effective version');
+    responsibility_ui_contains('责任链 v1 · 已生效', $defaultAlignmentHtml, 'Alignment without version_id prefers latest effective version');
     foreach (['Y13-CX20', 'Y13-CX21', 'Y13-CX32'] as $findingId) {
         responsibility_ui_contains($findingId, $defaultAlignmentHtml, 'Default effective alignment renders ' . $findingId);
     }
