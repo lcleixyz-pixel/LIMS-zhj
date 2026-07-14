@@ -568,7 +568,12 @@ final class QmsResponsibilityApprovalService
             if (!$approverUser || (string)$approverUser['role'] !== (string)$metadata['user_role']) {
                 throw new DomainException('签批用户已失效或签名角色与当前用户不一致。');
             }
-            self::assertPersistedSession($approverUserId, (string)$metadata['session_id'], true);
+            self::assertSessionValidAtSignature(
+                $approverUserId,
+                (string)$metadata['session_id'],
+                $signedAt,
+                true
+            );
         }
     }
 
@@ -616,6 +621,7 @@ final class QmsResponsibilityApprovalService
             throw new DomainException('最终生效前版本内容哈希不一致。');
         }
         $assignments = self::versionAssignments($versionId, $companyId, true, ['pending_approval']);
+        self::lockActivationDependencies($assignments, $companyId);
         $validation = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
         if (($validation['result'] ?? '') !== 'pass') {
             throw new DomainException('最终生效前责任链激活校验未通过。');
@@ -780,6 +786,80 @@ final class QmsResponsibilityApprovalService
         unset($group);
         uasort($groups, static fn (array $left, array $right): int => (string)$left['appointment_key'] <=> (string)$right['appointment_key']);
         return array_values($groups);
+    }
+
+    private static function lockActivationDependencies(array $assignments, string $companyId): void
+    {
+        $siteIds = [];
+        $competencyIds = [];
+        $certificateIds = [];
+        $positionIds = [];
+        foreach ($assignments as $assignment) {
+            $siteIds[] = (string)($assignment['site_id'] ?? '');
+            $positionIds[] = (string)($assignment['fixed_position_id'] ?? '');
+            $snapshot = self::decodeJson($assignment['competence_snapshot'] ?? null);
+            foreach ((array)($snapshot['competency_record_ids'] ?? []) as $id) {
+                if (is_scalar($id)) {
+                    $competencyIds[] = (string)$id;
+                }
+            }
+            foreach ((array)($snapshot['certificate_ids'] ?? []) as $id) {
+                if (is_scalar($id)) {
+                    $certificateIds[] = (string)$id;
+                }
+            }
+        }
+
+        $ownerPositionIds = Db::name('qms_positions')
+            ->where('company_id', $companyId)
+            ->whereIn('code', [self::GM_CODE, self::DIRECTOR_CODE])
+            ->column('id');
+        $positionIds = self::sortedIds(array_merge($positionIds, array_map('strval', $ownerPositionIds)));
+
+        // Fixed lock order prevents evidence updates from racing the final validation:
+        // employees -> sites -> competency -> certificates -> positions -> owner appointments.
+        // All company employees are locked because approval-owner candidates can change independently
+        // from assignment rows; activation is rare and must prefer correctness over lock breadth.
+        Db::name('employees')
+            ->where('company_id', $companyId)
+            ->order('id')
+            ->lock(true)
+            ->select();
+        self::lockRowsByIds('sites', self::sortedIds($siteIds), $companyId);
+        self::lockRowsByIds('competency_records', self::sortedIds($competencyIds), $companyId);
+        self::lockRowsByIds('employee_certificates', self::sortedIds($certificateIds), $companyId);
+        self::lockRowsByIds('qms_positions', $positionIds, $companyId);
+        if ($positionIds !== []) {
+            Db::name('employee_appointments')
+                ->where('company_id', $companyId)
+                ->whereIn('position_id', $positionIds)
+                ->order('id')
+                ->lock(true)
+                ->select();
+        }
+    }
+
+    private static function lockRowsByIds(string $table, array $ids, string $companyId): void
+    {
+        if ($ids === []) {
+            return;
+        }
+        Db::name($table)
+            ->where('company_id', $companyId)
+            ->whereIn('id', $ids)
+            ->order('id')
+            ->lock(true)
+            ->select();
+    }
+
+    private static function sortedIds(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map(
+            static fn (mixed $id): string => trim((string)$id),
+            $ids
+        ), static fn (string $id): bool => $id !== '')));
+        sort($ids, SORT_STRING);
+        return $ids;
     }
 
     private static function versionAssignments(string $versionId, string $companyId, bool $lock, array $statuses): array
@@ -1003,6 +1083,32 @@ final class QmsResponsibilityApprovalService
         }
         if (!$query->find()) {
             throw new DomainException('当前会话不存在、已结束或不属于当前用户。');
+        }
+    }
+
+    private static function assertSessionValidAtSignature(
+        string $userId,
+        string $sessionId,
+        string $signedAt,
+        bool $lock
+    ): void
+    {
+        $query = Db::name('user_sessions')
+            ->where('id', $sessionId)
+            ->where('user_id', $userId);
+        if ($lock) {
+            $query->lock(true);
+        }
+        $session = $query->find();
+        $startTime = trim((string)($session['start_time'] ?? ''));
+        $endTime = trim((string)($session['end_time'] ?? ''));
+        if (
+            !$session
+            || $startTime === ''
+            || $startTime > $signedAt
+            || ($endTime !== '' && $endTime < $signedAt)
+        ) {
+            throw new DomainException('历史签名时会话不存在、不属于批准人或在签名时无效。');
         }
     }
 

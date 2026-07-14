@@ -201,6 +201,90 @@ function approval_expected_appointment_keys(string $versionId): array
     return $keys;
 }
 
+function approval_concurrency_assert(bool $condition, string $message): void
+{
+    if (!$condition) {
+        throw new RuntimeException($message);
+    }
+}
+
+function approval_wait_for_file(string $path, float $timeoutSeconds): void
+{
+    $deadline = microtime(true) + $timeoutSeconds;
+    while (!is_file($path) && microtime(true) < $deadline) {
+        usleep(20_000);
+    }
+    approval_concurrency_assert(is_file($path), 'Activation worker did not reach the approval call');
+}
+
+/** @return array{stdout:string,stderr:string,exit_code:int} */
+function approval_wait_for_process($process, array $pipes, float $timeoutSeconds): array
+{
+    $deadline = microtime(true) + $timeoutSeconds;
+    $lastStatus = proc_get_status($process);
+    while (($lastStatus['running'] ?? false) && microtime(true) < $deadline) {
+        usleep(20_000);
+        $lastStatus = proc_get_status($process);
+    }
+    if ($lastStatus['running'] ?? false) {
+        proc_terminate($process);
+        throw new RuntimeException('Activation worker did not finish after the competing update committed');
+    }
+
+    $stdout = stream_get_contents($pipes[1]);
+    $stderr = stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    $closeCode = proc_close($process);
+    $exitCode = (int)($lastStatus['exitcode'] ?? $closeCode);
+
+    return ['stdout' => trim($stdout), 'stderr' => trim($stderr), 'exit_code' => $exitCode];
+}
+
+function approval_cleanup_concurrency_fixture(string $companyId, string $versionId, array $employeeIds): void
+{
+    $activityIds = $versionId === '' ? [] : array_map(
+        'strval',
+        Db::name('qms_responsibility_activities')->where('chain_version_id', $versionId)->column('id')
+    );
+    $responsibilityIds = $activityIds === [] ? [] : array_map(
+        'strval',
+        Db::name('qms_activity_responsibilities')->whereIn('activity_id', $activityIds)->column('id')
+    );
+
+    if ($versionId !== '') {
+        Db::name('employee_appointments')->where('source_chain_version_id', $versionId)->delete();
+        Db::name('qms_responsibility_approvals')->where('chain_version_id', $versionId)->delete();
+    }
+    if ($employeeIds !== []) {
+        Db::name('employee_appointments')->where('company_id', $companyId)->whereIn('employee_id', $employeeIds)->delete();
+        Db::name('qms_responsibility_approvals')->where('company_id', $companyId)
+            ->where(function ($query) use ($employeeIds): void {
+                $query->whereIn('subject_employee_id', $employeeIds)->whereOr('approver_employee_id', 'in', $employeeIds);
+            })->delete();
+    }
+    if ($responsibilityIds !== []) {
+        Db::name('qms_responsibility_assignments')->whereIn('responsibility_id', $responsibilityIds)->delete();
+        Db::name('qms_activity_responsibilities')->whereIn('id', $responsibilityIds)->delete();
+    }
+    if ($activityIds !== []) {
+        Db::name('qms_responsibility_activities')->whereIn('id', $activityIds)->delete();
+    }
+    if ($versionId !== '') {
+        Db::name('qms_responsibility_chain_versions')->where('id', $versionId)->delete();
+    }
+    if ($employeeIds !== []) {
+        $userIds = array_map('strval', Db::name('users')->whereIn('employee_id', $employeeIds)->column('id'));
+        if ($userIds !== []) {
+            Db::name('user_sessions')->whereIn('user_id', $userIds)->delete();
+            Db::name('users')->whereIn('id', $userIds)->delete();
+        }
+        Db::name('competency_records')->whereIn('employee_id', $employeeIds)->delete();
+        Db::name('employee_certificates')->whereIn('employee_id', $employeeIds)->delete();
+        Db::name('employees')->whereIn('id', $employeeIds)->delete();
+    }
+}
+
 catalog_in_transaction(function (): void {
     $companyId = catalog_company_id();
     $admin = approval_employee($companyId, 'ADMIN', true, 'admin');
@@ -473,8 +557,18 @@ catalog_in_transaction(function (): void {
     );
     Db::name('qms_responsibility_approvals')->where('id', $fakeApprovalId)->delete();
 
+    $gmSignedMetadata = json_decode(
+        (string)Db::name('qms_responsibility_approvals')
+            ->where('id', (string)$gmBatch['items'][0]['approval_id'])
+            ->value('signature_metadata'),
+        true
+    );
+    Db::name('user_sessions')->where('id', (string)$gmSignedMetadata['session_id'])->update([
+        'end_time' => date('Y-m-d H:i:s'),
+    ]);
+
     QmsResponsibilityApprovalService::approveBatch((string)$directorBatch['batch_key'], 'approved', '主任批准');
-    catalog_assert(QmsResponsibilityApprovalService::versionStatus($versionId) === 'effective', 'Last approval activates the version');
+    catalog_assert(QmsResponsibilityApprovalService::versionStatus($versionId) === 'effective', 'A historically valid GM signature remains valid after its session ends');
     $versionAssignmentCount = count(QmsResponsibilityDraftService::versionDetail($versionId)['assignments']);
     catalog_assert(
         (int)Db::name('qms_responsibility_assignments')->alias('ra')
@@ -668,5 +762,139 @@ catalog_in_transaction(function (): void {
     catalog_assert(Db::name('employee_appointments')->where('id', $legacyId)->value('status') === 'active', 'Supersession never revokes unrelated legacy appointments');
     catalog_assert((int)Db::name('employee_appointments')->where('source_kind', 'corporate_evidence')->where('status', 'active')->count() === 1, 'Corporate identity remains active after supersession');
 });
+
+// Two real database connections prove that a concurrent evidence update and final activation serialize.
+$companyId = catalog_company_id();
+$employeesBefore = array_map('strval', Db::name('employees')->where('company_id', $companyId)->column('id'));
+$concurrencyVersionId = '';
+$concurrencyEmployeeIds = [];
+$competingConnection = null;
+$worker = null;
+$workerPipes = [];
+$readyPath = sys_get_temp_dir() . '/qms-activation-' . str_replace('-', '', qms_uuid()) . '.ready';
+$concurrencyFailure = null;
+try {
+    $admin = approval_employee($companyId, 'CONCURRENT-ADMIN', true, 'admin');
+    $qualityManager = approval_employee($companyId, 'CONCURRENT-QM', true, 'quality_manager');
+    $gm = approval_employee($companyId, 'CONCURRENT-GM', true, 'staff');
+    $director = approval_employee($companyId, 'CONCURRENT-DIRECTOR', true, 'staff');
+
+    approval_session($admin['user']);
+    QmsResponsibilityApprovalService::registerCorporateIdentity([
+        'position_code' => 'company_general_manager',
+        'employee_id' => (string)$gm['employee']['id'],
+        'appointed_at' => date('Y-m-d'),
+        'source_document_number' => 'CONCURRENT-CORP-' . substr(qms_uuid(), 0, 8),
+        'source_excerpt' => '并发生效测试公司治理证据',
+    ]);
+    $bootstrap = QmsResponsibilityApprovalService::requestLabDirectorAppointment(
+        (string)$director['employee']['id'],
+        date('Y-m-d')
+    );
+    approval_session($gm['user']);
+    QmsResponsibilityApprovalService::approveBootstrap((string)$bootstrap['id'], 'approved', '并发测试主任任命');
+
+    $prepared = approval_prepare_version(
+        $companyId,
+        (string)$gm['employee']['id'],
+        (string)$director['employee']['id']
+    );
+    $concurrencyVersionId = (string)$prepared['version']['id'];
+    approval_session($qualityManager['user']);
+    QmsResponsibilityApprovalService::submitVersion($concurrencyVersionId);
+    $gmBatch = approval_pending_for($concurrencyVersionId, (string)$gm['employee']['id']);
+    $directorBatch = approval_pending_for($concurrencyVersionId, (string)$director['employee']['id']);
+    approval_session($gm['user']);
+    QmsResponsibilityApprovalService::approveBatch((string)$gmBatch['batch_key'], 'approved', '并发测试总经理批准');
+    approval_session($director['user']);
+    $directorSession = Session::get('user');
+    approval_concurrency_assert(is_array($directorSession), 'Director session payload is available to the worker');
+
+    $targetEmployeeId = (string)($directorBatch['items'][0]['employee_id'] ?? '');
+    approval_concurrency_assert($targetEmployeeId !== '', 'Concurrency fixture has an assignment employee to invalidate');
+    $concurrencyEmployeeIds = array_values(array_diff(
+        array_map('strval', Db::name('employees')->where('company_id', $companyId)->column('id')),
+        $employeesBefore
+    ));
+
+    $dbHost = (string)(getenv('DB_HOST') ?: 'db');
+    $dbPort = (string)(getenv('DB_PORT') ?: '3306');
+    $dbName = (string)(getenv('DB_NAME') ?: 'jewelry_qms');
+    $dbUser = (string)(getenv('DB_USER') ?: 'root');
+    $dbPass = (string)(getenv('DB_PASS') ?: '');
+    $competingConnection = new PDO(
+        "mysql:host={$dbHost};port={$dbPort};dbname={$dbName};charset=utf8mb4",
+        $dbUser,
+        $dbPass,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+    $competingConnection->beginTransaction();
+    $update = $competingConnection->prepare('UPDATE employees SET publish = 0 WHERE id = ?');
+    $update->execute([$targetEmployeeId]);
+    approval_concurrency_assert($update->rowCount() === 1, 'Competing connection holds an uncommitted employee invalidation');
+
+    $command = [
+        PHP_BINARY,
+        __DIR__ . '/support/qms_responsibility_activation_worker.php',
+        $readyPath,
+        base64_encode(json_encode($directorSession, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)),
+        (string)$directorBatch['batch_key'],
+    ];
+    $worker = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $workerPipes);
+    approval_concurrency_assert(is_resource($worker), 'Activation worker process starts');
+    approval_wait_for_file($readyPath, 5.0);
+    usleep(750_000);
+    $blockedStatus = proc_get_status($worker);
+    approval_concurrency_assert(
+        (bool)($blockedStatus['running'] ?? false),
+        'Final activation waits for the in-flight employee evidence update'
+    );
+
+    $competingConnection->commit();
+    $workerResult = approval_wait_for_process($worker, $workerPipes, 10.0);
+    $worker = null;
+    $workerPipes = [];
+    approval_concurrency_assert($workerResult['exit_code'] === 0, 'Activation worker exits cleanly: ' . $workerResult['stderr']);
+    $workerPayload = json_decode($workerResult['stdout'], true, 512, JSON_THROW_ON_ERROR);
+    approval_concurrency_assert(
+        ($workerPayload['result'] ?? '') === 'blocked',
+        'Activation reruns validation after the lock and rejects the newly invalid employee'
+    );
+    approval_concurrency_assert(
+        QmsResponsibilityApprovalService::versionStatus($concurrencyVersionId) === 'pending_approval',
+        'Rejected stale activation leaves the version pending approval'
+    );
+    approval_concurrency_assert(
+        (int)Db::name('qms_responsibility_approvals')
+            ->where('batch_key', (string)$directorBatch['batch_key'])
+            ->where('decision', 'pending')->where('soft_delete', 0)->count() === count($directorBatch['items']),
+        'Rejected stale activation rolls the final batch back to pending'
+    );
+    approval_concurrency_assert(
+        (int)Db::name('employee_appointments')->where('source_chain_version_id', $concurrencyVersionId)->count() === 0,
+        'Rejected stale activation generates no appointments'
+    );
+} catch (Throwable $exception) {
+    $concurrencyFailure = $exception;
+} finally {
+    if ($competingConnection instanceof PDO && $competingConnection->inTransaction()) {
+        $competingConnection->rollBack();
+    }
+    if (is_resource($worker)) {
+        proc_terminate($worker);
+        foreach ($workerPipes as $pipe) {
+            if (is_resource($pipe)) {
+                fclose($pipe);
+            }
+        }
+        proc_close($worker);
+    }
+    @unlink($readyPath);
+    approval_cleanup_concurrency_fixture($companyId, $concurrencyVersionId, $concurrencyEmployeeIds);
+}
+if ($concurrencyFailure instanceof Throwable) {
+    fwrite(STDERR, $concurrencyFailure->getMessage() . PHP_EOL);
+    exit(1);
+}
 
 echo "qms responsibility approval smoke: OK\n";

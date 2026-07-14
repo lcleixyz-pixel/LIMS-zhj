@@ -20,18 +20,22 @@ final class QmsResponsibilityValidationService
         }
 
         $companyId = (string)Config::get('qms.company_id');
-        $version = Db::name('qms_responsibility_chain_versions')
+        $lockingRead = $mode === 'activation';
+        $versionQuery = Db::name('qms_responsibility_chain_versions')
             ->where('id', $versionId)
             ->where('company_id', $companyId)
             ->where('publish', 1)
-            ->where('soft_delete', 0)
-            ->find();
+            ->where('soft_delete', 0);
+        if ($lockingRead) {
+            $versionQuery->lock(true);
+        }
+        $version = $versionQuery->find();
         if (!$version) {
             throw new DomainException('责任链版本不存在、未发布或不属于当前公司。');
         }
 
-        $responsibilities = self::responsibilities($versionId, $companyId);
-        $assignmentsByResponsibility = self::assignmentsByResponsibility($responsibilities, $companyId);
+        $responsibilities = self::responsibilities($versionId, $companyId, $lockingRead);
+        $assignmentsByResponsibility = self::assignmentsByResponsibility($responsibilities, $companyId, $lockingRead);
         $severity = $mode === 'activation' ? 'blocker' : 'warning';
         $issues = [];
 
@@ -72,12 +76,13 @@ final class QmsResponsibilityValidationService
                     $responsibility,
                     $assignment,
                     $severity,
+                    $lockingRead,
                     $issues
                 );
             }
         }
 
-        $owners = self::approvalOwners($companyId);
+        $owners = self::approvalOwners($companyId, $lockingRead);
         if ($owners['company_general_manager'] === []) {
             $issues[] = self::issue(
                 'company_general_manager_identity_missing',
@@ -139,9 +144,9 @@ final class QmsResponsibilityValidationService
         ];
     }
 
-    private static function responsibilities(string $versionId, string $companyId): array
+    private static function responsibilities(string $versionId, string $companyId, bool $lockingRead): array
     {
-        $rows = Db::name('qms_activity_responsibilities')
+        $query = Db::name('qms_activity_responsibilities')
             ->alias('r')
             ->join('qms_responsibility_activities a', 'a.id = r.activity_id AND a.company_id = r.company_id')
             ->leftJoin('qms_positions p', 'p.id = r.fixed_position_id AND p.company_id = r.company_id AND p.publish = 1 AND p.soft_delete = 0')
@@ -153,9 +158,11 @@ final class QmsResponsibilityValidationService
             ->where('r.publish', 1)
             ->where('r.soft_delete', 0)
             ->field('r.*,a.activity_code,a.sort_order activity_sort_order,p.code fixed_position_code')
-            ->order('a.sort_order,r.sort_order,r.step_code,r.id')
-            ->select()
-            ->toArray();
+            ->order('a.sort_order,r.sort_order,r.step_code,r.id');
+        if ($lockingRead) {
+            $query->lock(true);
+        }
+        $rows = $query->select()->toArray();
 
         foreach ($rows as &$row) {
             $row['eligibility_rule'] = self::decodeJson($row['eligibility_rule'] ?? null);
@@ -166,7 +173,11 @@ final class QmsResponsibilityValidationService
         return $rows;
     }
 
-    private static function assignmentsByResponsibility(array $responsibilities, string $companyId): array
+    private static function assignmentsByResponsibility(
+        array $responsibilities,
+        string $companyId,
+        bool $lockingRead
+    ): array
     {
         $responsibilityIds = array_values(array_filter(array_map(
             static fn (array $responsibility): string => (string)($responsibility['id'] ?? ''),
@@ -176,15 +187,17 @@ final class QmsResponsibilityValidationService
             return [];
         }
 
-        $rows = Db::name('qms_responsibility_assignments')
+        $query = Db::name('qms_responsibility_assignments')
             ->whereIn('responsibility_id', $responsibilityIds)
             ->where('company_id', $companyId)
             ->whereIn('status', self::CURRENT_ASSIGNMENT_STATUSES)
             ->where('publish', 1)
             ->where('soft_delete', 0)
-            ->order('responsibility_id,employee_id,site_scope_key,id')
-            ->select()
-            ->toArray();
+            ->order('responsibility_id,employee_id,site_scope_key,id');
+        if ($lockingRead) {
+            $query->lock(true);
+        }
+        $rows = $query->select()->toArray();
 
         $grouped = [];
         foreach ($rows as $row) {
@@ -200,15 +213,19 @@ final class QmsResponsibilityValidationService
         array $responsibility,
         array $assignment,
         string $severity,
+        bool $lockingRead,
         array &$issues
     ): void {
         $employeeId = (string)$assignment['employee_id'];
-        $employee = Db::name('employees')
+        $employeeQuery = Db::name('employees')
             ->where('id', $employeeId)
             ->where('company_id', $companyId)
             ->where('publish', 1)
-            ->where('soft_delete', 0)
-            ->find();
+            ->where('soft_delete', 0);
+        if ($lockingRead) {
+            $employeeQuery->lock(true);
+        }
+        $employee = $employeeQuery->find();
         if (!$employee) {
             $issues[] = self::issue(
                 'employee_inactive',
@@ -219,7 +236,7 @@ final class QmsResponsibilityValidationService
             );
         }
 
-        if (!self::siteMatches($companyId, $employee, $assignment)) {
+        if (!self::siteMatches($companyId, $employee, $assignment, $lockingRead)) {
             $issues[] = self::issue(
                 'site_mismatch',
                 $severity,
@@ -274,7 +291,8 @@ final class QmsResponsibilityValidationService
             $companyId,
             $employeeId,
             $competencyIds,
-            $certificateIds
+            $certificateIds,
+            $lockingRead
         )) {
             $issues[] = self::issue(
                 'competence_evidence_not_found',
@@ -286,7 +304,12 @@ final class QmsResponsibilityValidationService
         }
     }
 
-    private static function siteMatches(string $companyId, ?array $employee, array $assignment): bool
+    private static function siteMatches(
+        string $companyId,
+        ?array $employee,
+        array $assignment,
+        bool $lockingRead
+    ): bool
     {
         $siteId = trim((string)($assignment['site_id'] ?? ''));
         $siteScopeKey = trim((string)($assignment['site_scope_key'] ?? ''));
@@ -297,13 +320,16 @@ final class QmsResponsibilityValidationService
             return false;
         }
 
-        $site = Db::name('sites')
+        $siteQuery = Db::name('sites')
             ->where('id', $siteId)
             ->where('company_id', $companyId)
             ->where('status', 'active')
             ->where('publish', 1)
-            ->where('soft_delete', 0)
-            ->find();
+            ->where('soft_delete', 0);
+        if ($lockingRead) {
+            $siteQuery->lock(true);
+        }
+        $site = $siteQuery->find();
         if (!$site) {
             return false;
         }
@@ -349,11 +375,12 @@ final class QmsResponsibilityValidationService
         string $companyId,
         string $employeeId,
         array $competencyIds,
-        array $certificateIds
+        array $certificateIds,
+        bool $lockingRead
     ): bool {
         $today = date('Y-m-d');
         if ($competencyIds !== []) {
-            $validCompetencyIds = Db::name('competency_records')
+            $competencyQuery = Db::name('competency_records')
                 ->whereIn('id', $competencyIds)
                 ->where('company_id', $companyId)
                 ->where('employee_id', $employeeId)
@@ -362,8 +389,11 @@ final class QmsResponsibilityValidationService
                 ->where('soft_delete', 0)
                 ->where(static function ($query) use ($today): void {
                     $query->whereNull('valid_until')->whereOr('valid_until', '>=', $today);
-                })
-                ->column('id');
+                });
+            if ($lockingRead) {
+                $competencyQuery->lock(true);
+            }
+            $validCompetencyIds = $competencyQuery->column('id');
             if (array_values(array_unique(array_map('strval', $validCompetencyIds))) !== $competencyIds) {
                 $validSet = array_fill_keys(array_map('strval', $validCompetencyIds), true);
                 foreach ($competencyIds as $id) {
@@ -375,7 +405,7 @@ final class QmsResponsibilityValidationService
         }
 
         if ($certificateIds !== []) {
-            $validCertificateIds = Db::name('employee_certificates')
+            $certificateQuery = Db::name('employee_certificates')
                 ->whereIn('id', $certificateIds)
                 ->where('company_id', $companyId)
                 ->where('employee_id', $employeeId)
@@ -384,8 +414,11 @@ final class QmsResponsibilityValidationService
                 ->where('soft_delete', 0)
                 ->where(static function ($query) use ($today): void {
                     $query->whereNull('valid_until')->whereOr('valid_until', '>=', $today);
-                })
-                ->column('id');
+                });
+            if ($lockingRead) {
+                $certificateQuery->lock(true);
+            }
+            $validCertificateIds = $certificateQuery->column('id');
             $validSet = array_fill_keys(array_map('strval', $validCertificateIds), true);
             foreach ($certificateIds as $id) {
                 if (!isset($validSet[$id])) {
@@ -397,10 +430,10 @@ final class QmsResponsibilityValidationService
         return true;
     }
 
-    private static function approvalOwners(string $companyId): array
+    private static function approvalOwners(string $companyId, bool $lockingRead): array
     {
         $today = date('Y-m-d');
-        $appointments = Db::name('employee_appointments')
+        $query = Db::name('employee_appointments')
             ->alias('ea')
             ->join('employees e', 'e.id = ea.employee_id AND e.company_id = ea.company_id')
             ->leftJoin(
@@ -421,9 +454,11 @@ final class QmsResponsibilityValidationService
             ->where('e.publish', 1)
             ->where('e.soft_delete', 0)
             ->field('ea.employee_id,ea.source_kind,p.code position_code')
-            ->order('ea.employee_id,ea.id')
-            ->select()
-            ->toArray();
+            ->order('ea.employee_id,ea.id');
+        if ($lockingRead) {
+            $query->lock(true);
+        }
+        $appointments = $query->select()->toArray();
 
         $owners = [
             'company_general_manager' => [],
