@@ -31,6 +31,25 @@ function export_throws(callable $callback, string $message): void
     export_assert(false, $message);
 }
 
+function export_rejects_sensitive_candidate(
+    RegulatoryExportService $service,
+    string $candidateId,
+    string $sensitiveValue,
+    string $message
+): void {
+    try {
+        $service->exportCandidate($candidateId);
+    } catch (Throwable $exception) {
+        export_assert(
+            !str_contains($exception->getMessage(), $sensitiveValue),
+            $message . '（错误信息不得回显敏感值）'
+        );
+        return;
+    }
+
+    export_assert(false, $message);
+}
+
 function export_set_enabled(bool $enabled): void
 {
     $qms = (array)Config::get('qms', []);
@@ -148,6 +167,12 @@ $ids = [
     'hidden' => 'exp-hidden-' . $token,
     'deleted' => 'exp-deleted-' . $token,
     'unsafe_url' => 'exp-url-' . $token,
+    'sensitive_title' => 'exp-s-title-' . $token,
+    'sensitive_summary' => 'exp-s-summary-' . $token,
+    'sensitive_reference' => 'exp-s-ref-' . $token,
+    'sensitive_impact' => 'exp-s-impact-' . $token,
+    'sensitive_rule' => 'exp-s-rule-' . $token,
+    'sensitive_locator' => 'exp-s-locator-' . $token,
 ];
 $failure = null;
 
@@ -163,6 +188,40 @@ try {
     $unsafeUrl['source_url'] = 'http://www.samr.gov.cn/not-https';
     $unsafeUrl['normalized_url'] = 'http://www.samr.gov.cn/not-https';
     Db::name('qms_external_change_candidates')->insert($unsafeUrl);
+
+    $sensitiveValues = [
+        'sensitive_title' => 'Authorization: Bearer eXpoRt-SecRet-ToKen-123456789',
+        'sensitive_summary' => 'Cookie: qms_session=export-cookie-secret',
+        'sensitive_reference' => 'mysql://export_user:db-secret@db.internal/qms',
+        'sensitive_impact' => '13800138000',
+        'sensitive_rule' => '11010519491231002X',
+        'sensitive_locator' => 'password=export-password-secret',
+    ];
+    foreach ($sensitiveValues as $scope => $sensitiveValue) {
+        $candidate = export_candidate($ids[$scope], $companyId);
+        if ($scope === 'sensitive_title') {
+            $candidate['title'] = $sensitiveValue;
+        } elseif ($scope === 'sensitive_summary') {
+            $candidate['evidence_summary'] = $sensitiveValue;
+        } elseif ($scope === 'sensitive_reference') {
+            $references = json_decode((string)$candidate['evidence_refs'], true, flags: JSON_THROW_ON_ERROR);
+            $references[0]['label'] = $sensitiveValue;
+            $candidate['evidence_refs'] = json_encode($references, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        } elseif ($scope === 'sensitive_locator') {
+            $references = json_decode((string)$candidate['evidence_refs'], true, flags: JSON_THROW_ON_ERROR);
+            $references[0]['locator'] = $sensitiveValue;
+            $candidate['evidence_refs'] = json_encode($references, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        } else {
+            $impacts = json_decode((string)$candidate['impact_analysis'], true, flags: JSON_THROW_ON_ERROR);
+            if ($scope === 'sensitive_impact') {
+                $impacts['cma_scope_mark']['evidence'][0]['summary'] = $sensitiveValue;
+            } else {
+                $impacts['cma_scope_mark']['rule_ids'][] = $sensitiveValue;
+            }
+            $candidate['impact_analysis'] = json_encode($impacts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        }
+        Db::name('qms_external_change_candidates')->insert($candidate);
+    }
 
     export_set_enabled(true);
     Session::set('user', ['id' => 'export-admin', 'role' => 'admin']);
@@ -203,6 +262,21 @@ try {
         $service->filename($ids['visible']) === 'candidate-' . $ids['visible'] . '-review-packet-v1.0.json',
         '下载文件名必须按 schema 1.0 固定'
     );
+    export_assert(
+        (string)$packet['candidate']['announcement_number'] === '市场监管总局公告2026年第14号'
+            && (string)$packet['candidate']['published_date'] === '2026-07-01'
+            && (string)$packet['candidate']['effective_date'] === '2026-08-01',
+        '正常公告号和日期不得被敏感内容门禁误杀'
+    );
+
+    foreach ($sensitiveValues as $scope => $sensitiveValue) {
+        export_rejects_sensitive_candidate(
+            $service,
+            $ids[$scope],
+            $sensitiveValue,
+            '最终导出字符串命中敏感内容时必须 fail-closed: ' . $scope
+        );
+    }
 
     $candidateBefore = Db::name('qms_external_change_candidates')->where('id', $ids['visible'])->find();
     $response = export_controller_response($app, $ids['visible']);

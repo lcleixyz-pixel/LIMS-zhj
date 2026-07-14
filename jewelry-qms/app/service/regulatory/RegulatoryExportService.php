@@ -76,7 +76,7 @@ final class RegulatoryExportService
             throw new RuntimeException('法规候选官方来源链接无法安全导出');
         }
 
-        return [
+        $packet = [
             'schema_version' => self::SCHEMA_VERSION,
             'candidate' => [
                 'id' => (string)$candidate['id'],
@@ -114,6 +114,9 @@ final class RegulatoryExportService
                 'reviewed_at' => $this->nullableString($candidate['reviewed_at']),
             ],
         ];
+        $this->assertNoSensitiveContent($packet);
+
+        return $packet;
     }
 
     public function filename(string $candidateId): string
@@ -300,5 +303,79 @@ final class RegulatoryExportService
         }
 
         return $this->nullableString((string)$value);
+    }
+
+    private function assertNoSensitiveContent(mixed $value): void
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                $this->assertNoSensitiveContent($item);
+            }
+            return;
+        }
+        if (!is_string($value)) {
+            return;
+        }
+
+        $credentialPatterns = [
+            '/\bauthorization\s*[:=]\s*(?:(?:bearer|basic|digest)\s+)?\S+/i',
+            '/\bbearer\s+[A-Za-z0-9._~+\/=\-]{8,}/i',
+            '/\b(?:set-cookie|cookie)\s*[:=]\s*\S+/i',
+            '/\b(?:dsn|database_url)\s*[:=]\s*\S+/i',
+            '/\b(?:mysql|postgres(?:ql)?|sqlsrv|oracle|mongodb(?:\+srv)?|redis):(?:\/\/|host=)\S+/i',
+            '/\b(?:server|host)\s*=\s*[^;\s]+\s*;\s*(?:database|dbname)\s*=/i',
+            '/\bpassword\s*[:=]\s*\S+/i',
+        ];
+        foreach ($credentialPatterns as $pattern) {
+            if (preg_match($pattern, $value) === 1) {
+                throw new RuntimeException('法规候选导出内容包含敏感信息');
+            }
+        }
+        if (preg_match('/(?<![A-Za-z0-9])1[3-9]\d{9}(?![A-Za-z0-9])/', $value) === 1
+            || $this->containsChineseIdCard($value)
+        ) {
+            throw new RuntimeException('法规候选导出内容包含敏感信息');
+        }
+    }
+
+    private function containsChineseIdCard(string $value): bool
+    {
+        $matched = preg_match_all(
+            '/(?<![A-Za-z0-9])(\d{17}[0-9Xx])(?![A-Za-z0-9])/',
+            $value,
+            $matches
+        );
+        if (!is_int($matched) || $matched < 1) {
+            return false;
+        }
+
+        foreach ($matches[1] as $candidate) {
+            if ($this->validChineseIdCard((string)$candidate)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function validChineseIdCard(string $candidate): bool
+    {
+        $birthday = \DateTimeImmutable::createFromFormat('!Ymd', substr($candidate, 6, 8));
+        $dateErrors = \DateTimeImmutable::getLastErrors();
+        if ($birthday === false
+            || (is_array($dateErrors) && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
+            || $birthday->format('Ymd') !== substr($candidate, 6, 8)
+        ) {
+            return false;
+        }
+
+        $weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+        $checks = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+        $sum = 0;
+        foreach ($weights as $index => $weight) {
+            $sum += ((int)$candidate[$index]) * $weight;
+        }
+
+        return strtoupper($candidate[17]) === $checks[$sum % 11];
     }
 }
