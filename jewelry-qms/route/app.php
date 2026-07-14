@@ -126,6 +126,7 @@ Route::group(function () {
     Route::get('planning/regulatory-monitor/show', 'PlanningRegulatoryMonitor/show');
     Route::get('planning/regulatory-monitor/export', 'PlanningRegulatoryMonitor/export');
     Route::post('planning/regulatory-monitor/review', 'PlanningRegulatoryMonitor/review');
+    Route::post('planning/regulatory-monitor/promote', 'PlanningRegulatoryMonitor/promote');
     Route::post('planning/regulatory-monitor/run', 'PlanningRegulatoryMonitor/run');
     Route::post('planning/objectives/create-policy', 'PlanningObjective/createPolicy');
     Route::post('planning/objectives/create-objective', 'PlanningObjective/createObjective');

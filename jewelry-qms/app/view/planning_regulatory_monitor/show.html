@@ -6,7 +6,13 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">候选详情</h5>
-        <a href="/planning/regulatory-monitor" class="btn btn-sm btn-outline-secondary">返回候选清单</a>
+        <div class="d-flex gap-2">
+            <a href="/planning/regulatory-monitor/export?id={$record.id}" class="btn btn-sm btn-outline-primary">导出复核 JSON</a>
+            {if $record.promoted_event_id}
+            <a href="/planning/change-events/view?id={$record.promoted_event_id}" class="btn btn-sm btn-success">查看关联变更事件</a>
+            {/if}
+            <a href="/planning/regulatory-monitor" class="btn btn-sm btn-outline-secondary">返回候选清单</a>
+        </div>
     </div>
     <div class="card-body">
         <table class="table table-bordered align-middle">
@@ -74,6 +80,19 @@
                 <textarea name="review_comment" class="form-control" minlength="2" maxlength="1000" required></textarea>
             </div>
             <div class="col-12"><button class="btn btn-primary" type="submit">保存人工复核</button></div>
+        </form>
+    </div>
+</div>
+{/if}
+
+{if $currentRole == 'quality_manager' && $record.review_status == 'confirmed_applicable' && !$record.promoted_event_id}
+<div class="card mt-3 border-warning">
+    <div class="card-header"><h5 class="mb-0">建立正式变更事件</h5></div>
+    <div class="card-body">
+        <p>确认后将该候选<strong>晋升为外部变更事件</strong>。机器初判不会自动形成适用性结论，后续影响评估、文件修订和闭环仍须人工完成。</p>
+        <form method="post" action="/planning/regulatory-monitor/promote">
+            <input type="hidden" name="id" value="{$record.id}">
+            <button class="btn btn-warning" type="submit" onclick="return confirm('确认将该法规候选晋升为外部变更事件？后续仍须人工完成影响评估和修订。')">晋升为外部变更事件</button>
         </form>
     </div>
 </div>

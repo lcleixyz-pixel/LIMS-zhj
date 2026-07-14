@@ -5,9 +5,9 @@ require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../app/common.php';
 
 use app\command\MonitorRegulatoryChanges;
-use app\service\ExternalChangeEventService;
+use app\controller\PlanningRegulatoryMonitor;
+use app\middleware\AuditLog;
 use app\service\regulatory\RegulatoryCandidateReviewService;
-use app\service\regulatory\RegulatoryExportService;
 use app\service\regulatory\RegulatoryMonitorService;
 use think\console\Input;
 use think\console\Output;
@@ -81,6 +81,35 @@ function regulatory_e2e_json(mixed $value, string $field): array
     regulatory_e2e_assert(is_array($decoded), $field . ' 必须解析为数组');
 
     return $decoded;
+}
+
+function regulatory_e2e_promote(think\App $app, string $candidateId): think\Response
+{
+    $request = (new app\Request())
+        ->setMethod('POST')
+        ->setController('PlanningRegulatoryMonitor')
+        ->setAction('promote')
+        ->withPost([
+            'id' => $candidateId,
+            // 伪造字段必须被控制器忽略，actor 只能来自 Session。
+            'actor_id' => 'forged-e2e-actor',
+        ]);
+    $app->instance('request', $request);
+    $controller = new PlanningRegulatoryMonitor($app);
+
+    return (new AuditLog())->handle($request, static fn () => $controller->promote());
+}
+
+function regulatory_e2e_export(think\App $app, string $candidateId): think\Response
+{
+    $request = (new app\Request())
+        ->setMethod('GET')
+        ->setController('PlanningRegulatoryMonitor')
+        ->setAction('export')
+        ->withGet(['id' => $candidateId]);
+    $app->instance('request', $request);
+
+    return (new PlanningRegulatoryMonitor($app))->export();
 }
 
 $app = new think\App();
@@ -212,13 +241,22 @@ try {
     );
     regulatory_e2e_assert((string)$reviewed->review_status === 'confirmed_applicable', '人工复核必须确认为相关');
 
-    $event = ExternalChangeEventService::promoteRegulatoryCandidate($candidateId, $actorId);
-    $eventId = (string)$event->id;
+    $promotionResponse = regulatory_e2e_promote($app, $candidateId);
+    $promotedCandidate = Db::name('qms_external_change_candidates')->where('id', $candidateId)->find();
+    $eventId = trim((string)($promotedCandidate['promoted_event_id'] ?? ''));
     regulatory_e2e_assert($eventId !== '', '复核候选必须晋升为正式外部变更事件');
     $eventIds[] = $eventId;
     regulatory_e2e_assert(
+        (string)$promotionResponse->getHeader('Location') === '/planning/change-events/view?id=' . $eventId,
+        '控制器晋升成功后必须跳转正式事件'
+    );
+    regulatory_e2e_assert(
         Db::name('qms_external_change_events')->where('id', $eventId)->count() === 1,
         '晋升必须仅创建一条正式外部变更事件'
+    );
+    regulatory_e2e_assert(
+        (string)Db::name('qms_external_change_events')->where('id', $eventId)->value('created_by') === $actorId,
+        '控制器晋升 actor 必须来自 Session'
     );
     regulatory_e2e_assert(
         Db::name('histories')
@@ -229,7 +267,8 @@ try {
         '晋升必须仅保留一条成功动作审计'
     );
 
-    $packet = (new RegulatoryExportService())->exportCandidate($candidateId);
+    $exportResponse = regulatory_e2e_export($app, $candidateId);
+    $packet = json_decode($exportResponse->getContent(), true, flags: JSON_THROW_ON_ERROR);
     regulatory_e2e_assert((string)($packet['schema_version'] ?? '') === '1.0', '复核数据包必须是 schema 1.0');
     regulatory_e2e_assert((string)($packet['candidate']['id'] ?? '') === $candidateId, '复核数据包必须指向同一候选');
     regulatory_e2e_assert((string)($packet['review']['status'] ?? '') === 'promoted', '导出必须保留已晋升复核状态');
@@ -258,8 +297,11 @@ try {
         '一单一库条目版本链不得产生重复候选'
     );
 
-    $retriedEvent = ExternalChangeEventService::promoteRegulatoryCandidate($candidateId, $actorId);
-    regulatory_e2e_assert((string)$retriedEvent->id === $eventId, '重复晋升必须返回同一事件');
+    $retryResponse = regulatory_e2e_promote($app, $candidateId);
+    regulatory_e2e_assert(
+        (string)$retryResponse->getHeader('Location') === '/planning/change-events/view?id=' . $eventId,
+        '重复控制器晋升必须返回同一事件'
+    );
     regulatory_e2e_assert(
         Db::name('qms_external_change_events')->where('id', $eventId)->count() === 1,
         '第二次全链路验证不得产生重复事件'
