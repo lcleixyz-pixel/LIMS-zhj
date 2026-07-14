@@ -21,4 +21,19 @@ class EmployeeAppointment extends BaseModel
     {
         return $this->belongsTo(Site::class);
     }
+
+    public function chainVersion()
+    {
+        return $this->belongsTo(QmsResponsibilityChainVersion::class, 'source_chain_version_id');
+    }
+
+    public function responsibility()
+    {
+        return $this->belongsTo(QmsActivityResponsibility::class, 'source_responsibility_id');
+    }
+
+    public function responsibilityApproval()
+    {
+        return $this->belongsTo(QmsResponsibilityApproval::class, 'source_approval_id');
+    }
 }

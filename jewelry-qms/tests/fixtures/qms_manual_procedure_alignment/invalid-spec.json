@@ -1,0 +1,8 @@
+{
+  "pilot_id": "invalid-spec",
+  "manual": {
+    "doc_number": "XZTC/SC",
+    "version": "invalid",
+    "path": "manual-draft.md"
+  }
+}

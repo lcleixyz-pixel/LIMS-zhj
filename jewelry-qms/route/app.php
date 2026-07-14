@@ -125,6 +125,15 @@ Route::group(function () {
     Route::post('planning/objectives/create-policy', 'PlanningObjective/createPolicy');
     Route::post('planning/objectives/create-objective', 'PlanningObjective/createObjective');
     Route::rule('planning/objectives', 'PlanningObjective/index');
+    Route::post('planning/responsibilities/assignments/save', 'PlanningResponsibility/saveAssignment');
+    Route::post('planning/responsibilities/validate', 'PlanningResponsibility/validateVersion');
+    Route::post('planning/responsibilities/submit', 'PlanningResponsibility/submitVersion');
+    Route::post('planning/responsibilities/approve', 'PlanningResponsibility/approve');
+    Route::post('planning/responsibilities/bootstrap/general-manager', 'PlanningResponsibility/registerGeneralManager');
+    Route::post('planning/responsibilities/bootstrap/lab-director', 'PlanningResponsibility/requestLabDirector');
+    Route::get('planning/responsibilities/alignment', 'PlanningResponsibility/alignment');
+    Route::get('planning/responsibilities', 'PlanningResponsibility/index');
+    Route::post('planning/responsibilities', 'PlanningResponsibility/createInitialDraft');
 
     Route::post('approval/approve', 'Approval/approve');
 

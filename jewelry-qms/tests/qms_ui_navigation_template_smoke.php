@@ -63,6 +63,7 @@ assert_true(
 $recordFormReview = (string)file_get_contents($root . '/app/view/record_form_template/review.html');
 $recordFormView = (string)file_get_contents($root . '/app/view/record_form_template/view.html');
 $layoutView = (string)file_get_contents($root . '/app/view/layout/main.html');
+$responsibilityCssPath = $root . '/public/static/css/qms-responsibility.css';
 $recordFormController = (string)file_get_contents($root . '/app/controller/RecordFormTemplate.php');
 $crudBase = (string)file_get_contents($root . '/app/controller/CrudBase.php');
 assert_true(
@@ -77,6 +78,18 @@ assert_true(
     str_contains($layoutView, '填写记录'),
     'Record navigation labels should be business-facing'
 );
+assert_true(is_file($responsibilityCssPath), 'Responsibility workflow stylesheet should exist');
+$responsibilityCss = (string)file_get_contents($responsibilityCssPath);
+assert_true(
+    str_contains($layoutView, '/static/css/qms-responsibility.css'),
+    'Main layout should load the responsibility workflow stylesheet'
+);
+foreach (['.responsibility-workflow', '.responsibility-workflow__steps', '.responsibility-workflow__step', '.responsibility-workflow__auxiliary'] as $selector) {
+    assert_true(
+        str_contains($responsibilityCss, $selector),
+        'Responsibility stylesheet should scope selector ' . $selector
+    );
+}
 assert_true(
     str_contains($recordFormReview . $recordFormView, 'source_file_available'),
     'Record form template pages should show source links only when the physical source file exists'

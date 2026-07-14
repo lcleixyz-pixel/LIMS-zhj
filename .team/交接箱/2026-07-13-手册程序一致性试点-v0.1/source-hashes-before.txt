@@ -1,0 +1,6 @@
+28ecd667478a94d21070f11860f6c8181e7f72d60c80b5e7c5c7744e2729281a  knowledge/internal/manual/XZTC_SC-质量手册_第四版.md
+b39ca25bb5b24639bc498afb571bf8440c43ec1212aa80f5a6b117057d4ebd8f  knowledge/internal/procedures/XZTC_CX-08-2022-文件控制程序.md
+19956f5366b98584394c9cbf0e0006da60fafb5ee835778b77becc970863c2cc  knowledge/internal/procedures/XZTC_CX-19-2022-记录控制程序.md
+7670e38a3b787a60bdf00fb42c728ac55ea3564ef52b180efae03e296cff7308  knowledge/internal/procedures/XZTC_CX-20-2022-内部管理体系审核程序.md
+4772a18abe3e3c3fc3fad4305ad14a11409aad52c6af79b9d8e0c89fd1931645  knowledge/internal/procedures/XZTC_CX-21-2022-管理评审程序.md
+dc0b9a59bc2ab016ee8d1f669ad84f837d7f693e04c8dee3f7bf9a7ebe206fd7  knowledge/internal/procedures/XZTC_CX-32-2022-风险评估控制程序.md

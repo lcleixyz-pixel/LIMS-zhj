@@ -1,0 +1,268 @@
+{
+    "schema_version": "1.0",
+    "generated_at": "2026-07-13 19:54:21",
+    "pilot_id": "manual-procedure-alignment-current-v0.1",
+    "manual": {
+        "doc_number": "XZTC/SC",
+        "version": "第四版现行导出（试点基准）",
+        "path": "/knowledge/internal/manual/XZTC_SC-质量手册_第四版.md",
+        "sha256": "28ecd667478a94d21070f11860f6c8181e7f72d60c80b5e7c5c7744e2729281a"
+    },
+    "procedure_inputs": [
+        {
+            "doc_number": "XZTC/CX-08-2022",
+            "title": "文件控制程序",
+            "version": "2022",
+            "path": "/knowledge/internal/procedures/XZTC_CX-08-2022-文件控制程序.md",
+            "sha256": "b39ca25bb5b24639bc498afb571bf8440c43ec1212aa80f5a6b117057d4ebd8f"
+        },
+        {
+            "doc_number": "XZTC/CX-19-2022",
+            "title": "记录控制程序",
+            "version": "2022",
+            "path": "/knowledge/internal/procedures/XZTC_CX-19-2022-记录控制程序.md",
+            "sha256": "19956f5366b98584394c9cbf0e0006da60fafb5ee835778b77becc970863c2cc"
+        },
+        {
+            "doc_number": "XZTC/CX-20-2022",
+            "title": "内部管理体系审核程序",
+            "version": "2022",
+            "path": "/knowledge/internal/procedures/XZTC_CX-20-2022-内部管理体系审核程序.md",
+            "sha256": "7670e38a3b787a60bdf00fb42c728ac55ea3564ef52b180efae03e296cff7308"
+        },
+        {
+            "doc_number": "XZTC/CX-21-2022",
+            "title": "管理评审程序",
+            "version": "2022",
+            "path": "/knowledge/internal/procedures/XZTC_CX-21-2022-管理评审程序.md",
+            "sha256": "4772a18abe3e3c3fc3fad4305ad14a11409aad52c6af79b9d8e0c89fd1931645"
+        },
+        {
+            "doc_number": "XZTC/CX-32-2022",
+            "title": "风险评估控制程序",
+            "version": "2022",
+            "path": "/knowledge/internal/procedures/XZTC_CX-32-2022-风险评估控制程序.md",
+            "sha256": "dc0b9a59bc2ab016ee8d1f669ad84f837d7f693e04c8dee3f7bf9a7ebe206fd7"
+        }
+    ],
+    "counts": {
+        "consistent": 0,
+        "conflict": 4,
+        "missing": 0,
+        "review_required": 3,
+        "not_applicable": 0
+    },
+    "findings": [
+        {
+            "finding_id": "Y14",
+            "status": "conflict",
+            "severity": "high",
+            "rule": "policy_polarity",
+            "manual_section": "8.3.3.2",
+            "manual_locator": "/knowledge/internal/manual/XZTC_SC-质量手册_第四版.md:1388-1390",
+            "procedure_number": "XZTC/CX-08-2022",
+            "procedure_locator": "/knowledge/internal/procedures/XZTC_CX-08-2022-文件控制程序.md:130",
+            "expected": {
+                "polarity": "allow_with_authorization"
+            },
+            "observed": {
+                "polarity": "prohibit"
+            },
+            "evidence_excerpt": "4.6.3 本公司的管理体系文件不允许进行手写改动，若需对文件进行修改必须提出书面申请，经相关人员审核、批准后由资料管理员将修改内容打印出来，并发放新文件，回收旧文件，修改的内容在《文件修订页》上予以记录。",
+            "suggestion": "统一手册 8.3.3.2 与 CX-08 4.6.3 的文件手写划改规则，并保留授权、日期和签名条件。",
+            "trace_source": "formal_link",
+            "input_hashes": {
+                "manual": "28ecd667478a94d21070f11860f6c8181e7f72d60c80b5e7c5c7744e2729281a",
+                "procedure": "b39ca25bb5b24639bc498afb571bf8440c43ec1212aa80f5a6b117057d4ebd8f"
+            }
+        },
+        {
+            "finding_id": "Y15",
+            "status": "conflict",
+            "severity": "high",
+            "rule": "minimum_duration",
+            "manual_section": "8.4.1.7",
+            "manual_locator": "/knowledge/internal/manual/XZTC_SC-质量手册_第四版.md:1456-1464",
+            "procedure_number": "XZTC/CX-19-2022",
+            "procedure_locator": "/knowledge/internal/procedures/XZTC_CX-19-2022-记录控制程序.md:162",
+            "expected": {
+                "years": 6,
+                "condition": "人员调离或设备停止使用后"
+            },
+            "observed": {
+                "years": 3,
+                "condition": "人员调离或设备停止使用后"
+            },
+            "evidence_excerpt": "人员调离或设备停止使用后，人员或设备技术记录应再保存3年",
+            "suggestion": "将 CX-19 4.5.3.3 的人员或设备停止后保存期限统一为至少 6 年。",
+            "trace_source": "formal_link",
+            "input_hashes": {
+                "manual": "28ecd667478a94d21070f11860f6c8181e7f72d60c80b5e7c5c7744e2729281a",
+                "procedure": "19956f5366b98584394c9cbf0e0006da60fafb5ee835778b77becc970863c2cc"
+            }
+        },
+        {
+            "finding_id": "Y17",
+            "status": "conflict",
+            "severity": "high",
+            "rule": "internal_version_rule",
+            "manual_section": "8.3",
+            "manual_locator": "/knowledge/internal/manual/XZTC_SC-质量手册_第四版.md:1356-1358",
+            "procedure_number": "XZTC/CX-08-2022",
+            "procedure_locator": "/knowledge/internal/procedures/XZTC_CX-08-2022-文件控制程序.md:132,312",
+            "expected": {
+                "consistency": "正文与附录一致"
+            },
+            "observed": {
+                "body": {
+                    "threshold": 5,
+                    "target_version": 3,
+                    "target_revision": 0
+                },
+                "appendix": {
+                    "threshold": 10,
+                    "target_version": 2
+                }
+            },
+            "evidence_excerpt": "正文：修改5次以上或有重大修改需换成第3版第0次；附录：超过第10次时，版本升级为第二版",
+            "suggestion": "统一 CX-08 4.6.4 与附录 3 的换版阈值、目标版次和修订次数表达。",
+            "trace_source": "formal_link",
+            "input_hashes": {
+                "manual": "28ecd667478a94d21070f11860f6c8181e7f72d60c80b5e7c5c7744e2729281a",
+                "procedure": "b39ca25bb5b24639bc498afb571bf8440c43ec1212aa80f5a6b117057d4ebd8f"
+            }
+        },
+        {
+            "finding_id": "Y18",
+            "status": "conflict",
+            "severity": "high",
+            "rule": "record_reference_consistency",
+            "manual_section": "8.9",
+            "manual_locator": "/knowledge/internal/manual/XZTC_SC-质量手册_第四版.md:1584-1586",
+            "procedure_number": "XZTC/CX-21-2022",
+            "procedure_locator": "/knowledge/internal/procedures/XZTC_CX-21-2022-管理评审程序.md:138",
+            "expected": {
+                "record_code_prefix": "XZTC/BG-21-"
+            },
+            "observed": {
+                "missing_from_records": [
+                    "管理评审计划表",
+                    "管理评审报告",
+                    "管理评审验证记录表"
+                ],
+                "unexpected_record_codes": [
+                    "XZTC/BG-20-02",
+                    "XZTC/BG-20-08",
+                    "XZTC/BG-20-06"
+                ],
+                "listed_records": [
+                    "年度内审计划表",
+                    "内部审核日程计划表",
+                    "内部审核检查记录表"
+                ]
+            },
+            "evidence_excerpt": "《年度内审计划表》 XZTC/BG-20-02\n\n《内部审核日程计划表》 XZTC/BG-20-08\n\n《内部审核检查记录表》 XZTC/BG-20-06",
+            "suggestion": "在 CX-21 记录节列出正文实际使用的管理评审表单，并移除误挂的 BG-20 内审表单。",
+            "trace_source": "formal_link",
+            "input_hashes": {
+                "manual": "28ecd667478a94d21070f11860f6c8181e7f72d60c80b5e7c5c7744e2729281a",
+                "procedure": "4772a18abe3e3c3fc3fad4305ad14a11409aad52c6af79b9d8e0c89fd1931645"
+            }
+        },
+        {
+            "finding_id": "Y13-CX20",
+            "status": "review_required",
+            "severity": "high",
+            "rule": "responsibility_chain",
+            "manual_section": "8.8.1",
+            "manual_locator": "/knowledge/internal/manual/XZTC_SC-质量手册_第四版.md:1556-1558",
+            "procedure_number": "XZTC/CX-20-2022",
+            "procedure_locator": "/knowledge/internal/procedures/XZTC_CX-20-2022-内部管理体系审核程序.md:68",
+            "expected": {
+                "role": "质量负责人",
+                "responsibility": "编制/组织"
+            },
+            "observed": {
+                "roles": [
+                    "办公室负责人"
+                ],
+                "unconfirmed_aliases": [
+                    "办公室负责人"
+                ],
+                "activity": "制定年度内部审核计划"
+            },
+            "evidence_excerpt": "办公室负责人每年年初制定年度内部审核计划",
+            "suggestion": "统一手册与 CX-20 中年度内审计划的制定岗位，并区分编制、审核、批准。",
+            "trace_source": "formal_link",
+            "input_hashes": {
+                "manual": "28ecd667478a94d21070f11860f6c8181e7f72d60c80b5e7c5c7744e2729281a",
+                "procedure": "7670e38a3b787a60bdf00fb42c728ac55ea3564ef52b180efae03e296cff7308"
+            }
+        },
+        {
+            "finding_id": "Y13-CX21",
+            "status": "review_required",
+            "severity": "high",
+            "rule": "responsibility_chain",
+            "manual_section": "8.9.1",
+            "manual_locator": "/knowledge/internal/manual/XZTC_SC-质量手册_第四版.md:1586-1588",
+            "procedure_number": "XZTC/CX-21-2022",
+            "procedure_locator": "/knowledge/internal/procedures/XZTC_CX-21-2022-管理评审程序.md:118",
+            "expected": {
+                "role": "实验室主任",
+                "responsibility": "批准/决策"
+            },
+            "observed": {
+                "roles": [
+                    "公司总经理"
+                ],
+                "unconfirmed_aliases": [
+                    "公司总经理"
+                ],
+                "activity": "批准管理评审报告"
+            },
+            "evidence_excerpt": "管理评审报告》经公司总经理批准",
+            "suggestion": "确认公司总经理是否为实验室主任的受控别名，再统一管理评审报告批准岗位。",
+            "trace_source": "formal_link",
+            "input_hashes": {
+                "manual": "28ecd667478a94d21070f11860f6c8181e7f72d60c80b5e7c5c7744e2729281a",
+                "procedure": "4772a18abe3e3c3fc3fad4305ad14a11409aad52c6af79b9d8e0c89fd1931645"
+            }
+        },
+        {
+            "finding_id": "Y13-CX32",
+            "status": "review_required",
+            "severity": "medium",
+            "rule": "responsibility_chain",
+            "manual_section": "8.5",
+            "manual_locator": "/knowledge/internal/manual/XZTC_SC-质量手册_第四版.md:1468-1470",
+            "procedure_number": "XZTC/CX-32-2022",
+            "procedure_locator": "/knowledge/internal/procedures/XZTC_CX-32-2022-风险评估控制程序.md:44",
+            "expected": {
+                "role": null,
+                "responsibility": "批准/决策"
+            },
+            "observed": {
+                "roles": [
+                    "最高管理者",
+                    "质量负责人",
+                    "经理"
+                ],
+                "unconfirmed_aliases": [
+                    "最高管理者",
+                    "经理"
+                ],
+                "activity": "批准风险措施和评估报告"
+            },
+            "evidence_excerpt": "3.2.2负责批准风险预防和控制的措施。；4.4 风险防范措施的批准和实施；4.4.1 最高管理者批准风险评估报告，并由资料管理员进行编号后售空发放给相关人员。；4.6.3 对于风险指数大于等于10的风险，若没有相关程序对其进行要求的，则由质量负责人组织相关人员，制定风险控制计划，填写《风险控制计划》，质量负责人审批通过后，由相关人员按照计划要求实施控制及验证工作，确保风险消除或减小到可接受范围内。；4.7风险防范措施的批准和实施；4.7.1经理批准风险评估报告，并由资料管理员进行编号后受控发放给相关人员；",
+            "suggestion": "确认办公室主任、最高管理者、经理和质量负责人之间的正式风险批准责任边界。",
+            "trace_source": "formal_link",
+            "input_hashes": {
+                "manual": "28ecd667478a94d21070f11860f6c8181e7f72d60c80b5e7c5c7744e2729281a",
+                "procedure": "dc0b9a59bc2ab016ee8d1f669ad84f837d7f693e04c8dee3f7bf9a7ebe206fd7"
+            }
+        }
+    ],
+    "trace_gaps": [],
+    "blockers": []
+}

@@ -3,6 +3,7 @@
 !css/
 !css/qms.css
 !css/qms-copilot.css
+!css/qms-responsibility.css
 !js/
 !js/record-form-editor.js
 !js/record-form-session-keepalive.js

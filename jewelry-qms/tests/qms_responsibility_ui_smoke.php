@@ -1,0 +1,726 @@
+<?php
+declare(strict_types=1);
+
+$root = dirname(__DIR__);
+require __DIR__ . '/support/qms_responsibility_fixture.php';
+
+use app\controller\PlanningResponsibility;
+use app\middleware\AuditLog;
+use app\service\QmsResponsibilityApprovalService;
+use app\service\QmsResponsibilityCatalogService;
+use app\service\QmsResponsibilityDraftService;
+use app\service\QmsResponsibilityValidationService;
+use app\service\RbacService;
+use think\facade\Db;
+use think\facade\Session;
+
+function responsibility_ui_assert(bool $condition, string $message): void
+{
+    if (!$condition) {
+        fwrite(STDERR, $message . PHP_EOL);
+        exit(1);
+    }
+}
+
+function responsibility_ui_contains(string $needle, string $haystack, string $message): void
+{
+    responsibility_ui_assert(str_contains($haystack, $needle), $message . ' (missing: ' . $needle . ')');
+}
+
+$route = (string)file_get_contents($root . '/route/app.php');
+$config = (string)file_get_contents($root . '/config/qms.php');
+$layout = (string)file_get_contents($root . '/app/view/layout/main.html');
+$controllerPath = $root . '/app/controller/PlanningResponsibility.php';
+$viewPath = $root . '/app/view/planning_responsibility/index.html';
+$employeeController = (string)file_get_contents($root . '/app/controller/Employee.php');
+$employeeView = (string)file_get_contents($root . '/app/view/employee/view.html');
+$auditLog = (string)file_get_contents($root . '/app/middleware/AuditLog.php');
+$rbacMiddleware = (string)file_get_contents($root . '/app/middleware/Rbac.php');
+
+responsibility_ui_assert(is_file($controllerPath), 'Responsibility controller exists');
+responsibility_ui_assert(is_file($viewPath), 'Responsibility page exists');
+$controller = (string)file_get_contents($controllerPath);
+$view = (string)file_get_contents($viewPath);
+
+foreach ([
+    'planning/responsibilities',
+    'planning/responsibilities/assignments/save',
+    'planning/responsibilities/validate',
+    'planning/responsibilities/submit',
+    'planning/responsibilities/approve',
+    'planning/responsibilities/bootstrap/general-manager',
+    'planning/responsibilities/bootstrap/lab-director',
+    'planning/responsibilities/alignment',
+] as $path) {
+    responsibility_ui_contains($path, $route, 'Route contains ' . $path);
+}
+$baseResponsibilityPost = strpos($route, "Route::post('planning/responsibilities',");
+responsibility_ui_assert($baseResponsibilityPost !== false, 'Base responsibility POST route exists');
+foreach (['assignments/save', 'validate', 'submit', 'approve', 'bootstrap/general-manager', 'bootstrap/lab-director'] as $specificPath) {
+    $specificPosition = strpos($route, "Route::post('planning/responsibilities/{$specificPath}'");
+    responsibility_ui_assert(
+        $specificPosition !== false && $specificPosition < $baseResponsibilityPost,
+        'Specific responsibility POST route precedes the base draft-creation route: ' . $specificPath
+    );
+}
+
+foreach ([
+    'index', 'createInitialDraft', 'saveAssignment', 'removeAssignment', 'validateVersion',
+    'submitVersion', 'registerGeneralManager', 'requestLabDirector', 'approve', 'alignment',
+] as $method) {
+    responsibility_ui_contains('function ' . $method . '(', $controller, 'Controller exposes ' . $method);
+}
+
+foreach (['定义职责', '配置人员', '校验并签批', '已生效责任链', '岗位尚未绑定人员', '运行时指定'] as $label) {
+    responsibility_ui_contains($label, $view, 'Responsibility page contains ' . $label);
+}
+foreach ([
+    '1. 定义职责',
+    '2. 配置人员',
+    '3. 校验并签批',
+    '4. 查看已生效责任链',
+    '文件对齐（辅助）',
+    '活动总数',
+    '职责总数',
+    '查看技术信息',
+] as $label) {
+    responsibility_ui_contains($label, $view, 'Responsibility workflow contains ' . $label);
+}
+foreach (['status_label', 'duty_type_label', 'responsible_party_label', 'assignment_mode_label'] as $field) {
+    responsibility_ui_contains($field, $view, 'Responsibility page renders presentation field ' . $field);
+}
+responsibility_ui_contains('responsibility-workflow', $view, 'Responsibility page owns a scoped workflow shell');
+responsibility_ui_assert(
+    !str_contains($view, '<strong>链编码：</strong>'),
+    'Chain code is not exposed in the primary summary'
+);
+responsibility_ui_assert(
+    !str_contains($view, '<th>环节</th>'),
+    'Raw step code is not a primary structure column'
+);
+foreach ([
+    '保存后仍是草案，不构成任命',
+    '适用场所',
+    '生效日期',
+    '能力证据',
+    '证书证据',
+    '1. 校验责任结构',
+    '2. 检查签批就绪度',
+    '3. 提交并完成签批',
+    '技术校验信息',
+    '证据详情',
+    '授权依据',
+] as $label) {
+    responsibility_ui_contains($label, $view, 'Responsibility workflow renders ' . $label);
+}
+foreach (['assignment.status_label', 'validationResult.result_label', 'issue.severity_label', 'pendingBatch.approver.position_label', 'approval.approver_position_label', 'approval.decision_label', 'appointment.evidence_label'] as $field) {
+    responsibility_ui_contains($field, $view, 'Responsibility workflow renders presentation field ' . $field);
+}
+responsibility_ui_assert(
+    !str_contains($view, '<p>内容哈希：'),
+    'Content hash is not exposed as primary approval content'
+);
+responsibility_ui_assert(
+    !str_contains($view, '<th>来源版本</th>'),
+    'Raw source version is not a primary effective-appointment column'
+);
+foreach (['文件对齐（辅助核验）', '只读辅助工具', '核验对象', '核验依据', '应承担职责的岗位', '文件中写明的岗位'] as $label) {
+    responsibility_ui_contains($label, $view, 'Alignment helper renders ' . $label);
+}
+responsibility_ui_contains('alignmentData.version.status_label', $view, 'Alignment version renders a Chinese status label');
+responsibility_ui_assert(
+    !str_contains($view, '<th>发现</th>'),
+    'Finding identifier is not a primary alignment column'
+);
+responsibility_ui_assert(
+    !str_contains($view, '<div class="small text-muted">{$finding.status}</div>'),
+    'Raw alignment status is not exposed in the primary result cell'
+);
+foreach (['structure', 'staffing', 'approval', 'effective', 'alignment'] as $mode) {
+    responsibility_ui_contains('view=' . $mode, $view, 'Responsibility page exposes view ' . $mode);
+}
+responsibility_ui_contains("Route::get('planning/responsibilities/alignment'", $route, 'Alignment endpoint remains GET-only');
+foreach ([
+    'QmsResponsibilityAlignmentService::baselineForVersion',
+    'QmsResponsibilityAlignmentService::injectBaseline',
+    'QmsManualProcedureAlignmentService::loadInputs',
+    'QmsManualProcedureTraceService::fromDatabase',
+    'QmsManualProcedureAlignmentService::check',
+] as $readOnlyCall) {
+    responsibility_ui_contains($readOnlyCall, $controller, 'Alignment page uses read-only source: ' . $readOnlyCall);
+}
+responsibility_ui_assert(
+    !str_contains($controller, 'QmsManualProcedureAlignmentReportService'),
+    'Alignment page does not write report files'
+);
+responsibility_ui_assert(!str_contains($view, 'name="apply"'), 'Alignment page exposes no apply action');
+
+responsibility_ui_contains('/planning/responsibilities', $layout, 'Planning navigation links responsibility page');
+responsibility_ui_contains('planningresponsibility', $config, 'All logged-in roles can be granted responsibility-page read access');
+responsibility_ui_contains("['admin', 'quality_manager']", $controller, 'Management writes are explicitly limited');
+responsibility_ui_contains('QmsResponsibilityApprovalService::approve', $controller, 'Business approval delegates to approval service');
+responsibility_ui_contains('planningresponsibility', $rbacMiddleware, 'RBAC leaves business approval to appointment-aware service');
+
+foreach (['createinitialdraft', 'saveassignment', 'removeassignment', 'validateversion', 'submitversion', 'registergeneralmanager', 'requestlabdirector', 'approve'] as $action) {
+    responsibility_ui_contains("'{$action}'", $auditLog, 'Audit log covers ' . $action);
+}
+responsibility_ui_contains("post('operation'", $auditLog, 'Audit log distinguishes remove operation on the shared assignment route');
+foreach (['qms_responsibility_audit', 'outcome=', 'subject_type=', 'subject_key='] as $auditNeedle) {
+    responsibility_ui_contains($auditNeedle, $auditLog . $controller, 'Responsibility audit records outcome and subject: ' . $auditNeedle);
+}
+responsibility_ui_contains('instanceof DomainException', $controller, 'Only domain errors may be shown verbatim');
+responsibility_ui_contains("'操作失败，请联系管理员'", $controller, 'Unexpected errors use a generic message');
+responsibility_ui_contains('Log::error', $controller, 'Unexpected errors are logged server-side');
+
+foreach (['source_kind', 'source_chain_version_id', 'source_responsibility_id', 'source_approval_id'] as $field) {
+    responsibility_ui_contains($field, $employeeController, 'Employee appointment query exposes ' . $field);
+}
+foreach (['来源类型', '责任链版本', '签批证据', 'legacy_document'] as $label) {
+    responsibility_ui_contains($label, $employeeView, 'Employee evidence view contains ' . $label);
+}
+
+Session::set('user.role', 'staff');
+responsibility_ui_assert(RbacService::canAccess('PlanningResponsibility'), 'staff can read responsibility page');
+responsibility_ui_assert(!RbacService::canWrite('PlanningResponsibility'), 'staff receives no generic responsibility write permission');
+Session::set('user.role', 'quality_manager');
+responsibility_ui_assert(RbacService::canWrite('PlanningResponsibility'), 'quality manager can edit responsibility drafts');
+Session::delete('user.role');
+
+$companyId = (string)config('qms.company_id');
+$employeeId = (string)Db::name('employees')->where('company_id', $companyId)->where('soft_delete', 0)->value('id');
+if ($employeeId !== '') {
+    $id = qms_uuid();
+    Db::name('employee_appointments')->insert([
+        'id' => $id,
+        'company_id' => $companyId,
+        'employee_id' => $employeeId,
+        'appointment_key' => 'ui-legacy-default:' . $id,
+        'appointment_type' => 'role',
+        'position_name' => '旧导入兼容测试',
+        'appointed_at' => date('Y-m-d'),
+        'status' => 'active',
+        'publish' => 1,
+        'soft_delete' => 0,
+        'created' => date('Y-m-d H:i:s'),
+        'modified' => date('Y-m-d H:i:s'),
+    ]);
+    responsibility_ui_assert(
+        Db::name('employee_appointments')->where('id', $id)->value('source_kind') === 'legacy_document',
+        'Old-field appointment insert defaults source_kind to legacy_document'
+    );
+    Db::name('employee_appointments')->where('id', $id)->delete();
+}
+
+function responsibility_ui_user(string $companyId, string $label, string $role): array
+{
+    $employeeId = responsibility_fixture_row('employees', [
+        'company_id' => $companyId,
+        'employee_number' => 'UI-' . strtoupper(substr(str_replace('-', '', qms_uuid()), 0, 10)),
+        'name' => '页面审计-' . $label,
+    ]);
+    $userId = responsibility_fixture_row('users', [
+        'company_id' => $companyId,
+        'employee_id' => $employeeId,
+        'username' => 'ui_' . strtolower(substr(str_replace('-', '', qms_uuid()), 0, 12)),
+        'password' => password_hash('test-only', PASSWORD_DEFAULT),
+        'name' => '页面审计用户-' . $label,
+        'role' => $role,
+    ]);
+
+    return [
+        'employee_id' => $employeeId,
+        'user_id' => $userId,
+        'role' => $role,
+    ];
+}
+
+function responsibility_ui_session(array $person, bool $signedSession = false): void
+{
+    $sessionId = 'UI-' . substr(str_replace('-', '', qms_uuid()), 0, 20);
+    if ($signedSession) {
+        Db::name('user_sessions')->insert([
+            'id' => $sessionId,
+            'user_id' => (string)$person['user_id'],
+            'start_time' => date('Y-m-d H:i:s'),
+            'end_time' => null,
+            'ip_address' => '127.0.0.1',
+        ]);
+    }
+    Session::set('user', [
+        'id' => (string)$person['user_id'],
+        'employee_id' => (string)$person['employee_id'],
+        'role' => (string)$person['role'],
+        'session_id' => $sessionId,
+    ]);
+}
+
+function responsibility_ui_run_action(think\App $app, string $action, array $post)
+{
+    $request = (new app\Request())
+        ->setMethod('POST')
+        ->setController('PlanningResponsibility')
+        ->setAction($action)
+        ->withPost($post);
+    $app->instance('request', $request);
+    $controller = new PlanningResponsibility($app);
+
+    return (new AuditLog())->handle($request, static fn () => $controller->{$action}());
+}
+
+function responsibility_ui_history(string $userId, string $action): array
+{
+    $row = Db::name('histories')->where('user_id', $userId)->where('action', $action)->order('created', 'desc')->find();
+    responsibility_ui_assert(is_array($row), 'Audit history exists for ' . $action . ' and ' . $userId);
+
+    return $row;
+}
+
+function responsibility_ui_render_alignment(think\App $app, ?string $versionId, bool $draftPreview): string
+{
+    think\facade\View::layout(false);
+    $get = [
+        'view' => 'alignment',
+        'draft_preview' => $draftPreview ? '1' : '0',
+    ];
+    if ($versionId !== null && $versionId !== '') {
+        $get['version_id'] = $versionId;
+    }
+    $request = (new app\Request())
+        ->setMethod('GET')
+        ->setController('PlanningResponsibility')
+        ->setAction('alignment')
+        ->withGet($get);
+    $app->instance('request', $request);
+    $controller = new PlanningResponsibility($app);
+
+    return (string)$controller->alignment();
+}
+
+function responsibility_ui_render_page(think\App $app, string $versionId, string $viewMode): string
+{
+    $requestSession = $app->make(think\Session::class);
+    $requestSession->init();
+    $request = (new app\Request())
+        ->setMethod('GET')
+        ->setController('PlanningResponsibility')
+        ->setAction('index')
+        ->withSession($requestSession)
+        ->withGet([
+            'view' => $viewMode,
+            'version_id' => $versionId,
+        ]);
+    $app->instance('request', $request);
+    $controller = new PlanningResponsibility($app);
+
+    return (string)$controller->index();
+}
+
+function responsibility_ui_bind_ready_staff(string $companyId, string $versionId, array $gm, array $director): void
+{
+    $detail = QmsResponsibilityDraftService::versionDetail($versionId);
+    $peopleBySlot = [];
+    foreach ($detail['responsibilities'] as $responsibility) {
+        $mode = (string)$responsibility['assignment_mode'];
+        if ($mode !== 'named_person') {
+            continue;
+        }
+
+        $positionCode = (string)($responsibility['fixed_position_code'] ?? '');
+        if ($positionCode === 'company_general_manager') {
+            $person = $gm;
+        } elseif ($positionCode === 'lab_director') {
+            $person = $director;
+        } else {
+            $slot = $positionCode;
+            $peopleBySlot[$slot] ??= responsibility_ui_user($companyId, 'READY-' . count($peopleBySlot), 'staff');
+            $person = $peopleBySlot[$slot];
+        }
+        $competencyId = responsibility_fixture_row('competency_records', [
+            'company_id' => $companyId,
+            'employee_id' => (string)$person['employee_id'],
+            'test_item' => '审计原子性测试资格证据',
+            'assessment_date' => date('Y-m-d'),
+            'result' => 'qualified',
+            'valid_until' => date('Y-m-d', strtotime('+2 years')),
+        ]);
+        QmsResponsibilityDraftService::saveAssignment(
+            (string)$responsibility['id'],
+            (string)$person['employee_id'],
+            null,
+            date('Y-m-d'),
+            null,
+            ['competency_record_ids' => [$competencyId]]
+        );
+    }
+}
+
+catalog_in_transaction(function () use ($app): void {
+    $companyId = catalog_company_id();
+    $admin = responsibility_ui_user($companyId, 'RUNTIME-UX-ADMIN', 'admin');
+    responsibility_ui_session($admin);
+    $draft = QmsResponsibilityCatalogService::createInitialDraft();
+    $versionId = (string)$draft['id'];
+    $detail = QmsResponsibilityDraftService::versionDetail($versionId);
+    $runtimeIds = [];
+    $namedIds = [];
+    foreach ($detail['responsibilities'] as $responsibility) {
+        if ((string)$responsibility['assignment_mode'] === 'named_person') {
+            $namedIds[] = (string)$responsibility['id'];
+        } else {
+            $runtimeIds[] = (string)$responsibility['id'];
+        }
+    }
+    responsibility_ui_assert(count($runtimeIds) === 9, 'Catalog exposes exactly nine runtime slots');
+    responsibility_ui_assert(count($namedIds) === 12, 'Catalog exposes exactly twelve named-person duties');
+
+    $structureHtml = responsibility_ui_render_page($app, $versionId, 'structure');
+    $staffingHtml = responsibility_ui_render_page($app, $versionId, 'staffing');
+    foreach ([$structureHtml, $staffingHtml] as $pageHtml) {
+        responsibility_ui_assert(
+            substr_count($pageHtml, 'data-runtime-slot="1"') === 9,
+            'Rendered responsibility page marks all nine runtime slots'
+        );
+        responsibility_ui_assert(
+            substr_count($pageHtml, 'data-assignment-mode="named_person"') === 12,
+            'Rendered responsibility page marks all twelve named-person duties'
+        );
+        responsibility_ui_contains(
+            '需要在活动发生时指定的人员，仍须在当次活动中登记并核对。',
+            $pageHtml,
+            'Runtime page states the first-version enforcement boundary honestly'
+        );
+        responsibility_ui_contains(
+            '具体内审活动开始前必须登记内审员与被审核工作责任人并检查不得自审',
+            $pageHtml,
+            'Runtime page renders the no-self-audit instruction'
+        );
+        responsibility_ui_contains(
+            '具体风险活动关闭前必须登记执行人与验证人并检查分离',
+            $pageHtml,
+            'Runtime page renders the executor-verifier separation instruction'
+        );
+        responsibility_ui_contains(
+            '需在具体活动或记录中留存当次责任人',
+            $pageHtml,
+            'Runtime page renders the general runtime evidence instruction'
+        );
+    }
+
+    preg_match_all('/<tr data-runtime-slot="1".*?<\/tr>/su', $structureHtml, $structureRows);
+    responsibility_ui_assert(count($structureRows[0]) === 9, 'Structure HTML contains nine runtime rows');
+    foreach ($structureRows[0] as $runtimeRow) {
+        responsibility_ui_contains('badge text-bg-secondary">运行时指定', $runtimeRow, 'Runtime structure row uses the gray status');
+        responsibility_ui_assert(!str_contains($runtimeRow, 'text-bg-warning'), 'Runtime structure row never uses the yellow missing-person status');
+        responsibility_ui_assert(!str_contains($runtimeRow, '岗位尚未绑定人员'), 'Runtime structure row never claims a person is missing');
+    }
+
+    preg_match_all('/<section class="border rounded p-3 mb-2" data-runtime-slot="1".*?<\/section>/su', $staffingHtml, $staffingRuntimeSections);
+    responsibility_ui_assert(count($staffingRuntimeSections[0]) === 9, 'Staffing HTML contains nine runtime sections');
+    foreach ($staffingRuntimeSections[0] as $runtimeSection) {
+        responsibility_ui_contains('badge text-bg-secondary">运行时指定', $runtimeSection, 'Runtime staffing section uses the gray status');
+        responsibility_ui_assert(!str_contains($runtimeSection, 'text-bg-warning'), 'Runtime staffing section never uses the yellow missing-person status');
+        responsibility_ui_assert(!str_contains($runtimeSection, '岗位尚未绑定人员'), 'Runtime staffing section never claims a person is missing');
+        responsibility_ui_assert(!str_contains($runtimeSection, 'action="/planning/responsibilities/assignments/save"'), 'Runtime staffing section renders no permanent-person draft form');
+        responsibility_ui_assert(!str_contains($runtimeSection, '保存人员草案'), 'Runtime staffing section renders no permanent-person save button');
+    }
+    responsibility_ui_assert(
+        substr_count($staffingHtml, 'name="responsibility_id"') === 12,
+        'Only twelve named-person duties render personnel draft forms'
+    );
+
+    foreach (['structure', 'activation'] as $mode) {
+        $validation = QmsResponsibilityValidationService::validateVersion($versionId, $mode);
+        foreach ($validation['issues'] as $issue) {
+            if ((string)$issue['code'] === 'required_assignment_missing') {
+                responsibility_ui_assert(
+                    !in_array((string)$issue['responsibility_id'], $runtimeIds, true),
+                    ucfirst($mode) . ' validation never reports a runtime slot as a missing named person'
+                );
+            }
+        }
+    }
+});
+
+Db::execute('DROP TRIGGER IF EXISTS qms_test_fail_responsibility_history');
+Db::execute(<<<'SQL'
+CREATE TRIGGER qms_test_fail_responsibility_history
+BEFORE INSERT ON histories
+FOR EACH ROW
+BEGIN
+    IF COALESCE(@qms_test_fail_responsibility_history, 0) = 1 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected history insert failure';
+    END IF;
+END
+SQL);
+
+catalog_in_transaction(function () use ($app): void {
+    $companyId = catalog_company_id();
+    $draft = QmsResponsibilityCatalogService::createInitialDraft();
+    $versionId = (string)$draft['id'];
+    $detail = QmsResponsibilityDraftService::versionDetail($versionId);
+    $responsibility = current(array_filter(
+        $detail['responsibilities'],
+        static fn (array $row): bool => (string)$row['assignment_mode'] === 'named_person'
+    ));
+    responsibility_ui_assert(is_array($responsibility), 'Audit test has a named-person responsibility');
+    $responsibilityId = (string)$responsibility['id'];
+
+    $subject = responsibility_ui_user($companyId, 'SUBJECT', 'staff');
+    $staff = responsibility_ui_user($companyId, 'UNAUTHORIZED-SAVE', 'staff');
+    responsibility_ui_session($staff);
+    responsibility_ui_run_action($app, 'saveAssignment', [
+        'version_id' => $versionId,
+        'responsibility_id' => $responsibilityId,
+        'employee_id' => (string)$subject['employee_id'],
+        'proposed_from' => date('Y-m-d'),
+    ]);
+    $staffFailure = responsibility_ui_history((string)$staff['user_id'], 'saveAssignment');
+    responsibility_ui_assert(str_contains((string)$staffFailure['details'], 'outcome=failed'), 'Unauthorized staff save is audited as failed');
+    responsibility_ui_assert((string)$staffFailure['record_id'] === $responsibilityId, 'Unauthorized staff save audit points to responsibility');
+    responsibility_ui_assert(
+        Db::name('histories')->where('user_id', (string)$staff['user_id'])->where('action', 'saveAssignment')->count() === 1,
+        'Unauthorized assignment save creates exactly one failed audit row'
+    );
+
+    $qualityManager = responsibility_ui_user($companyId, 'QUALITY-MANAGER', 'quality_manager');
+    responsibility_ui_session($qualityManager);
+    Db::execute('SET @qms_test_fail_responsibility_history = 1');
+    Session::delete('error');
+    responsibility_ui_run_action($app, 'saveAssignment', [
+        'version_id' => $versionId,
+        'responsibility_id' => $responsibilityId,
+        'employee_id' => (string)$subject['employee_id'],
+        'proposed_from' => date('Y-m-d'),
+    ]);
+    Db::execute('SET @qms_test_fail_responsibility_history = 0');
+    responsibility_ui_assert(
+        !Db::name('qms_responsibility_assignments')
+            ->where('responsibility_id', $responsibilityId)
+            ->where('employee_id', (string)$subject['employee_id'])->find(),
+        'History failure rolls back assignment save'
+    );
+    responsibility_ui_assert(Session::get('error') === '操作失败，请联系管理员', 'History failure is shown as a generic error');
+
+    responsibility_ui_run_action($app, 'saveAssignment', [
+        'version_id' => $versionId,
+        'responsibility_id' => $responsibilityId,
+        'employee_id' => (string)$subject['employee_id'],
+        'proposed_from' => date('Y-m-d'),
+    ]);
+    $savedAssignment = Db::name('qms_responsibility_assignments')
+        ->where('responsibility_id', $responsibilityId)
+        ->where('employee_id', (string)$subject['employee_id'])->find();
+    $saveSuccess = responsibility_ui_history((string)$qualityManager['user_id'], 'saveAssignment');
+    responsibility_ui_assert(str_contains((string)$saveSuccess['details'], 'outcome=success'), 'Successful assignment save is audited as success');
+    responsibility_ui_assert((string)$saveSuccess['record_id'] === (string)$savedAssignment['id'], 'Successful assignment audit points to assignment');
+    responsibility_ui_assert(
+        Db::name('histories')->where('user_id', (string)$qualityManager['user_id'])->where('action', 'saveAssignment')->count() === 1,
+        'Successful assignment save creates exactly one audit row'
+    );
+
+    $unappointed = responsibility_ui_user($companyId, 'UNAPPOINTED-APPROVER', 'staff');
+    responsibility_ui_session($unappointed, true);
+    responsibility_ui_run_action($app, 'approve', [
+        'approval_scope' => 'assignment',
+        'version_id' => $versionId,
+        'batch_key' => hash('sha256', 'no-business-appointment'),
+        'decision' => 'approved',
+    ]);
+    $approvalFailure = responsibility_ui_history((string)$unappointed['user_id'], 'approve');
+    responsibility_ui_assert(str_contains((string)$approvalFailure['details'], 'outcome=failed'), 'Unappointed signer is audited as failed');
+    responsibility_ui_assert((string)$approvalFailure['record_id'] === $versionId, 'Failed batch signature audit points to version');
+
+    $admin = responsibility_ui_user($companyId, 'ADMIN', 'admin');
+    $gm = responsibility_ui_user($companyId, 'GM', 'staff');
+    $director = responsibility_ui_user($companyId, 'DIRECTOR', 'staff');
+    responsibility_ui_session($admin, true);
+    QmsResponsibilityApprovalService::registerCorporateIdentity([
+        'position_code' => 'company_general_manager',
+        'employee_id' => (string)$gm['employee_id'],
+        'source_document_number' => 'UI-GOV-001',
+        'source_excerpt' => '公司既有任职证据',
+        'appointed_at' => date('Y-m-d'),
+    ]);
+    $bootstrap = QmsResponsibilityApprovalService::requestLabDirectorAppointment(
+        (string)$director['employee_id'],
+        date('Y-m-d')
+    );
+    responsibility_ui_session($gm, true);
+    responsibility_ui_run_action($app, 'approve', [
+        'approval_scope' => 'governance_bootstrap',
+        'approval_id' => (string)$bootstrap['id'],
+        'decision' => 'approved',
+        'comments' => '同意任命',
+    ]);
+    $approvalSuccess = responsibility_ui_history((string)$gm['user_id'], 'approve');
+    responsibility_ui_assert(str_contains((string)$approvalSuccess['details'], 'outcome=success'), 'Successful business signature is audited as success');
+    responsibility_ui_assert((string)$approvalSuccess['record_id'] === (string)$bootstrap['id'], 'Successful bootstrap signature audit points to approval');
+
+    $request = (new app\Request())->setMethod('POST')->setController('PlanningResponsibility')->setAction('submitVersion')->withPost(['version_id' => $versionId]);
+    $app->instance('request', $request);
+    $controller = new PlanningResponsibility($app);
+    $failure = new ReflectionMethod($controller, 'failure');
+    Session::delete('error');
+    $failure->invoke($controller, new RuntimeException('internal-secret-detail'), 'approval', $versionId);
+    responsibility_ui_assert(Session::get('error') === '操作失败，请联系管理员', 'Unexpected exception detail is not flashed');
+    responsibility_ui_assert(!str_contains((string)Session::get('error'), 'internal-secret-detail'), 'Internal exception detail is hidden');
+    Session::delete('error');
+    $failure->invoke($controller, new DomainException('可安全展示的业务错误'), 'approval', $versionId);
+    responsibility_ui_assert(Session::get('error') === '可安全展示的业务错误', 'Domain exception remains user-facing');
+});
+
+catalog_in_transaction(function () use ($app): void {
+    $companyId = catalog_company_id();
+    $admin = responsibility_ui_user($companyId, 'ATOMIC-ADMIN', 'admin');
+    $qualityManager = responsibility_ui_user($companyId, 'ATOMIC-QM', 'quality_manager');
+    $gm = responsibility_ui_user($companyId, 'ATOMIC-GM', 'staff');
+    $director = responsibility_ui_user($companyId, 'ATOMIC-DIRECTOR', 'staff');
+
+    responsibility_ui_session($qualityManager, true);
+    $draft = QmsResponsibilityCatalogService::createInitialDraft();
+    $versionId = (string)$draft['id'];
+    responsibility_ui_bind_ready_staff($companyId, $versionId, $gm, $director);
+
+    responsibility_ui_session($admin, true);
+    QmsResponsibilityApprovalService::registerCorporateIdentity([
+        'position_code' => 'company_general_manager',
+        'employee_id' => (string)$gm['employee_id'],
+        'source_document_number' => 'ATOMIC-GOV-001',
+        'source_excerpt' => '审计原子性测试治理证据',
+        'appointed_at' => date('Y-m-d'),
+    ]);
+    $bootstrap = QmsResponsibilityApprovalService::requestLabDirectorAppointment(
+        (string)$director['employee_id'],
+        date('Y-m-d')
+    );
+    responsibility_ui_session($gm, true);
+    QmsResponsibilityApprovalService::approveBootstrap((string)$bootstrap['id'], 'approved', '审计原子性测试批准');
+    responsibility_ui_assert(
+        (QmsResponsibilityValidationService::validateVersion($versionId, 'activation')['can_submit'] ?? false) === true,
+        'Atomic submission fixture can submit'
+    );
+
+    responsibility_ui_session($qualityManager, true);
+    Db::execute('SET @qms_test_fail_responsibility_history = 1');
+    Session::delete('error');
+    responsibility_ui_run_action($app, 'submitVersion', ['version_id' => $versionId]);
+    Db::execute('SET @qms_test_fail_responsibility_history = 0');
+    responsibility_ui_assert(
+        QmsResponsibilityApprovalService::versionStatus($versionId) === 'draft',
+        'History failure rolls back submitted version status'
+    );
+    responsibility_ui_assert(
+        Db::name('qms_responsibility_approvals')->where('chain_version_id', $versionId)->where('soft_delete', 0)->count() === 0,
+        'History failure rolls back submitted approval batches'
+    );
+    responsibility_ui_assert(Session::get('error') === '操作失败，请联系管理员', 'Submit history failure is shown as a generic error');
+
+    responsibility_ui_run_action($app, 'submitVersion', ['version_id' => $versionId]);
+    responsibility_ui_assert(
+        QmsResponsibilityApprovalService::versionStatus($versionId) === 'pending_approval',
+        'Submission succeeds after audit storage recovers'
+    );
+    responsibility_ui_assert(
+        Db::name('histories')->where('user_id', (string)$qualityManager['user_id'])->where('action', 'submitVersion')->count() === 1,
+        'Successful submission creates exactly one audit row'
+    );
+});
+
+Db::execute('SET @qms_test_fail_responsibility_history = 0');
+Db::execute('DROP TRIGGER IF EXISTS qms_test_fail_responsibility_history');
+
+catalog_in_transaction(function () use ($app): void {
+    Session::delete('user');
+    Session::set('user.role', 'staff');
+    $effective = QmsResponsibilityCatalogService::createInitialDraft();
+    $effectiveId = (string)$effective['id'];
+    $contentHash = QmsResponsibilityDraftService::contentHash($effectiveId);
+    Db::name('qms_responsibility_chain_versions')->where('id', $effectiveId)->update([
+        'status' => 'effective',
+        'content_hash' => $contentHash,
+        'effective_at' => date('Y-m-d H:i:s'),
+    ]);
+
+    $beforeRead = [
+        'versions' => (int)Db::name('qms_responsibility_chain_versions')->count(),
+        'activities' => (int)Db::name('qms_responsibility_activities')->count(),
+        'responsibilities' => (int)Db::name('qms_activity_responsibilities')->count(),
+        'assignments' => (int)Db::name('qms_responsibility_assignments')->count(),
+    ];
+    $effectiveHtml = responsibility_ui_render_alignment($app, $effectiveId, false);
+    foreach (['Y13-CX20', 'Y13-CX21', 'Y13-CX32'] as $findingId) {
+        responsibility_ui_contains($findingId, $effectiveHtml, 'Effective alignment HTML renders ' . $findingId);
+    }
+    foreach ([
+        'Y13-CX20' => ['内部审核职责对齐', '存在冲突'],
+        'Y13-CX21' => ['管理评审职责对齐', '存在冲突'],
+        'Y13-CX32' => ['风险管理职责对齐', '需要人工确认'],
+    ] as $findingId => [$findingLabel, $statusLabel]) {
+        responsibility_ui_assert(
+            preg_match(
+                '/' . preg_quote($findingLabel, '/') . '.*?<span class="badge [^"]+">'
+                    . preg_quote($statusLabel, '/') . '<\/span>.*?<code>'
+                    . preg_quote($findingId, '/') . '<\/code>.*?<\/tr>/su',
+                $effectiveHtml
+            ) === 1,
+            $findingId . ' renders its expected status ' . $statusLabel
+        );
+    }
+    foreach (['应承担职责的岗位', '文件中写明的岗位', '检查编号', '岗位编码', '基准校验标识'] as $label) {
+        responsibility_ui_contains($label, $effectiveHtml, 'Alignment HTML exposes evidence field ' . $label);
+    }
+    responsibility_ui_contains('存在冲突', $effectiveHtml, 'Effective alignment HTML renders conflict status');
+    responsibility_ui_contains('需要人工确认', $effectiveHtml, 'Effective alignment HTML renders review-required status');
+
+    $draft = QmsResponsibilityDraftService::cloneEffectiveVersion($effectiveId);
+    $draftId = (string)$draft['id'];
+    responsibility_ui_assert((int)$effective['version_no'] === 1, 'Default-alignment scenario starts with effective v1');
+    responsibility_ui_assert((int)$draft['version_no'] === 2, 'Default-alignment scenario has a newer draft v2');
+
+    $defaultAlignmentHtml = responsibility_ui_render_alignment($app, null, false);
+    responsibility_ui_contains('责任链 v1 · 已生效', $defaultAlignmentHtml, 'Alignment without version_id prefers latest effective version');
+    foreach (['Y13-CX20', 'Y13-CX21', 'Y13-CX32'] as $findingId) {
+        responsibility_ui_contains($findingId, $defaultAlignmentHtml, 'Default effective alignment renders ' . $findingId);
+    }
+    responsibility_ui_assert(
+        !str_contains($defaultAlignmentHtml, '明确预览草案'),
+        'A newer draft is not automatically previewed on the alignment page'
+    );
+
+    $draftBlockedHtml = responsibility_ui_render_alignment($app, $draftId, false);
+    responsibility_ui_contains('明确预览草案', $draftBlockedHtml, 'Draft alignment requires an explicit preview choice');
+    responsibility_ui_assert(
+        !str_contains($draftBlockedHtml, 'Y13-CX20'),
+        'Draft findings are not rendered without explicit preview'
+    );
+
+    $draftPreviewHtml = responsibility_ui_render_alignment($app, $draftId, true);
+    foreach (['Y13-CX20', 'Y13-CX21', 'Y13-CX32'] as $findingId) {
+        responsibility_ui_contains($findingId, $draftPreviewHtml, 'Explicit draft preview renders ' . $findingId);
+    }
+
+    Db::name('qms_responsibility_chain_versions')->where('id', $effectiveId)->update(['status' => 'superseded']);
+    $noEffectiveHtml = responsibility_ui_render_alignment($app, null, false);
+    responsibility_ui_contains('明确预览草案', $noEffectiveHtml, 'Without an effective version alignment falls back to the latest draft');
+    responsibility_ui_assert(
+        !str_contains($noEffectiveHtml, 'Y13-CX20'),
+        'Fallback to a draft still does not automatically enable draft preview'
+    );
+
+    $afterRead = [
+        'versions' => (int)Db::name('qms_responsibility_chain_versions')->count(),
+        'activities' => (int)Db::name('qms_responsibility_activities')->count(),
+        'responsibilities' => (int)Db::name('qms_activity_responsibilities')->count(),
+        'assignments' => (int)Db::name('qms_responsibility_assignments')->count(),
+    ];
+    responsibility_ui_assert(
+        $afterRead['versions'] === $beforeRead['versions'] + 1
+        && $afterRead['activities'] === $beforeRead['activities'] + 3
+        && $afterRead['responsibilities'] === $beforeRead['responsibilities'] + 21
+        && $afterRead['assignments'] === $beforeRead['assignments'],
+        'Alignment GETs add no data beyond the explicitly created draft clone'
+    );
+    Session::delete('user.role');
+});
+
+echo "qms_responsibility_ui_smoke passed\n";

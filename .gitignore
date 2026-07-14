@@ -49,6 +49,9 @@ jewelry-qms/public/uploads/*
 # Node (if any)
 node_modules/
 
+# Local Git worktrees
+.worktrees/
+
 # LIMS-zhj 版权红线与工作副本排除（2026-07-09）
 # 外部文件依据：CNAS/GBT/RBT 标准原文，版权所有，永不入仓（见《项目总体规划》第七条）
 整合/外部文件依据/

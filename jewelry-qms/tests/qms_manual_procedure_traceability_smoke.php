@@ -8,6 +8,7 @@ $app = new think\App();
 $app->initialize();
 
 use app\service\QmsDocumentStructureService;
+use app\service\QmsManualProcedureTraceService;
 use think\facade\Db;
 
 function assert_same($expected, $actual, string $message): void
@@ -79,5 +80,143 @@ $procedureLabels = array_values(array_filter(
     fn (string $label): bool => $label !== ''
 ));
 assert_true(in_array('XZTC/CX-01-2022 人员培训程序', $procedureLabels, true), 'Manual detail rows expose linked procedure labels');
+
+Db::startTrans();
+try {
+    $companyId = (string)config('qms.company_id');
+    $foreignCompanyId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+    $suffix = strtoupper(substr(str_replace('-', '', qms_uuid()), 0, 8));
+    $procedureNumber = 'XZTC/CX-SCOPE-' . $suffix . '-2022';
+    $sectionNumber = '8.8.' . substr($suffix, 0, 4);
+    $elementId = qms_uuid();
+    $now = date('Y-m-d H:i:s');
+
+    $currentDocumentId = qms_uuid();
+    $foreignDocumentId = qms_uuid();
+    foreach ([
+        [$currentDocumentId, $companyId, '当前公司程序'],
+        [$foreignDocumentId, $foreignCompanyId, '外部公司同号程序'],
+    ] as [$documentId, $ownerCompanyId, $title]) {
+        Db::name('documents')->insert([
+            'id' => $documentId,
+            'company_id' => $ownerCompanyId,
+            'level' => 2,
+            'doc_number' => $procedureNumber,
+            'title' => $title,
+            'version' => 'A/0',
+            'status' => 'published',
+            'publish' => 1,
+            'soft_delete' => 0,
+            'created' => $now,
+            'modified' => $now,
+        ]);
+    }
+
+    $currentStructuredId = qms_uuid();
+    $foreignStructuredId = qms_uuid();
+    foreach ([
+        [$currentStructuredId, $companyId, '当前公司质量手册'],
+        [$foreignStructuredId, $foreignCompanyId, '外部公司质量手册'],
+    ] as [$structuredId, $ownerCompanyId, $title]) {
+        Db::name('qms_structured_documents')->insert([
+            'id' => $structuredId,
+            'company_id' => $ownerCompanyId,
+            'document_role' => 'quality_manual',
+            'doc_number' => 'XZTC/SC',
+            'title' => $title,
+            'version' => '第四版',
+            'source_status' => 'current',
+            'status' => 'published',
+            'publish' => 1,
+            'soft_delete' => 0,
+            'created' => $now,
+            'modified' => $now,
+        ]);
+    }
+
+    $currentBlockId = qms_uuid();
+    $foreignBlockId = qms_uuid();
+    foreach ([
+        [$currentBlockId, $companyId, $currentStructuredId, '当前公司手册块'],
+        [$foreignBlockId, $foreignCompanyId, $foreignStructuredId, '外部公司手册块'],
+    ] as [$blockId, $ownerCompanyId, $structuredId, $title]) {
+        Db::name('qms_document_blocks')->insert([
+            'id' => $blockId,
+            'company_id' => $ownerCompanyId,
+            'structured_document_id' => $structuredId,
+            'stable_key' => 'scope-' . $blockId,
+            'section_number' => $sectionNumber,
+            'title' => $title,
+            'block_type' => 'section',
+            'markdown' => $title,
+            'status' => 'effective',
+            'publish' => 1,
+            'soft_delete' => 0,
+            'created' => $now,
+            'modified' => $now,
+        ]);
+    }
+
+    foreach ([
+        [$companyId, $currentBlockId, $currentDocumentId],
+        [$foreignCompanyId, $foreignBlockId, $foreignDocumentId],
+        // Adversarial cross-company rows prove join predicates cannot bridge tenants.
+        [$foreignCompanyId, $currentBlockId, $foreignDocumentId],
+        [$companyId, $currentBlockId, $foreignDocumentId],
+    ] as [$ownerCompanyId, $blockId, $documentId]) {
+        Db::name('qms_document_block_links')->insert([
+            'id' => qms_uuid(),
+            'company_id' => $ownerCompanyId,
+            'block_id' => $blockId,
+            'element_id' => $elementId,
+            'procedure_document_id' => $documentId,
+            'relation_type' => 'supporting',
+            'confidence' => 'high',
+            'publish' => 1,
+            'soft_delete' => 0,
+            'created' => $now,
+            'modified' => $now,
+        ]);
+    }
+
+    foreach ([
+        [$companyId, $currentDocumentId],
+        [$foreignCompanyId, $foreignDocumentId],
+    ] as [$ownerCompanyId, $documentId]) {
+        Db::name('qms_element_documents')->insert([
+            'id' => qms_uuid(),
+            'company_id' => $ownerCompanyId,
+            'element_id' => $elementId,
+            'document_id' => $documentId,
+            'relation_type' => 'primary',
+            'publish' => 1,
+            'soft_delete' => 0,
+            'created' => $now,
+            'modified' => $now,
+        ]);
+    }
+
+    $legacyTrace = QmsManualProcedureTraceService::fromDatabase([$sectionNumber], [$procedureNumber]);
+    assert_same([], $legacyTrace['_blockers'], 'Default trace query ignores same-number published documents from other companies');
+    $legacyCandidates = (array)($legacyTrace[$sectionNumber] ?? []);
+    assert_true($legacyCandidates !== [], 'Default trace query retains current-company formal and element links');
+    foreach ($legacyCandidates as $candidate) {
+        assert_same($currentDocumentId, (string)$candidate['procedure_document_id'], 'Default trace candidates remain in the configured company');
+    }
+    assert_true(!in_array($procedureNumber, $legacyTrace['_unlinked'], true), 'Current-company procedure remains linked');
+
+    $explicitTrace = QmsManualProcedureTraceService::fromDatabase([$sectionNumber], [$procedureNumber], $companyId);
+    assert_same($legacyTrace, $explicitTrace, 'Legacy no-company call remains compatible with the configured company');
+
+    $foreignTrace = QmsManualProcedureTraceService::fromDatabase([$sectionNumber], [$procedureNumber], $foreignCompanyId);
+    assert_same([], $foreignTrace['_blockers'], 'Explicit foreign-company trace is isolated from current-company documents');
+    $foreignCandidates = (array)($foreignTrace[$sectionNumber] ?? []);
+    assert_true($foreignCandidates !== [], 'Explicit foreign-company trace retains its own formal and element links');
+    foreach ($foreignCandidates as $candidate) {
+        assert_same($foreignDocumentId, (string)$candidate['procedure_document_id'], 'Explicit foreign-company trace returns only its own links');
+    }
+} finally {
+    Db::rollback();
+}
 
 echo "qms_manual_procedure_traceability_smoke passed\n";

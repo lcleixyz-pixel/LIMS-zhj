@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "pilot_id": "manual-procedure-alignment-current-v0.1",
+  "manual": {
+    "doc_number": "XZTC/SC",
+    "version": "第四版现行导出（试点基准）",
+    "path": "knowledge/internal/manual/XZTC_SC-质量手册_第四版.md"
+  },
+  "pilot_procedures": [
+    "XZTC/CX-08-2022",
+    "XZTC/CX-19-2022",
+    "XZTC/CX-20-2022",
+    "XZTC/CX-21-2022",
+    "XZTC/CX-32-2022"
+  ],
+  "requirements": [
+    {
+      "id": "Y14",
+      "manual_section": "8.3.3.2",
+      "rule": "policy_polarity",
+      "subject": "管理体系文件",
+      "action": "手写划改",
+      "expected": {"polarity": "allow_with_authorization"},
+      "fallback_targets": ["XZTC/CX-08-2022"],
+      "severity": "high",
+      "suggestion": "统一手册 8.3.3.2 与 CX-08 4.6.3 的文件手写划改规则，并保留授权、日期和签名条件。"
+    },
+    {
+      "id": "Y15",
+      "manual_section": "8.4.1.7",
+      "rule": "minimum_duration",
+      "subject": "人员或设备技术记录",
+      "action": "停止后保存",
+      "expected": {"years": 6, "condition": "人员调离或设备停止使用后"},
+      "fallback_targets": ["XZTC/CX-19-2022"],
+      "severity": "high",
+      "suggestion": "将 CX-19 4.5.3.3 的人员或设备停止后保存期限统一为至少 6 年。"
+    },
+    {
+      "id": "Y17",
+      "manual_section": "8.3",
+      "rule": "internal_version_rule",
+      "subject": "文件版本状态",
+      "action": "修改后升级版本",
+      "expected": {"consistency": "正文与附录一致"},
+      "fallback_targets": ["XZTC/CX-08-2022"],
+      "severity": "high",
+      "suggestion": "统一 CX-08 4.6.4 与附录 3 的换版阈值、目标版次和修订次数表达。"
+    },
+    {
+      "id": "Y18",
+      "manual_section": "8.9",
+      "rule": "record_reference_consistency",
+      "subject": "管理评审记录",
+      "action": "正文引用与记录节列示一致",
+      "expected": {"record_code_prefix": "XZTC/BG-21-"},
+      "fallback_targets": ["XZTC/CX-21-2022"],
+      "severity": "high",
+      "suggestion": "在 CX-21 记录节列出正文实际使用的管理评审表单，并移除误挂的 BG-20 内审表单。"
+    },
+    {
+      "id": "Y13-CX20",
+      "manual_section": "8.8.1",
+      "rule": "responsibility_chain",
+      "subject": "内部审核",
+      "action": "制定年度内部审核计划",
+      "activity": "制定年度内部审核计划",
+      "expected": {"role": "质量负责人", "responsibility": "编制/组织"},
+      "fallback_targets": ["XZTC/CX-20-2022"],
+      "severity": "high",
+      "suggestion": "统一手册与 CX-20 中年度内审计划的制定岗位，并区分编制、审核、批准。"
+    },
+    {
+      "id": "Y13-CX21",
+      "manual_section": "8.9.1",
+      "rule": "responsibility_chain",
+      "subject": "管理评审",
+      "action": "批准管理评审报告",
+      "activity": "批准管理评审报告",
+      "expected": {"role": "实验室主任", "responsibility": "批准/决策"},
+      "fallback_targets": ["XZTC/CX-21-2022"],
+      "severity": "high",
+      "suggestion": "确认公司总经理是否为实验室主任的受控别名，再统一管理评审报告批准岗位。"
+    },
+    {
+      "id": "Y13-CX32",
+      "manual_section": "8.5",
+      "rule": "responsibility_chain",
+      "subject": "风险措施",
+      "action": "批准风险措施和评估报告",
+      "activity": "批准风险措施和评估报告",
+      "expected": {"role": null, "responsibility": "批准/决策"},
+      "fallback_targets": ["XZTC/CX-32-2022"],
+      "severity": "medium",
+      "suggestion": "确认办公室主任、最高管理者、经理和质量负责人之间的正式风险批准责任边界。"
+    }
+  ]
+}
