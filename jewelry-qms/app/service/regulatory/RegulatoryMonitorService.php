@@ -144,21 +144,27 @@ final class RegulatoryMonitorService
                             throw new RuntimeException('来源适配器返回了无效候选条目');
                         }
                         if ($since !== null) {
-                            $publishedDate = trim((string)($item['published_date'] ?? ''));
-                            if ($publishedDate !== '' && preg_match('/\A\d{4}-\d{2}-\d{2}\z/D', $publishedDate) === 1) {
-                                if (strcmp($publishedDate, $since) < 0) {
-                                    $sourceResult['filter_skipped_count']++;
-                                    continue;
-                                }
-                            } else {
+                            $observedPublishedDate = $item['published_date']
+                                ?? $item['evidence']['observed_published_date']
+                                ?? null;
+                            $disposition = $this->sinceDisposition($observedPublishedDate, $since);
+                            if ($disposition === 'filtered_before_since') {
+                                $sourceResult['filter_skipped_count']++;
+                                continue;
+                            }
+                            if ($disposition === 'included_missing_date_manual_confirmation') {
                                 $sourceResult['missing_published_date_count']++;
                                 $sourceResult['requires_manual_verification'] = true;
-                                $sourceResult['message'] = '已保留无发布日期条目，需人工确认 since 边界';
+                                $sourceResult['message'] = '已保留发布日期缺失或非法的条目，需人工确认 since 边界';
                                 $item['monitor_filter'] = [
                                     'since' => $since,
                                     'disposition' => 'included_missing_date_manual_confirmation',
                                     'reason' => 'published_date_missing_or_invalid',
+                                    'observed_published_date' => trim((string)$observedPublishedDate) !== ''
+                                        ? trim((string)$observedPublishedDate)
+                                        : null,
                                 ];
+                                $item['published_date'] = null;
                             }
                         }
                         $sourceResult['processed_count']++;
@@ -174,6 +180,9 @@ final class RegulatoryMonitorService
                         $sourceResult['candidate_new_count'] += (int)$recorded['new_count'];
                         $sourceResult['candidate_existing_count'] += (int)$recorded['existing_count'];
                     } catch (Throwable $itemException) {
+                        if ($itemException instanceof RegulatoryTransactionAbortedException) {
+                            throw $itemException;
+                        }
                         if (!$countedAsProcessed) {
                             $sourceResult['processed_count']++;
                         }
@@ -195,6 +204,9 @@ final class RegulatoryMonitorService
                     $sourceResult['status'] = 'success';
                 }
             } catch (Throwable $exception) {
+                if ($exception instanceof RegulatoryTransactionAbortedException) {
+                    throw $exception;
+                }
                 $failureCount++;
                 $sanitized = $this->sanitizeError($exception->getMessage());
                 $sourceResult['error'] = $sanitized;
@@ -297,6 +309,20 @@ final class RegulatoryMonitorService
         }
 
         return $since;
+    }
+
+    private function sinceDisposition(mixed $publishedDate, string $since): string
+    {
+        $publishedDate = trim((string)$publishedDate);
+        if (preg_match('/\A\d{4}-\d{2}-\d{2}\z/D', $publishedDate) !== 1) {
+            return 'included_missing_date_manual_confirmation';
+        }
+        [$year, $month, $day] = array_map('intval', explode('-', $publishedDate));
+        if (!checkdate($month, $day, $year)) {
+            return 'included_missing_date_manual_confirmation';
+        }
+
+        return strcmp($publishedDate, $since) < 0 ? 'filtered_before_since' : 'included';
     }
 
     private function sanitizeError(string $message, int $maximum = self::SOURCE_ERROR_MAX_LENGTH): string

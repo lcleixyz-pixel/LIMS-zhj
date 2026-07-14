@@ -6,6 +6,9 @@ require __DIR__ . '/../app/common.php';
 
 use app\command\MonitorRegulatoryChanges;
 use app\service\NotificationService;
+use app\service\regulatory\RegulatoryCandidateService;
+use app\service\regulatory\RegulatoryMonitorService;
+use app\service\regulatory\RegulatoryTransactionAbortedException;
 use think\console\Input;
 use think\console\Output;
 use think\facade\Db;
@@ -20,9 +23,14 @@ function monitor_assert(bool $condition, string $message): void
 }
 
 /** @return array{0: int, 1: string} */
-function run_monitor_command(think\App $app, array $arguments, ?callable $failureNotifier = null): array
+function run_monitor_command(
+    think\App $app,
+    array $arguments,
+    ?callable $failureNotifier = null,
+    ?callable $serviceFactory = null
+): array
 {
-    $command = new MonitorRegulatoryChanges($failureNotifier);
+    $command = new MonitorRegulatoryChanges($failureNotifier, $serviceFactory);
     $command->setApp($app);
     $output = new Output('buffer');
     $exitCode = $command->run(new Input($arguments), $output);
@@ -74,6 +82,9 @@ function since_fixture_html(string $slug): string
         . '<span class="announcement-number">SINCE-BOUNDARY-' . $slug . '</span></li>'
         . '<li><a href="/fixture/' . $slug . '-undated.html">无发布日期条目</a>'
         . '<span class="announcement-number">SINCE-UNDATED-' . $slug . '</span></li>'
+        . '<li><a href="/fixture/' . $slug . '-invalid-date.html">非法发布日期条目</a>'
+        . '<time datetime="2025-99-99">2025-99-99</time>'
+        . '<span class="announcement-number">SINCE-INVALID-' . $slug . '</span></li>'
         . '</ul></body></html>';
 }
 
@@ -123,6 +134,25 @@ foreach ([
         'Invalid source/since input must fail before creating a run'
     );
 }
+
+$sinceDisposition = new ReflectionMethod(RegulatoryMonitorService::class, 'sinceDisposition');
+$sinceDisposition->setAccessible(true);
+$dispositionService = new RegulatoryMonitorService();
+foreach ([null, '', '2025/01/01', '2025-99-99', '2025-02-29'] as $invalidPublishedDate) {
+    monitor_assert(
+        $sinceDisposition->invoke($dispositionService, $invalidPublishedDate, '2026-01-01')
+            === 'included_missing_date_manual_confirmation',
+        'Empty, malformed and calendar-invalid published dates must be kept for manual confirmation'
+    );
+}
+monitor_assert(
+    $sinceDisposition->invoke($dispositionService, '2025-12-31', '2026-01-01') === 'filtered_before_since',
+    'Valid dates before since must be filtered'
+);
+monitor_assert(
+    $sinceDisposition->invoke($dispositionService, '2026-01-01', '2026-01-01') === 'included',
+    'Valid date equal to since must be included'
+);
 
 $fixtureDir = sys_get_temp_dir() . '/regulatory-command-fixture-' . str_replace('-', '', qms_uuid());
 monitor_assert(mkdir($fixtureDir, 0700), 'Fixture test directory must be created');
@@ -231,10 +261,11 @@ try {
         ->order('title', 'asc')
         ->select()
         ->toArray();
-    monitor_assert(count($sinceCandidates) === 2, 'Since filter must keep the boundary item and undated item only');
+    monitor_assert(count($sinceCandidates) === 3, 'Since filter must keep boundary, undated and invalid-date items');
     $sinceTitles = array_column($sinceCandidates, 'title');
     monitor_assert(in_array('边界日期条目', $sinceTitles, true), 'Since boundary date must be inclusive');
     monitor_assert(in_array('无发布日期条目', $sinceTitles, true), 'Undated item must not be silently dropped');
+    monitor_assert(in_array('非法发布日期条目', $sinceTitles, true), 'Calendar-invalid item must not be silently dropped');
     monitor_assert(!in_array('旧日期条目', $sinceTitles, true), 'Older dated item must be filtered out');
     $undatedCandidate = array_values(array_filter(
         $sinceCandidates,
@@ -244,6 +275,16 @@ try {
     monitor_assert(
         ($undatedEvidence['monitor_filter']['disposition'] ?? null) === 'included_missing_date_manual_confirmation',
         'Undated since item must carry an explicit manual-confirmation disposition'
+    );
+    $invalidCandidate = array_values(array_filter(
+        $sinceCandidates,
+        static fn (array $candidate): bool => $candidate['title'] === '非法发布日期条目'
+    ))[0];
+    $invalidEvidence = json_decode((string)$invalidCandidate['evidence_json'], true, 512, JSON_THROW_ON_ERROR);
+    monitor_assert($invalidCandidate['published_date'] === null, 'Invalid observed date must be stored as null');
+    monitor_assert(
+        ($invalidEvidence['monitor_filter']['observed_published_date'] ?? null) === '2025-99-99',
+        'Invalid observed date must be retained in monitor evidence'
     );
     $sinceResult = json_decode(
         (string)Db::name('qms_regulatory_monitor_runs')->where('id', $sinceRunId)->value('result_json'),
@@ -256,8 +297,8 @@ try {
         'Run result must count items skipped by since'
     );
     monitor_assert(
-        ($sinceResult['sources'][0]['missing_published_date_count'] ?? null) === 1,
-        'Run result must count undated items kept for manual confirmation'
+        ($sinceResult['sources'][0]['missing_published_date_count'] ?? null) === 2,
+        'Run result must count undated and invalid-date items kept for manual confirmation'
     );
 
     cleanup_monitor_run($sinceRunId);
@@ -277,7 +318,7 @@ try {
     monitor_assert($dryExit === 0, 'Successful dry-run must preserve the completed exit code');
     $dryRunId = monitor_run_id($dryOutput);
     monitor_assert(str_contains($dryOutput, 'DRY-RUN'), 'Dry-run output must state that it was not persisted');
-    monitor_assert(str_contains($dryOutput, 'candidates_new: 2'), 'Dry-run must execute actual parsing and candidate rules');
+    monitor_assert(str_contains($dryOutput, 'candidates_new: 3'), 'Dry-run must execute actual parsing and candidate rules');
     monitor_assert(
         Db::name('qms_regulatory_monitor_runs')->count() === $runsBeforeDryRun
         && Db::name('qms_regulatory_monitor_runs')->where('id', $dryRunId)->count() === 0,
@@ -290,6 +331,49 @@ try {
     monitor_assert(
         Db::name('notifications')->count() === $notificationsBeforeDryRun,
         'Dry-run must leave zero notification residue'
+    );
+
+    $runsBeforeAbortedDryRun = Db::name('qms_regulatory_monitor_runs')->count();
+    $candidatesBeforeAbortedDryRun = Db::name('qms_external_change_candidates')->count();
+    $notificationsBeforeAbortedDryRun = Db::name('notifications')->count();
+    $abortingServiceFactory = static function (?callable $sourceFetcher, bool $dryRun): RegulatoryMonitorService {
+        monitor_assert($dryRun, 'Aborted transaction regression must exercise the command dry-run branch');
+        return new RegulatoryMonitorService(
+            sourceFetcher: $sourceFetcher,
+            candidateService: new RegulatoryCandidateService(
+                candidateInserter: static function (): never {
+                    throw new RegulatoryTransactionAbortedException('forced ambient transaction abort');
+                },
+                ownsTransaction: false
+            )
+        );
+    };
+    [$abortedExit, $abortedOutput] = run_monitor_command(
+        $app,
+        [
+            '--source=samr_rkjcs_notice',
+            '--fixture-dir=' . $fixtureDir,
+            '--dry-run',
+        ],
+        null,
+        $abortingServiceFactory
+    );
+    monitor_assert($abortedExit === 1, 'Ambient transaction abort must propagate through monitor to command failure');
+    monitor_assert(
+        str_contains($abortedOutput, '法规监测未能完成'),
+        'Command must report a system failure for an aborted ambient transaction'
+    );
+    monitor_assert(
+        Db::name('qms_regulatory_monitor_runs')->count() === $runsBeforeAbortedDryRun,
+        'Command finally must roll back the monitor run after an ambient transaction abort'
+    );
+    monitor_assert(
+        Db::name('qms_external_change_candidates')->count() === $candidatesBeforeAbortedDryRun,
+        'Command finally must leave zero candidate residue after an ambient transaction abort'
+    );
+    monitor_assert(
+        Db::name('notifications')->count() === $notificationsBeforeAbortedDryRun,
+        'Command must leave zero notification residue after an ambient transaction abort'
     );
 } finally {
     putenv('APP_ENV=test');

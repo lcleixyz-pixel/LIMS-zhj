@@ -25,13 +25,16 @@ final class RegulatoryCandidateService
     private Closure $candidateInserter;
     private Closure $retryBackoff;
     private Closure $impactAnalyzer;
+    private bool $ownsTransaction;
 
     public function __construct(
         ?callable $clock = null,
         ?callable $candidateInserter = null,
         ?callable $retryBackoff = null,
-        RegulatoryImpactService|callable|null $impactService = null
+        RegulatoryImpactService|callable|null $impactService = null,
+        bool $ownsTransaction = true
     ) {
+        $this->ownsTransaction = $ownsTransaction;
         $this->clock = Closure::fromCallable(
             $clock ?? static fn (): DateTimeImmutable => new DateTimeImmutable('now')
         );
@@ -142,21 +145,33 @@ final class RegulatoryCandidateService
             ($this->impactAnalyzer)($normalized, $companyId, substr($seenAt, 0, 10))
         );
 
-        return $this->withDeadlockRetry(
-            fn (): array => Db::transaction(
-                fn (): array => $this->recordInTransaction(
-                    $companyId,
-                    $monitorRunId,
-                    $sourceKey,
-                    $sourceMode,
-                    $normalized,
-                    $sourceItemKey,
-                    $contentHash,
-                    $seenAt,
-                    $impactResult
-                )
-            )
+        $operation = fn (): array => $this->recordInTransaction(
+            $companyId,
+            $monitorRunId,
+            $sourceKey,
+            $sourceMode,
+            $normalized,
+            $sourceItemKey,
+            $contentHash,
+            $seenAt,
+            $impactResult
         );
+        if (!$this->ownsTransaction) {
+            try {
+                return $operation();
+            } catch (Throwable $exception) {
+                if ($this->isDeadlockOrSerializationFailure($exception)) {
+                    throw new RegulatoryTransactionAbortedException(
+                        '法规监测预览事务已中止，未在失效事务上重试',
+                        0,
+                        $exception
+                    );
+                }
+                throw $exception;
+            }
+        }
+
+        return $this->withDeadlockRetry(fn (): array => Db::transaction($operation));
     }
 
     private function recordInTransaction(

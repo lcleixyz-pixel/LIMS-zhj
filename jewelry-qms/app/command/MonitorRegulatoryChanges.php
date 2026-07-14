@@ -6,6 +6,7 @@ namespace app\command;
 use app\service\NotificationService;
 use app\service\regulatory\RegulatorySourceRegistry;
 use app\service\regulatory\RegulatoryMonitorService;
+use app\service\regulatory\RegulatoryCandidateService;
 use Closure;
 use InvalidArgumentException;
 use RuntimeException;
@@ -19,12 +20,14 @@ use think\facade\Log;
 class MonitorRegulatoryChanges extends Command
 {
     private Closure $failureNotifier;
+    private ?Closure $serviceFactory;
 
-    public function __construct(?callable $failureNotifier = null)
+    public function __construct(?callable $failureNotifier = null, ?callable $serviceFactory = null)
     {
         $this->failureNotifier = Closure::fromCallable(
             $failureNotifier ?? [NotificationService::class, 'notifyRegulatoryMonitorFailure']
         );
+        $this->serviceFactory = $serviceFactory !== null ? Closure::fromCallable($serviceFactory) : null;
         parent::__construct();
     }
 
@@ -45,8 +48,18 @@ class MonitorRegulatoryChanges extends Command
             $sourceKeys = $this->sourceKeys($input);
             $since = $this->since($input);
             $fixtureFetcher = $this->fixtureFetcher($input);
-            $service = new RegulatoryMonitorService(sourceFetcher: $fixtureFetcher);
             $dryRun = $input->getOption('dry-run') === true;
+            $service = $this->serviceFactory !== null
+                ? ($this->serviceFactory)($fixtureFetcher, $dryRun)
+                : new RegulatoryMonitorService(
+                    sourceFetcher: $fixtureFetcher,
+                    candidateService: $dryRun
+                        ? new RegulatoryCandidateService(ownsTransaction: false)
+                        : null
+                );
+            if (!$service instanceof RegulatoryMonitorService) {
+                throw new RuntimeException('法规监测服务工厂返回类型无效');
+            }
             if ($dryRun) {
                 Db::startTrans();
                 try {

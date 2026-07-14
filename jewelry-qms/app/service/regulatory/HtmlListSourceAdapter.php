@@ -98,10 +98,13 @@ final class HtmlListSourceAdapter implements RegulatorySourceAdapterInterface
             $node
         )?->item(0);
         $publishedDate = null;
+        $observedPublishedDate = null;
         if ($dateNode instanceof DOMElement && $dateNode->hasAttribute('datetime')) {
-            $publishedDate = $this->normalizeDate($dateNode->getAttribute('datetime'));
+            $observedPublishedDate = $this->normalizedText($dateNode->getAttribute('datetime'));
+            $publishedDate = $this->normalizeDate($observedPublishedDate);
         } elseif ($dateNode instanceof DOMNode) {
-            $publishedDate = $this->normalizeDate($dateNode->textContent);
+            $observedPublishedDate = $this->normalizedText($dateNode->textContent);
+            $publishedDate = $this->normalizeDate($observedPublishedDate);
         }
 
         $numberNode = $xpath->query(
@@ -131,6 +134,7 @@ final class HtmlListSourceAdapter implements RegulatorySourceAdapterInterface
                 'source_key' => (string)($source['key'] ?? ''),
                 'entry_url' => (string)$source['entry_url'],
                 'raw_text' => $rawText,
+                'observed_published_date' => $observedPublishedDate,
             ],
         ];
     }
