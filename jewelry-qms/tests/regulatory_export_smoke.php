@@ -245,6 +245,10 @@ $ids = [
     'smart_cookie' => 'exp-f-cookie-' . $token,
     'safe_json' => 'exp-safe-json-' . $token,
     'deep_json' => 'exp-deep-json-' . $token,
+    'double_encoded' => 'exp-double-json-' . $token,
+    'unicode_prefix' => 'exp-unicode-json-' . $token,
+    'percent_encoded' => 'exp-percent-json-' . $token,
+    'double_safe' => 'exp-double-safe-' . $token,
 ];
 $failure = null;
 
@@ -270,6 +274,9 @@ try {
     $deepJson = export_candidate($ids['deep_json'], $companyId);
     $deepJson['title'] = $deepJsonValue;
     Db::name('qms_external_change_candidates')->insert($deepJson);
+    $doubleSafe = export_candidate($ids['double_safe'], $companyId);
+    $doubleSafe['title'] = '"{\\"notice\\":\\"公告2026年第14号\\",\\"effective_date\\":\\"2026-08-01\\"}"';
+    Db::name('qms_external_change_candidates')->insert($doubleSafe);
 
     $sensitiveCases = [
         'json_password' => ['title', '{"Pass_word":"export-json-password-secret"}'],
@@ -289,6 +296,9 @@ try {
         'phone_country' => ['impact_evidence', '+86 13800138000'],
         'fullwidth_password' => ['title', 'password：export-fullwidth-secret'],
         'smart_cookie' => ['summary', '“coo-kie”：“export-smart-cookie-secret”'],
+        'double_encoded' => ['title', '"{\\"password\\":\\"double-secret-24680\\"}"'],
+        'unicode_prefix' => ['title', '官方摘录 {"pass\\u0077ord":"unicode-secret-123"}'],
+        'percent_encoded' => ['summary', '官方摘录%20%7B%22password%22%3A%22percent-secret-13579%22%7D'],
     ];
     foreach ($sensitiveCases as $scope => [$location, $sensitiveValue]) {
         $candidate = export_inject_sensitive_value(
@@ -354,6 +364,10 @@ try {
         '法规候选导出内容无法安全检查',
         '超过递归扫描深度的疑似 JSON 必须 fail-closed'
     );
+    export_assert(
+        (new RegulatoryExportService())->exportCandidate($ids['double_safe'])['candidate']['title'] === $doubleSafe['title'],
+        '双重编码但仅含安全业务字段的 JSON 不得被误杀或改写'
+    );
 
     foreach ($sensitiveCases as $scope => [, $sensitiveValue]) {
         export_rejects_sensitive_candidate(
@@ -361,6 +375,18 @@ try {
             $ids[$scope],
             $sensitiveValue,
             '最终导出字符串命中敏感内容时必须 fail-closed: ' . $scope
+        );
+    }
+    foreach (['double_encoded', 'unicode_prefix', 'percent_encoded'] as $scope) {
+        $httpException = export_expect_http_exception(
+            fn () => export_controller_response($app, $ids[$scope]),
+            422,
+            '法规候选复核包暂无法安全导出',
+            '编码敏感内容阻断必须稳定映射为 422: ' . $scope
+        );
+        export_assert(
+            !str_contains($httpException->getMessage(), $sensitiveCases[$scope][1]),
+            '422 安全错误不得回显编码敏感原值: ' . $scope
         );
     }
 

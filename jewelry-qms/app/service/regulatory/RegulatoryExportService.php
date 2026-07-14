@@ -27,6 +27,9 @@ final class RegulatoryExportService
         'idcard',
     ];
 
+    private const MAX_SCAN_NODES = 4096;
+    private const MAX_SCAN_BYTES = 2_000_000;
+
     private const IMPACT_KEYS = [
         'cma_scope_mark',
         'qms_documents',
@@ -60,6 +63,9 @@ final class RegulatoryExportService
         'review_status',
         'reviewed_at',
     ];
+
+    private int $scanNodes = 0;
+    private int $scanBytes = 0;
 
     /** @return array<string, mixed> */
     public function exportCandidate(string $candidateId): array
@@ -130,6 +136,8 @@ final class RegulatoryExportService
                 'reviewed_at' => $this->nullableString($candidate['reviewed_at']),
             ],
         ];
+        $this->scanNodes = 0;
+        $this->scanBytes = 0;
         $this->assertNoSensitiveContent($packet);
 
         return $packet;
@@ -326,6 +334,7 @@ final class RegulatoryExportService
         if ($depth > 20) {
             throw new UnexpectedValueException('法规候选导出内容无法安全检查');
         }
+        $this->consumeScanBudget($value);
         if (is_array($value)) {
             foreach ($value as $key => $item) {
                 if (is_string($key) && $this->isForbiddenKey($key)) {
@@ -341,9 +350,11 @@ final class RegulatoryExportService
 
         $normalized = $this->normalizedSensitiveRepresentation($value);
         $this->assertEmbeddedJsonIsSafe($normalized, $depth);
+        $this->assertPercentEncodedCopyIsSafe($normalized, $depth);
+        $scanCopy = str_replace(['\\"', "\\'"], ['"', "'"], $normalized);
         if (preg_match_all(
             '/["\']?([A-Za-z][A-Za-z0-9_-]{0,50})["\']?\s*[:=]/',
-            $normalized,
+            $scanCopy,
             $keyMatches
         ) > 0) {
             foreach ($keyMatches[1] as $key) {
@@ -363,15 +374,15 @@ final class RegulatoryExportService
             '/\bpassword\s*[:=]\s*\S+/i',
         ];
         foreach ($credentialPatterns as $pattern) {
-            if (preg_match($pattern, $normalized) === 1) {
+            if (preg_match($pattern, $scanCopy) === 1) {
                 throw new UnexpectedValueException('法规候选导出内容包含敏感信息');
             }
         }
         if (preg_match(
             '/(?<![A-Za-z0-9])(?:\+?86[\s-]*)?1[3-9]\d(?:[\s-]*\d){8}(?![A-Za-z0-9])/',
-            $normalized
+            $scanCopy
         ) === 1
-            || $this->containsChineseIdCard($normalized)
+            || $this->containsChineseIdCard($scanCopy)
         ) {
             throw new UnexpectedValueException('法规候选导出内容包含敏感信息');
         }
@@ -380,35 +391,74 @@ final class RegulatoryExportService
     private function assertEmbeddedJsonIsSafe(string $value, int $depth): void
     {
         $trimmed = trim($value);
+        $looksLikeString = str_starts_with($trimmed, '"') && str_ends_with($trimmed, '"');
         $looksLikeObject = str_starts_with($trimmed, '{')
             && str_ends_with($trimmed, '}')
             && preg_match('/["\'][^"\']+["\']\s*:/', $trimmed) === 1;
         $looksLikeArray = str_starts_with($trimmed, '[')
             && str_ends_with($trimmed, ']')
             && preg_match('/^\[\s*(?:[\[{"\']|-?\d|true\b|false\b|null\b)/i', $trimmed) === 1;
-        $looksLikeContainer = $looksLikeObject || $looksLikeArray;
-        if (!$looksLikeContainer) {
+        $looksLikeJson = $looksLikeString || $looksLikeObject || $looksLikeArray;
+        if (!$looksLikeJson) {
             return;
         }
         try {
             $decoded = json_decode($trimmed, true, 16, JSON_THROW_ON_ERROR);
         } catch (\JsonException $exception) {
+            if ($looksLikeString && !$looksLikeObject && !$looksLikeArray) {
+                return;
+            }
             throw new UnexpectedValueException('法规候选导出内容无法安全检查', 0, $exception);
         }
-        if (is_array($decoded)) {
+        if (is_array($decoded) || is_string($decoded)) {
+            $this->assertNoSensitiveContent($decoded, $depth + 1);
+        }
+    }
+
+    private function assertPercentEncodedCopyIsSafe(string $value, int $depth): void
+    {
+        if (preg_match('/%[0-9A-Fa-f]{2}/', $value) !== 1) {
+            return;
+        }
+        $decoded = rawurldecode($value);
+        if ($decoded !== $value) {
             $this->assertNoSensitiveContent($decoded, $depth + 1);
         }
     }
 
     private function normalizedSensitiveRepresentation(string $value): string
     {
-        return strtr($value, [
+        $normalized = strtr($value, [
             '“' => '"', '”' => '"', '＂' => '"',
             '‘' => "'", '’' => "'", '＇' => "'",
             '：' => ':', '＝' => '=',
             '－' => '-', '—' => '-', '–' => '-', '−' => '-',
             '＿' => '_', "\u{00A0}" => ' ', '　' => ' ',
         ]);
+        for ($pass = 0; $pass < 2; $pass++) {
+            $decoded = preg_replace_callback(
+                '/\\\\u00([0-7][0-9A-Fa-f])/i',
+                static fn (array $match): string => chr((int)hexdec($match[1])),
+                $normalized
+            );
+            if (!is_string($decoded) || $decoded === $normalized) {
+                break;
+            }
+            $normalized = $decoded;
+        }
+
+        return $normalized;
+    }
+
+    private function consumeScanBudget(mixed $value): void
+    {
+        $this->scanNodes++;
+        if (is_string($value)) {
+            $this->scanBytes += strlen($value);
+        }
+        if ($this->scanNodes > self::MAX_SCAN_NODES || $this->scanBytes > self::MAX_SCAN_BYTES) {
+            throw new UnexpectedValueException('法规候选导出内容无法安全检查');
+        }
     }
 
     private function isForbiddenKey(string $key): bool
