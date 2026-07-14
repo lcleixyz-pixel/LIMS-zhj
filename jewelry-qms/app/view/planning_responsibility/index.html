@@ -98,7 +98,7 @@
 {/if}
 
 {if $viewMode == 'staffing'}
-<div class="alert alert-info">此处选人只形成草案。在资格校验和业务签批完成前，不作为任命或内部授权证据。</div>
+<div class="alert alert-info"><strong>保存后仍是草案，不构成任命。</strong>完成资格校验和业务签批后，人员授权才正式生效。</div>
 <div class="alert alert-secondary small">需要在活动发生时指定的人员，仍须在当次活动中登记并核对。</div>
 {volist name="detail.activities" id="activity"}
 <div class="card mb-3">
@@ -121,7 +121,7 @@
                 <span class="badge text-bg-light">{$assignment.employee_name} ({$assignment.employee_number})</span>
                 <span>{$assignment.site_name|default='全机构'}</span>
                 <span>{$assignment.proposed_from} 至 {$assignment.proposed_until|default='长期'}</span>
-                <span class="text-muted">{$assignment.status}</span>
+                <span class="text-muted">{$assignment.status_label}</span>
                 {if $managerCanEdit && $detail.status == 'draft'}
                 <form method="post" action="/planning/responsibilities/assignments/save" class="ms-auto">
                     <input type="hidden" name="operation" value="remove">
@@ -133,15 +133,15 @@
             </div>
             {/volist}
             {if $managerCanEdit && $detail.status == 'draft'}
-            <form method="post" action="/planning/responsibilities/assignments/save" class="row g-2 mt-2">
+            <form method="post" action="/planning/responsibilities/assignments/save" class="row g-2 mt-2 align-items-end">
                 <input type="hidden" name="operation" value="save">
                 <input type="hidden" name="version_id" value="{$detail.id}">
                 <input type="hidden" name="responsibility_id" value="{$responsibility.id}">
-                <div class="col-lg-2"><select name="employee_id" class="form-select form-select-sm" required><option value="">选择人员</option>{volist name="employees" id="employee"}<option value="{$employee.id}">{$employee.name} ({$employee.employee_number})</option>{/volist}</select></div>
-                <div class="col-lg-2"><select name="site_id" class="form-select form-select-sm"><option value="">全机构</option>{volist name="sites" id="site"}<option value="{$site.id}">{$site.name}</option>{/volist}</select></div>
-                <div class="col-lg-2"><input name="proposed_from" type="date" value="{:date('Y-m-d')}" class="form-control form-control-sm" required></div>
-                <div class="col-lg-2"><select name="competency_record_id" class="form-select form-select-sm"><option value="">能力证据（可选）</option>{volist name="competencyEvidence" id="evidence"}<option value="{$evidence.id}">{$evidence.employee_name} · {$evidence.test_item} · {$evidence.result}</option>{/volist}</select></div>
-                <div class="col-lg-2"><select name="certificate_id" class="form-select form-select-sm"><option value="">证书证据（可选）</option>{volist name="certificateEvidence" id="certificate"}<option value="{$certificate.id}">{$certificate.employee_name} · {$certificate.certificate_type}</option>{/volist}</select></div>
+                <div class="col-lg-2"><label class="form-label small">选择人员</label><select name="employee_id" class="form-select form-select-sm" required><option value="">请选择</option>{volist name="employees" id="employee"}<option value="{$employee.id}">{$employee.name} ({$employee.employee_number})</option>{/volist}</select></div>
+                <div class="col-lg-2"><label class="form-label small">适用场所</label><select name="site_id" class="form-select form-select-sm"><option value="">全机构</option>{volist name="sites" id="site"}<option value="{$site.id}">{$site.name}</option>{/volist}</select></div>
+                <div class="col-lg-2"><label class="form-label small">生效日期</label><input name="proposed_from" type="date" value="{:date('Y-m-d')}" class="form-control form-control-sm" required></div>
+                <div class="col-lg-2"><label class="form-label small">能力证据</label><select name="competency_record_id" class="form-select form-select-sm"><option value="">可选</option>{volist name="competencyEvidence" id="evidence"}<option value="{$evidence.id}">{$evidence.employee_name} · {$evidence.test_item} · {$evidence.result}</option>{/volist}</select></div>
+                <div class="col-lg-2"><label class="form-label small">证书证据</label><select name="certificate_id" class="form-select form-select-sm"><option value="">可选</option>{volist name="certificateEvidence" id="certificate"}<option value="{$certificate.id}">{$certificate.employee_name} · {$certificate.certificate_type}</option>{/volist}</select></div>
                 <div class="col-lg-2"><button class="btn btn-sm btn-primary w-100" type="submit">保存人员草案</button></div>
             </form>
             {/if}
@@ -157,10 +157,14 @@
 <div class="row g-3">
     <div class="col-lg-8">
         <div class="card mb-3">
-            <div class="card-header"><strong>校验与版本锁定</strong></div>
+            <div class="card-header"><strong>校验并签批</strong></div>
             <div class="card-body">
-                <p>内容哈希：<code>{$detail.version.content_hash|default='尚未锁定'}</code></p>
-                <p class="small text-muted">结构校验时，必需人员未绑定是警告；提交签批时会升级为阻断。任何人都不得批准自己的任命。</p>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-4"><div class="border rounded p-3 h-100"><strong>1. 校验责任结构</strong><div class="small text-muted mt-1">确认活动、岗位和职责关系完整。</div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-3 h-100"><strong>2. 检查签批就绪度</strong><div class="small text-muted mt-1">确认必需人员及资格证据已补齐。</div></div></div>
+                    <div class="col-md-4"><div class="border rounded p-3 h-100"><strong>3. 提交并完成签批</strong><div class="small text-muted mt-1">由具备相应身份的人员签批后生效。</div></div></div>
+                </div>
+                <p class="small text-muted">人员未绑定在结构检查中会提示，在签批就绪检查中会阻止提交。任何人都不得批准自己的任命。</p>
                 {if $managerCanEdit && $detail.status == 'draft'}
                 <div class="d-flex gap-2 flex-wrap">
                     <form method="post" action="/planning/responsibilities/validate"><input type="hidden" name="version_id" value="{$detail.id}"><input type="hidden" name="mode" value="structure"><button class="btn btn-outline-primary" type="submit">检查责任结构</button></form>
@@ -169,17 +173,18 @@
                 </div>
                 {/if}
                 {if $validationResult}
-                <hr><h6>最近校验：{$validationResult.result}</h6>
-                <ul class="mb-0">{volist name="validationResult.issues" id="issue"}<li><span class="badge text-bg-warning">{$issue.severity}</span> {$issue.message}</li>{/volist}</ul>
+                <hr><h6>最近校验：{$validationResult.result_label}</h6>
+                <ul class="mb-0">{volist name="validationResult.issues" id="issue"}<li><span class="badge text-bg-warning">{$issue.severity_label}</span> {$issue.message}</li>{/volist}</ul>
                 {/if}
+                <details class="small text-muted mt-3"><summary>技术校验信息</summary><div class="mt-2">内容校验标识：<code>{$detail.version.content_hash|default='尚未锁定'}</code></div></details>
             </div>
         </div>
 
         {if $pendingBatch}
         <div class="card mb-3 border-primary">
-            <div class="card-header"><strong>我的待签批批次</strong> · {$pendingBatch.approver.position_code}</div>
+            <div class="card-header"><strong>我的待签批批次</strong> · {$pendingBatch.approver.position_label}</div>
             <div class="card-body">
-                {volist name="pendingBatch.items" id="item"}<div class="border-bottom py-2"><strong>{$item.employee_name}</strong> · {$item.position_name}<div>{$item.duty_text}</div><small class="text-muted">资格快照已锁定 · {$item.version_hash}</small></div>{/volist}
+                {volist name="pendingBatch.items" id="item"}<div class="border-bottom py-2"><strong>{$item.employee_name}</strong> · {$item.position_name}<div>{$item.duty_text}</div><small class="text-muted">资格证据已锁定</small><details class="small text-muted mt-1"><summary>技术校验信息</summary><code>{$item.version_hash}</code></details></div>{/volist}
                 <form method="post" action="/planning/responsibilities/approve" class="mt-3">
                     <input type="hidden" name="approval_scope" value="assignment"><input type="hidden" name="version_id" value="{$detail.id}"><input type="hidden" name="batch_key" value="{$pendingBatch.batch_key}">
                     <textarea name="comments" class="form-control mb-2" placeholder="签批意见"></textarea>
@@ -194,7 +199,7 @@
         <div class="card mb-3 border-warning"><div class="card-body"><strong>实验室主任首次任命：{$bootstrap.subject_employee_name}</strong><p class="small text-muted">仅当前已核验的公司总经理可签批，不得自批。</p><form method="post" action="/planning/responsibilities/approve"><input type="hidden" name="approval_scope" value="governance_bootstrap"><input type="hidden" name="approval_id" value="{$bootstrap.id}"><textarea name="comments" class="form-control mb-2" placeholder="签批意见"></textarea><button name="decision" value="approved" class="btn btn-success" type="submit">批准</button> <button name="decision" value="rejected" class="btn btn-outline-danger" type="submit">驳回</button></form></div></div>
         {/volist}
 
-        <div class="card"><div class="card-header"><strong>签批记录</strong></div><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>被任命人</th><th>批准人</th><th>批准岗位</th><th>决定</th><th>签批时间</th></tr></thead><tbody>{volist name="approvalHistory" id="approval"}<tr><td>{$approval.subject_employee_name}</td><td>{$approval.approver_employee_name}</td><td>{$approval.approver_position_code}</td><td>{$approval.decision}</td><td>{$approval.signed_at|default='-'}</td></tr>{/volist}{empty name="approvalHistory"}<tr><td colspan="5" class="text-center text-muted">暂无记录</td></tr>{/empty}</tbody></table></div></div>
+        <div class="card"><div class="card-header"><strong>签批记录</strong></div><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>被任命人</th><th>批准人</th><th>批准岗位</th><th>决定</th><th>签批时间</th></tr></thead><tbody>{volist name="approvalHistory" id="approval"}<tr><td>{$approval.subject_employee_name}</td><td>{$approval.approver_employee_name}</td><td>{$approval.approver_position_label}</td><td>{$approval.decision_label}</td><td>{$approval.signed_at|default='-'}</td></tr>{/volist}{empty name="approvalHistory"}<tr><td colspan="5" class="text-center text-muted">暂无记录</td></tr>{/empty}</tbody></table></div></div>
     </div>
     <div class="col-lg-4">
         {if $isAdmin}
@@ -206,7 +211,7 @@
 {/if}
 
 {if $viewMode == 'effective'}
-<div class="card"><div class="card-header"><strong>有效责任链与任命证据</strong></div><div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>具体人员</th><th>岗位/角色</th><th>职责</th><th>场所</th><th>有效期</th><th>来源版本</th><th>签批证据</th></tr></thead><tbody>{volist name="effectiveAppointments" id="appointment"}<tr><td>{$appointment.employee_name}</td><td>{$appointment.position_display|default=$appointment.position_name}</td><td>{$appointment.appointment_scope}</td><td>{$appointment.site_name|default='全机构'}</td><td>{$appointment.appointed_at} 至 {$appointment.valid_until|default='长期'}</td><td>{$appointment.source_chain_version_id}</td><td>{$appointment.source_approval_id|default='-'}</td></tr>{/volist}{empty name="effectiveAppointments"}<tr><td colspan="7" class="text-center text-muted py-4">当前选定版本尚无生效任命证据。</td></tr>{/empty}</tbody></table></div></div>
+<div class="card"><div class="card-header"><strong>已生效责任链与任命证据</strong></div><div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>具体人员</th><th>岗位或角色</th><th>职责</th><th>场所</th><th>有效期</th><th>授权依据</th></tr></thead><tbody>{volist name="effectiveAppointments" id="appointment"}<tr><td>{$appointment.employee_name}</td><td>{$appointment.position_display|default=$appointment.position_name}</td><td>{$appointment.appointment_scope}</td><td>{$appointment.site_name|default='全机构'}</td><td>{$appointment.appointed_at} 至 {$appointment.valid_until|default='长期'}</td><td><span>{$appointment.evidence_label}</span><details class="small text-muted mt-1"><summary>证据详情</summary><div>责任链版本：<code>{$appointment.source_chain_version_id}</code></div><div>签批记录：<code>{$appointment.source_approval_id|default='-'}</code></div></details></td></tr>{/volist}{empty name="effectiveAppointments"}<tr><td colspan="6" class="text-center text-muted py-4">当前选定版本尚无生效任命证据。</td></tr>{/empty}</tbody></table></div></div>
 {/if}
 
 {if $viewMode == 'alignment'}

@@ -98,6 +98,32 @@ responsibility_ui_assert(
     !str_contains($view, '<th>环节</th>'),
     'Raw step code is not a primary structure column'
 );
+foreach ([
+    '保存后仍是草案，不构成任命',
+    '适用场所',
+    '生效日期',
+    '能力证据',
+    '证书证据',
+    '1. 校验责任结构',
+    '2. 检查签批就绪度',
+    '3. 提交并完成签批',
+    '技术校验信息',
+    '证据详情',
+    '授权依据',
+] as $label) {
+    responsibility_ui_contains($label, $view, 'Responsibility workflow renders ' . $label);
+}
+foreach (['assignment.status_label', 'validationResult.result_label', 'issue.severity_label', 'pendingBatch.approver.position_label', 'approval.approver_position_label', 'approval.decision_label', 'appointment.evidence_label'] as $field) {
+    responsibility_ui_contains($field, $view, 'Responsibility workflow renders presentation field ' . $field);
+}
+responsibility_ui_assert(
+    !str_contains($view, '<p>内容哈希：'),
+    'Content hash is not exposed as primary approval content'
+);
+responsibility_ui_assert(
+    !str_contains($view, '<th>来源版本</th>'),
+    'Raw source version is not a primary effective-appointment column'
+);
 foreach (['structure', 'staffing', 'approval', 'effective', 'alignment'] as $mode) {
     responsibility_ui_contains('view=' . $mode, $view, 'Responsibility page exposes view ' . $mode);
 }
