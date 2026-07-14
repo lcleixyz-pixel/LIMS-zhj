@@ -59,6 +59,16 @@ function column_length(string $table, string $column): int
     return (int)($rows[0]['CHARACTER_MAXIMUM_LENGTH'] ?? 0);
 }
 
+function column_collation(string $table, string $column): string
+{
+    $rows = Db::query(
+        'SELECT COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+        [$table, $column]
+    );
+
+    return (string)($rows[0]['COLLATION_NAME'] ?? '');
+}
+
 function model_assert(bool $condition, string $message): void
 {
     if (!$condition) {
@@ -98,6 +108,25 @@ $candidateTable = 'qms_external_change_candidates';
 
 schema_assert(table_exists($runTable), 'Missing table: ' . $runTable);
 schema_assert(table_exists($candidateTable), 'Missing table: ' . $candidateTable);
+
+$migrationPath = dirname(__DIR__) . '/database/migrations/20260714_regulatory_monitor.sql';
+$migration = (string)file_get_contents($migrationPath);
+schema_assert(
+    str_contains($migration, 'CREATE TABLE IF NOT EXISTS `' . $runTable . '`')
+        && str_contains($migration, 'CREATE TABLE IF NOT EXISTS `' . $candidateTable . '`'),
+    'Migration must create both tables idempotently'
+);
+Db::execute(
+    'ALTER TABLE `qms_external_change_candidates` '
+    . 'MODIFY COLUMN `source_item_key` varchar(255) CHARACTER SET utf8mb4 '
+    . "COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '来源侧稳定项目标识'"
+);
+run_migration($migration);
+run_migration($migration);
+schema_assert(
+    column_collation($candidateTable, 'source_item_key') === 'utf8mb4_bin',
+    'Candidate source_item_key must use binary utf8mb4 collation'
+);
 
 $uniqueColumns = Db::query(
     "SELECT COLUMN_NAME
@@ -174,17 +203,6 @@ schema_assert(
     column_type($candidateTable, 'review_status') === "enum('pending','confirmed_applicable','confirmed_not_applicable','deferred','promoted')",
     'Candidate review_status contract is not calibrated'
 );
-
-$migrationPath = dirname(__DIR__) . '/database/migrations/20260714_regulatory_monitor.sql';
-$migration = (string)file_get_contents($migrationPath);
-schema_assert(
-    str_contains($migration, 'CREATE TABLE IF NOT EXISTS `' . $runTable . '`')
-        && str_contains($migration, 'CREATE TABLE IF NOT EXISTS `' . $candidateTable . '`'),
-    'Migration must create both tables idempotently'
-);
-
-run_migration($migration);
-run_migration($migration);
 
 $runId = qms_uuid();
 $candidateId = qms_uuid();

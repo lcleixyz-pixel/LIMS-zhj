@@ -176,6 +176,31 @@ try {
         $hashService->contentHash($hashItemB),
         'Content hash must ignore fetched_at and stabilize attachment/key ordering'
     );
+    $objectAttachmentA = new stdClass();
+    $objectAttachmentA->name = '对象附件.pdf';
+    $objectAttachmentA->sha256 = 'object-sha';
+    $objectAttachmentA->fetched_at = '2026-07-14 09:00:00';
+    $objectAttachmentA->metadata = (object)[
+        'page_count' => 3,
+        'fetched_at' => '2026-07-14 09:00:00',
+    ];
+    $objectAttachmentB = new stdClass();
+    $objectAttachmentB->metadata = (object)[
+        'fetched_at' => '2026-07-15 11:30:00',
+        'page_count' => 3,
+    ];
+    $objectAttachmentB->fetched_at = '2026-07-15 11:30:00';
+    $objectAttachmentB->sha256 = 'object-sha';
+    $objectAttachmentB->name = '对象附件.pdf';
+    $objectHashItemA = $v1;
+    $objectHashItemA['attachments'] = [$objectAttachmentA];
+    $objectHashItemB = $v1;
+    $objectHashItemB['attachments'] = [$objectAttachmentB];
+    candidate_assert_same(
+        $hashService->contentHash($objectHashItemA),
+        $hashService->contentHash($objectHashItemB),
+        'Content hash must recursively stabilize stdClass attachments and ignore observation times'
+    );
 
     $noNumber = $v1;
     $noNumber['announcement_number'] = null;
@@ -204,6 +229,34 @@ try {
             return $now;
         }
     );
+    foreach ([
+        ['https://www.samr.gov.cn/notices/Case.html', 'https://www.samr.gov.cn/notices/case.html'],
+        ['https://www.samr.gov.cn/notices/café.html', 'https://www.samr.gov.cn/notices/cafe.html'],
+        ['https://www.samr.gov.cn/notices/Ａ.html', 'https://www.samr.gov.cn/notices/A.html'],
+    ] as $boundaryPair) {
+        $boundaryResults = [];
+        foreach ($boundaryPair as $boundaryUrl) {
+            $boundaryItem = $noNumber;
+            $boundaryItem['canonical_url'] = $boundaryUrl;
+            $boundaryItem['title'] = '无文号 URL 二进制边界 ' . $boundaryUrl;
+            $boundaryResult = $candidateService->record(
+                $companyId,
+                $runId,
+                'url-binary-boundary',
+                'html_list',
+                $boundaryItem
+            );
+            $candidateIds[] = (string)$boundaryResult['candidate']['id'];
+            $boundaryResults[] = $boundaryResult;
+        }
+        candidate_assert_same('new', $boundaryResults[0]['status'], 'First URL boundary item must be new');
+        candidate_assert_same('new', $boundaryResults[1]['status'], 'Binary-distinct URL must not be merged');
+        candidate_assert_same(
+            null,
+            $boundaryResults[1]['candidate']['supersedes_candidate_id'],
+            'Binary-distinct URL must not join the other URL version chain'
+        );
+    }
     $first = $candidateService->record(
         $companyId,
         $runId,
@@ -523,10 +576,155 @@ try {
         'Corrupt race simulation must roll back all inserted rows'
     );
 
+    $deadlockInsertCalls = 0;
+    $deadlockBackoffs = [];
+    $deadlockRetryService = new RegulatoryCandidateService(
+        static fn (): DateTimeImmutable => new DateTimeImmutable('2026-07-14 12:00:03'),
+        static function (array $data) use (&$deadlockInsertCalls): void {
+            $deadlockInsertCalls++;
+            if ($deadlockInsertCalls < 3) {
+                throw new RuntimeException(
+                    'SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock',
+                    40001
+                );
+            }
+            Db::name('qms_external_change_candidates')->insert($data);
+        },
+        static function (int $attempt) use (&$deadlockBackoffs): void {
+            $deadlockBackoffs[] = $attempt;
+        }
+    );
+    $deadlockItem = $noNumber;
+    $deadlockItem['canonical_url'] = 'https://www.samr.gov.cn/deadlock/retry-success.html';
+    $deadlockRetry = $deadlockRetryService->record(
+        $companyId,
+        $raceRunId,
+        'deadlock_retry_success',
+        'html_list',
+        $deadlockItem
+    );
+    $candidateIds[] = (string)$deadlockRetry['candidate']['id'];
+    candidate_assert_same('new', $deadlockRetry['status'], 'Deadlock retry must start a fresh transaction and succeed');
+    candidate_assert_same(3, $deadlockInsertCalls, 'Deadlock retry must be bounded to the required attempts');
+    candidate_assert_same([1, 2], $deadlockBackoffs, 'Backoff must run only between retry attempts');
+
+    $deadlockExhaustedCalls = 0;
+    $deadlockExhaustedService = new RegulatoryCandidateService(
+        static fn (): DateTimeImmutable => new DateTimeImmutable('2026-07-14 12:00:04'),
+        static function (array $data) use (&$deadlockExhaustedCalls): void {
+            $deadlockExhaustedCalls++;
+            throw new RuntimeException('SQLSTATE[40001]: Serialization failure: 1213 Deadlock', 1213);
+        },
+        static function (int $attempt): void {
+        }
+    );
+    try {
+        $deadlockExhaustedService->record(
+            $companyId,
+            $raceRunId,
+            'deadlock_retry_exhausted',
+            'html_list',
+            $deadlockItem
+        );
+        throw new RuntimeException('Exhausted deadlock retries must fail');
+    } catch (RuntimeException $exception) {
+        candidate_assert(str_contains($exception->getMessage(), '已重试 3 次'), 'Exhausted deadlock error must be understandable');
+    }
+    candidate_assert_same(3, $deadlockExhaustedCalls, 'Deadlock retries must stop after three attempts');
+
+    $ordinaryFailureCalls = 0;
+    $ordinaryFailureService = new RegulatoryCandidateService(
+        static fn (): DateTimeImmutable => new DateTimeImmutable('2026-07-14 12:00:05'),
+        static function (array $data) use (&$ordinaryFailureCalls): void {
+            $ordinaryFailureCalls++;
+            throw new RuntimeException('SQLSTATE[HY000]: Lock wait timeout exceeded', 1205);
+        },
+        static function (int $attempt): void {
+            throw new RuntimeException('Ordinary errors must not invoke retry backoff');
+        }
+    );
+    try {
+        $ordinaryFailureService->record(
+            $companyId,
+            $raceRunId,
+            'ordinary_failure_no_retry',
+            'html_list',
+            $deadlockItem
+        );
+        throw new RuntimeException('Ordinary database failure must be propagated');
+    } catch (RuntimeException $exception) {
+        candidate_assert(str_contains($exception->getMessage(), 'Lock wait timeout'), 'Ordinary database error must be preserved');
+    }
+    candidate_assert_same(1, $ordinaryFailureCalls, 'Non-deadlock database errors must never be retried');
+
     $fixtureBodies = [
         'samr_rkjcs_notice' => (string)file_get_contents(__DIR__ . '/fixtures/regulatory/changed_notice_v1.html'),
         'cnas_lab_notice' => (string)file_get_contents(__DIR__ . '/fixtures/regulatory/cnas_notice_list.html'),
     ];
+    $guardedService = new RegulatoryMonitorService(
+        registry: $registry,
+        sourceFetcher: static fn (array $source): string => $fixtureBodies[(string)$source['key']]
+            ?? throw new RuntimeException('Unexpected guarded fetch key'),
+        clock: make_sequence_clock('2026-07-14 12:30:00'),
+        candidateService: new RegulatoryCandidateService(make_sequence_clock('2026-07-14 12:30:10'))
+    );
+    $runsBeforeInvalidSelection = Db::name('qms_regulatory_monitor_runs')->count();
+    foreach ([
+        [],
+        ['SAMR_RKJCS_NOTICE'],
+        ['password=malicious-source-secret'],
+        ['ＳＡＭＲ：password=fullwidth-source-secret'],
+    ] as $invalidSources) {
+        try {
+            $guardedService->run('manual', $invalidSources);
+            throw new RuntimeException('Invalid source selection must be rejected before run creation');
+        } catch (InvalidArgumentException $exception) {
+            candidate_assert(str_contains($exception->getMessage(), 'source'), 'Invalid source selection must name source validation');
+        }
+        candidate_assert_same(
+            $runsBeforeInvalidSelection,
+            Db::name('qms_regulatory_monitor_runs')->count(),
+            'Invalid or empty source selection must not create a run'
+        );
+    }
+    foreach (['malicious-source-secret', 'fullwidth-source-secret'] as $sourceSecret) {
+        $persistedLeak = Db::query(
+            'SELECT COUNT(*) AS total FROM qms_regulatory_monitor_runs '
+            . 'WHERE COALESCE(source_stats, JSON_OBJECT()) LIKE ? '
+            . 'OR COALESCE(result_json, JSON_OBJECT()) LIKE ? '
+            . 'OR COALESCE(error_summary, \'\') LIKE ?',
+            array_fill(0, 3, '%' . $sourceSecret . '%')
+        );
+        candidate_assert_same(0, (int)$persistedLeak[0]['total'], 'Rejected source key must not reach persistence');
+    }
+    $manualOnly = $guardedService->run('manual', ['cma_capability_query']);
+    $runIds[] = (string)$manualOnly['run_id'];
+    candidate_assert_same('completed', $manualOnly['status'], 'Manual-only selection must complete without fetch');
+    candidate_assert_same(1, $manualOnly['manual_verification_count'], 'Manual-only selection must be counted');
+    $defaultAllService = new RegulatoryMonitorService(
+        registry: $registry,
+        sourceFetcher: static function (array $source): string {
+            $listClass = str_contains((string)$source['item_xpath'], 'news-list')
+                ? 'news-list'
+                : 'notice-list';
+            $key = (string)$source['key'];
+            return '<!doctype html><html><body><ul class="' . $listClass . '"><li>'
+                . '<a href="/default/' . $key . '.html">默认全来源 ' . $key . '</a>'
+                . '<span class="announcement-number">DEFAULT-' . strtoupper($key) . '</span>'
+                . '</li></ul></body></html>';
+        },
+        clock: make_sequence_clock('2026-07-14 12:40:00'),
+        candidateService: new RegulatoryCandidateService(make_sequence_clock('2026-07-14 12:40:10'))
+    );
+    $defaultAll = $defaultAllService->run('manual', null);
+    $runIds[] = (string)$defaultAll['run_id'];
+    candidate_assert_same(
+        count($registry->all()),
+        $defaultAll['source_count'],
+        'Null source selection must continue to mean every registered source'
+    );
+    candidate_assert_same('completed', $defaultAll['status'], 'Default all-source run must complete with offline fixtures');
+    candidate_assert_same(1, $defaultAll['manual_verification_count'], 'Default all-source run must include manual-only source');
     $fetchedKeys = [];
     $fetcher = static function (array $source) use (&$fetchedKeys, $fixtureBodies): string {
         $key = (string)$source['key'];
@@ -567,6 +765,10 @@ try {
         . "DATABASE_URL = host=url-host-no-scheme.internal;dbname=url-db-no-scheme;user=url-user-no-scheme;password=url-pass-no-scheme\n"
         . "DB_HOST=env-host.internal DB_NAME=env-secret-db DB_USER=env-user DB_PASS=env-pass\n"
         . "token=token-value password=password-value secret=secret-value\n"
+        . "PaSsWoRd=\"mixed case secret with spaces\"\n"
+        . "ＰＡＳＳＷＯＲＤ＝“fullwidth password value with spaces”\n"
+        . "ＴＯＫＥＮ　：　‘curly token value with spaces’\n"
+        . "下一行仍可能出现 ＤＢ＿ＰＡＳＳ＝multi-line-fullwidth-secret\n"
         . "后续非敏感处理提示：请稍后重试。\n"
         . str_repeat('detail-', 120);
     $partialFetcher = static function (array $source) use ($fixtureBodies, $secretError): string {
@@ -629,6 +831,9 @@ try {
         'env-host.internal', 'env-secret-db', 'env-user', 'env-pass',
         'mysql:host=', 'pgsql:host=', 'pgsql://', 'sqlsrv:', 'oci:', 'sqlite:',
         'driver', 'server', 'database', 'uid', 'pwd', 'host', 'dbname', 'user',
+        'fullwidth password value with spaces', 'curly token value with spaces',
+        'mixed case secret with spaces', 'multi-line-fullwidth-secret',
+        'ＰＡＳＳＷＯＲＤ', 'ＴＯＫＥＮ', 'ＤＢ＿ＰＡＳＳ',
     ];
     foreach ($sanitizedSurfaces as $surface => $text) {
         candidate_assert(str_contains($text, '法规来源连接失败'), $surface . ' must retain a useful non-sensitive summary');
@@ -642,6 +847,60 @@ try {
         }
     }
     candidate_assert(isset($partialRow['execution_version'], $partialRow['source_config_version'], $partialRow['rule_version']), 'Run must persist collector, source config and rule versions');
+
+    $twoItemHtml = '<!doctype html><html><body><ul class="news-list">'
+        . '<li><a href="/item/one.html">条目一</a><span class="announcement-number">ITEM-ONE</span></li>'
+        . '<li><a href="/item/two.html">条目二</a><span class="announcement-number">ITEM-TWO</span></li>'
+        . '</ul></body></html>';
+    $partialItemInsertCalls = 0;
+    $partialItemCandidateService = new RegulatoryCandidateService(
+        make_sequence_clock('2026-07-14 14:30:10'),
+        static function (array $data) use (&$partialItemInsertCalls): void {
+            $partialItemInsertCalls++;
+            if ($partialItemInsertCalls === 2) {
+                throw new RuntimeException('第二条候选写入失败，透明错误 item-two-failure');
+            }
+            Db::name('qms_external_change_candidates')->insert($data);
+        }
+    );
+    $partialItemService = new RegulatoryMonitorService(
+        registry: $registry,
+        sourceFetcher: static fn (array $source): string => $twoItemHtml,
+        clock: make_sequence_clock('2026-07-14 14:30:00'),
+        candidateService: $partialItemCandidateService
+    );
+    $partialItem = $partialItemService->run('scheduled', ['samr_rkjcs_notice']);
+    $runIds[] = (string)$partialItem['run_id'];
+    candidate_assert_same('partial_failed', $partialItem['status'], 'One successful and one failed item must be partial');
+    candidate_assert_same(1, $partialItem['candidate_new_count'], 'Partial item run must retain actual new candidate count');
+    $partialItemSource = $partialItem['sources'][0];
+    candidate_assert_same(2, $partialItemSource['item_count'], 'Parsed item_count must be fixed before recording');
+    candidate_assert_same(2, $partialItemSource['processed_count'], 'Every parsed item must be processed');
+    candidate_assert_same(1, $partialItemSource['item_success_count'], 'One item must be counted successful');
+    candidate_assert_same(1, $partialItemSource['item_failure_count'], 'One item must be counted failed');
+    candidate_assert_same(1, $partialItemSource['candidate_new_count'], 'Source new count must match persisted candidates');
+    candidate_assert(str_contains((string)$partialItemSource['error'], 'item-two-failure'), 'Item failure must remain transparent');
+    candidate_assert_same(
+        1,
+        Db::name('qms_external_change_candidates')->where('monitor_run_id', $partialItem['run_id'])->count(),
+        'Partial item candidate count must match actual persisted candidates'
+    );
+    $partialItemRow = Db::name('qms_regulatory_monitor_runs')->where('id', $partialItem['run_id'])->find();
+    candidate_assert(is_array($partialItemRow), 'Partial item run must be persisted');
+    $partialItemStoredResult = candidate_json($partialItemRow['result_json']);
+    foreach ([
+        'item_count' => 2,
+        'processed_count' => 2,
+        'item_success_count' => 1,
+        'item_failure_count' => 1,
+        'candidate_new_count' => 1,
+    ] as $field => $expected) {
+        candidate_assert_same(
+            $expected,
+            $partialItemStoredResult['sources'][0][$field],
+            'Persisted partial item source result must retain ' . $field
+        );
+    }
 
     $allFailedService = new RegulatoryMonitorService(
         registry: $registry,

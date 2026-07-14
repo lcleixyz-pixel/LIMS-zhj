@@ -53,8 +53,7 @@ final class RegulatoryMonitorService
         if (!in_array($triggerMode, ['scheduled', 'manual'], true)) {
             throw new InvalidArgumentException('trigger_mode 必须是 scheduled 或 manual');
         }
-        $sourceKeys = $sourceKeys ?? array_keys($this->registry->all());
-        $sourceKeys = array_values(array_unique(array_map('strval', $sourceKeys)));
+        $sourceKeys = $this->resolveSourceKeys($sourceKeys);
         $companyId = trim((string)Config::get('qms.company_id'));
         if ($companyId === '') {
             throw new RuntimeException('法规监测缺少 company_id 配置');
@@ -81,7 +80,9 @@ final class RegulatoryMonitorService
 
         $successCount = 0;
         $failureCount = 0;
+        $automaticSourceCount = 0;
         $manualVerificationCount = 0;
+        $itemSuccessTotal = 0;
         $candidateNewCount = 0;
         $candidateExistingCount = 0;
         $sourceResults = [];
@@ -94,6 +95,9 @@ final class RegulatoryMonitorService
                 'mode' => null,
                 'status' => 'failed',
                 'item_count' => 0,
+                'processed_count' => 0,
+                'item_success_count' => 0,
+                'item_failure_count' => 0,
                 'candidate_new_count' => 0,
                 'candidate_existing_count' => 0,
                 'requires_manual_verification' => false,
@@ -117,28 +121,49 @@ final class RegulatoryMonitorService
                     continue;
                 }
 
+                $automaticSourceCount++;
                 $body = ($this->sourceFetcher)($source);
                 if (!is_string($body)) {
                     throw new RuntimeException('来源 fetcher 必须返回 HTML 字符串');
                 }
                 $parsed = $this->registry->adapterFor($sourceKey)->parse($body, $source);
-                foreach ((array)($parsed['items'] ?? []) as $item) {
-                    if (!is_array($item)) {
-                        throw new RuntimeException('来源适配器返回了无效候选条目');
+                $items = (array)($parsed['items'] ?? []);
+                $sourceResult['item_count'] = count($items);
+                $itemErrors = [];
+                foreach ($items as $item) {
+                    $sourceResult['processed_count']++;
+                    try {
+                        if (!is_array($item)) {
+                            throw new RuntimeException('来源适配器返回了无效候选条目');
+                        }
+                        $recorded = $this->candidateService->record(
+                            $companyId,
+                            $runId,
+                            $sourceKey,
+                            (string)$source['mode'],
+                            $item
+                        );
+                        $sourceResult['item_success_count']++;
+                        $sourceResult['candidate_new_count'] += (int)$recorded['new_count'];
+                        $sourceResult['candidate_existing_count'] += (int)$recorded['existing_count'];
+                    } catch (Throwable $itemException) {
+                        $sourceResult['item_failure_count']++;
+                        $itemErrors[] = '条目 ' . $sourceResult['processed_count'] . ': '
+                            . $this->sanitizeError($itemException->getMessage());
                     }
-                    $recorded = $this->candidateService->record(
-                        $companyId,
-                        $runId,
-                        $sourceKey,
-                        (string)$source['mode'],
-                        $item
-                    );
-                    $sourceResult['candidate_new_count'] += (int)$recorded['new_count'];
-                    $sourceResult['candidate_existing_count'] += (int)$recorded['existing_count'];
                 }
-                $sourceResult['item_count'] = count((array)($parsed['items'] ?? []));
-                $successCount++;
-                $sourceResult['status'] = 'success';
+                $itemSuccessTotal += (int)$sourceResult['item_success_count'];
+                if ($sourceResult['item_failure_count'] > 0) {
+                    $failureCount++;
+                    $sourceResult['status'] = $sourceResult['item_success_count'] > 0
+                        ? 'partial_failed'
+                        : 'failed';
+                    $sourceResult['error'] = $this->sanitizeError(implode(' | ', $itemErrors));
+                    $errors[] = $sourceKey . ': ' . $sourceResult['error'];
+                } else {
+                    $successCount++;
+                    $sourceResult['status'] = 'success';
+                }
             } catch (Throwable $exception) {
                 $failureCount++;
                 $sanitized = $this->sanitizeError($exception->getMessage());
@@ -152,11 +177,11 @@ final class RegulatoryMonitorService
 
         $status = $failureCount === 0
             ? 'completed'
-            : ($successCount > 0 ? 'partial_failed' : 'failed');
+            : (($successCount > 0 || $itemSuccessTotal > 0) ? 'partial_failed' : 'failed');
         $finishedAt = $this->now();
         $sourceStats = [
             'source_count' => count($sourceKeys),
-            'automatic_source_count' => $successCount + $failureCount,
+            'automatic_source_count' => $automaticSourceCount,
             'success_count' => $successCount,
             'failure_count' => $failureCount,
             'manual_verification_count' => $manualVerificationCount,
@@ -184,7 +209,7 @@ final class RegulatoryMonitorService
         ];
         $errorSummary = $errors === []
             ? null
-            : $this->boundedText(implode(' | ', $errors), self::ERROR_SUMMARY_MAX_LENGTH);
+            : $this->sanitizeError(implode(' | ', $errors), self::ERROR_SUMMARY_MAX_LENGTH);
 
         Db::name('qms_regulatory_monitor_runs')->where('id', $runId)->update([
             'finished_at' => $finishedAt,
@@ -199,8 +224,43 @@ final class RegulatoryMonitorService
         return $result;
     }
 
-    private function sanitizeError(string $message): string
+    /** @return list<string> */
+    private function resolveSourceKeys(?array $sourceKeys): array
     {
+        $selected = $sourceKeys ?? array_keys($this->registry->all());
+        if ($selected === []) {
+            throw new InvalidArgumentException('source_keys 不能为空；省略参数表示全部来源');
+        }
+
+        $resolved = [];
+        foreach ($selected as $sourceKey) {
+            if (!is_string($sourceKey)) {
+                throw new InvalidArgumentException('source_keys 包含无效或未批准的来源');
+            }
+            $sourceKey = trim($sourceKey);
+            if (preg_match('/\A[a-z][a-z0-9_]{0,99}\z/D', $sourceKey) !== 1) {
+                throw new InvalidArgumentException('source_keys 包含无效或未批准的来源');
+            }
+            try {
+                $this->registry->source($sourceKey);
+            } catch (Throwable $exception) {
+                throw new InvalidArgumentException('source_keys 包含无效或未批准的来源', 0, $exception);
+            }
+            $resolved[$sourceKey] = $sourceKey;
+        }
+
+        return array_values($resolved);
+    }
+
+    private function sanitizeError(string $message, int $maximum = self::SOURCE_ERROR_MAX_LENGTH): string
+    {
+        $message = mb_convert_kana($message, 'as', 'UTF-8');
+        $message = strtr($message, [
+            '“' => '"',
+            '”' => '"',
+            '‘' => "'",
+            '’' => "'",
+        ]);
         $message = preg_split('/(?:Stack trace:|\n\s*#0\b)/i', $message, 2)[0] ?? $message;
         $patterns = [
             '/\b(?:authorization|proxy-authorization|cookie|set-cookie)\s*:\s*[^\r\n]*/iu' => '[REDACTED]',
@@ -219,7 +279,7 @@ final class RegulatoryMonitorService
             $message = '来源处理失败（错误详情已脱敏）';
         }
 
-        return $this->boundedText($message, self::SOURCE_ERROR_MAX_LENGTH);
+        return $this->boundedText($message, $maximum);
     }
 
     private function sourceConfigVersion(): string

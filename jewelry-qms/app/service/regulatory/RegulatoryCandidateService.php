@@ -23,15 +23,24 @@ final class RegulatoryCandidateService
 
     private Closure $clock;
     private Closure $candidateInserter;
+    private Closure $retryBackoff;
 
-    public function __construct(?callable $clock = null, ?callable $candidateInserter = null)
-    {
+    public function __construct(
+        ?callable $clock = null,
+        ?callable $candidateInserter = null,
+        ?callable $retryBackoff = null
+    ) {
         $this->clock = Closure::fromCallable(
             $clock ?? static fn (): DateTimeImmutable => new DateTimeImmutable('now')
         );
         $this->candidateInserter = Closure::fromCallable(
             $candidateInserter ?? static function (array $data): void {
                 Db::name('qms_external_change_candidates')->insert($data);
+            }
+        );
+        $this->retryBackoff = Closure::fromCallable(
+            $retryBackoff ?? static function (int $attempt): void {
+                usleep($attempt * 10_000);
             }
         );
     }
@@ -118,92 +127,149 @@ final class RegulatoryCandidateService
         $contentHash = $this->contentHash($item);
         $seenAt = $this->now();
 
-        return Db::transaction(function () use (
-            $companyId,
-            $monitorRunId,
-            $sourceKey,
-            $sourceMode,
-            $normalized,
-            $sourceItemKey,
-            $contentHash,
-            $seenAt
-        ): array {
-            $versions = $this->lockVersionChain($companyId, $sourceKey, $sourceItemKey);
-            $previous = $this->resolveChainTail($versions);
-            foreach ($versions as $version) {
-                if (hash_equals((string)$version['content_hash'], $contentHash)) {
-                    return $this->existingResult($version, $seenAt);
-                }
+        return $this->withDeadlockRetry(
+            fn (): array => Db::transaction(
+                fn (): array => $this->recordInTransaction(
+                    $companyId,
+                    $monitorRunId,
+                    $sourceKey,
+                    $sourceMode,
+                    $normalized,
+                    $sourceItemKey,
+                    $contentHash,
+                    $seenAt
+                )
+            )
+        );
+    }
+
+    private function recordInTransaction(
+        string $companyId,
+        string $monitorRunId,
+        string $sourceKey,
+        string $sourceMode,
+        array $normalized,
+        string $sourceItemKey,
+        string $contentHash,
+        string $seenAt
+    ): array {
+        $versions = $this->lockVersionChain($companyId, $sourceKey, $sourceItemKey);
+        $previous = $this->resolveChainTail($versions);
+        foreach ($versions as $version) {
+            if (hash_equals((string)$version['content_hash'], $contentHash)) {
+                return $this->existingResult($version, $seenAt);
             }
+        }
 
-            $candidate = [
-                'id' => qms_uuid(),
-                'company_id' => $companyId,
-                'monitor_run_id' => $monitorRunId,
-                'source_key' => $sourceKey,
-                'source_mode' => $sourceMode,
-                'source_item_key' => $sourceItemKey,
-                'source_url' => $normalized['canonical_url'],
-                'normalized_url' => $normalized['canonical_url'],
-                'title' => $normalized['title'],
-                'announcement_number' => $normalized['announcement_number'],
-                'document_type' => $normalized['document_type'],
-                'published_date' => $normalized['published_date'],
-                'effective_date' => $normalized['effective_date'],
-                'first_seen_at' => $seenAt,
-                'last_seen_at' => $seenAt,
-                'content_hash' => $contentHash,
-                'evidence_summary' => $normalized['evidence_summary'],
-                'evidence_refs' => $this->encodeJson($normalized['evidence_refs']),
-                'evidence_json' => $this->encodeJson($normalized['evidence_json']),
-                'supersedes_candidate_id' => $previous !== null ? (string)$previous['id'] : null,
-                'relevance' => 'unknown',
-                'preliminary_applicability' => 'needs_review',
-                'impact_analysis' => null,
-                'analysis_rule_version' => null,
-                'analysis_confidence' => null,
-                'analysis_rationale' => null,
-                'review_status' => 'pending',
-                'publish' => 1,
-                'soft_delete' => 0,
-                'created' => $seenAt,
-                'modified' => $seenAt,
-            ];
+        $candidate = [
+            'id' => qms_uuid(),
+            'company_id' => $companyId,
+            'monitor_run_id' => $monitorRunId,
+            'source_key' => $sourceKey,
+            'source_mode' => $sourceMode,
+            'source_item_key' => $sourceItemKey,
+            'source_url' => $normalized['canonical_url'],
+            'normalized_url' => $normalized['canonical_url'],
+            'title' => $normalized['title'],
+            'announcement_number' => $normalized['announcement_number'],
+            'document_type' => $normalized['document_type'],
+            'published_date' => $normalized['published_date'],
+            'effective_date' => $normalized['effective_date'],
+            'first_seen_at' => $seenAt,
+            'last_seen_at' => $seenAt,
+            'content_hash' => $contentHash,
+            'evidence_summary' => $normalized['evidence_summary'],
+            'evidence_refs' => $this->encodeJson($normalized['evidence_refs']),
+            'evidence_json' => $this->encodeJson($normalized['evidence_json']),
+            'supersedes_candidate_id' => $previous !== null ? (string)$previous['id'] : null,
+            'relevance' => 'unknown',
+            'preliminary_applicability' => 'needs_review',
+            'impact_analysis' => null,
+            'analysis_rule_version' => null,
+            'analysis_confidence' => null,
+            'analysis_rationale' => null,
+            'review_status' => 'pending',
+            'publish' => 1,
+            'soft_delete' => 0,
+            'created' => $seenAt,
+            'modified' => $seenAt,
+        ];
 
-            try {
-                ($this->candidateInserter)($candidate);
-            } catch (Throwable $exception) {
-                if (!$this->isUniqueConstraintViolation($exception)) {
-                    throw $exception;
-                }
-                $racedVersions = $this->lockVersionChain($companyId, $sourceKey, $sourceItemKey);
-                $this->resolveChainTail($racedVersions);
-                foreach ($racedVersions as $raced) {
-                    if (hash_equals((string)$raced['content_hash'], $contentHash)) {
-                        return $this->existingResult($raced, $seenAt);
-                    }
-                }
-
+        try {
+            ($this->candidateInserter)($candidate);
+        } catch (Throwable $exception) {
+            if (!$this->isUniqueConstraintViolation($exception)) {
                 throw $exception;
             }
-
-            $stored = $this->findExisting(
-                $companyId,
-                $sourceKey,
-                $sourceItemKey,
-                $contentHash
-            );
-            if (!is_array($stored)) {
-                throw new RuntimeException('候选写入后无法读取');
+            $racedVersions = $this->lockVersionChain($companyId, $sourceKey, $sourceItemKey);
+            $this->resolveChainTail($racedVersions);
+            foreach ($racedVersions as $raced) {
+                if (hash_equals((string)$raced['content_hash'], $contentHash)) {
+                    return $this->existingResult($raced, $seenAt);
+                }
             }
 
-            return [
-                'status' => 'new',
-                'new_count' => 1,
-                'existing_count' => 0,
-                'candidate' => $this->decodeCandidate($stored),
-            ];
-        });
+            throw $exception;
+        }
+
+        $stored = $this->findExisting(
+            $companyId,
+            $sourceKey,
+            $sourceItemKey,
+            $contentHash
+        );
+        if (!is_array($stored)) {
+            throw new RuntimeException('候选写入后无法读取');
+        }
+
+        return [
+            'status' => 'new',
+            'new_count' => 1,
+            'existing_count' => 0,
+            'candidate' => $this->decodeCandidate($stored),
+        ];
+    }
+
+    private function withDeadlockRetry(callable $operation): array
+    {
+        $maximumAttempts = 3;
+        for ($attempt = 1; $attempt <= $maximumAttempts; $attempt++) {
+            try {
+                return $operation();
+            } catch (Throwable $exception) {
+                if (!$this->isDeadlockOrSerializationFailure($exception)) {
+                    throw $exception;
+                }
+                if ($attempt === $maximumAttempts) {
+                    throw new RuntimeException(
+                        '候选并发冲突，已重试 3 次仍未成功，请稍后重试',
+                        0,
+                        $exception
+                    );
+                }
+                ($this->retryBackoff)($attempt);
+            }
+        }
+
+        throw new RuntimeException('候选并发重试进入不可达状态');
+    }
+
+    private function isDeadlockOrSerializationFailure(Throwable $exception): bool
+    {
+        for ($current = $exception; $current instanceof Throwable; $current = $current->getPrevious()) {
+            $code = (string)$current->getCode();
+            $message = $current->getMessage();
+            if ($code === '1213'
+                || $code === '40001'
+                || str_contains($message, 'SQLSTATE[40001]')
+                || (preg_match('/\b1213\b/u', $message) === 1
+                    && stripos($message, 'deadlock') !== false)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function normalizeItem(array $item): array
@@ -279,6 +345,7 @@ final class RegulatoryCandidateService
         // This current read locks the whole item chain/range so concurrent new versions wait,
         // then see the version committed by the transaction that acquired the lock first.
         $result = Db::name('qms_external_change_candidates')
+            ->field(['id', 'content_hash', 'supersedes_candidate_id', 'last_seen_at'])
             ->where('company_id', $companyId)
             ->where('source_key', $sourceKey)
             ->where('source_item_key', $sourceItemKey)
@@ -440,6 +507,9 @@ final class RegulatoryCandidateService
 
     private function withoutObservationTimes(mixed $value): mixed
     {
+        if (is_object($value)) {
+            $value = get_object_vars($value);
+        }
         if (!is_array($value)) {
             return $value;
         }
@@ -456,6 +526,9 @@ final class RegulatoryCandidateService
 
     private function canonicalize(mixed $value): mixed
     {
+        if (is_object($value)) {
+            $value = get_object_vars($value);
+        }
         if (!is_array($value)) {
             return $value;
         }

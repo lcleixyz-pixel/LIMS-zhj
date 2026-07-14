@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `qms_external_change_candidates` (
   `monitor_run_id` varchar(36) NOT NULL,
   `source_key` varchar(100) NOT NULL,
   `source_mode` enum('html_list','manual_only') NOT NULL DEFAULT 'html_list',
-  `source_item_key` varchar(255) NOT NULL COMMENT '来源侧稳定项目标识',
+  `source_item_key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '来源侧稳定项目标识',
   `source_url` varchar(500) DEFAULT NULL,
   `normalized_url` varchar(1000) DEFAULT NULL,
   `title` varchar(300) NOT NULL,
@@ -77,3 +77,7 @@ CREATE TABLE IF NOT EXISTS `qms_external_change_candidates` (
   KEY `promoted_event_id` (`promoted_event_id`),
   KEY `published_date` (`published_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 早期开发库可能已经按表默认的不区分大小写/重音排序创建该列；重复执行仍安全。
+ALTER TABLE `qms_external_change_candidates`
+  MODIFY COLUMN `source_item_key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '来源侧稳定项目标识';
