@@ -41,6 +41,7 @@ final class RegulatoryHttpClient
 
         while (true) {
             $validated = $this->validateUrl($currentUrl, $deadline);
+            $currentUrl = $validated['url'];
             $remaining = $this->remainingBudget($deadline);
             $options = [
                 'connect_timeout' => self::CONNECT_TIMEOUT,
@@ -72,7 +73,11 @@ final class RegulatoryHttpClient
                     throw new RuntimeException('官方来源重定向次数超过上限');
                 }
                 $redirects++;
-                $currentUrl = self::resolveUrl($currentUrl, trim($location));
+                $currentUrl = RegulatoryUrlNormalizer::normalize(
+                    trim($location),
+                    $this->allowedHosts,
+                    $currentUrl
+                );
                 continue;
             }
 
@@ -80,33 +85,22 @@ final class RegulatoryHttpClient
                 throw new RuntimeException('官方来源请求失败，HTTP 状态码：' . $status);
             }
 
+            $contentType = $this->headerValue($headers, 'content-type');
+            $mediaType = strtolower(trim(explode(';', (string)$contentType, 2)[0]));
+            if (!in_array($mediaType, ['text/html', 'application/xhtml+xml'], true)) {
+                throw new RuntimeException('官方来源响应 Content-Type 不是明确的 HTML');
+            }
+
             return $body;
         }
     }
 
-    /** @return array{host: string, resolved_ips: array<int, string>} */
+    /** @return array{url: string, host: string, resolved_ips: array<int, string>} */
     public function validateUrl(string $url, ?float $deadline = null): array
     {
         $deadline ??= ($this->clock)() + self::TIMEOUT;
-        if ($url === '' || preg_match('/[\x00-\x20\x7f]/', $url) === 1) {
-            throw new RuntimeException('官方来源 URL 格式无效');
-        }
-
-        $parts = parse_url($url);
-        if (!is_array($parts) || strtolower((string)($parts['scheme'] ?? '')) !== 'https') {
-            throw new RuntimeException('官方来源仅允许 HTTPS');
-        }
-        if (isset($parts['user']) || isset($parts['pass'])) {
-            throw new RuntimeException('官方来源 URL 不允许 userinfo');
-        }
-        if (isset($parts['port']) && (int)$parts['port'] !== 443) {
-            throw new RuntimeException('官方来源 URL 端口不在允许范围');
-        }
-
-        $host = strtolower((string)($parts['host'] ?? ''));
-        if ($host === '' || !in_array($host, $this->allowedHosts, true)) {
-            throw new RuntimeException('官方来源主机不在白名单');
-        }
+        $normalizedUrl = RegulatoryUrlNormalizer::normalize($url, $this->allowedHosts);
+        $host = (string)parse_url($normalizedUrl, PHP_URL_HOST);
 
         $addresses = ($this->dnsResolver)($host, $this->remainingBudget($deadline));
         $this->remainingBudget($deadline);
@@ -120,7 +114,7 @@ final class RegulatoryHttpClient
             }
         }
 
-        return ['host' => $host, 'resolved_ips' => $addresses];
+        return ['url' => $normalizedUrl, 'host' => $host, 'resolved_ips' => $addresses];
     }
 
     private function remainingBudget(float $deadline): float
@@ -143,10 +137,48 @@ final class RegulatoryHttpClient
             return false;
         }
 
-        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
-            && !$this->ipInCidr($address, '2000::/3')
-        ) {
-            return false;
+        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false) {
+            // IANA IPv6 Special-Purpose Address Space, last updated 2025-10-09.
+            // These more-specific entries are globally reachable exceptions to broader ranges.
+            foreach ([
+                '64:ff9b::/96',
+                '2001:1::1/128',
+                '2001:1::2/128',
+                '2001:1::3/128',
+                '2001:3::/32',
+                '2001:4:112::/48',
+                '2001:20::/28',
+                '2001:30::/28',
+            ] as $globallyReachableException) {
+                if ($this->ipInCidr($address, $globallyReachableException)) {
+                    return true;
+                }
+            }
+
+            // Explicitly fail closed for every current Globally Reachable=False range.
+            foreach ([
+                '::/128',
+                '::1/128',
+                '::ffff:0:0/96',
+                '64:ff9b:1::/48',
+                '100::/64',
+                '100:0:0:1::/64',
+                '2001::/23',
+                '2001:2::/48',
+                '2001:db8::/32',
+                '2002::/16',
+                '3fff::/20',
+                '5f00::/16',
+                'fc00::/7',
+                'fe80::/10',
+                'ff00::/8',
+            ] as $nonGlobalRange) {
+                if ($this->ipInCidr($address, $nonGlobalRange)) {
+                    return false;
+                }
+            }
+
+            return $this->ipInCidr($address, '2000::/3');
         }
 
         foreach ([
@@ -158,11 +190,6 @@ final class RegulatoryHttpClient
             '203.0.113.0/24',
             '192.88.99.0/24',
             '224.0.0.0/4',
-            '64:ff9b:1::/48',
-            '100::/64',
-            '2001::/23',
-            '2001:db8::/32',
-            '2002::/16',
         ] as $blockedRange) {
             if ($this->ipInCidr($address, $blockedRange)) {
                 return false;
@@ -193,71 +220,6 @@ final class RegulatoryHttpClient
 
         $mask = (0xff << (8 - $remainingBits)) & 0xff;
         return (ord($addressBytes[$wholeBytes]) & $mask) === (ord($networkBytes[$wholeBytes]) & $mask);
-    }
-
-    public static function resolveUrl(string $baseUrl, string $reference): string
-    {
-        if ($reference === '') {
-            throw new RuntimeException('相对 URL 不能为空');
-        }
-        if (str_starts_with($reference, '//')) {
-            return 'https:' . $reference;
-        }
-        $referenceParts = parse_url($reference);
-        if (is_array($referenceParts) && isset($referenceParts['scheme'])) {
-            return $reference;
-        }
-
-        $base = parse_url($baseUrl);
-        if (!is_array($base) || !isset($base['scheme'], $base['host'])) {
-            throw new RuntimeException('基础 URL 格式无效');
-        }
-
-        $authority = $base['scheme'] . '://' . $base['host'];
-        if (isset($base['port'])) {
-            $authority .= ':' . $base['port'];
-        }
-
-        $query = '';
-        $fragmentPosition = strpos($reference, '#');
-        if ($fragmentPosition !== false) {
-            $reference = substr($reference, 0, $fragmentPosition);
-        }
-        $queryPosition = strpos($reference, '?');
-        if ($queryPosition !== false) {
-            $query = substr($reference, $queryPosition);
-            $reference = substr($reference, 0, $queryPosition);
-        }
-
-        if ($reference === '') {
-            $path = (string)($base['path'] ?? '/');
-        } elseif (str_starts_with($reference, '/')) {
-            $path = $reference;
-        } else {
-            $basePath = (string)($base['path'] ?? '/');
-            $directory = str_ends_with($basePath, '/') ? $basePath : dirname($basePath) . '/';
-            $path = $directory . $reference;
-        }
-
-        return $authority . self::removeDotSegments($path) . $query;
-    }
-
-    private static function removeDotSegments(string $path): string
-    {
-        $segments = explode('/', $path);
-        $normalized = [];
-        foreach ($segments as $segment) {
-            if ($segment === '' || $segment === '.') {
-                continue;
-            }
-            if ($segment === '..') {
-                array_pop($normalized);
-                continue;
-            }
-            $normalized[] = $segment;
-        }
-
-        return '/' . implode('/', $normalized);
     }
 
     private function headerValue(array $headers, string $name): ?string
@@ -371,7 +333,7 @@ PHP;
 
         $body = '';
         $tooLarge = false;
-        $responseHeaders = [];
+        $headerAccumulator = new RegulatoryHttpHeaderAccumulator();
         $host = (string)parse_url($url, PHP_URL_HOST);
         $resolve = [];
         foreach ($options['resolved_ips'] as $address) {
@@ -397,17 +359,7 @@ PHP;
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_RESOLVE => $resolve,
-            CURLOPT_HEADERFUNCTION => static function ($curl, string $line) use (&$responseHeaders): int {
-                $length = strlen($line);
-                if (str_contains($line, ':')) {
-                    [$name, $value] = explode(':', $line, 2);
-                    $name = strtolower(trim($name));
-                    if ($name !== '') {
-                        $responseHeaders[$name][] = trim($value);
-                    }
-                }
-                return $length;
-            },
+            CURLOPT_HEADERFUNCTION => static fn ($curl, string $line): int => $headerAccumulator->consume($line),
             CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use (&$body, &$tooLarge, $options): int {
                 if (strlen($body) + strlen($chunk) > (int)$options['max_body_bytes']) {
                     $tooLarge = true;
@@ -434,6 +386,6 @@ PHP;
             throw new RuntimeException('官方来源请求失败（cURL 错误码 ' . $errorCode . '）');
         }
 
-        return ['status' => $status, 'headers' => $responseHeaders, 'body' => $body];
+        return ['status' => $status, 'headers' => $headerAccumulator->headers(), 'body' => $body];
     }
 }

@@ -47,13 +47,21 @@ final class HtmlListSourceAdapter implements RegulatorySourceAdapterInterface
         if ($nodes === false) {
             throw new RuntimeException('HTML 来源条目 XPath 无效');
         }
+        if ($nodes->length === 0) {
+            throw new RuntimeException('HTML 来源列表结构未命中，可能发生页面结构漂移');
+        }
 
         $items = [];
+        $seenUrls = [];
         foreach ($nodes as $node) {
             $item = $this->parseItem($xpath, $node, $source);
-            if ($item !== null) {
+            if ($item !== null && !isset($seenUrls[$item['canonical_url']])) {
+                $seenUrls[$item['canonical_url']] = true;
                 $items[] = $item;
             }
+        }
+        if ($items === []) {
+            throw new RuntimeException('HTML 来源列表存在但未解析出有效条目');
         }
 
         return [
@@ -79,8 +87,11 @@ final class HtmlListSourceAdapter implements RegulatorySourceAdapterInterface
             return null;
         }
 
-        $canonicalUrl = RegulatoryHttpClient::resolveUrl((string)$source['entry_url'], $href);
-        $this->assertAllowedItemUrl($canonicalUrl, (array)($source['allowed_hosts'] ?? []));
+        $canonicalUrl = RegulatoryUrlNormalizer::normalize(
+            $href,
+            (array)($source['allowed_hosts'] ?? []),
+            (string)$source['entry_url']
+        );
 
         $dateNode = $xpath->query(
             '(.//time[@datetime] | .//*[contains(concat(" ", normalize-space(@class), " "), " date ")] | .//*[contains(concat(" ", normalize-space(@class), " "), " time ")])[1]',
@@ -122,28 +133,6 @@ final class HtmlListSourceAdapter implements RegulatorySourceAdapterInterface
                 'raw_text' => $rawText,
             ],
         ];
-    }
-
-    private function assertAllowedItemUrl(string $url, array $allowedHosts): void
-    {
-        $parts = parse_url($url);
-        if (!is_array($parts)
-            || strtolower((string)($parts['scheme'] ?? '')) !== 'https'
-            || isset($parts['user'])
-            || isset($parts['pass'])
-            || (isset($parts['port']) && (int)$parts['port'] !== 443)
-        ) {
-            throw new RuntimeException('列表条目 URL 必须是无凭据的 HTTPS 地址');
-        }
-
-        $host = strtolower((string)($parts['host'] ?? ''));
-        $normalizedAllowedHosts = array_map(
-            static fn (mixed $allowed): string => strtolower((string)$allowed),
-            $allowedHosts
-        );
-        if ($host === '' || !in_array($host, $normalizedAllowedHosts, true)) {
-            throw new RuntimeException('列表条目 URL 主机不在来源白名单');
-        }
     }
 
     private function normalizeDate(string $value): ?string

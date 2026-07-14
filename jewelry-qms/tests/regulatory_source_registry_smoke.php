@@ -5,9 +5,11 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use app\service\regulatory\HtmlListSourceAdapter;
 use app\service\regulatory\ManualOnlySourceAdapter;
+use app\service\regulatory\RegulatoryHttpHeaderAccumulator;
 use app\service\regulatory\RegulatoryHttpClient;
 use app\service\regulatory\RegulatorySourceAdapterInterface;
 use app\service\regulatory\RegulatorySourceRegistry;
+use app\service\regulatory\RegulatoryUrlNormalizer;
 
 function regulatory_assert(bool $condition, string $message): void
 {
@@ -53,7 +55,7 @@ function make_http_client(
     };
 
     $transport ??= static function (string $url, array $options): array {
-        return ['status' => 200, 'headers' => [], 'body' => 'offline fixture response'];
+        return ['status' => 200, 'headers' => ['content-type' => 'text/html; charset=UTF-8'], 'body' => 'offline fixture response'];
     };
 
     return new RegulatoryHttpClient($allowedHosts, $resolver, $transport, $clock);
@@ -207,6 +209,105 @@ regulatory_assert_throws(
     'Manual-only source must structurally prohibit HTTP client creation'
 );
 
+$headerAccumulator = new RegulatoryHttpHeaderAccumulator();
+foreach ([
+    "HTTP/1.1 103 Early Hints\r\n",
+    "Content-Type: text/html\r\n",
+    "Location: https://www.samr.gov.cn/stale-redirect\r\n",
+    "\r\n",
+    "HTTP/1.1 200 OK\r\n",
+    "Content-Type: application/pdf\r\n",
+    "X-Final: yes\r\n",
+    "\r\n",
+    "Content-Type: text/html\r\n",
+] as $headerLine) {
+    $headerAccumulator->consume($headerLine);
+}
+regulatory_assert_same(
+    ['application/pdf'],
+    $headerAccumulator->headers()['content-type'] ?? null,
+    'Final response Content-Type must replace interim headers and ignore trailers'
+);
+regulatory_assert(
+    !isset($headerAccumulator->headers()['location']),
+    'Interim Location must not leak into the final response headers'
+);
+
+$missingFinalHeaderAccumulator = new RegulatoryHttpHeaderAccumulator();
+foreach ([
+    "HTTP/1.1 103 Early Hints\r\n",
+    "Content-Type: text/html\r\n",
+    "\r\n",
+    "HTTP/1.1 200 OK\r\n",
+    "X-Final: yes\r\n",
+    "\r\n",
+] as $headerLine) {
+    $missingFinalHeaderAccumulator->consume($headerLine);
+}
+regulatory_assert(
+    !isset($missingFinalHeaderAccumulator->headers()['content-type']),
+    'Missing final Content-Type must not inherit an interim HTML value'
+);
+
+$samrAllowedHosts = $registry->allowedHosts('samr_rkjcs_notice');
+regulatory_assert_same(
+    'https://www.samr.gov.cn/rkjcs/tzgg/item.html?a=1&b=2&case=ABC',
+    RegulatoryUrlNormalizer::normalize(
+        'HTTPS://WWW.SAMR.GOV.CN:443/rkjcs/tzgg/../tzgg/item.html?utm_source=x&case=ABC&spm=1&from=feed&b=2&a=1#fragment',
+        $samrAllowedHosts
+    ),
+    'Absolute URL canonicalization must normalize host, port, path, query and tracking parameters'
+);
+regulatory_assert_same(
+    'https://www.samr.gov.cn/rkjcs/tzgg/item.html?a=1&b=2',
+    RegulatoryUrlNormalizer::normalize(
+        './item.html?b=2&utm_medium=email&a=1#fragment',
+        $samrAllowedHosts,
+        $registry->source('samr_rkjcs_notice')['entry_url']
+    ),
+    'Relative URL canonicalization must match absolute URL behavior'
+);
+regulatory_assert_same(
+    'https://www.samr.gov.cn/item?case=1&case=2&empty=&flag=',
+    RegulatoryUrlNormalizer::normalize(
+        'https://www.samr.gov.cn/item?flag&case=2&empty=&case=1',
+        $samrAllowedHosts
+    ),
+    'Canonical query must retain business parameters, duplicates and stable ordering'
+);
+regulatory_assert_same(
+    'https://www.samr.gov.cn/item?a=1&b=2',
+    RegulatoryUrlNormalizer::normalize(
+        '#fragment-only',
+        $samrAllowedHosts,
+        'https://www.samr.gov.cn/item?b=2&a=1'
+    ),
+    'Fragment-only relative reference must retain and canonicalize the base business query'
+);
+regulatory_assert_same(
+    'https://www.samr.gov.cn/item?literal=a%2Bb&q=a%20b',
+    RegulatoryUrlNormalizer::normalize(
+        'https://www.samr.gov.cn/item?q=a+b&literal=a%2Bb',
+        $samrAllowedHosts
+    ),
+    'Canonical query must preserve application/x-www-form-urlencoded plus semantics'
+);
+foreach ([
+    "https://www.samr.gov.cn/item\r\nInjected: value",
+    'https://www.samr.gov.cn/item?value=%0Dheader',
+    './item?value=%250Aheader',
+] as $unsafeUrl) {
+    regulatory_assert_throws(
+        static fn () => RegulatoryUrlNormalizer::normalize(
+            $unsafeUrl,
+            $samrAllowedHosts,
+            $registry->source('samr_rkjcs_notice')['entry_url']
+        ),
+        '控制字符',
+        'Canonical URL must reject raw or decoded ASCII control characters'
+    );
+}
+
 $htmlAdapter = $registry->adapterFor('samr_rkjcs_notice');
 regulatory_assert($htmlAdapter instanceof RegulatorySourceAdapterInterface, 'HTML adapter must implement source interface');
 regulatory_assert($htmlAdapter instanceof HtmlListSourceAdapter, 'HTML source must resolve to HtmlListSourceAdapter');
@@ -269,6 +370,57 @@ regulatory_assert_same(null, $cnasItem['announcement_number'], 'CNAS missing ann
 regulatory_assert(str_contains($cnasItem['summary'], '变更管理'), 'CNAS summary evidence missing');
 regulatory_assert(isset($cnasItem['evidence']['raw_text']), 'CNAS evidence must be present');
 
+$cnasRulesAdapter = $registry->adapterFor('cnas_lab_rules');
+$cnasRulesHtml = (string)file_get_contents($fixtureDir . '/cnas_lab_rules.html');
+$cnasRulesResult = $cnasRulesAdapter->parse($cnasRulesHtml, $registry->source('cnas_lab_rules'));
+regulatory_assert_same(1, count($cnasRulesResult['items']), 'CNAS rules fixture must return one normalized item');
+$cnasRulesItem = $cnasRulesResult['items'][0];
+regulatory_assert_same('CNAS-RL01：2026《实验室认可规则》发布通知', $cnasRulesItem['title'], 'CNAS rules title normalization failed');
+regulatory_assert_same(
+    'https://www.cnas.org.cn/rkfw/sys/rkyq/rkzz/2026/rule-7.html',
+    $cnasRulesItem['canonical_url'],
+    'CNAS rules relative URL normalization failed'
+);
+regulatory_assert_same('2026-07-08', $cnasRulesItem['published_date'], 'CNAS rules date normalization failed');
+regulatory_assert_same('CNAS-RL01:2026', $cnasRulesItem['announcement_number'], 'CNAS rules number normalization failed');
+regulatory_assert(str_contains($cnasRulesItem['summary'], '过渡安排'), 'CNAS rules summary evidence missing');
+
+$xinjiangAdapter = $registry->adapterFor('xinjiang_samr_notice');
+$xinjiangHtml = (string)file_get_contents($fixtureDir . '/xinjiang_notice_list.html');
+$xinjiangResult = $xinjiangAdapter->parse($xinjiangHtml, $registry->source('xinjiang_samr_notice'));
+regulatory_assert_same(1, count($xinjiangResult['items']), 'Xinjiang fixture must return one normalized item');
+$xinjiangItem = $xinjiangResult['items'][0];
+regulatory_assert_same(
+    '自治区市场监督管理局关于开展检验检测专项检查的通知',
+    $xinjiangItem['title'],
+    'Xinjiang title normalization failed'
+);
+regulatory_assert_same(
+    'https://scjgj.xinjiang.gov.cn/xjaic/tzgg/202607/notice-18.html',
+    $xinjiangItem['canonical_url'],
+    'Xinjiang URL normalization failed'
+);
+regulatory_assert_same('2026-07-06', $xinjiangItem['published_date'], 'Xinjiang date normalization failed');
+regulatory_assert_same(null, $xinjiangItem['announcement_number'], 'Xinjiang missing number must normalize to null');
+regulatory_assert(str_contains($xinjiangItem['summary'], '专项检查'), 'Xinjiang summary evidence missing');
+
+regulatory_assert_throws(
+    static fn () => $htmlAdapter->parse(
+        '<html><body><ul class="unexpected-list"><li><a href="/notice.html">结构漂移</a></li></ul></body></html>',
+        $registry->source('samr_rkjcs_notice')
+    ),
+    '列表结构',
+    'HTML parser must audit a configured XPath that matches zero nodes'
+);
+regulatory_assert_throws(
+    static fn () => $htmlAdapter->parse(
+        '<html><body><ul class="news-list"><li><span>缺少有效链接</span></li></ul></body></html>',
+        $registry->source('samr_rkjcs_notice')
+    ),
+    '有效条目',
+    'HTML parser must audit list nodes that produce zero valid items'
+);
+
 $officialDns = [
     'www.samr.gov.cn' => ['8.8.8.8'],
     'www.cnas.org.cn' => ['8.8.4.4'],
@@ -278,6 +430,34 @@ $officialDns = [
     'samr.gov.cn.evil.example' => ['149.112.112.112'],
 ];
 $allowedHosts = $registry->allowedHosts('samr_rkjcs_notice');
+
+foreach ([
+    ['application/pdf', '%PDF-1.7', 'Content-Type'],
+    ['', '<html><body>missing content type</body></html>', 'Content-Type'],
+] as [$contentType, $body, $needle]) {
+    $transport = static fn (string $url, array $options): array => [
+        'status' => 200,
+        'headers' => $contentType === '' ? [] : ['content-type' => $contentType],
+        'body' => $body,
+    ];
+    $client = make_http_client($allowedHosts, $officialDns, $transport);
+    regulatory_assert_throws(
+        static fn () => $client->fetch('https://www.samr.gov.cn/rkjcs/tzgg/index.html'),
+        $needle,
+        'HTTP client must reject a response without an explicit HTML Content-Type'
+    );
+}
+
+$xhtmlTransport = static fn (string $url, array $options): array => [
+    'status' => 200,
+    'headers' => ['content-type' => 'Application/XHTML+XML; charset=UTF-8'],
+    'body' => '<html xmlns="http://www.w3.org/1999/xhtml"><body>ok</body></html>',
+];
+$xhtmlClient = make_http_client($allowedHosts, $officialDns, $xhtmlTransport);
+regulatory_assert(
+    str_contains($xhtmlClient->fetch('https://www.samr.gov.cn/xhtml'), '<body>ok</body>'),
+    'HTTP client must accept application/xhtml+xml with charset'
+);
 
 foreach ([
     ['http://www.samr.gov.cn/rkjcs/tzgg/index.html', 'HTTPS', 'HTTP URL'],
@@ -305,12 +485,56 @@ foreach ([
     'fc00::1' => 'IPv6 private',
     'fe80::1' => 'IPv6 link-local',
     'ff00::1' => 'IPv6 multicast/reserved',
+    '64:ff9b:1::' => 'IPv4-IPv6 local translation range start',
+    '64:ff9b:1:ffff:ffff:ffff:ffff:ffff' => 'IPv4-IPv6 local translation range end',
+    '64:ff9b:0:1::' => 'address immediately outside the globally reachable translation /96',
+    '100::' => 'discard-only range start',
+    '100::ffff:ffff:ffff:ffff' => 'discard-only range end',
+    '100:0:0:1::' => 'dummy IPv6 range start',
+    '100:0:0:1:ffff:ffff:ffff:ffff' => 'dummy IPv6 range end',
+    '2001:1::4' => 'IETF protocol assignment without a globally reachable exception',
+    '2001:2::' => 'benchmarking range start',
+    '2001:2:0:ffff:ffff:ffff:ffff:ffff' => 'benchmarking range end',
+    '2001:db8::' => 'documentation range start',
+    '2001:db8:ffff:ffff:ffff:ffff:ffff:ffff' => 'documentation range end',
+    '2002::' => '6to4 range start',
+    '2002:ffff:ffff:ffff:ffff:ffff:ffff:ffff' => '6to4 range end',
+    '3fff::' => 'documentation range start',
+    '3fff:fff:ffff:ffff:ffff:ffff:ffff:ffff' => 'documentation range end',
+    '5f00::' => 'SRv6 SID range start',
+    '5f00:ffff:ffff:ffff:ffff:ffff:ffff:ffff' => 'SRv6 SID range end',
 ] as $address => $case) {
     $client = make_http_client($allowedHosts, ['www.samr.gov.cn' => [$address]]);
     regulatory_assert_throws(
         static fn () => $client->fetch('https://www.samr.gov.cn/rkjcs/tzgg/index.html'),
         'IP',
         'HTTP client must reject DNS resolution to ' . $case
+    );
+}
+
+foreach ([
+    '64:ff9b::' => 'globally reachable IPv4-IPv6 translation range start',
+    '64:ff9b::ffff:ffff' => 'globally reachable IPv4-IPv6 translation range end',
+    '2001:1::1' => 'PCP anycast exception',
+    '2001:1::2' => 'TURN anycast exception',
+    '2001:1::3' => 'DNS-SD anycast exception',
+    '2001:3::' => 'AMT exception start',
+    '2001:3:ffff:ffff:ffff:ffff:ffff:ffff' => 'AMT exception end',
+    '2001:4:112::' => 'AS112 exception start',
+    '2001:4:112:ffff:ffff:ffff:ffff:ffff' => 'AS112 exception end',
+    '2001:20::' => 'ORCHIDv2 exception start',
+    '2001:2f:ffff:ffff:ffff:ffff:ffff:ffff' => 'ORCHIDv2 exception end',
+    '2001:30::' => 'DETs exception start',
+    '2001:3f:ffff:ffff:ffff:ffff:ffff:ffff' => 'DETs exception end',
+    '2001:200::' => 'address immediately outside the non-global IETF assignment /23',
+    '3fff:1000::' => 'address immediately outside the documentation /20',
+    '2001:4860:4860::8888' => 'ordinary public IPv6 address',
+] as $address => $case) {
+    $client = make_http_client($allowedHosts, ['www.samr.gov.cn' => [$address]]);
+    regulatory_assert_same(
+        'offline fixture response',
+        $client->fetch('https://www.samr.gov.cn/rkjcs/tzgg/index.html'),
+        'HTTP client must accept ' . $case
     );
 }
 
@@ -372,7 +596,7 @@ $redirectTransport = static function (string $url, array $options) use (&$calls)
     if (count($calls) === 1) {
         return [
             'status' => 302,
-            'headers' => ['location' => '../final.html'],
+            'headers' => ['location' => '../final.html?utm_source=redirect&b=2&a=1#section'],
             'body' => '',
         ];
     }
@@ -381,11 +605,16 @@ $redirectTransport = static function (string $url, array $options) use (&$calls)
 $client = make_http_client($allowedHosts, $officialDns, $redirectTransport);
 regulatory_assert_same(
     'redirected body',
-    $client->fetch('https://www.samr.gov.cn/rkjcs/tzgg/index.html'),
+    $client->fetch('HTTPS://WWW.SAMR.GOV.CN:443/rkjcs/tzgg/index.html?utm_campaign=start#top'),
     'HTTP client must follow a validated relative redirect'
 );
 regulatory_assert_same(2, count($calls), 'HTTP client must perform one request per redirect hop');
-regulatory_assert_same('https://www.samr.gov.cn/rkjcs/final.html', $calls[1][0], 'Redirect URL resolution failed');
+regulatory_assert_same(
+    'https://www.samr.gov.cn/rkjcs/tzgg/index.html',
+    $calls[0][0],
+    'Initial HTTP URL must use the shared canonicalization entry point'
+);
+regulatory_assert_same('https://www.samr.gov.cn/rkjcs/final.html?a=1&b=2', $calls[1][0], 'Redirect URL canonicalization failed');
 foreach ($calls as [$url, $options]) {
     regulatory_assert_same(5, $options['connect_timeout'], 'Connect timeout must be 5 seconds');
     regulatory_assert(
@@ -414,7 +643,7 @@ $budgetTransport = static function (string $url, array $options) use (&$now, &$r
         $now += 12.0;
         return ['status' => 302, 'headers' => ['location' => '/within-budget'], 'body' => ''];
     }
-    return ['status' => 200, 'headers' => [], 'body' => 'within total deadline'];
+    return ['status' => 200, 'headers' => ['content-type' => 'text/html'], 'body' => 'within total deadline'];
 };
 $budgetClient = new RegulatoryHttpClient(
     ['www.samr.gov.cn'],
