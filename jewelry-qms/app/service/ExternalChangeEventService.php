@@ -3,8 +3,19 @@ declare(strict_types=1);
 
 namespace app\service;
 
+use app\model\History;
+use app\model\QmsExternalChangeCandidate;
 use app\model\QmsExternalChangeEvent;
+use app\service\regulatory\RegulatorySourceRegistry;
+use app\service\regulatory\RegulatoryUrlNormalizer;
+use think\facade\Config;
 use think\facade\Db;
+use think\facade\Log;
+use think\facade\Session;
+
+class RegulatoryPromotionDomainException extends \RuntimeException
+{
+}
 
 class ExternalChangeEventService
 {
@@ -159,6 +170,213 @@ class ExternalChangeEventService
         $event->save($data);
 
         return $event;
+    }
+
+    public static function promoteRegulatoryCandidate(string $candidateId, string $actorId): QmsExternalChangeEvent
+    {
+        self::assertPromotionIdentity($candidateId, $actorId);
+
+        try {
+            return Db::transaction(function () use ($candidateId, $actorId): QmsExternalChangeEvent {
+                $companyId = trim((string)Config::get('qms.company_id'));
+                if ($companyId === '') {
+                    throw new RegulatoryPromotionDomainException('法规候选晋升缺少机构配置');
+                }
+
+                $candidate = QmsExternalChangeCandidate::where('company_id', $companyId)
+                    ->where('publish', 1)
+                    ->where('soft_delete', 0)
+                    ->lock(true)
+                    ->find($candidateId);
+                if (!$candidate) {
+                    throw new RegulatoryPromotionDomainException('法规候选不存在或无权晋升');
+                }
+
+                $status = trim((string)$candidate->review_status);
+                $promotedEventId = trim((string)$candidate->promoted_event_id);
+                if ($status === 'promoted') {
+                    if ($promotedEventId === '') {
+                        throw new RegulatoryPromotionDomainException('法规候选晋升状态异常，请人工核查');
+                    }
+
+                    return self::findValidPromotedEvent($promotedEventId, $companyId);
+                }
+                if ($promotedEventId !== '') {
+                    throw new RegulatoryPromotionDomainException('法规候选晋升关联异常，请人工核查');
+                }
+                if ($status !== 'confirmed_applicable') {
+                    throw new RegulatoryPromotionDomainException('仅已确认相关的法规候选可以晋升');
+                }
+
+                $officialUrl = self::officialCandidateUrl($candidate);
+                $eventData = self::normalizeInput([
+                    'source_kind' => self::sourceKindForCandidate((string)$candidate->source_key),
+                    'source_name' => self::safeSummaryText((string)$candidate->title, 300),
+                    'source_url' => $officialUrl,
+                    'announcement_number' => self::safeSummaryText((string)$candidate->announcement_number, 120),
+                    'published_date' => $candidate->published_date,
+                    'effective_date' => $candidate->effective_date,
+                    'event_summary' => self::promotionSummary($candidate, $officialUrl),
+                    'graph_snapshot_hash' => self::candidateGraphSnapshotHash($candidate),
+                    'status' => self::STATUS_REGISTERED,
+                ], true);
+                $validationErrors = self::validateData($eventData, true);
+                if ($validationErrors !== []) {
+                    throw new RegulatoryPromotionDomainException('法规候选无法建立正式变更事件，请核对候选字段');
+                }
+
+                $event = static::persistPromotedEvent($eventData);
+                $eventId = trim((string)$event->id);
+                if ($eventId === '') {
+                    throw new \RuntimeException('persisted promotion event has no id');
+                }
+
+                $candidate->save([
+                    'review_status' => 'promoted',
+                    'promoted_event_id' => $eventId,
+                    'promoted_at' => date('Y-m-d H:i:s'),
+                    'promotion_error_summary' => null,
+                ]);
+                static::writePromotionHistory($candidateId, $eventId, $actorId);
+
+                return $event;
+            });
+        } catch (RegulatoryPromotionDomainException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            Log::error('[Regulatory Promotion] failure exception=' . $exception::class);
+            throw new \RuntimeException('法规候选晋升失败，请稍后重试');
+        }
+    }
+
+    /** @param array<string, mixed> $data */
+    protected static function persistPromotedEvent(array $data): QmsExternalChangeEvent
+    {
+        $event = new QmsExternalChangeEvent();
+        $event->save($data);
+
+        return $event;
+    }
+
+    protected static function writePromotionHistory(string $candidateId, string $eventId, string $actorId): void
+    {
+        History::create([
+            'id' => qms_uuid(),
+            'model_name' => 'QmsExternalChangeCandidate',
+            'controller_name' => 'ExternalChangeEventService',
+            'action' => 'promoteRegulatoryCandidate',
+            'record_id' => $candidateId,
+            'user_id' => $actorId,
+            'details' => implode(' ', [
+                'outcome=success',
+                'candidate_id=' . $candidateId,
+                'event_id=' . $eventId,
+                'actor_id=' . $actorId,
+            ]),
+            'created' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    private static function assertPromotionIdentity(string $candidateId, string $actorId): void
+    {
+        if (trim((string)Session::get('user.role', 'staff')) !== 'quality_manager') {
+            throw new RegulatoryPromotionDomainException('仅质量负责人可以晋升法规候选');
+        }
+        if ($actorId !== trim($actorId)
+            || preg_match('/\A[A-Za-z0-9][A-Za-z0-9._:@-]{0,35}\z/D', $actorId) !== 1
+        ) {
+            throw new RegulatoryPromotionDomainException('actor_id 必须是 1–36 位安全标识符');
+        }
+        if (trim((string)Session::get('user.id', '')) !== $actorId) {
+            throw new RegulatoryPromotionDomainException('晋升操作人与当前登录身份不一致');
+        }
+        if ($candidateId !== trim($candidateId)
+            || preg_match('/\A[A-Za-z0-9][A-Za-z0-9._:@-]{0,35}\z/D', $candidateId) !== 1
+        ) {
+            throw new RegulatoryPromotionDomainException('候选 ID 格式无效');
+        }
+    }
+
+    private static function findValidPromotedEvent(string $eventId, string $companyId): QmsExternalChangeEvent
+    {
+        $event = QmsExternalChangeEvent::where('company_id', $companyId)
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->lock(true)
+            ->find($eventId);
+        if (!$event) {
+            throw new RegulatoryPromotionDomainException('法规候选关联事件无效，请人工核查');
+        }
+
+        return $event;
+    }
+
+    private static function sourceKindForCandidate(string $sourceKey): string
+    {
+        return match ($sourceKey) {
+            'cnas_lab_notice', 'cnas_lab_rules' => 'cnas',
+            'samr_rkjcs_notice', 'xinjiang_samr_notice', 'cma_capability_query' => 'samr',
+            default => 'other',
+        };
+    }
+
+    private static function officialCandidateUrl(QmsExternalChangeCandidate $candidate): ?string
+    {
+        $url = trim((string)$candidate->source_url);
+        if ($url === '') {
+            return null;
+        }
+        try {
+            $registry = new RegulatorySourceRegistry();
+
+            return RegulatoryUrlNormalizer::normalize(
+                $url,
+                $registry->allowedHosts(trim((string)$candidate->source_key))
+            );
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private static function candidateGraphSnapshotHash(QmsExternalChangeCandidate $candidate): string
+    {
+        $hash = strtolower(trim((string)$candidate->graph_snapshot_hash));
+
+        return preg_match('/\A[a-f0-9]{64}\z/D', $hash) === 1 ? $hash : self::currentGraphSnapshotHash();
+    }
+
+    private static function promotionSummary(QmsExternalChangeCandidate $candidate, ?string $officialUrl): string
+    {
+        $sourceKey = self::safeSummaryText((string)$candidate->source_key, 100);
+        $announcement = self::safeSummaryText((string)$candidate->announcement_number, 120);
+        $url = self::safeSummaryText((string)$officialUrl, 500);
+        $evidence = self::safeSummaryText((string)$candidate->evidence_summary, 500);
+
+        return implode('；', array_filter([
+            '机器发现/规则初判，待正式影响评估',
+            '本记录仅保留候选证据，不得视为适用性正式评估',
+            '来源=' . ($sourceKey !== '' ? $sourceKey : 'unknown'),
+            $announcement !== '' ? '文号=' . $announcement : '',
+            $url !== '' ? '官方URL=' . $url : '',
+            $evidence !== '' ? '证据摘要=' . $evidence : '',
+        ]));
+    }
+
+    private static function safeSummaryText(string $value, int $maxLength): string
+    {
+        for ($iteration = 0; $iteration < 3; $iteration++) {
+            $decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if ($decoded === $value) {
+                break;
+            }
+            $value = $decoded;
+        }
+        $value = strip_tags($value);
+        $value = preg_replace('/javascript\s*:/iu', '', $value) ?? '';
+        $value = preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $value) ?? '';
+        $value = preg_replace('/\s+/u', ' ', trim($value)) ?? '';
+
+        return mb_substr($value, 0, $maxLength, 'UTF-8');
     }
 
     public static function currentGraphSnapshotHash(): string

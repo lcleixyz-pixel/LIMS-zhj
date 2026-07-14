@@ -16,7 +16,10 @@ class FieldAuditService
         'Equipment' => ['status', 'next_calibration_date', 'last_calibration_date', 'site_id'],
         'AuditFinding' => ['status', 'capa_id'],
         'QmsExternalChangeEvent' => ['status', 'old_source_id', 'new_source_id', 'effective_date', 'graph_snapshot_hash', 'close_reason'],
-        'QmsExternalChangeCandidate' => ['review_status', 'review_comment', 'reviewed_by', 'reviewed_at'],
+        'QmsExternalChangeCandidate' => [
+            'review_status', 'review_comment', 'reviewed_by', 'reviewed_at',
+            'promoted_event_id', 'promoted_at',
+        ],
     ];
 
     protected static array $sensitiveFields = ['password'];
