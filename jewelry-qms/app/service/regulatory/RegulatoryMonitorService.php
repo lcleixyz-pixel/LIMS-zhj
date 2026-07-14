@@ -204,6 +204,7 @@ final class RegulatoryMonitorService
         $message = preg_split('/(?:Stack trace:|\n\s*#0\b)/i', $message, 2)[0] ?? $message;
         $patterns = [
             '/\b(?:authorization|proxy-authorization|cookie|set-cookie)\s*:\s*[^\r\n]*/iu' => '[REDACTED]',
+            '/(?<![\p{L}\p{N}_])["\']?(?:db_dsn|dsn|database_(?:url|dsn))["\']?(?![\p{L}\p{N}_])\s*[:=]\s*[^\r\n]*/iu' => '[REDACTED]',
             '#(?<![\p{L}\p{N}_])(?:mysql|mariadb|pgsql|postgres(?:ql)?|sqlsrv|oci|sqlite|odbc|firebird|ibm|informix|cubrid|mongodb|redis):(?://)?[^\r\n]*#iu' => '[REDACTED]',
             '#\b(?:https?|ftp)://[^\s/@:]+:[^\s/@]+@[^\r\n]*#iu' => '[REDACTED]',
             '/\b(?:authorization|proxy-authorization|cookie|set-cookie|password|passwd|pwd|token|api[_-]?key|secret|dsn|database_(?:url|dsn)|db_(?:dsn|host|name|user|pass(?:word)?))\s*[=:]\s*(?:"[^"]*"|\'[^\']*\'|[^\s,;]+)/iu' => '[REDACTED]',

@@ -128,33 +128,13 @@ final class RegulatoryCandidateService
             $contentHash,
             $seenAt
         ): array {
-            $existing = $this->findExisting(
-                $companyId,
-                $sourceKey,
-                $sourceItemKey,
-                $contentHash,
-                false
-            );
-            if (is_array($existing)) {
-                $lockedExisting = $this->findExisting(
-                    $companyId,
-                    $sourceKey,
-                    $sourceItemKey,
-                    $contentHash,
-                    true
-                );
-                if (is_array($lockedExisting)) {
-                    return $this->existingResult($lockedExisting, $seenAt);
-                }
-            }
-
             $versions = $this->lockVersionChain($companyId, $sourceKey, $sourceItemKey);
+            $previous = $this->resolveChainTail($versions);
             foreach ($versions as $version) {
                 if (hash_equals((string)$version['content_hash'], $contentHash)) {
                     return $this->existingResult($version, $seenAt);
                 }
             }
-            $previous = $this->resolveChainTail($versions);
 
             $candidate = [
                 'id' => qms_uuid(),
@@ -196,26 +176,22 @@ final class RegulatoryCandidateService
                 if (!$this->isUniqueConstraintViolation($exception)) {
                     throw $exception;
                 }
-                $raced = $this->findExisting(
-                    $companyId,
-                    $sourceKey,
-                    $sourceItemKey,
-                    $contentHash,
-                    true
-                );
-                if (!is_array($raced)) {
-                    throw $exception;
+                $racedVersions = $this->lockVersionChain($companyId, $sourceKey, $sourceItemKey);
+                $this->resolveChainTail($racedVersions);
+                foreach ($racedVersions as $raced) {
+                    if (hash_equals((string)$raced['content_hash'], $contentHash)) {
+                        return $this->existingResult($raced, $seenAt);
+                    }
                 }
 
-                return $this->existingResult($raced, $seenAt);
+                throw $exception;
             }
 
             $stored = $this->findExisting(
                 $companyId,
                 $sourceKey,
                 $sourceItemKey,
-                $contentHash,
-                false
+                $contentHash
             );
             if (!is_array($stored)) {
                 throw new RuntimeException('候选写入后无法读取');
@@ -285,17 +261,13 @@ final class RegulatoryCandidateService
         string $companyId,
         string $sourceKey,
         string $sourceItemKey,
-        string $contentHash,
-        bool $lock
+        string $contentHash
     ): ?array {
         $query = Db::name('qms_external_change_candidates')
             ->where('company_id', $companyId)
             ->where('source_key', $sourceKey)
             ->where('source_item_key', $sourceItemKey)
             ->where('content_hash', $contentHash);
-        if ($lock) {
-            $query->lock(true);
-        }
         $row = $query->find();
 
         return is_array($row) ? $row : null;

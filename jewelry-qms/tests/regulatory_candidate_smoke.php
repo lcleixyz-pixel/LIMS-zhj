@@ -339,6 +339,7 @@ try {
     $corruptCases = [
         'fork' => [
             'expected' => '分叉',
+            'exact_match' => true,
             'rows' => [
                 ['20000000-0000-4000-8000-000000000001', null],
                 ['20000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000001'],
@@ -347,18 +348,21 @@ try {
         ],
         'broken' => [
             'expected' => '断链',
+            'exact_match' => false,
             'rows' => [
                 ['30000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-999999999999'],
             ],
         ],
         'cycle' => [
             'expected' => '环',
+            'exact_match' => false,
             'rows' => [
                 ['40000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000002'],
                 ['40000000-0000-4000-8000-000000000002', '40000000-0000-4000-8000-000000000001'],
             ],
         ],
     ];
+    $now = new DateTimeImmutable('2026-07-14 12:00:00');
     foreach ($corruptCases as $case => $definition) {
         $sourceKey = 'chain-corrupt-' . $case;
         $sourceItemKey = 'CHAIN-CORRUPT-' . strtoupper($case);
@@ -377,11 +381,21 @@ try {
         $newCorruptItem = $v2;
         $newCorruptItem['announcement_number'] = $sourceItemKey;
         $newCorruptItem['canonical_url'] = 'https://www.samr.gov.cn/chain/corrupt-' . $case . '.html';
+        if ($definition['exact_match']) {
+            Db::name('qms_external_change_candidates')
+                ->where('id', $definition['rows'][0][0])
+                ->update(['content_hash' => $candidateService->contentHash($newCorruptItem)]);
+        }
         $beforeCount = Db::name('qms_external_change_candidates')
             ->where('company_id', $companyId)
             ->where('source_key', $sourceKey)
             ->where('source_item_key', $sourceItemKey)
             ->count();
+        $beforeLastSeen = $definition['exact_match']
+            ? (string)Db::name('qms_external_change_candidates')
+                ->where('id', $definition['rows'][0][0])
+                ->value('last_seen_at')
+            : null;
         candidate_assert_throws_integrity(
             static fn () => $candidateService->record(
                 $companyId,
@@ -402,6 +416,15 @@ try {
                 ->count(),
             'Corrupt ' . $case . ' chain must not insert a candidate'
         );
+        if ($definition['exact_match']) {
+            candidate_assert_same(
+                $beforeLastSeen,
+                (string)Db::name('qms_external_change_candidates')
+                    ->where('id', $definition['rows'][0][0])
+                    ->value('last_seen_at'),
+                'Exact hash on corrupt chain must not update last_seen_at'
+            );
+        }
     }
 
     foreach ([
@@ -450,6 +473,56 @@ try {
     candidate_assert_same('existing', $race['status'], 'Unique-key race must re-query and return existing');
     candidate_assert_same(1, Db::name('qms_external_change_candidates')->where('id', $race['candidate']['id'])->count(), 'Unique-key race must retain one row');
 
+    $raceCorruptSourceKey = 'race-corrupt-source';
+    $raceCorruptRootId = '50000000-0000-4000-8000-000000000001';
+    $raceCorruptChildIds = [
+        '50000000-0000-4000-8000-000000000002',
+        '50000000-0000-4000-8000-000000000003',
+    ];
+    $raceCorruptInserter = static function (array $data) use (
+        $raceCorruptRootId,
+        $raceCorruptChildIds
+    ): void {
+        $data['id'] = $raceCorruptRootId;
+        Db::name('qms_external_change_candidates')->insert($data);
+        foreach ($raceCorruptChildIds as $childId) {
+            $child = $data;
+            $child['id'] = $childId;
+            $child['title'] = '竞态分叉子版本 ' . $childId;
+            $child['source_url'] = 'https://www.samr.gov.cn/race-corrupt/' . $childId . '.html';
+            $child['normalized_url'] = $child['source_url'];
+            $child['content_hash'] = hash('sha256', $childId);
+            $child['supersedes_candidate_id'] = $raceCorruptRootId;
+            Db::name('qms_external_change_candidates')->insert($child);
+        }
+        throw new RuntimeException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry', 1062);
+    };
+    $raceCorruptService = new RegulatoryCandidateService(
+        static fn (): DateTimeImmutable => new DateTimeImmutable('2026-07-14 12:00:02'),
+        $raceCorruptInserter
+    );
+    $raceCorruptItem = $noNumber;
+    $raceCorruptItem['canonical_url'] = 'https://www.samr.gov.cn/race-corrupt/item.html';
+    candidate_assert_throws_integrity(
+        static fn () => $raceCorruptService->record(
+            $companyId,
+            $raceRunId,
+            $raceCorruptSourceKey,
+            'html_list',
+            $raceCorruptItem
+        ),
+        'Unique-key race fallback must validate the complete chain',
+        '分叉'
+    );
+    candidate_assert_same(
+        0,
+        Db::name('qms_external_change_candidates')
+            ->where('company_id', $companyId)
+            ->where('source_key', $raceCorruptSourceKey)
+            ->count(),
+        'Corrupt race simulation must roll back all inserted rows'
+    );
+
     $fixtureBodies = [
         'samr_rkjcs_notice' => (string)file_get_contents(__DIR__ . '/fixtures/regulatory/changed_notice_v1.html'),
         'cnas_lab_notice' => (string)file_get_contents(__DIR__ . '/fixtures/regulatory/cnas_notice_list.html'),
@@ -489,10 +562,12 @@ try {
         . "sqlsrv:Server=sql-host.internal;Database=sql-secret-db;UID=sql-user;PWD=sql-pass\n"
         . "oci:dbname=//oci-host.internal:1521/oci-secret-db;charset=UTF8;user=oci-user;password=oci-pass\n"
         . "sqlite:/private/sqlite-secret-db.sqlite\n"
-        . "DB_DSN=odbc:Driver=driver-value;Server=odbc-host.internal;Database=odbc-secret-db;UID=odbc-user;PWD=odbc-pass\n"
-        . "DATABASE_URL=pgsql://url-user:url-pass@url-host.internal/url-secret-db\n"
+        . "DB_DSN = Driver={ODBC Driver 18 for SQL Server};Server=no-protocol-host.internal;Database=no-protocol-db;UID=no-protocol-user;PWD=no-protocol-pass\n"
+        . "DSN = host=generic-host.internal;dbname=generic-db;user=generic-user;password=generic-pass\n"
+        . "DATABASE_URL = host=url-host-no-scheme.internal;dbname=url-db-no-scheme;user=url-user-no-scheme;password=url-pass-no-scheme\n"
         . "DB_HOST=env-host.internal DB_NAME=env-secret-db DB_USER=env-user DB_PASS=env-pass\n"
         . "token=token-value password=password-value secret=secret-value\n"
+        . "后续非敏感处理提示：请稍后重试。\n"
         . str_repeat('detail-', 120);
     $partialFetcher = static function (array $source) use ($fixtureBodies, $secretError): string {
         if ($source['key'] === 'cnas_lab_notice') {
@@ -548,13 +623,16 @@ try {
         'sql-host.internal', 'sql-secret-db', 'sql-user', 'sql-pass',
         'oci-host.internal', 'oci-secret-db', 'oci-user', 'oci-pass',
         'sqlite-secret-db.sqlite',
-        'odbc-host.internal', 'odbc-secret-db', 'odbc-user', 'odbc-pass', 'driver-value',
-        'url-host.internal', 'url-secret-db', 'url-user', 'url-pass',
+        'no-protocol-host.internal', 'no-protocol-db', 'no-protocol-user', 'no-protocol-pass',
+        'generic-host.internal', 'generic-db', 'generic-user', 'generic-pass',
+        'url-host-no-scheme.internal', 'url-db-no-scheme', 'url-user-no-scheme', 'url-pass-no-scheme',
         'env-host.internal', 'env-secret-db', 'env-user', 'env-pass',
-        'mysql:host=', 'pgsql:host=', 'pgsql://', 'sqlsrv:', 'oci:', 'sqlite:', 'odbc:',
+        'mysql:host=', 'pgsql:host=', 'pgsql://', 'sqlsrv:', 'oci:', 'sqlite:',
+        'driver', 'server', 'database', 'uid', 'pwd', 'host', 'dbname', 'user',
     ];
     foreach ($sanitizedSurfaces as $surface => $text) {
         candidate_assert(str_contains($text, '法规来源连接失败'), $surface . ' must retain a useful non-sensitive summary');
+        candidate_assert(str_contains($text, '后续非敏感处理提示'), $surface . ' must retain later non-sensitive lines');
         candidate_assert(str_contains($text, '[REDACTED]'), $surface . ' must visibly mark redaction');
         foreach ($sensitiveFragments as $fragment) {
             candidate_assert(
