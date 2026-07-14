@@ -4,7 +4,10 @@ declare(strict_types=1);
 namespace app\controller;
 
 use app\BaseController;
+use app\service\QmsManualProcedureAlignmentService;
+use app\service\QmsManualProcedureTraceService;
 use app\service\QmsResponsibilityApprovalService;
+use app\service\QmsResponsibilityAlignmentService;
 use app\service\QmsResponsibilityCatalogService;
 use app\service\QmsResponsibilityDraftService;
 use app\service\QmsResponsibilityValidationService;
@@ -256,6 +259,9 @@ final class PlanningResponsibility extends BaseController
                 $pendingBatch = null;
             }
         }
+        $alignmentData = $viewMode === 'alignment'
+            ? $this->alignmentData($detail, $versionId)
+            : ['state' => 'not_requested', 'findings' => [], 'message' => '', 'version' => []];
 
         View::assign([
             'pageTitle' => '活动级责任链',
@@ -277,9 +283,132 @@ final class PlanningResponsibility extends BaseController
                 $detail && (string)$detail['status'] === 'effective' ? $versionId : ''
             ),
             'validationResult' => Session::get('responsibility_validation'),
+            'alignmentData' => $alignmentData,
         ]);
 
         return View::fetch('planning_responsibility/index');
+    }
+
+    private function alignmentData(?array $detail, string $versionId): array
+    {
+        if ($detail === null || $versionId === '') {
+            return [
+                'state' => 'empty',
+                'message' => '尚未选择可用于文件对齐的责任链版本。',
+                'findings' => [],
+                'version' => [],
+            ];
+        }
+
+        $status = (string)$detail['status'];
+        $draftPreview = (string)$this->request->get('draft_preview', '0') === '1';
+        if ($status === 'draft' && !$draftPreview) {
+            return [
+                'state' => 'draft_preview_required',
+                'message' => '当前为草案。请明确预览草案后再运行只读文件对齐；预览结果不得作为正式任命或定案证据。',
+                'findings' => [],
+                'version' => [],
+            ];
+        }
+        if ($status !== 'effective' && !($status === 'draft' && $draftPreview)) {
+            return [
+                'state' => 'ineligible',
+                'message' => '仅有效版本或明确选择预览的草案可用于文件对齐。',
+                'findings' => [],
+                'version' => [],
+            ];
+        }
+
+        try {
+            $baseline = QmsResponsibilityAlignmentService::baselineForVersion(
+                $versionId,
+                $status === 'draft' && $draftPreview
+            );
+            $qmsRoot = dirname(__DIR__, 2);
+            $repoRoot = dirname($qmsRoot);
+            $inputs = QmsManualProcedureAlignmentService::loadInputs(
+                $qmsRoot . '/docs/qms_manual_procedure_alignment_pilot-v0.1.json',
+                $repoRoot . '/knowledge/internal/procedures'
+            );
+            $inputs = QmsResponsibilityAlignmentService::injectBaseline($inputs, $baseline);
+            $trace = QmsManualProcedureTraceService::fromDatabase(
+                array_values(array_unique(array_map(
+                    static fn (array $row): string => (string)$row['manual_section'],
+                    (array)$inputs['requirements']
+                ))),
+                (array)$inputs['pilot_procedures']
+            );
+            $result = QmsManualProcedureAlignmentService::check($inputs, $trace);
+            $targetIds = ['Y13-CX20', 'Y13-CX21', 'Y13-CX32'];
+            $findings = [];
+            foreach ((array)$result['findings'] as $finding) {
+                if (!in_array((string)$finding['finding_id'], $targetIds, true)) {
+                    continue;
+                }
+                $findings[] = $this->alignmentFindingView((array)$finding);
+            }
+
+            return [
+                'state' => 'ready',
+                'message' => $status === 'draft'
+                    ? '当前显示草案预览，只用于结构校验，不代表已签批生效。'
+                    : '当前显示有效责任链与现行手册、程序文件的只读对齐结果。',
+                'findings' => $findings,
+                'version' => (array)$baseline['version'],
+            ];
+        } catch (DomainException $e) {
+            return [
+                'state' => 'unavailable',
+                'message' => $e->getMessage(),
+                'findings' => [],
+                'version' => [],
+            ];
+        } catch (Throwable $e) {
+            Log::error('读取责任链文件对齐结果失败', ['exception' => $e, 'version_id' => $versionId]);
+
+            return [
+                'state' => 'unavailable',
+                'message' => '暂时无法读取文件对齐结果，请联系管理员核对只读输入。',
+                'findings' => [],
+                'version' => [],
+            ];
+        }
+    }
+
+    private function alignmentFindingView(array $finding): array
+    {
+        $expected = (array)($finding['expected'] ?? []);
+        $observed = (array)($finding['observed'] ?? []);
+        $status = (string)($finding['status'] ?? 'review_required');
+
+        return [
+            'finding_id' => (string)$finding['finding_id'],
+            'status' => $status,
+            'status_label' => [
+                'consistent' => '一致',
+                'conflict' => '冲突',
+                'missing' => '缺失',
+                'review_required' => '人工复核',
+                'not_applicable' => '不适用',
+            ][$status] ?? $status,
+            'status_class' => match ($status) {
+                'conflict', 'missing' => 'text-bg-danger',
+                'review_required' => 'text-bg-warning',
+                'consistent' => 'text-bg-success',
+                default => 'text-bg-secondary',
+            },
+            'expected_role' => (string)($expected['role'] ?? ''),
+            'expected_role_code' => (string)($expected['role_code'] ?? ''),
+            'observed_roles' => implode('、', array_map('strval', (array)($observed['roles'] ?? []))),
+            'observed_position_codes' => implode('、', array_map('strval', (array)($observed['position_codes'] ?? []))),
+            'unconfirmed_aliases' => implode('、', array_map('strval', (array)($observed['unconfirmed_aliases'] ?? []))),
+            'source_activity_code' => (string)($expected['source_activity_code'] ?? ''),
+            'source_step_code' => (string)($expected['source_step_code'] ?? ''),
+            'source_responsibility_id' => (string)($expected['source_responsibility_id'] ?? ''),
+            'source_refs' => implode('、', array_map('strval', (array)($expected['source_refs'] ?? []))),
+            'expected_json' => (string)json_encode($expected, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'observed_json' => (string)json_encode($observed, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        ];
     }
 
     private function bootstrapApprovals(string $companyId, string $employeeId): array

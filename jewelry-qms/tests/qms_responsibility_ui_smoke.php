@@ -76,6 +76,21 @@ foreach (['责任结构', '人员配置', '校验与签批', '有效责任链', 
 foreach (['structure', 'staffing', 'approval', 'effective', 'alignment'] as $mode) {
     responsibility_ui_contains('view=' . $mode, $view, 'Responsibility page exposes view ' . $mode);
 }
+responsibility_ui_contains("Route::get('planning/responsibilities/alignment'", $route, 'Alignment endpoint remains GET-only');
+foreach ([
+    'QmsResponsibilityAlignmentService::baselineForVersion',
+    'QmsResponsibilityAlignmentService::injectBaseline',
+    'QmsManualProcedureAlignmentService::loadInputs',
+    'QmsManualProcedureTraceService::fromDatabase',
+    'QmsManualProcedureAlignmentService::check',
+] as $readOnlyCall) {
+    responsibility_ui_contains($readOnlyCall, $controller, 'Alignment page uses read-only source: ' . $readOnlyCall);
+}
+responsibility_ui_assert(
+    !str_contains($controller, 'QmsManualProcedureAlignmentReportService'),
+    'Alignment page does not write report files'
+);
+responsibility_ui_assert(!str_contains($view, 'name="apply"'), 'Alignment page exposes no apply action');
 
 responsibility_ui_contains('/planning/responsibilities', $layout, 'Planning navigation links responsibility page');
 responsibility_ui_contains('planningresponsibility', $config, 'All logged-in roles can be granted responsibility-page read access');
@@ -197,6 +212,24 @@ function responsibility_ui_history(string $userId, string $action): array
     return $row;
 }
 
+function responsibility_ui_render_alignment(think\App $app, string $versionId, bool $draftPreview): string
+{
+    think\facade\View::layout(false);
+    $request = (new app\Request())
+        ->setMethod('GET')
+        ->setController('PlanningResponsibility')
+        ->setAction('alignment')
+        ->withGet([
+            'view' => 'alignment',
+            'version_id' => $versionId,
+            'draft_preview' => $draftPreview ? '1' : '0',
+        ]);
+    $app->instance('request', $request);
+    $controller = new PlanningResponsibility($app);
+
+    return (string)$controller->alignment();
+}
+
 catalog_in_transaction(function () use ($app): void {
     $companyId = catalog_company_id();
     $draft = QmsResponsibilityCatalogService::createInitialDraft();
@@ -286,6 +319,78 @@ catalog_in_transaction(function () use ($app): void {
     Session::delete('error');
     $failure->invoke($controller, new DomainException('可安全展示的业务错误'), 'approval', $versionId);
     responsibility_ui_assert(Session::get('error') === '可安全展示的业务错误', 'Domain exception remains user-facing');
+});
+
+catalog_in_transaction(function () use ($app): void {
+    Session::delete('user');
+    Session::set('user.role', 'staff');
+    $effective = QmsResponsibilityCatalogService::createInitialDraft();
+    $effectiveId = (string)$effective['id'];
+    $contentHash = QmsResponsibilityDraftService::contentHash($effectiveId);
+    Db::name('qms_responsibility_chain_versions')->where('id', $effectiveId)->update([
+        'status' => 'effective',
+        'content_hash' => $contentHash,
+        'effective_at' => date('Y-m-d H:i:s'),
+    ]);
+
+    $beforeRead = [
+        'versions' => (int)Db::name('qms_responsibility_chain_versions')->count(),
+        'activities' => (int)Db::name('qms_responsibility_activities')->count(),
+        'responsibilities' => (int)Db::name('qms_activity_responsibilities')->count(),
+        'assignments' => (int)Db::name('qms_responsibility_assignments')->count(),
+    ];
+    $effectiveHtml = responsibility_ui_render_alignment($app, $effectiveId, false);
+    foreach (['Y13-CX20', 'Y13-CX21', 'Y13-CX32'] as $findingId) {
+        responsibility_ui_contains($findingId, $effectiveHtml, 'Effective alignment HTML renders ' . $findingId);
+    }
+    foreach ([
+        'Y13-CX20' => '冲突',
+        'Y13-CX21' => '冲突',
+        'Y13-CX32' => '人工复核',
+    ] as $findingId => $statusLabel) {
+        responsibility_ui_assert(
+            preg_match(
+                '/<code>' . preg_quote($findingId, '/') . '<\/code>.*?<span class="badge [^"]+">'
+                    . preg_quote($statusLabel, '/') . '<\/span>.*?<\/tr>/su',
+                $effectiveHtml
+            ) === 1,
+            $findingId . ' renders its expected status ' . $statusLabel
+        );
+    }
+    foreach (['期望岗位', '观察岗位', '来源责任项', 'baseline_hash'] as $label) {
+        responsibility_ui_contains($label, $effectiveHtml, 'Alignment HTML exposes evidence field ' . $label);
+    }
+    responsibility_ui_contains('冲突', $effectiveHtml, 'Effective alignment HTML renders conflict status');
+    responsibility_ui_contains('人工复核', $effectiveHtml, 'Effective alignment HTML renders review-required status');
+
+    $draft = QmsResponsibilityDraftService::cloneEffectiveVersion($effectiveId);
+    $draftId = (string)$draft['id'];
+    $draftBlockedHtml = responsibility_ui_render_alignment($app, $draftId, false);
+    responsibility_ui_contains('明确预览草案', $draftBlockedHtml, 'Draft alignment requires an explicit preview choice');
+    responsibility_ui_assert(
+        !str_contains($draftBlockedHtml, 'Y13-CX20'),
+        'Draft findings are not rendered without explicit preview'
+    );
+
+    $draftPreviewHtml = responsibility_ui_render_alignment($app, $draftId, true);
+    foreach (['Y13-CX20', 'Y13-CX21', 'Y13-CX32'] as $findingId) {
+        responsibility_ui_contains($findingId, $draftPreviewHtml, 'Explicit draft preview renders ' . $findingId);
+    }
+
+    $afterRead = [
+        'versions' => (int)Db::name('qms_responsibility_chain_versions')->count(),
+        'activities' => (int)Db::name('qms_responsibility_activities')->count(),
+        'responsibilities' => (int)Db::name('qms_activity_responsibilities')->count(),
+        'assignments' => (int)Db::name('qms_responsibility_assignments')->count(),
+    ];
+    responsibility_ui_assert(
+        $afterRead['versions'] === $beforeRead['versions'] + 1
+        && $afterRead['activities'] === $beforeRead['activities'] + 3
+        && $afterRead['responsibilities'] === $beforeRead['responsibilities'] + 21
+        && $afterRead['assignments'] === $beforeRead['assignments'],
+        'Alignment GETs add no data beyond the explicitly created draft clone'
+    );
+    Session::delete('user.role');
 });
 
 echo "qms_responsibility_ui_smoke passed\n";

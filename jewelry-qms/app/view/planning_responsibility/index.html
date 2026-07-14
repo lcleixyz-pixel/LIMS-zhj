@@ -190,6 +190,44 @@
 {/if}
 
 {if $viewMode == 'alignment'}
-<div class="card"><div class="card-header"><strong>手册—程序—责任链对齐</strong></div><div class="card-body"><p>本页仅显示来源和修订建议，不直接编辑或回写受控文件。</p><div class="alert alert-secondary mb-0">责任链对齐器将在下一步以有效版本或指定草案为结构化基准，对 Y13 职责矛盾族给出只读差异。</div></div></div>
+<div class="card">
+    <div class="card-header"><strong>手册—程序—责任链对齐</strong></div>
+    <div class="card-body">
+        <p>本页只读检查现行手册、程序文件与责任链岗位职责，不生成报告文件，不直接编辑或回写受控文件。</p>
+        {if $alignmentData.state == 'draft_preview_required'}
+        <div class="alert alert-warning">
+            {$alignmentData.message}
+            <a class="alert-link ms-2" href="/planning/responsibilities/alignment?view=alignment&version_id={$versionId}&draft_preview=1">明确预览草案</a>
+        </div>
+        {elseif $alignmentData.state == 'ready'}
+        <div class="alert {if $detail.status == 'draft'}alert-warning{else}alert-info{/if}">{$alignmentData.message}</div>
+        <div class="small text-muted mb-3">
+            <span class="me-3">责任链：v{$alignmentData.version.version_no} / {$alignmentData.version.status}</span>
+            <span class="me-3">content_hash：<code>{$alignmentData.version.content_hash}</code></span>
+            <span>baseline_hash：<code>{$alignmentData.version.baseline_hash}</code></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>发现</th><th>状态</th><th>期望岗位</th><th>观察岗位</th><th>来源责任项</th><th>完整对照</th></tr></thead>
+                <tbody>
+                {volist name="alignmentData.findings" id="finding"}
+                <tr>
+                    <td><code>{$finding.finding_id}</code></td>
+                    <td><span class="badge {$finding.status_class}">{$finding.status_label}</span><div class="small text-muted">{$finding.status}</div></td>
+                    <td>{$finding.expected_role}<div class="small text-muted"><code>{$finding.expected_role_code}</code></div></td>
+                    <td>{$finding.observed_roles|default='未识别'}<div class="small text-muted"><code>{$finding.observed_position_codes|default='-'}</code></div>{if $finding.unconfirmed_aliases}<div class="small text-warning">待确认：{$finding.unconfirmed_aliases}</div>{/if}</td>
+                    <td><code>{$finding.source_activity_code}/{$finding.source_step_code}</code><div class="small text-muted">{$finding.source_responsibility_id}</div><div class="small">{$finding.source_refs}</div></td>
+                    <td><details><summary>期望 / 观察</summary><div class="small mt-1"><strong>期望：</strong><code>{$finding.expected_json}</code></div><div class="small"><strong>观察：</strong><code>{$finding.observed_json}</code></div></details></td>
+                </tr>
+                {/volist}
+                {empty name="alignmentData.findings"}<tr><td colspan="6" class="text-center text-muted py-4">未生成 Y13 职责对齐结果。</td></tr>{/empty}
+                </tbody>
+            </table>
+        </div>
+        {else}
+        <div class="alert alert-secondary mb-0">{$alignmentData.message|default='当前没有可展示的文件对齐结果。'}</div>
+        {/if}
+    </div>
+</div>
 {/if}
 {/if}
