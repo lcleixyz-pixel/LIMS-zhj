@@ -162,6 +162,7 @@ impact_assert_same($impactKeys, array_keys($negative['impact_analysis']), 'Negat
 foreach ($negative['impact_analysis'] as $impactKey => $assessment) {
     impact_assert_same('no_match', $assessment['conclusion'], 'Unrelated notice must be no_match: ' . $impactKey);
     impact_assert_same([], $assessment['rule_ids'], 'no_match must have no rule ids: ' . $impactKey);
+    impact_assert_same(0.0, $assessment['confidence'], 'no_match confidence must be zero: ' . $impactKey);
     $wording = implode(' ', $assessment['evidence']);
     impact_assert(str_contains($wording, '未命中') && str_contains($wording, '人工复核'), 'no_match must explain rule miss and manual review');
     impact_assert(!str_contains($wording, '不适用'), 'no_match must never be worded as not applicable');
@@ -211,6 +212,38 @@ $listMetadataNegative = $service->analyze([
 foreach ($listMetadataNegative['impact_analysis'] as $impactKey => $assessment) {
     impact_assert_same('no_match', $assessment['conclusion'], 'List evidence metadata must not enter rule text: ' . $impactKey);
 }
+$nestedMetadataNegative = $service->analyze([
+    'title' => '深层证据边界通知',
+    'summary' => '正文仅讨论脚本语言模式定义。',
+    'evidence_json' => [
+        'evidence' => [
+            'source_key' => 'nested_schema_feed',
+            'entry_url' => 'https://example.invalid/CMA/schema.html',
+            'body' => [
+                'raw_text' => '正文仅讨论脚本语言模式定义。',
+            ],
+        ],
+    ],
+], 'company-impact-smoke');
+foreach ($nestedMetadataNegative['impact_analysis'] as $impactKey => $assessment) {
+    impact_assert_same('no_match', $assessment['conclusion'], 'Nested evidence metadata must never enter rule text: ' . $impactKey);
+}
+$nestedBodyPositive = $service->analyze([
+    'title' => '深层正文边界通知',
+    'summary' => '详情见正文。',
+    'evidence_json' => [
+        'evidence' => [
+            'entry_url' => 'https://example.invalid/neutral/schema.html',
+            'body' => [
+                'content' => '报告应依法使用CMA标志。',
+            ],
+        ],
+    ],
+], 'company-impact-smoke');
+impact_assert(
+    in_array('REG-CMA-001', $nestedBodyPositive['impact_analysis']['cma_scope_mark']['rule_ids'], true),
+    'Approved nested body fields must remain available to deterministic rules'
+);
 $documentTypePositive = $service->analyze([
     'title' => '动态管理通知',
     'document_type' => '公示公告',

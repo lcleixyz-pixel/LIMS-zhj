@@ -38,6 +38,7 @@ final class RegulatoryImpactService
         'evidence',
         'raw_text',
         'body_summary',
+        'summary',
         'body',
         'text',
         'content',
@@ -302,33 +303,13 @@ final class RegulatoryImpactService
             ) {
                 continue;
             }
-            array_push($body, ...$this->flattenText($item));
+            $text = $this->evidenceBodyText($item);
+            if ($text !== '') {
+                $body[] = $text;
+            }
         }
 
         return $this->normalizeText(implode(' ', $body));
-    }
-
-    /** @return array<int, string> */
-    private function flattenText(mixed $value): array
-    {
-        if (is_scalar($value)) {
-            return [(string)$value];
-        }
-        if (is_object($value)) {
-            $value = get_object_vars($value);
-        }
-        if (!is_array($value)) {
-            return [];
-        }
-        $values = [];
-        foreach ($value as $key => $item) {
-            if (is_string($key) && in_array(strtolower($key), self::OBSERVATION_TIME_FIELDS, true)) {
-                continue;
-            }
-            array_push($values, ...$this->flattenText($item));
-        }
-
-        return $values;
     }
 
     /** @return array<int, string> */
@@ -386,7 +367,7 @@ final class RegulatoryImpactService
                         : '机构上下文数据未取得，需人工确认。',
                 ],
                 'rule_ids' => [],
-                'confidence' => $contextAvailable ? 0.35 : 0.2,
+                'confidence' => 0.0,
             ];
         }
 

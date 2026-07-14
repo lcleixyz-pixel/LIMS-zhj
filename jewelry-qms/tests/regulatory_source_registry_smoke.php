@@ -1,6 +1,15 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * 必须用无网络且覆盖默认入口的独立容器运行，避免默认 entrypoint 等待数据库：
+ * docker run --rm --network none --entrypoint php \
+ *   -v "$PWD/jewelry-qms:/app" \
+ *   -v lzhj-regulatory-test_vendor:/app/vendor \
+ *   -w /app lzhj-regulatory-test-app \
+ *   tests/regulatory_source_registry_smoke.php
+ */
+
 require __DIR__ . '/../vendor/autoload.php';
 
 use app\service\regulatory\HtmlListSourceAdapter;
@@ -64,7 +73,8 @@ function make_http_client(
 function regulatory_assert_no_default_route(): void
 {
     // This security regression intentionally requires a container started with
-    // `docker run --network none`; a normal Compose network is not isolated enough.
+    // `docker run --rm --network none --entrypoint php ...`; a normal Compose
+    // network is not isolated enough, and the image's default entrypoint waits for DB.
     $routes = @file('/proc/net/route', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     regulatory_assert(is_array($routes), 'Real cURL proxy regression requires Linux /proc route inspection');
     foreach ($routes as $index => $route) {
