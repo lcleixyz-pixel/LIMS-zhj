@@ -235,6 +235,16 @@ final class PlanningResponsibility extends BaseController
             ->order('version_no', 'desc')->select()->toArray();
         $versionId = trim((string)$this->request->get('version_id', ''));
         if ($versionId === '' && $versions !== []) {
+            if ($viewMode === 'alignment') {
+                foreach ($versions as $version) {
+                    if ((string)$version['status'] === 'effective') {
+                        $versionId = (string)$version['id'];
+                        break;
+                    }
+                }
+            }
+        }
+        if ($versionId === '' && $versions !== []) {
             $versionId = (string)$versions[0]['id'];
         }
         $detail = null;
@@ -336,7 +346,8 @@ final class PlanningResponsibility extends BaseController
                     static fn (array $row): string => (string)$row['manual_section'],
                     (array)$inputs['requirements']
                 ))),
-                (array)$inputs['pilot_procedures']
+                (array)$inputs['pilot_procedures'],
+                (string)Config::get('qms.company_id')
             );
             $result = QmsManualProcedureAlignmentService::check($inputs, $trace);
             $targetIds = ['Y13-CX20', 'Y13-CX21', 'Y13-CX32'];

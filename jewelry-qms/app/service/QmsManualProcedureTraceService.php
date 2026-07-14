@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\service;
 
 use RuntimeException;
+use think\facade\Config;
 use think\facade\Db;
 
 final class QmsManualProcedureTraceService
@@ -45,13 +46,18 @@ final class QmsManualProcedureTraceService
         return $trace;
     }
 
-    public static function fromDatabase(array $manualSections, array $pilotProcedures): array
+    public static function fromDatabase(array $manualSections, array $pilotProcedures, ?string $companyId = null): array
     {
+        $companyId = trim($companyId ?? (string)Config::get('qms.company_id'));
+        if ($companyId === '') {
+            throw new RuntimeException('缺少用于追溯查询的公司标识');
+        }
         $manualSections = array_values(array_unique(array_map('strval', $manualSections)));
         $pilotProcedures = array_values(array_unique(array_map('strval', $pilotProcedures)));
         $trace = ['_unlinked' => [], '_blockers' => []];
 
         $documentRows = Db::table('documents')
+            ->where('company_id', $companyId)
             ->whereIn('doc_number', $pilotProcedures)
             ->where('status', 'published')
             ->where('soft_delete', 0)
@@ -71,9 +77,12 @@ final class QmsManualProcedureTraceService
 
         $manualRows = Db::table('qms_document_blocks')
             ->alias('b')
-            ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
-            ->join('qms_document_block_links l', 'l.block_id = b.id AND l.soft_delete = 0')
-            ->leftJoin('documents d', 'd.id = l.procedure_document_id AND d.soft_delete = 0')
+            ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id AND sd.company_id = b.company_id')
+            ->join('qms_document_block_links l', 'l.block_id = b.id AND l.company_id = b.company_id AND l.soft_delete = 0')
+            ->leftJoin('documents d', 'd.id = l.procedure_document_id AND d.company_id = l.company_id AND d.soft_delete = 0')
+            ->where('b.company_id', $companyId)
+            ->where('sd.company_id', $companyId)
+            ->where('l.company_id', $companyId)
             ->where('sd.document_role', 'quality_manual')
             ->where('sd.doc_number', 'XZTC/SC')
             ->where('sd.source_status', 'current')
@@ -115,7 +124,9 @@ final class QmsManualProcedureTraceService
         if ($elementSections !== []) {
             $elementRows = Db::table('qms_element_documents')
                 ->alias('ed')
-                ->join('documents d', 'd.id = ed.document_id AND d.soft_delete = 0')
+                ->join('documents d', 'd.id = ed.document_id AND d.company_id = ed.company_id AND d.soft_delete = 0')
+                ->where('ed.company_id', $companyId)
+                ->where('d.company_id', $companyId)
                 ->whereIn('ed.element_id', array_keys($elementSections))
                 ->whereIn('d.doc_number', $pilotProcedures)
                 ->where('ed.soft_delete', 0)

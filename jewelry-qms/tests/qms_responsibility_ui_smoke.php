@@ -212,18 +212,21 @@ function responsibility_ui_history(string $userId, string $action): array
     return $row;
 }
 
-function responsibility_ui_render_alignment(think\App $app, string $versionId, bool $draftPreview): string
+function responsibility_ui_render_alignment(think\App $app, ?string $versionId, bool $draftPreview): string
 {
     think\facade\View::layout(false);
+    $get = [
+        'view' => 'alignment',
+        'draft_preview' => $draftPreview ? '1' : '0',
+    ];
+    if ($versionId !== null && $versionId !== '') {
+        $get['version_id'] = $versionId;
+    }
     $request = (new app\Request())
         ->setMethod('GET')
         ->setController('PlanningResponsibility')
         ->setAction('alignment')
-        ->withGet([
-            'view' => 'alignment',
-            'version_id' => $versionId,
-            'draft_preview' => $draftPreview ? '1' : '0',
-        ]);
+        ->withGet($get);
     $app->instance('request', $request);
     $controller = new PlanningResponsibility($app);
 
@@ -365,6 +368,19 @@ catalog_in_transaction(function () use ($app): void {
 
     $draft = QmsResponsibilityDraftService::cloneEffectiveVersion($effectiveId);
     $draftId = (string)$draft['id'];
+    responsibility_ui_assert((int)$effective['version_no'] === 1, 'Default-alignment scenario starts with effective v1');
+    responsibility_ui_assert((int)$draft['version_no'] === 2, 'Default-alignment scenario has a newer draft v2');
+
+    $defaultAlignmentHtml = responsibility_ui_render_alignment($app, null, false);
+    responsibility_ui_contains('责任链：v1 / effective', $defaultAlignmentHtml, 'Alignment without version_id prefers latest effective version');
+    foreach (['Y13-CX20', 'Y13-CX21', 'Y13-CX32'] as $findingId) {
+        responsibility_ui_contains($findingId, $defaultAlignmentHtml, 'Default effective alignment renders ' . $findingId);
+    }
+    responsibility_ui_assert(
+        !str_contains($defaultAlignmentHtml, '明确预览草案'),
+        'A newer draft is not automatically previewed on the alignment page'
+    );
+
     $draftBlockedHtml = responsibility_ui_render_alignment($app, $draftId, false);
     responsibility_ui_contains('明确预览草案', $draftBlockedHtml, 'Draft alignment requires an explicit preview choice');
     responsibility_ui_assert(
@@ -376,6 +392,14 @@ catalog_in_transaction(function () use ($app): void {
     foreach (['Y13-CX20', 'Y13-CX21', 'Y13-CX32'] as $findingId) {
         responsibility_ui_contains($findingId, $draftPreviewHtml, 'Explicit draft preview renders ' . $findingId);
     }
+
+    Db::name('qms_responsibility_chain_versions')->where('id', $effectiveId)->update(['status' => 'superseded']);
+    $noEffectiveHtml = responsibility_ui_render_alignment($app, null, false);
+    responsibility_ui_contains('明确预览草案', $noEffectiveHtml, 'Without an effective version alignment falls back to the latest draft');
+    responsibility_ui_assert(
+        !str_contains($noEffectiveHtml, 'Y13-CX20'),
+        'Fallback to a draft still does not automatically enable draft preview'
+    );
 
     $afterRead = [
         'versions' => (int)Db::name('qms_responsibility_chain_versions')->count(),
