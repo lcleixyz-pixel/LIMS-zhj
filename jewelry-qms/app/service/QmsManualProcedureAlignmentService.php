@@ -525,7 +525,7 @@ final class QmsManualProcedureAlignmentService
         $text = (string)$procedure['text'];
         $action = trim((string)($requirement['activity'] ?? $requirement['action'] ?? ''));
         $subject = trim((string)($requirement['subject'] ?? ''));
-        $rolePattern = '(?:公司总经理|办公室主任|办公室负责人|质量负责人|实验室主任|最高管理者|技术负责人|总经理|经理)';
+        $rolePattern = self::responsibilityRolePattern($roleCatalog);
         $roles = [];
         $evidenceRows = [];
 
@@ -659,6 +659,31 @@ final class QmsManualProcedureAlignmentService
             'text' => (string)$match['body'][0],
             'offset' => (int)$match[0][1],
         ];
+    }
+
+    private static function responsibilityRolePattern(?array $roleCatalog): string
+    {
+        if ($roleCatalog === null) {
+            return '(?:公司总经理|办公室主任|办公室负责人|质量负责人|实验室主任|最高管理者|技术负责人|总经理|经理)';
+        }
+
+        $aliases = array_values(array_filter(
+            array_map('strval', array_keys((array)($roleCatalog['aliases'] ?? []))),
+            static fn (string $alias): bool => trim($alias) !== ''
+        ));
+        usort($aliases, static function (string $left, string $right): int {
+            $lengthOrder = mb_strlen($right) <=> mb_strlen($left);
+
+            return $lengthOrder !== 0 ? $lengthOrder : strcmp($left, $right);
+        });
+        if ($aliases === []) {
+            return '(?!)';
+        }
+
+        return '(?:' . implode('|', array_map(
+            static fn (string $alias): string => preg_quote($alias, '/'),
+            $aliases
+        )) . ')';
     }
 
     private static function extractNamedRecords(string $text): array

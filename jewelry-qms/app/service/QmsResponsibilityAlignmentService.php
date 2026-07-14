@@ -9,10 +9,10 @@ use think\facade\Db;
 
 final class QmsResponsibilityAlignmentService
 {
-    private const PILOT_STEP_BY_REQUIREMENT = [
-        'Y13-CX20' => 'ia_annual_plan',
-        'Y13-CX21' => 'mr_preside_approve',
-        'Y13-CX32' => 'risk_general_approval',
+    private const PILOT_SOURCE_BY_REQUIREMENT = [
+        'Y13-CX20' => ['activity_code' => 'internal_audit', 'step_code' => 'ia_annual_plan'],
+        'Y13-CX21' => ['activity_code' => 'management_review', 'step_code' => 'mr_preside_approve'],
+        'Y13-CX32' => ['activity_code' => 'risk_management', 'step_code' => 'risk_general_approval'],
     ];
 
     public static function baselineForVersion(string $versionId, bool $draftPreview = false): array
@@ -39,6 +39,9 @@ final class QmsResponsibilityAlignmentService
         if (!$version) {
             throw new DomainException('责任链版本不存在或不属于当前公司。');
         }
+        if ((string)$version['chain_code'] !== 'core_governance') {
+            throw new DomainException('当前文件对齐试点只接受 core_governance 责任链。');
+        }
 
         $status = (string)$version['status'];
         if ($status !== 'effective' && !($draftPreview && $status === 'draft')) {
@@ -57,12 +60,16 @@ final class QmsResponsibilityAlignmentService
         $activities = Db::name('qms_responsibility_activities')
             ->where('chain_version_id', $versionId)
             ->where('company_id', $companyId)
-            ->where('publish', 1)
             ->where('soft_delete', 0)
             ->order('sort_order,activity_code')
             ->select()
             ->toArray();
         $activityIds = array_column($activities, 'id');
+        foreach ($activities as $activity) {
+            if ((int)($activity['publish'] ?? 0) !== 1) {
+                throw new DomainException('有效责任链包含未发布活动，禁止静默排除：' . (string)$activity['activity_code']);
+            }
+        }
 
         $responsibilities = [];
         if ($activityIds !== []) {
@@ -72,11 +79,9 @@ final class QmsResponsibilityAlignmentService
                 ->leftJoin('qms_positions p', 'p.id = r.fixed_position_id AND p.company_id = r.company_id')
                 ->whereIn('r.activity_id', $activityIds)
                 ->where('r.company_id', $companyId)
-                ->where('r.publish', 1)
                 ->where('r.soft_delete', 0)
-                ->where('a.publish', 1)
                 ->where('a.soft_delete', 0)
-                ->field('r.id,r.activity_id,r.step_code,r.duty_type,r.duty_text,r.slot_kind,r.assignment_mode,r.fixed_position_id,r.activity_role_code,r.dynamic_owner_code,r.source_refs,r.sort_order,a.activity_code,a.name activity_name,p.code position_code,p.name position_name')
+                ->field('r.id,r.activity_id,r.step_code,r.duty_type,r.duty_text,r.slot_kind,r.assignment_mode,r.fixed_position_id,r.activity_role_code,r.dynamic_owner_code,r.source_refs,r.sort_order,r.publish responsibility_publish,a.activity_code,a.name activity_name,p.code position_code,p.name position_name')
                 ->order('a.sort_order,r.sort_order,r.step_code')
                 ->select()
                 ->toArray();
@@ -85,6 +90,10 @@ final class QmsResponsibilityAlignmentService
         $responsibilitiesByActivity = [];
         $normalizedResponsibilities = [];
         foreach ($responsibilities as $responsibility) {
+            if ((int)($responsibility['responsibility_publish'] ?? 0) !== 1) {
+                throw new DomainException('有效责任链包含未发布责任项，禁止静默排除：'
+                    . (string)$responsibility['activity_code'] . '/' . (string)$responsibility['step_code']);
+            }
             $normalized = [
                 'responsibility_id' => (string)$responsibility['id'],
                 'activity_code' => (string)$responsibility['activity_code'],
@@ -151,6 +160,16 @@ final class QmsResponsibilityAlignmentService
             $positions[$positionCode]['aliases'][] = $alias;
         }
 
+        $baselineHash = hash('sha256', (string)json_encode([
+            'chain_code' => (string)$version['chain_code'],
+            'version_no' => (int)$version['version_no'],
+            'status' => $status,
+            'content_hash' => $contentHash,
+            'activities' => $normalizedActivities,
+            'positions' => $positions,
+            'aliases' => $aliases,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+
         return [
             'version' => [
                 'id' => $versionId,
@@ -158,6 +177,7 @@ final class QmsResponsibilityAlignmentService
                 'version_no' => (int)$version['version_no'],
                 'status' => $status,
                 'content_hash' => $contentHash,
+                'baseline_hash' => $baselineHash,
             ],
             'activities' => $normalizedActivities,
             'responsibilities' => $normalizedResponsibilities,
@@ -171,9 +191,17 @@ final class QmsResponsibilityAlignmentService
 
     public static function injectBaseline(array $inputs, array $baseline): array
     {
-        $responsibilitiesByStep = [];
+        if ((string)($baseline['version']['chain_code'] ?? '') !== 'core_governance') {
+            throw new DomainException('当前文件对齐试点只能注入 core_governance 责任链基准。');
+        }
+
+        $responsibilitiesBySource = [];
         foreach ((array)($baseline['responsibilities'] ?? []) as $responsibility) {
-            $responsibilitiesByStep[(string)($responsibility['step_code'] ?? '')] = (array)$responsibility;
+            $sourceKey = self::sourceKey(
+                (string)($responsibility['activity_code'] ?? ''),
+                (string)($responsibility['step_code'] ?? '')
+            );
+            $responsibilitiesBySource[$sourceKey][] = (array)$responsibility;
         }
 
         $requirements = [];
@@ -184,15 +212,24 @@ final class QmsResponsibilityAlignmentService
             }
 
             $findingId = (string)($requirement['id'] ?? '');
-            $stepCode = self::PILOT_STEP_BY_REQUIREMENT[$findingId] ?? '';
-            if ($stepCode === '') {
+            $sourceDefinition = self::PILOT_SOURCE_BY_REQUIREMENT[$findingId] ?? [];
+            if ($sourceDefinition === []) {
                 $requirements[] = $requirement;
                 continue;
             }
-            $source = $responsibilitiesByStep[$stepCode] ?? [];
-            if ($source === []) {
-                throw new DomainException($findingId . ' 未在责任链基准中找到来源责任项：' . $stepCode);
+            $activityCode = (string)$sourceDefinition['activity_code'];
+            $stepCode = (string)$sourceDefinition['step_code'];
+            $matches = $responsibilitiesBySource[self::sourceKey($activityCode, $stepCode)] ?? [];
+            if (count($matches) !== 1) {
+                throw new DomainException(sprintf(
+                    '%s 的责任链来源必须严格命中 1 项，实际 %d 项：%s/%s',
+                    $findingId,
+                    count($matches),
+                    $activityCode,
+                    $stepCode
+                ));
             }
+            $source = $matches[0];
             $positionCode = trim((string)($source['position_code'] ?? ''));
             $positionName = trim((string)($source['position_name'] ?? ''));
             if ($positionCode === '' || $positionName === '') {
@@ -237,5 +274,10 @@ final class QmsResponsibilityAlignmentService
         $value = trim((string)($value ?? ''));
 
         return $value === '' ? null : $value;
+    }
+
+    private static function sourceKey(string $activityCode, string $stepCode): string
+    {
+        return $activityCode . "\0" . $stepCode;
     }
 }
