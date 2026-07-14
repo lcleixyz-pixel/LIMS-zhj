@@ -292,6 +292,25 @@ regulatory_assert_same(
     ),
     'Canonical query must preserve application/x-www-form-urlencoded plus semantics'
 );
+regulatory_assert_same(
+    RegulatoryUrlNormalizer::normalize(
+        'https://www.samr.gov.cn/a%20b/keep%2Fslash',
+        $samrAllowedHosts
+    ),
+    RegulatoryUrlNormalizer::normalize(
+        'https://www.samr.gov.cn/a b/keep%2fslash',
+        $samrAllowedHosts
+    ),
+    'Raw path spaces and encoded spaces must share one canonical URL without decoding reserved slashes'
+);
+regulatory_assert_same(
+    'https://www.samr.gov.cn/a%20b/keep%2Fslash',
+    RegulatoryUrlNormalizer::normalize(
+        'https://www.samr.gov.cn/a b/keep%2fslash',
+        $samrAllowedHosts
+    ),
+    'Path canonicalization must encode spaces and preserve reserved %2F'
+);
 foreach ([
     "https://www.samr.gov.cn/item\r\nInjected: value",
     'https://www.samr.gov.cn/item?value=%0Dheader',

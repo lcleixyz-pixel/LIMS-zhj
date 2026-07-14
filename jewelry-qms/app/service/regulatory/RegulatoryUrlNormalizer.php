@@ -92,7 +92,7 @@ final class RegulatoryUrlNormalizer
     {
         self::assertNoControls($path);
         self::assertValidPercentEncoding($path);
-        $path = self::normalizePercentEncoding($path);
+        $path = str_replace(' ', '%20', self::normalizePercentEncoding($path));
         $trailingSlash = str_ends_with($path, '/');
         $segments = [];
         foreach (explode('/', $path) as $segment) {
