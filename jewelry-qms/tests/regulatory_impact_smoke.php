@@ -6,6 +6,12 @@ require __DIR__ . '/../app/common.php';
 
 $app = new think\App();
 $app->initialize();
+// ThinkPHP 的控制台异常处理器只渲染异常，不会设置非零退出码。
+// 冒烟脚本必须自行把未捕获断言转换成可靠的失败状态。
+set_exception_handler(static function (Throwable $exception): never {
+    fwrite(STDERR, $exception::class . ': ' . $exception->getMessage() . PHP_EOL);
+    exit(1);
+});
 
 use app\service\regulatory\HtmlListSourceAdapter;
 use app\service\regulatory\RegulatoryImpactService;
@@ -66,7 +72,10 @@ $contextProvider = static function (string $companyId) use (&$contextCalls): arr
         'active_equipment_authorization_count' => 4,
     ];
 };
-$service = new RegulatoryImpactService($contextProvider);
+$service = new RegulatoryImpactService(
+    $contextProvider,
+    static fn (): DateTimeImmutable => new DateTimeImmutable('2026-07-14 12:00:00')
+);
 $registry = new RegulatorySourceRegistry();
 $source = $registry->source('samr_rkjcs_notice');
 $fixture = (string)file_get_contents(__DIR__ . '/fixtures/regulatory/samr_one_list_one_library.html');
