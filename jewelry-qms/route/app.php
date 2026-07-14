@@ -122,6 +122,10 @@ Route::group(function () {
     Route::post('planning/change-events/upload-attachment', 'PlanningChangeEvent/uploadAttachment');
     Route::get('planning/change-events/download-attachment', 'PlanningChangeEvent/downloadAttachment');
     Route::rule('planning/change-events', 'PlanningChangeEvent/index');
+    Route::get('planning/regulatory-monitor', 'PlanningRegulatoryMonitor/index');
+    Route::get('planning/regulatory-monitor/show', 'PlanningRegulatoryMonitor/show');
+    Route::post('planning/regulatory-monitor/review', 'PlanningRegulatoryMonitor/review');
+    Route::post('planning/regulatory-monitor/run', 'PlanningRegulatoryMonitor/run');
     Route::post('planning/objectives/create-policy', 'PlanningObjective/createPolicy');
     Route::post('planning/objectives/create-objective', 'PlanningObjective/createObjective');
     Route::rule('planning/objectives', 'PlanningObjective/index');

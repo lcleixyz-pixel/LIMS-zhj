@@ -7,6 +7,7 @@ use app\service\NotificationService;
 use app\service\regulatory\RegulatorySourceRegistry;
 use app\service\regulatory\RegulatoryMonitorService;
 use app\service\regulatory\RegulatoryCandidateService;
+use app\service\regulatory\RegulatoryMonitorRunner;
 use Closure;
 use InvalidArgumentException;
 use RuntimeException;
@@ -14,7 +15,6 @@ use think\console\Command;
 use think\console\Input;
 use think\console\input\Option;
 use think\console\Output;
-use think\facade\Db;
 use think\facade\Log;
 
 class MonitorRegulatoryChanges extends Command
@@ -60,24 +60,13 @@ class MonitorRegulatoryChanges extends Command
             if (!$service instanceof RegulatoryMonitorService) {
                 throw new RuntimeException('法规监测服务工厂返回类型无效');
             }
-            if ($dryRun) {
-                Db::startTrans();
-                try {
-                    $result = $service->run(
-                        $input->getOption('scheduled') === true ? 'scheduled' : 'manual',
-                        $sourceKeys,
-                        $since
-                    );
-                } finally {
-                    Db::rollback();
-                }
-            } else {
-                $result = $service->run(
-                    $input->getOption('scheduled') === true ? 'scheduled' : 'manual',
-                    $sourceKeys,
-                    $since
-                );
-            }
+            $result = (new RegulatoryMonitorRunner())->run(
+                $service,
+                $input->getOption('scheduled') === true ? 'scheduled' : 'manual',
+                $sourceKeys,
+                $since,
+                $dryRun
+            );
         } catch (InvalidArgumentException $exception) {
             $output->writeln('<error>' . $exception->getMessage() . '</error>');
             return 1;

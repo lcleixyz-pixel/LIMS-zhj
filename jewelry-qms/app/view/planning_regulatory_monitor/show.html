@@ -1,0 +1,90 @@
+<div class="alert alert-warning border-warning" role="alert">
+    <strong>机器发现/规则初判，须人工确认</strong>
+    <div class="small mt-1">“未命中规则”只表示当前规则没有找到关联，不得解读为“不适用”。</div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">候选详情</h5>
+        <a href="/planning/regulatory-monitor" class="btn btn-sm btn-outline-secondary">返回候选清单</a>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered align-middle">
+            <tr><th width="180">标题</th><td>{$record.title}</td></tr>
+            <tr><th>来源/文号</th><td>{$record.source_key} / {$record.announcement_number|default='-'}</td></tr>
+            <tr><th>官方证据链接</th><td>{if $safeSourceUrl}<a href="{$safeSourceUrl}" target="_blank" rel="noopener noreferrer">{$safeSourceUrl}</a>{else}{$record.source_url|default='-' } <span class="text-danger small">(链接未通过安全校验，不可点击)</span>{/if}</td></tr>
+            <tr><th>发布/生效日期</th><td>{$record.published_date|default='-'} / {$record.effective_date|default='-'}</td></tr>
+            <tr><th>证据摘要</th><td>{$record.evidence_summary|default='-'}</td></tr>
+            <tr><th>内容指纹</th><td><code>{$record.content_hash}</code></td></tr>
+            <tr><th>规则/图谱快照</th><td>{$record.analysis_rule_version|default='-'} / <code>{$record.graph_snapshot_hash|default='-'}</code></td></tr>
+            <tr><th>复核状态</th><td>{$reviewStatusLabels[$record.review_status]|default=$record.review_status}</td></tr>
+            <tr><th>人工复核</th><td>{$record.reviewed_at|default='-'} / {$record.reviewed_by|default='-'}<br>{$record.review_comment|default='-'}</td></tr>
+        </table>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">固定六类影响初判</h5></div>
+    <div class="card-body">
+        {foreach $impactAnalysis as $impactKey=>$impact}
+        <section class="border rounded p-3 mb-3" data-impact-key="{$impactKey}">
+            <div class="d-flex justify-content-between"><strong>{$impactLabels[$impactKey]|default=$impactKey}</strong><code>{$impactKey}</code></div>
+            <div class="mt-2"><span class="badge bg-secondary">{$conclusionLabels[$impact.conclusion]|default='未命中规则'}</span> 置信度 {$impact.confidence}</div>
+            <div class="mt-2 small">
+                <strong>规则：</strong>{foreach $impact.rule_ids as $ruleId}<code class="me-2">{$ruleId}</code>{/foreach}
+            </div>
+            <ul class="mt-2 mb-0">
+                {foreach $impact.evidence as $evidence}
+                <li>{$evidence.summary|default='需人工查看候选证据'}</li>
+                {/foreach}
+                {empty name="impact.evidence"}<li class="text-muted">未命中规则；当前无规则证据，不等于不适用。</li>{/empty}
+            </ul>
+        </section>
+        {/foreach}
+        <!-- Stable contract keys: cma_scope_mark qms_documents personnel_authorization equipment_calibration lims_rules training -->
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">版本链</h5></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>首次发现</th><th>内容指纹</th><th>上一版候选</th><th>当前复核状态</th></tr></thead>
+            <tbody>{volist name="versions" id="version"}<tr><td>{$version.first_seen_at}</td><td><code>{$version.content_hash}</code></td><td>{$version.supersedes_candidate_id|default='-'}</td><td>{$reviewStatusLabels[$version.review_status]|default=$version.review_status}</td></tr>{/volist}</tbody>
+        </table>
+    </div>
+</div>
+
+{if $currentRole == 'quality_manager' && $record.review_status != 'promoted' && !$record.promoted_event_id}
+<div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">人工复核</h5></div>
+    <div class="card-body">
+        <form method="post" action="/planning/regulatory-monitor/review" class="row g-3">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="col-md-4">
+                <label class="form-label required">复核结论</label>
+                <select name="review_status" class="form-select" required>
+                    <option value="confirmed_applicable">已确认相关</option>
+                    <option value="confirmed_not_applicable">已确认不相关</option>
+                    <option value="deferred">暂缓/待补证</option>
+                </select>
+            </div>
+            <div class="col-md-8">
+                <label class="form-label required">人工理由（2–1000字符）</label>
+                <textarea name="review_comment" class="form-control" minlength="2" maxlength="1000" required></textarea>
+            </div>
+            <div class="col-12"><button class="btn btn-primary" type="submit">保存人工复核</button></div>
+        </form>
+    </div>
+</div>
+{/if}
+
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0">复核字段审计</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm mb-0"><thead><tr><th>时间</th><th>字段</th><th>旧值</th><th>新值</th><th>操作人</th></tr></thead>
+            <tbody>{volist name="fieldChangeLogs" id="log"}<tr><td>{$log.changed_at}</td><td>{$log.field_name}</td><td>{$log.old_value|default='-'}</td><td>{$log.new_value|default='-'}</td><td>{$log.changed_by|default='-'}</td></tr>{/volist}
+            {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无复核字段变更。</td></tr>{/empty}</tbody>
+        </table>
+    </div>
+</div>

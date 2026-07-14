@@ -22,6 +22,15 @@ class AuditLog
         if (Session::has('user.id') && $request->isPost()) {
             $controller = $request->controller();
             $action = $request->action();
+            $isRegulatoryAction = strtolower((string)$controller) === 'planningregulatorymonitor';
+            $regulatoryAudit = $isRegulatoryAction
+                ? (array)$request->middleware('qms_regulatory_audit', [])
+                : [];
+            // The controller marks this only after its transaction succeeds.
+            // A rejected/rolled-back review must never become a generic success log.
+            if ($isRegulatoryAction && $regulatoryAudit === []) {
+                return $response;
+            }
             if (
                 strtolower((string)$controller) === 'planningresponsibility'
                 && strtolower((string)$action) === 'saveassignment'
@@ -63,6 +72,8 @@ class AuditLog
                 'submitversion',
                 'registergeneralmanager',
                 'requestlabdirector',
+                'review',
+                'run',
             ];
             if (in_array(strtolower($action), $logActions, true)) {
                 try {
@@ -71,7 +82,13 @@ class AuditLog
                         : ($isResponsibilityAction ? 'failed' : 'success');
                     $subjectType = trim((string)($responsibilityAudit['subject_type'] ?? 'route_record'));
                     $subjectKey = trim((string)($responsibilityAudit['subject_key'] ?? ''));
-                    $recordId = $this->resolveRecordId($request, $response, $responsibilityAudit, $isResponsibilityAction);
+                    $auditMeta = $isRegulatoryAction ? $regulatoryAudit : $responsibilityAudit;
+                    $recordId = $this->resolveRecordId(
+                        $request,
+                        $response,
+                        $auditMeta,
+                        $isResponsibilityAction || $isRegulatoryAction
+                    );
                     $details = $isResponsibilityAction
                         ? implode(' ', array_filter([
                             'outcome=' . $outcome,

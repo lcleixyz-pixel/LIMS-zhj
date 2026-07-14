@@ -33,7 +33,7 @@ return [
         'quality_manager' => [
             'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'approval', 'doc_category', 'doc_template',
             'compliance', 'ai_assistant', 'ai_chat',
-            'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningchangeevent', 'planningobjective', 'planningresponsibility',
+            'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningchangeevent', 'planningregulatorymonitor', 'planningobjective', 'planningresponsibility',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
             'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',
@@ -162,6 +162,37 @@ return [
         'calibration_days' => 30,
         'capa_overdue_days' => 0,
         'capa_effectiveness_days' => 30,
+    ],
+
+    // 与月度调度共用一个经 Compose/体验部署透传的显式开关；默认关闭。
+    'regulatory_monitor' => [
+        'enabled' => env('REGULATORY_MONITOR_ENABLED', getenv('REGULATORY_MONITOR_ENABLED') ?: false),
+        'review_status_labels' => [
+            'pending' => '待人工复核',
+            'confirmed_applicable' => '已确认相关',
+            'confirmed_not_applicable' => '已确认不相关',
+            'deferred' => '暂缓/待补证',
+            'promoted' => '已晋升正式事件',
+        ],
+        'run_status_labels' => [
+            'running' => '执行中',
+            'completed' => '已完成',
+            'partial_failed' => '部分来源失败',
+            'failed' => '执行失败',
+        ],
+        'impact_labels' => [
+            'cma_scope_mark' => 'CMA 能力范围与标志',
+            'qms_documents' => '体系文件',
+            'personnel_authorization' => '人员与授权',
+            'equipment_calibration' => '设备与校准',
+            'lims_rules' => 'LIMS 规则',
+            'training' => '培训',
+        ],
+        'conclusion_labels' => [
+            'likely' => '可能直接影响',
+            'possible' => '可能影响，待核实',
+            'no_match' => '未命中规则',
+        ],
     ],
 
     'integration' => [

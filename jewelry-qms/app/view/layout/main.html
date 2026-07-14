@@ -135,6 +135,9 @@
                         <li><a class="dropdown-item" href="/planning/structures">文件结构化</a></li>
                         <li><a class="dropdown-item" href="/planning/traceability">追溯矩阵</a></li>
                         <li><a class="dropdown-item" href="/planning/change-events">变更事件</a></li>
+                        {if condition="config('qms.regulatory_monitor.enabled') && qms_can('planningregulatorymonitor')"}
+                        <li><a class="dropdown-item" href="/planning/regulatory-monitor">法规监测</a></li>
+                        {/if}
                         <li><a class="dropdown-item" href="/planning/objectives">质量方针目标</a></li>
                         {/if}
                         {if condition="qms_can('planningresponsibility')"}
