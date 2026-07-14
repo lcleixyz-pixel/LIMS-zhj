@@ -354,7 +354,7 @@ regulatory_assert_same(false, $samrResult['requires_manual_verification'], 'HTML
 regulatory_assert_same(1, count($samrResult['items']), 'SAMR parser must ignore links outside configured list nodes');
 $samrItem = $samrResult['items'][0];
 regulatory_assert_same(
-    '市场监管总局关于发布检验检测机构能力验证结果的公告',
+    '市场监管总局关于检验检测机构资质认定“一单一库”有关事项的公告',
     $samrItem['title'],
     'SAMR title normalization failed'
 );
@@ -365,13 +365,13 @@ regulatory_assert_same(
 );
 regulatory_assert_same('2026-07-14', $samrItem['published_date'], 'SAMR published date normalization failed');
 regulatory_assert_same(
-    '国家市场监督管理总局公告 2026 年第 28 号',
+    '国家市场监督管理总局公告 2026 年第 14 号',
     $samrItem['announcement_number'],
     'SAMR announcement number normalization failed'
 );
-regulatory_assert(str_contains($samrItem['summary'], '能力验证结果'), 'SAMR summary evidence missing');
+regulatory_assert(str_contains($samrItem['summary'], '一单一库') || str_contains($samrItem['summary'], '事项清单'), 'SAMR summary evidence missing');
 regulatory_assert_same('samr_rkjcs_notice', $samrItem['evidence']['source_key'], 'SAMR evidence source key missing');
-regulatory_assert(str_contains($samrItem['evidence']['raw_text'], '能力验证结果'), 'SAMR raw evidence missing');
+regulatory_assert(str_contains($samrItem['evidence']['raw_text'], '一单一库'), 'SAMR raw evidence missing');
 
 $cnasAdapter = $registry->adapterFor('cnas_lab_notice');
 $cnasHtml = (string)file_get_contents($fixtureDir . '/cnas_notice_list.html');

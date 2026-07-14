@@ -8,6 +8,7 @@ $app = new think\App();
 $app->initialize();
 
 use app\service\regulatory\RegulatoryCandidateService;
+use app\service\regulatory\RegulatoryImpactService;
 use app\service\regulatory\RegulatoryMonitorService;
 use app\service\regulatory\RegulatorySourceRegistry;
 use think\facade\Config;
@@ -223,11 +224,29 @@ try {
         'modified' => '2026-07-14 09:00:00',
     ]);
 
+    $impactContextCalls = 0;
+    $impactService = new RegulatoryImpactService(
+        static function (string $contextCompanyId) use (&$impactContextCalls, $companyId): array {
+            $impactContextCalls++;
+            candidate_assert_same($companyId, $contextCompanyId, 'Impact context must be company-scoped');
+
+            return [
+                'qms_structure_layers' => ['external_basis', 'quality_manual', 'procedure', 'work_instruction', 'record_form'],
+                'active_employee_count' => 5,
+                'active_personnel_authorization_count' => 3,
+                'active_equipment_count' => 8,
+                'active_equipment_authorization_count' => 4,
+            ];
+        }
+    );
     $now = new DateTimeImmutable('2026-07-14 09:00:01');
     $candidateService = new RegulatoryCandidateService(
         static function () use (&$now): DateTimeImmutable {
             return $now;
-        }
+        },
+        null,
+        null,
+        $impactService
     );
     foreach ([
         ['https://www.samr.gov.cn/notices/Case.html', 'https://www.samr.gov.cn/notices/case.html'],
@@ -273,7 +292,32 @@ try {
         $first['candidate']['content_hash'],
         'Persisted content hash must match the public stable fingerprint of the raw parsed item'
     );
-    candidate_assert_same(null, $first['candidate']['impact_analysis'], 'Task 3 must leave impact analysis unassessed');
+    candidate_assert_same(
+        ['cma_scope_mark', 'qms_documents', 'personnel_authorization', 'equipment_calibration', 'lims_rules', 'training'],
+        array_keys($first['candidate']['impact_analysis']),
+        'New candidate must persist the deterministic fixed six-key impact analysis'
+    );
+    foreach ($first['candidate']['impact_analysis'] as $impactKey => $assessment) {
+        candidate_assert_same(
+            ['conclusion', 'evidence', 'rule_ids', 'confidence'],
+            array_keys($assessment),
+            'Persisted impact assessment must restore fixed field order: ' . $impactKey
+        );
+    }
+    candidate_assert_same(
+        RegulatoryImpactService::RULE_VERSION,
+        $first['candidate']['analysis_rule_version'],
+        'New candidate must persist impact rule version'
+    );
+    candidate_assert(
+        (float)$first['candidate']['analysis_confidence'] >= 0.0
+            && (float)$first['candidate']['analysis_confidence'] <= 1.0,
+        'New candidate must persist bounded overall confidence'
+    );
+    candidate_assert(
+        str_contains((string)$first['candidate']['analysis_rationale'], '确定性规则'),
+        'New candidate must persist deterministic rationale'
+    );
     candidate_assert_same(null, $first['candidate']['supersedes_candidate_id'], 'First version must not supersede anything');
     candidate_assert_same('CNAS RL01:2026', $first['candidate']['announcement_number'], 'Stored announcement number must use the stable normalized form');
     candidate_assert_same(
@@ -306,7 +350,57 @@ try {
     candidate_assert_same('deferred', $same['candidate']['review_status'], 'Repeated content must preserve manual review status');
     candidate_assert_same('human-reviewer', $same['candidate']['reviewed_by'], 'Repeated content must preserve reviewer');
     candidate_assert_same('保留人工判断', $same['candidate']['review_comment'], 'Repeated content must preserve review comment');
+    candidate_assert_same(
+        candidate_canonical($first['candidate']['impact_analysis']),
+        candidate_canonical($same['candidate']['impact_analysis']),
+        'Repeated content must preserve persisted impact analysis without recalculation'
+    );
+    candidate_assert_same(
+        $first['candidate']['analysis_rule_version'],
+        $same['candidate']['analysis_rule_version'],
+        'Repeated content must preserve analysis rule version'
+    );
     candidate_assert_same(1, Db::name('qms_external_change_candidates')->where('id', $first['candidate']['id'])->count(), 'Repeated content must keep one row');
+
+    $impactCallsBeforeFailure = $impactContextCalls;
+    $failureItem = $v1;
+    $failureItem['announcement_number'] = 'IMPACT-FAILURE-2026';
+    $failureItem['canonical_url'] = 'https://www.samr.gov.cn/rkjcs/tzgg/impact-failure.html';
+    $failureItem['title'] = '影响规则异常回滚测试';
+    $failureCandidateCount = Db::name('qms_external_change_candidates')->count();
+    $failingImpactService = new RegulatoryCandidateService(
+        static fn (): DateTimeImmutable => new DateTimeImmutable('2026-07-14 10:15:00'),
+        null,
+        null,
+        static function (array $item, string $analysisCompanyId): array {
+            throw new RuntimeException('impact-rule-fixture-failure');
+        }
+    );
+    try {
+        $failingImpactService->record(
+            $companyId,
+            $runId,
+            'impact-rule-failure',
+            'html_list',
+            $failureItem
+        );
+        throw new RuntimeException('Impact rule failure must abort candidate creation');
+    } catch (RuntimeException $exception) {
+        candidate_assert(
+            str_contains($exception->getMessage(), 'impact-rule-fixture-failure'),
+            'Impact rule exception must remain transparent'
+        );
+    }
+    candidate_assert_same(
+        $failureCandidateCount,
+        Db::name('qms_external_change_candidates')->count(),
+        'Impact rule exception must roll back without a partial candidate'
+    );
+    candidate_assert_same(
+        $impactCallsBeforeFailure,
+        $impactContextCalls,
+        'Failing injected analyzer must not touch the normal context provider'
+    );
 
     $sameDocumentDifferentUrl = $hashItemA;
     $sameDocumentDifferentUrl['canonical_url'] = 'https://www.samr.gov.cn/rkjcs/tzgg/alternate-location.html';

@@ -218,12 +218,42 @@ $candidateJson = [
         'original_url' => 'https://example.invalid/' . str_repeat('x', 550),
     ],
     'impact_analysis' => [
-        'cma_scope_mark' => ['status' => 'no_match'],
-        'cnas_accreditation' => ['status' => 'possible'],
-        'qms_documents' => ['status' => 'direct'],
-        'personnel_authorization' => ['status' => 'no_match'],
-        'methods_resources' => ['status' => 'possible'],
-        'lims_rules' => ['status' => 'direct'],
+        'cma_scope_mark' => [
+            'conclusion' => 'possible',
+            'evidence' => ['规则 REG-CMA-001 命中检验检测机构，需人工复核。'],
+            'rule_ids' => ['REG-CMA-001'],
+            'confidence' => 0.82,
+        ],
+        'qms_documents' => [
+            'conclusion' => 'possible',
+            'evidence' => ['规则 REG-QMS-001 命中后续处置要求，需人工复核。'],
+            'rule_ids' => ['REG-QMS-001'],
+            'confidence' => 0.84,
+        ],
+        'personnel_authorization' => [
+            'conclusion' => 'possible',
+            'evidence' => ['规则 REG-PER-001 命中人员授权，需人工复核。'],
+            'rule_ids' => ['REG-PER-001'],
+            'confidence' => 0.78,
+        ],
+        'equipment_calibration' => [
+            'conclusion' => 'no_match',
+            'evidence' => ['现有确定性规则未命中，需人工复核。'],
+            'rule_ids' => [],
+            'confidence' => 0.35,
+        ],
+        'lims_rules' => [
+            'conclusion' => 'possible',
+            'evidence' => ['规则 REG-LIMS-001 命中能力验证结果，需人工复核。'],
+            'rule_ids' => ['REG-LIMS-001'],
+            'confidence' => 0.80,
+        ],
+        'training' => [
+            'conclusion' => 'no_match',
+            'evidence' => ['现有确定性规则未命中，需人工复核。'],
+            'rule_ids' => [],
+            'confidence' => 0.35,
+        ],
     ],
 ];
 $modelFailure = null;

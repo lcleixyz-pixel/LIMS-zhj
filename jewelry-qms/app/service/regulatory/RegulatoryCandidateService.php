@@ -24,11 +24,13 @@ final class RegulatoryCandidateService
     private Closure $clock;
     private Closure $candidateInserter;
     private Closure $retryBackoff;
+    private Closure $impactAnalyzer;
 
     public function __construct(
         ?callable $clock = null,
         ?callable $candidateInserter = null,
-        ?callable $retryBackoff = null
+        ?callable $retryBackoff = null,
+        RegulatoryImpactService|callable|null $impactService = null
     ) {
         $this->clock = Closure::fromCallable(
             $clock ?? static fn (): DateTimeImmutable => new DateTimeImmutable('now')
@@ -43,6 +45,16 @@ final class RegulatoryCandidateService
                 usleep($attempt * 10_000);
             }
         );
+        if ($impactService instanceof RegulatoryImpactService) {
+            $this->impactAnalyzer = static fn (array $item, string $companyId): array =>
+                $impactService->analyze($item, $companyId);
+        } elseif (is_callable($impactService)) {
+            $this->impactAnalyzer = Closure::fromCallable($impactService);
+        } else {
+            $defaultImpactService = new RegulatoryImpactService();
+            $this->impactAnalyzer = static fn (array $item, string $companyId): array =>
+                $defaultImpactService->analyze($item, $companyId);
+        }
     }
 
     public static function normalizeAnnouncementNumber(string $value): string
@@ -161,6 +173,10 @@ final class RegulatoryCandidateService
             }
         }
 
+        $impactResult = $this->validatedImpactResult(
+            ($this->impactAnalyzer)($normalized, $companyId)
+        );
+
         $candidate = [
             'id' => qms_uuid(),
             'company_id' => $companyId,
@@ -184,10 +200,10 @@ final class RegulatoryCandidateService
             'supersedes_candidate_id' => $previous !== null ? (string)$previous['id'] : null,
             'relevance' => 'unknown',
             'preliminary_applicability' => 'needs_review',
-            'impact_analysis' => null,
-            'analysis_rule_version' => null,
-            'analysis_confidence' => null,
-            'analysis_rationale' => null,
+            'impact_analysis' => $this->encodeJson($impactResult['impact_analysis']),
+            'analysis_rule_version' => $impactResult['analysis_rule_version'],
+            'analysis_confidence' => $impactResult['analysis_confidence'],
+            'analysis_rationale' => $impactResult['analysis_rationale'],
             'review_status' => 'pending',
             'publish' => 1,
             'soft_delete' => 0,
@@ -487,8 +503,86 @@ final class RegulatoryCandidateService
                 $candidate[$field] = json_decode($candidate[$field], true, 512, JSON_THROW_ON_ERROR);
             }
         }
+        if (is_array($candidate['impact_analysis'] ?? null)) {
+            $ordered = [];
+            foreach ([
+                'cma_scope_mark',
+                'qms_documents',
+                'personnel_authorization',
+                'equipment_calibration',
+                'lims_rules',
+                'training',
+            ] as $impactKey) {
+                if (array_key_exists($impactKey, $candidate['impact_analysis'])) {
+                    $assessment = $candidate['impact_analysis'][$impactKey];
+                    if (is_array($assessment)) {
+                        $assessment = [
+                            'conclusion' => $assessment['conclusion'] ?? null,
+                            'evidence' => $assessment['evidence'] ?? [],
+                            'rule_ids' => $assessment['rule_ids'] ?? [],
+                            'confidence' => $assessment['confidence'] ?? null,
+                        ];
+                    }
+                    $ordered[$impactKey] = $assessment;
+                }
+            }
+            $candidate['impact_analysis'] = $ordered;
+        }
 
         return $candidate;
+    }
+
+    /** @return array{impact_analysis: array<string, mixed>, analysis_rule_version: string, analysis_confidence: float, analysis_rationale: string} */
+    private function validatedImpactResult(mixed $result): array
+    {
+        if (!is_array($result)) {
+            throw new RuntimeException('法规影响初判结果不可读');
+        }
+        $impactKeys = [
+            'cma_scope_mark',
+            'qms_documents',
+            'personnel_authorization',
+            'equipment_calibration',
+            'lims_rules',
+            'training',
+        ];
+        $impactAnalysis = $result['impact_analysis'] ?? null;
+        if (!is_array($impactAnalysis) || array_keys($impactAnalysis) !== $impactKeys) {
+            throw new RuntimeException('法规影响初判必须使用固定六键和固定顺序');
+        }
+        foreach ($impactAnalysis as $impactKey => $assessment) {
+            if (!is_array($assessment)
+                || array_keys($assessment) !== ['conclusion', 'evidence', 'rule_ids', 'confidence']
+                || !in_array($assessment['conclusion'], ['likely', 'possible', 'no_match'], true)
+                || !is_array($assessment['evidence'])
+                || $assessment['evidence'] === []
+                || !is_array($assessment['rule_ids'])
+                || !is_numeric($assessment['confidence'])
+                || (float)$assessment['confidence'] < 0.0
+                || (float)$assessment['confidence'] > 1.0
+            ) {
+                throw new RuntimeException('法规影响初判分类结构无效：' . $impactKey);
+            }
+        }
+        $ruleVersion = trim((string)($result['analysis_rule_version'] ?? ''));
+        $rationale = trim((string)($result['analysis_rationale'] ?? ''));
+        $confidence = $result['analysis_confidence'] ?? null;
+        if ($ruleVersion === '' || mb_strlen($ruleVersion) > 80) {
+            throw new RuntimeException('法规影响初判规则版本无效');
+        }
+        if (!is_numeric($confidence) || (float)$confidence < 0.0 || (float)$confidence > 1.0) {
+            throw new RuntimeException('法规影响初判总体置信度无效');
+        }
+        if ($rationale === '') {
+            throw new RuntimeException('法规影响初判依据不能为空');
+        }
+
+        return [
+            'impact_analysis' => $impactAnalysis,
+            'analysis_rule_version' => $ruleVersion,
+            'analysis_confidence' => (float)$confidence,
+            'analysis_rationale' => $rationale,
+        ];
     }
 
     private function canonicalAttachments(array $attachments): array
