@@ -358,6 +358,12 @@ PHP;
 
     private function curlTransport(string $url, array $options): array
     {
+        foreach (['CURLOPT_PROXY', 'CURLOPT_NOPROXY'] as $requiredOption) {
+            if (!defined($requiredOption)) {
+                throw new RuntimeException('当前 cURL 缺少安全代理禁用能力');
+            }
+        }
+
         $handle = curl_init($url);
         if ($handle === false) {
             throw new RuntimeException('官方来源请求初始化失败');
@@ -373,9 +379,11 @@ PHP;
             $resolve[] = $host . ':443:' . $resolveAddress;
         }
 
-        curl_setopt_array($handle, [
+        $configured = curl_setopt_array($handle, [
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_FOLLOWLOCATION => false,
+            constant('CURLOPT_PROXY') => '',
+            constant('CURLOPT_NOPROXY') => '*',
             CURLOPT_CONNECTTIMEOUT_MS => min(
                 (int)$options['connect_timeout'] * 1000,
                 max(1, (int)floor((float)$options['timeout'] * 1000))
@@ -409,6 +417,10 @@ PHP;
                 return strlen($chunk);
             },
         ]);
+        if ($configured !== true) {
+            curl_close($handle);
+            throw new RuntimeException('官方来源安全传输配置失败');
+        }
 
         $executed = curl_exec($handle);
         $errorCode = curl_errno($handle);

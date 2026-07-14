@@ -59,6 +59,117 @@ function make_http_client(
     return new RegulatoryHttpClient($allowedHosts, $resolver, $transport, $clock);
 }
 
+function regulatory_assert_no_default_route(): void
+{
+    // This security regression intentionally requires a container started with
+    // `docker run --network none`; a normal Compose network is not isolated enough.
+    $routes = @file('/proc/net/route', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    regulatory_assert(is_array($routes), 'Real cURL proxy regression requires Linux /proc route inspection');
+    foreach ($routes as $index => $route) {
+        if ($index === 0) {
+            continue;
+        }
+        $columns = preg_split('/\s+/', trim($route)) ?: [];
+        if (($columns[1] ?? '') === '00000000') {
+            throw new RuntimeException(
+                'Real cURL proxy regression must run in Docker --network none (default route detected)'
+            );
+        }
+    }
+}
+
+/** @return array{process: resource, pipes: array<int, resource>, address: string, log_path: string, temp_dir: string} */
+function regulatory_start_fake_connect_proxy(): array
+{
+    $tempDir = sys_get_temp_dir() . '/regulatory-proxy-' . bin2hex(random_bytes(6));
+    regulatory_assert(mkdir($tempDir, 0700), 'Unable to create fake proxy temp directory');
+    $logPath = $tempDir . '/connect.log';
+    $script = <<<'PHP'
+$logPath = (string)($argv[1] ?? '');
+$server = @stream_socket_server('tcp://127.0.0.1:0', $errno, $error);
+if (!is_resource($server)) {
+    fwrite(STDERR, 'proxy bind failed');
+    exit(2);
+}
+echo stream_socket_get_name($server, false) . "\n";
+flush();
+$client = @stream_socket_accept($server, 5);
+if (is_resource($client)) {
+    stream_set_timeout($client, 1);
+    $request = '';
+    while (!feof($client)) {
+        $line = fgets($client);
+        if ($line === false) {
+            break;
+        }
+        $request .= $line;
+        if ($line === "\r\n" || $line === "\n") {
+            break;
+        }
+    }
+    file_put_contents($logPath, $request, LOCK_EX);
+    fwrite($client, "HTTP/1.1 502 Fake Proxy Rejected CONNECT\r\nContent-Length: 0\r\n\r\n");
+    fclose($client);
+}
+fclose($server);
+PHP;
+    $descriptors = [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ];
+    $process = proc_open([PHP_BINARY, '-r', $script, $logPath], $descriptors, $pipes);
+    if (!is_resource($process)) {
+        @rmdir($tempDir);
+        throw new RuntimeException('Unable to start fake CONNECT proxy');
+    }
+    fclose($pipes[0]);
+    stream_set_timeout($pipes[1], 2);
+    $address = trim((string)fgets($pipes[1]));
+    if (!preg_match('/^127\.0\.0\.1:\d+$/', $address)) {
+        $error = trim((string)stream_get_contents($pipes[2]));
+        proc_terminate($process);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+        @unlink($logPath);
+        @rmdir($tempDir);
+        throw new RuntimeException('Fake CONNECT proxy did not start: ' . $error);
+    }
+
+    return [
+        'process' => $process,
+        'pipes' => $pipes,
+        'address' => $address,
+        'log_path' => $logPath,
+        'temp_dir' => $tempDir,
+    ];
+}
+
+function regulatory_stop_fake_connect_proxy(array $proxy): void
+{
+    if (isset($proxy['process']) && is_resource($proxy['process'])) {
+        $status = proc_get_status($proxy['process']);
+        if ($status['running']) {
+            proc_terminate($proxy['process']);
+        }
+    }
+    foreach ((array)($proxy['pipes'] ?? []) as $pipe) {
+        if (is_resource($pipe)) {
+            fclose($pipe);
+        }
+    }
+    if (isset($proxy['process']) && is_resource($proxy['process'])) {
+        proc_close($proxy['process']);
+    }
+    if (isset($proxy['log_path'])) {
+        @unlink((string)$proxy['log_path']);
+    }
+    if (isset($proxy['temp_dir'])) {
+        @rmdir((string)$proxy['temp_dir']);
+    }
+}
+
 $expectedSources = [
     'samr_rkjcs_notice' => ['html_list', 'https://www.samr.gov.cn/rkjcs/tzgg/index.html'],
     'cnas_lab_notice' => ['html_list', 'https://www.cnas.org.cn/rkfw/sys/zxtz/index.html'],
@@ -203,6 +314,58 @@ foreach ([
     );
 }
 
+regulatory_assert_no_default_route();
+$proxy = [];
+$proxyEnvironment = [];
+$proxyVariables = ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy'];
+$noProxyVariables = ['NO_PROXY', 'no_proxy'];
+try {
+    $proxy = regulatory_start_fake_connect_proxy();
+    $proxyUrl = 'http://proxy-user:proxy-secret@' . $proxy['address'];
+    foreach (array_merge($proxyVariables, $noProxyVariables) as $variable) {
+        $proxyEnvironment[$variable] = getenv($variable);
+    }
+    foreach ($proxyVariables as $variable) {
+        putenv($variable . '=' . $proxyUrl);
+    }
+    foreach ($noProxyVariables as $variable) {
+        putenv($variable . '=');
+    }
+
+    $validatedAddresses = [];
+    $realCurlClient = new RegulatoryHttpClient(
+        ['www.samr.gov.cn'],
+        static function (string $host, float $timeout) use (&$validatedAddresses): array {
+            $validatedAddresses = ['8.8.8.8'];
+            return $validatedAddresses;
+        }
+    );
+    $realCurlFailure = null;
+    try {
+        $realCurlClient->fetch('https://www.samr.gov.cn/proxy-regression');
+    } catch (Throwable $exception) {
+        $realCurlFailure = $exception;
+    }
+    usleep(100_000);
+    $proxyRequest = is_file($proxy['log_path'])
+        ? (string)file_get_contents($proxy['log_path'])
+        : '';
+
+    regulatory_assert_same(['8.8.8.8'], $validatedAddresses, 'Real cURL regression must inject a validated public resolved_ips value');
+    regulatory_assert($realCurlFailure instanceof Throwable, 'Fixed-IP request without external network must fail safely');
+    regulatory_assert(
+        str_contains($realCurlFailure->getMessage(), 'cURL 错误码 7'),
+        'Real cURL must attempt the fixed IP directly (connect failure), not retry DNS or proxy resolution'
+    );
+    regulatory_assert_same('', $proxyRequest, 'Real cURL transport must not connect to an environment proxy');
+} finally {
+    foreach (array_merge($proxyVariables, $noProxyVariables) as $variable) {
+        $previous = $proxyEnvironment[$variable] ?? false;
+        putenv($previous === false ? $variable : $variable . '=' . $previous);
+    }
+    regulatory_stop_fake_connect_proxy($proxy);
+}
+
 $calls = [];
 $redirectTransport = static function (string $url, array $options) use (&$calls): array {
     $calls[] = [$url, $options];
@@ -231,6 +394,7 @@ foreach ($calls as [$url, $options]) {
     );
     regulatory_assert_same(5 * 1024 * 1024, $options['max_body_bytes'], 'Body limit must be 5 MiB');
     regulatory_assert(str_contains($options['user_agent'], 'LIMS-ZHJ-RegulatoryMonitor/'), 'User-Agent must be fixed and identifiable');
+    regulatory_assert_same(['8.8.8.8'], $options['resolved_ips'], 'Transport options must carry the validated fixed IP');
     $headerText = strtolower(implode("\n", $options['headers']));
     regulatory_assert(!str_contains($headerText, 'cookie:'), 'Cookie must not be forwarded across requests');
     regulatory_assert(!str_contains($headerText, 'authorization:'), 'Authorization must not be forwarded across requests');
