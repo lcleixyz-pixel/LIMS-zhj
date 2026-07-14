@@ -8,6 +8,7 @@ use app\service\FieldAuditService;
 use app\service\regulatory\RegulatoryCandidateReviewService;
 use app\service\regulatory\RegulatoryExportService;
 use InvalidArgumentException;
+use OutOfBoundsException;
 use RuntimeException;
 use think\App;
 use think\exception\HttpException;
@@ -15,6 +16,7 @@ use think\facade\Config;
 use think\facade\Log;
 use think\facade\Session;
 use think\facade\View;
+use UnexpectedValueException;
 
 class PlanningRegulatoryMonitor extends BaseController
 {
@@ -157,8 +159,15 @@ class PlanningRegulatoryMonitor extends BaseController
             $service = $this->exportService();
             $packet = $service->exportCandidate($candidateId);
             $filename = $service->filename($candidateId);
-        } catch (InvalidArgumentException|RuntimeException $exception) {
+        } catch (InvalidArgumentException|OutOfBoundsException $exception) {
             throw new HttpException(404, '法规候选不存在或无权导出');
+        } catch (UnexpectedValueException $exception) {
+            Log::warning('[RegulatoryExport] error_code={error_code} exception_class={exception_class} candidate_id_hash={candidate_id_hash}', [
+                'error_code' => 'REG_EXPORT_VALIDATION_BLOCKED',
+                'exception_class' => $exception::class,
+                'candidate_id_hash' => substr(hash('sha256', $candidateId), 0, 16),
+            ]);
+            throw new HttpException(422, '法规候选复核包暂无法安全导出');
         }
 
         return json(

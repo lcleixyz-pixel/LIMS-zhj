@@ -9,6 +9,8 @@ use app\service\regulatory\RegulatoryExportService;
 use think\facade\Config;
 use think\facade\Db;
 use think\facade\Session;
+use think\exception\HttpException;
+use think\event\LogRecord;
 
 final class RegulatoryExportSmokeAssertionFailed extends RuntimeException
 {
@@ -21,14 +23,35 @@ function export_assert(bool $condition, string $message): void
     }
 }
 
-function export_throws(callable $callback, string $message): void
+function export_expect_exception(
+    callable $callback,
+    string $expectedClass,
+    string $expectedMessage,
+    string $message
+): Throwable
 {
     try {
         $callback();
-    } catch (Throwable) {
-        return;
+    } catch (Throwable $exception) {
+        export_assert($exception instanceof $expectedClass, $message . '（异常类型不符）');
+        export_assert($exception->getMessage() === $expectedMessage, $message . '（安全错误不符）');
+
+        return $exception;
     }
     export_assert(false, $message);
+}
+
+function export_expect_http_exception(
+    callable $callback,
+    int $expectedStatus,
+    string $expectedMessage,
+    string $message
+): HttpException {
+    $exception = export_expect_exception($callback, HttpException::class, $expectedMessage, $message);
+    export_assert($exception instanceof HttpException, $message . '（必须是 HTTP 异常）');
+    export_assert($exception->getStatusCode() === $expectedStatus, $message . '（HTTP 状态码不符）');
+
+    return $exception;
 }
 
 function export_rejects_sensitive_candidate(
@@ -37,17 +60,16 @@ function export_rejects_sensitive_candidate(
     string $sensitiveValue,
     string $message
 ): void {
-    try {
-        $service->exportCandidate($candidateId);
-    } catch (Throwable $exception) {
-        export_assert(
-            !str_contains($exception->getMessage(), $sensitiveValue),
-            $message . '（错误信息不得回显敏感值）'
-        );
-        return;
-    }
-
-    export_assert(false, $message);
+    $exception = export_expect_exception(
+        fn () => $service->exportCandidate($candidateId),
+        UnexpectedValueException::class,
+        '法规候选导出内容包含敏感信息',
+        $message
+    );
+    export_assert(
+        !str_contains($exception->getMessage(), $sensitiveValue),
+        $message . '（错误信息不得回显敏感值）'
+    );
 }
 
 function export_set_enabled(bool $enabled): void
@@ -126,6 +148,43 @@ function export_candidate(string $id, string $companyId, int $publish = 1, int $
     ];
 }
 
+/** @param array<string, mixed> $candidate @return array<string, mixed> */
+function export_inject_sensitive_value(array $candidate, string $location, string $value): array
+{
+    if ($location === 'title') {
+        $candidate['title'] = $value;
+        return $candidate;
+    }
+    if ($location === 'summary') {
+        $candidate['evidence_summary'] = $value;
+        return $candidate;
+    }
+    if (str_starts_with($location, 'reference_')) {
+        $references = json_decode((string)$candidate['evidence_refs'], true, flags: JSON_THROW_ON_ERROR);
+        $references[0][substr($location, strlen('reference_'))] = $value;
+        $candidate['evidence_refs'] = json_encode(
+            $references,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+        );
+        return $candidate;
+    }
+
+    $impacts = json_decode((string)$candidate['impact_analysis'], true, flags: JSON_THROW_ON_ERROR);
+    if ($location === 'impact_evidence') {
+        $impacts['cma_scope_mark']['evidence'][0]['summary'] = $value;
+    } elseif ($location === 'rule_id') {
+        $impacts['cma_scope_mark']['rule_ids'][] = $value;
+    } else {
+        throw new InvalidArgumentException('未知敏感值注入位置');
+    }
+    $candidate['impact_analysis'] = json_encode(
+        $impacts,
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
+    );
+
+    return $candidate;
+}
+
 /** @return list<string> */
 function export_recursive_keys(mixed $value): array
 {
@@ -173,6 +232,19 @@ $ids = [
     'sensitive_impact' => 'exp-s-impact-' . $token,
     'sensitive_rule' => 'exp-s-rule-' . $token,
     'sensitive_locator' => 'exp-s-locator-' . $token,
+    'json_password' => 'exp-j-password-' . $token,
+    'json_cookie' => 'exp-j-cookie-' . $token,
+    'json_authorization' => 'exp-j-auth-' . $token,
+    'json_dsn' => 'exp-j-dsn-' . $token,
+    'json_mobile' => 'exp-j-mobile-' . $token,
+    'json_id_card' => 'exp-j-idcard-' . $token,
+    'phone_space' => 'exp-p-space-' . $token,
+    'phone_dash' => 'exp-p-dash-' . $token,
+    'phone_country' => 'exp-p-country-' . $token,
+    'fullwidth_password' => 'exp-f-password-' . $token,
+    'smart_cookie' => 'exp-f-cookie-' . $token,
+    'safe_json' => 'exp-safe-json-' . $token,
+    'deep_json' => 'exp-deep-json-' . $token,
 ];
 $failure = null;
 
@@ -188,38 +260,42 @@ try {
     $unsafeUrl['source_url'] = 'http://www.samr.gov.cn/not-https';
     $unsafeUrl['normalized_url'] = 'http://www.samr.gov.cn/not-https';
     Db::name('qms_external_change_candidates')->insert($unsafeUrl);
+    $safeJson = export_candidate($ids['safe_json'], $companyId);
+    $safeJson['title'] = '{"notice":"公告2026年第14号","effective_date":"2026-08-01"}';
+    Db::name('qms_external_change_candidates')->insert($safeJson);
+    $deepJsonValue = '{"pass\\u0077ord":"export-deep-json-secret"}';
+    for ($depth = 0; $depth < 20; $depth++) {
+        $deepJsonValue = '{"safe":' . $deepJsonValue . '}';
+    }
+    $deepJson = export_candidate($ids['deep_json'], $companyId);
+    $deepJson['title'] = $deepJsonValue;
+    Db::name('qms_external_change_candidates')->insert($deepJson);
 
-    $sensitiveValues = [
-        'sensitive_title' => 'Authorization: Bearer eXpoRt-SecRet-ToKen-123456789',
-        'sensitive_summary' => 'Cookie: qms_session=export-cookie-secret',
-        'sensitive_reference' => 'mysql://export_user:db-secret@db.internal/qms',
-        'sensitive_impact' => '13800138000',
-        'sensitive_rule' => '11010519491231002X',
-        'sensitive_locator' => 'password=export-password-secret',
+    $sensitiveCases = [
+        'json_password' => ['title', '{"Pass_word":"export-json-password-secret"}'],
+        'sensitive_title' => ['title', 'Authorization: Bearer eXpoRt-SecRet-ToKen-123456789'],
+        'sensitive_summary' => ['summary', 'Cookie: qms_session=export-cookie-secret'],
+        'sensitive_reference' => ['reference_label', 'mysql://export_user:db-secret@db.internal/qms'],
+        'sensitive_impact' => ['impact_evidence', '13800138000'],
+        'sensitive_rule' => ['rule_id', '11010519491231002X'],
+        'sensitive_locator' => ['reference_locator', 'password=export-password-secret'],
+        'json_cookie' => ['summary', '[{"COO-KIE":"export-json-cookie-secret"}]'],
+        'json_authorization' => ['reference_label', '{"Author_ization":"export-json-auth-secret"}'],
+        'json_dsn' => ['impact_evidence', '{"D-S_N":"export-json-dsn-secret"}'],
+        'json_mobile' => ['rule_id', '{"Mo_bile":"export-json-mobile-secret"}'],
+        'json_id_card' => ['reference_locator', '{"ID-Card":"export-json-id-secret"}'],
+        'phone_space' => ['summary', '138 0013 8000'],
+        'phone_dash' => ['reference_kind', '138-0013-8000'],
+        'phone_country' => ['impact_evidence', '+86 13800138000'],
+        'fullwidth_password' => ['title', 'password：export-fullwidth-secret'],
+        'smart_cookie' => ['summary', '“coo-kie”：“export-smart-cookie-secret”'],
     ];
-    foreach ($sensitiveValues as $scope => $sensitiveValue) {
-        $candidate = export_candidate($ids[$scope], $companyId);
-        if ($scope === 'sensitive_title') {
-            $candidate['title'] = $sensitiveValue;
-        } elseif ($scope === 'sensitive_summary') {
-            $candidate['evidence_summary'] = $sensitiveValue;
-        } elseif ($scope === 'sensitive_reference') {
-            $references = json_decode((string)$candidate['evidence_refs'], true, flags: JSON_THROW_ON_ERROR);
-            $references[0]['label'] = $sensitiveValue;
-            $candidate['evidence_refs'] = json_encode($references, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-        } elseif ($scope === 'sensitive_locator') {
-            $references = json_decode((string)$candidate['evidence_refs'], true, flags: JSON_THROW_ON_ERROR);
-            $references[0]['locator'] = $sensitiveValue;
-            $candidate['evidence_refs'] = json_encode($references, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-        } else {
-            $impacts = json_decode((string)$candidate['impact_analysis'], true, flags: JSON_THROW_ON_ERROR);
-            if ($scope === 'sensitive_impact') {
-                $impacts['cma_scope_mark']['evidence'][0]['summary'] = $sensitiveValue;
-            } else {
-                $impacts['cma_scope_mark']['rule_ids'][] = $sensitiveValue;
-            }
-            $candidate['impact_analysis'] = json_encode($impacts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-        }
+    foreach ($sensitiveCases as $scope => [$location, $sensitiveValue]) {
+        $candidate = export_inject_sensitive_value(
+            export_candidate($ids[$scope], $companyId),
+            $location,
+            $sensitiveValue
+        );
         Db::name('qms_external_change_candidates')->insert($candidate);
     }
 
@@ -268,8 +344,18 @@ try {
             && (string)$packet['candidate']['effective_date'] === '2026-08-01',
         '正常公告号和日期不得被敏感内容门禁误杀'
     );
+    export_assert(
+        (new RegulatoryExportService())->exportCandidate($ids['safe_json'])['candidate']['title'] === $safeJson['title'],
+        '仅含安全业务字段的 JSON 字符串不得被误杀'
+    );
+    export_expect_exception(
+        fn () => (new RegulatoryExportService())->exportCandidate($ids['deep_json']),
+        UnexpectedValueException::class,
+        '法规候选导出内容无法安全检查',
+        '超过递归扫描深度的疑似 JSON 必须 fail-closed'
+    );
 
-    foreach ($sensitiveValues as $scope => $sensitiveValue) {
+    foreach ($sensitiveCases as $scope => [, $sensitiveValue]) {
         export_rejects_sensitive_candidate(
             $service,
             $ids[$scope],
@@ -295,23 +381,109 @@ try {
     }
     foreach (['technical_manager', 'staff', 'auditor'] as $role) {
         Session::set('user', ['id' => 'export-' . $role, 'role' => $role]);
-        export_throws(fn () => (new RegulatoryExportService())->exportCandidate($ids['visible']), $role . ' 不得通过服务层导出');
-        export_throws(fn () => export_controller_response($app, $ids['visible']), $role . ' 不得通过控制器导出');
+        export_expect_exception(
+            fn () => (new RegulatoryExportService())->exportCandidate($ids['visible']),
+            DomainException::class,
+            '无权导出法规候选复核包',
+            $role . ' 不得通过服务层导出'
+        );
+        export_expect_http_exception(
+            fn () => export_controller_response($app, $ids['visible']),
+            403,
+            '无权执行法规监测操作',
+            $role . ' 不得通过控制器导出'
+        );
     }
 
     Session::set('user', ['id' => 'export-admin', 'role' => 'admin']);
     foreach (['other', 'hidden', 'deleted'] as $scope) {
-        export_throws(fn () => (new RegulatoryExportService())->exportCandidate($ids[$scope]), '不得导出越机构或不可见候选: ' . $scope);
+        export_expect_exception(
+            fn () => (new RegulatoryExportService())->exportCandidate($ids[$scope]),
+            OutOfBoundsException::class,
+            '法规候选不存在或无权导出',
+            '不得导出越机构或不可见候选: ' . $scope
+        );
+        export_expect_http_exception(
+            fn () => export_controller_response($app, $ids[$scope]),
+            404,
+            '法规候选不存在或无权导出',
+            '控制器必须将越机构或不可见候选映射为 404: ' . $scope
+        );
     }
-    export_throws(fn () => (new RegulatoryExportService())->exportCandidate($ids['unsafe_url']), '非 HTTPS 候选来源不得导出');
+    export_expect_exception(
+        fn () => (new RegulatoryExportService())->exportCandidate($ids['unsafe_url']),
+        UnexpectedValueException::class,
+        '法规候选官方来源链接无法安全导出',
+        '非 HTTPS 候选来源不得导出'
+    );
+    export_expect_http_exception(
+        fn () => export_controller_response($app, $ids['unsafe_url']),
+        422,
+        '法规候选复核包暂无法安全导出',
+        '导出契约或安全校验失败必须映射为 422'
+    );
+
+    $loggedSecret = $sensitiveCases['json_password'][1];
+    $blockedLogMessages = [];
+    $app->event->listen(LogRecord::class, static function (LogRecord $record) use (&$blockedLogMessages): void {
+        $blockedLogMessages[] = (string)$record->message;
+    });
+    export_expect_http_exception(
+        fn () => export_controller_response($app, $ids['json_password']),
+        422,
+        '法规候选复核包暂无法安全导出',
+        '敏感内容阻断必须映射为 422'
+    );
+    $blockedLogs = implode("\n", $blockedLogMessages);
+    export_assert(str_contains($blockedLogs, 'REG_EXPORT_VALIDATION_BLOCKED'), '422 阻断必须记录固定错误码');
+    export_assert(str_contains($blockedLogs, substr(hash('sha256', $ids['json_password']), 0, 16)), '422 阻断日志必须仅记录候选 ID 哈希');
+    export_assert(!str_contains($blockedLogs, $loggedSecret), '422 阻断日志不得记录敏感原值');
+
     foreach (["bad\r\nX-Test: injected", '../bad', '', str_repeat('x', 37)] as $invalidId) {
-        export_throws(fn () => (new RegulatoryExportService())->exportCandidate($invalidId), '不安全候选 ID 必须在查询/响应头前拒绝');
-        export_throws(fn () => (new RegulatoryExportService())->filename($invalidId), '不安全候选 ID 不得进入文件名');
+        export_expect_exception(
+            fn () => (new RegulatoryExportService())->exportCandidate($invalidId),
+            InvalidArgumentException::class,
+            '候选 ID 必须是 1–36 位安全标识符',
+            '不安全候选 ID 必须在查询/响应头前拒绝'
+        );
+        export_expect_exception(
+            fn () => (new RegulatoryExportService())->filename($invalidId),
+            InvalidArgumentException::class,
+            '候选 ID 必须是 1–36 位安全标识符',
+            '不安全候选 ID 不得进入文件名'
+        );
+        export_expect_http_exception(
+            fn () => export_controller_response($app, $invalidId),
+            404,
+            '法规候选不存在或无权导出',
+            '控制器必须将无效 ID 映射为 404'
+        );
     }
 
     export_set_enabled(false);
-    export_throws(fn () => (new RegulatoryExportService())->exportCandidate($ids['visible']), '功能开关关闭时必须拒绝导出');
+    export_expect_exception(
+        fn () => (new RegulatoryExportService())->exportCandidate($ids['visible']),
+        RuntimeException::class,
+        '法规监测功能未启用',
+        '功能开关关闭时必须拒绝导出'
+    );
     export_set_enabled(true);
+
+    $qmsConfig = (array)Config::get('qms', []);
+    $configuredCompanyId = $qmsConfig['company_id'] ?? null;
+    $qmsConfig['company_id'] = '';
+    Config::set($qmsConfig, 'qms');
+    try {
+        export_expect_exception(
+            fn () => export_controller_response($app, $ids['visible']),
+            RuntimeException::class,
+            '法规监测缺少 company_id 配置',
+            '内部/配置异常不得被误映射为 404 或 422'
+        );
+    } finally {
+        $qmsConfig['company_id'] = $configuredCompanyId;
+        Config::set($qmsConfig, 'qms');
+    }
 
     $routeSource = (string)file_get_contents(dirname(__DIR__) . '/route/app.php');
     export_assert(

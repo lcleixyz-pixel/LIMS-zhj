@@ -3,17 +3,29 @@ declare(strict_types=1);
 
 namespace app\service\regulatory;
 
+use DomainException;
 use InvalidArgumentException;
+use OutOfBoundsException;
 use RuntimeException;
 use think\facade\Config;
 use think\facade\Db;
 use think\facade\Session;
+use UnexpectedValueException;
 
 final class RegulatoryExportService
 {
     public const SCHEMA_VERSION = '1.0';
 
     private const EXPORT_ROLES = ['admin', 'quality_manager'];
+
+    private const FORBIDDEN_KEYS = [
+        'password',
+        'cookie',
+        'authorization',
+        'dsn',
+        'mobile',
+        'idcard',
+    ];
 
     private const IMPACT_KEYS = [
         'cma_scope_mark',
@@ -61,19 +73,23 @@ final class RegulatoryExportService
             ->where('id', $candidateId)
             ->find();
         if (!is_array($candidate)) {
-            throw new RuntimeException('法规候选不存在或无权导出');
+            throw new OutOfBoundsException('法规候选不存在或无权导出');
         }
 
         $sourceKey = trim((string)$candidate['source_key']);
         $registry = new RegulatorySourceRegistry();
-        $source = $registry->source($sourceKey);
+        $sources = $registry->all();
+        if (!is_array($sources[$sourceKey] ?? null)) {
+            throw new UnexpectedValueException('法规候选来源不在批准清单');
+        }
+        $source = $sources[$sourceKey];
         $allowedHosts = $registry->allowedHosts($sourceKey);
         $canonicalUrl = $this->approvedHttpsUrl(
             trim((string)($candidate['normalized_url'] ?: $candidate['source_url'])),
             $allowedHosts
         );
         if ($canonicalUrl === null) {
-            throw new RuntimeException('法规候选官方来源链接无法安全导出');
+            throw new UnexpectedValueException('法规候选官方来源链接无法安全导出');
         }
 
         $packet = [
@@ -146,7 +162,7 @@ final class RegulatoryExportService
     {
         $role = trim((string)Session::get('user.role', 'staff'));
         if (!in_array($role, self::EXPORT_ROLES, true)) {
-            throw new RuntimeException('无权导出法规候选复核包');
+            throw new DomainException('无权导出法规候选复核包');
         }
     }
 
@@ -170,15 +186,15 @@ final class RegulatoryExportService
             return [];
         }
         if (!is_string($value)) {
-            throw new RuntimeException('法规候选导出字段格式无效');
+            throw new UnexpectedValueException('法规候选导出字段格式无效');
         }
         try {
             $decoded = json_decode($value, true, flags: JSON_THROW_ON_ERROR);
         } catch (\JsonException $exception) {
-            throw new RuntimeException('法规候选导出字段格式无效', 0, $exception);
+            throw new UnexpectedValueException('法规候选导出字段格式无效', 0, $exception);
         }
         if (!is_array($decoded)) {
-            throw new RuntimeException('法规候选导出字段格式无效');
+            throw new UnexpectedValueException('法规候选导出字段格式无效');
         }
 
         return $decoded;
@@ -305,16 +321,36 @@ final class RegulatoryExportService
         return $this->nullableString((string)$value);
     }
 
-    private function assertNoSensitiveContent(mixed $value): void
+    private function assertNoSensitiveContent(mixed $value, int $depth = 0): void
     {
+        if ($depth > 20) {
+            throw new UnexpectedValueException('法规候选导出内容无法安全检查');
+        }
         if (is_array($value)) {
-            foreach ($value as $item) {
-                $this->assertNoSensitiveContent($item);
+            foreach ($value as $key => $item) {
+                if (is_string($key) && $this->isForbiddenKey($key)) {
+                    throw new UnexpectedValueException('法规候选导出内容包含敏感信息');
+                }
+                $this->assertNoSensitiveContent($item, $depth + 1);
             }
             return;
         }
         if (!is_string($value)) {
             return;
+        }
+
+        $normalized = $this->normalizedSensitiveRepresentation($value);
+        $this->assertEmbeddedJsonIsSafe($normalized, $depth);
+        if (preg_match_all(
+            '/["\']?([A-Za-z][A-Za-z0-9_-]{0,50})["\']?\s*[:=]/',
+            $normalized,
+            $keyMatches
+        ) > 0) {
+            foreach ($keyMatches[1] as $key) {
+                if ($this->isForbiddenKey((string)$key)) {
+                    throw new UnexpectedValueException('法规候选导出内容包含敏感信息');
+                }
+            }
         }
 
         $credentialPatterns = [
@@ -327,15 +363,59 @@ final class RegulatoryExportService
             '/\bpassword\s*[:=]\s*\S+/i',
         ];
         foreach ($credentialPatterns as $pattern) {
-            if (preg_match($pattern, $value) === 1) {
-                throw new RuntimeException('法规候选导出内容包含敏感信息');
+            if (preg_match($pattern, $normalized) === 1) {
+                throw new UnexpectedValueException('法规候选导出内容包含敏感信息');
             }
         }
-        if (preg_match('/(?<![A-Za-z0-9])1[3-9]\d{9}(?![A-Za-z0-9])/', $value) === 1
-            || $this->containsChineseIdCard($value)
+        if (preg_match(
+            '/(?<![A-Za-z0-9])(?:\+?86[\s-]*)?1[3-9]\d(?:[\s-]*\d){8}(?![A-Za-z0-9])/',
+            $normalized
+        ) === 1
+            || $this->containsChineseIdCard($normalized)
         ) {
-            throw new RuntimeException('法规候选导出内容包含敏感信息');
+            throw new UnexpectedValueException('法规候选导出内容包含敏感信息');
         }
+    }
+
+    private function assertEmbeddedJsonIsSafe(string $value, int $depth): void
+    {
+        $trimmed = trim($value);
+        $looksLikeObject = str_starts_with($trimmed, '{')
+            && str_ends_with($trimmed, '}')
+            && preg_match('/["\'][^"\']+["\']\s*:/', $trimmed) === 1;
+        $looksLikeArray = str_starts_with($trimmed, '[')
+            && str_ends_with($trimmed, ']')
+            && preg_match('/^\[\s*(?:[\[{"\']|-?\d|true\b|false\b|null\b)/i', $trimmed) === 1;
+        $looksLikeContainer = $looksLikeObject || $looksLikeArray;
+        if (!$looksLikeContainer) {
+            return;
+        }
+        try {
+            $decoded = json_decode($trimmed, true, 16, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $exception) {
+            throw new UnexpectedValueException('法规候选导出内容无法安全检查', 0, $exception);
+        }
+        if (is_array($decoded)) {
+            $this->assertNoSensitiveContent($decoded, $depth + 1);
+        }
+    }
+
+    private function normalizedSensitiveRepresentation(string $value): string
+    {
+        return strtr($value, [
+            '“' => '"', '”' => '"', '＂' => '"',
+            '‘' => "'", '’' => "'", '＇' => "'",
+            '：' => ':', '＝' => '=',
+            '－' => '-', '—' => '-', '–' => '-', '−' => '-',
+            '＿' => '_', "\u{00A0}" => ' ', '　' => ' ',
+        ]);
+    }
+
+    private function isForbiddenKey(string $key): bool
+    {
+        $normalized = strtolower((string)preg_replace('/[^A-Za-z0-9]/', '', $key));
+
+        return in_array($normalized, self::FORBIDDEN_KEYS, true);
     }
 
     private function containsChineseIdCard(string $value): bool
