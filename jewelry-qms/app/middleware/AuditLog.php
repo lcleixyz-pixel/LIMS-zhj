@@ -12,6 +12,13 @@ class AuditLog
     {
         $response = $next($request);
 
+        // Responsibility writes persist their business change and success audit in
+        // one controller-owned transaction. Middleware logging would be both late
+        // and duplicative, so this controller is deliberately excluded here.
+        if (strtolower((string)$request->controller()) === 'planningresponsibility') {
+            return $response;
+        }
+
         if (Session::has('user.id') && $request->isPost()) {
             $controller = $request->controller();
             $action = $request->action();

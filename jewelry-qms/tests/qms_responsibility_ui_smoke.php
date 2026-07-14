@@ -9,6 +9,7 @@ use app\middleware\AuditLog;
 use app\service\QmsResponsibilityApprovalService;
 use app\service\QmsResponsibilityCatalogService;
 use app\service\QmsResponsibilityDraftService;
+use app\service\QmsResponsibilityValidationService;
 use app\service\RbacService;
 use think\facade\Db;
 use think\facade\Session;
@@ -233,6 +234,61 @@ function responsibility_ui_render_alignment(think\App $app, ?string $versionId, 
     return (string)$controller->alignment();
 }
 
+function responsibility_ui_bind_ready_staff(string $companyId, string $versionId, array $gm, array $director): void
+{
+    $detail = QmsResponsibilityDraftService::versionDetail($versionId);
+    $peopleBySlot = [];
+    $activityRoleBound = false;
+    foreach ($detail['responsibilities'] as $responsibility) {
+        $mode = (string)$responsibility['assignment_mode'];
+        if ($mode === 'derived_from_scope' || ($mode === 'activity_instance' && $activityRoleBound)) {
+            continue;
+        }
+
+        $positionCode = (string)($responsibility['fixed_position_code'] ?? '');
+        if ($positionCode === 'company_general_manager') {
+            $person = $gm;
+        } elseif ($positionCode === 'lab_director') {
+            $person = $director;
+        } else {
+            $slot = $positionCode !== '' ? $positionCode : 'activity-instance';
+            $peopleBySlot[$slot] ??= responsibility_ui_user($companyId, 'READY-' . count($peopleBySlot), 'staff');
+            $person = $peopleBySlot[$slot];
+        }
+        $competencyId = responsibility_fixture_row('competency_records', [
+            'company_id' => $companyId,
+            'employee_id' => (string)$person['employee_id'],
+            'test_item' => '审计原子性测试资格证据',
+            'assessment_date' => date('Y-m-d'),
+            'result' => 'qualified',
+            'valid_until' => date('Y-m-d', strtotime('+2 years')),
+        ]);
+        QmsResponsibilityDraftService::saveAssignment(
+            (string)$responsibility['id'],
+            (string)$person['employee_id'],
+            null,
+            date('Y-m-d'),
+            null,
+            ['competency_record_ids' => [$competencyId]]
+        );
+        if ($mode === 'activity_instance') {
+            $activityRoleBound = true;
+        }
+    }
+}
+
+Db::execute('DROP TRIGGER IF EXISTS qms_test_fail_responsibility_history');
+Db::execute(<<<'SQL'
+CREATE TRIGGER qms_test_fail_responsibility_history
+BEFORE INSERT ON histories
+FOR EACH ROW
+BEGIN
+    IF COALESCE(@qms_test_fail_responsibility_history, 0) = 1 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'injected history insert failure';
+    END IF;
+END
+SQL);
+
 catalog_in_transaction(function () use ($app): void {
     $companyId = catalog_company_id();
     $draft = QmsResponsibilityCatalogService::createInitialDraft();
@@ -257,9 +313,30 @@ catalog_in_transaction(function () use ($app): void {
     $staffFailure = responsibility_ui_history((string)$staff['user_id'], 'saveAssignment');
     responsibility_ui_assert(str_contains((string)$staffFailure['details'], 'outcome=failed'), 'Unauthorized staff save is audited as failed');
     responsibility_ui_assert((string)$staffFailure['record_id'] === $responsibilityId, 'Unauthorized staff save audit points to responsibility');
+    responsibility_ui_assert(
+        Db::name('histories')->where('user_id', (string)$staff['user_id'])->where('action', 'saveAssignment')->count() === 1,
+        'Unauthorized assignment save creates exactly one failed audit row'
+    );
 
     $qualityManager = responsibility_ui_user($companyId, 'QUALITY-MANAGER', 'quality_manager');
     responsibility_ui_session($qualityManager);
+    Db::execute('SET @qms_test_fail_responsibility_history = 1');
+    Session::delete('error');
+    responsibility_ui_run_action($app, 'saveAssignment', [
+        'version_id' => $versionId,
+        'responsibility_id' => $responsibilityId,
+        'employee_id' => (string)$subject['employee_id'],
+        'proposed_from' => date('Y-m-d'),
+    ]);
+    Db::execute('SET @qms_test_fail_responsibility_history = 0');
+    responsibility_ui_assert(
+        !Db::name('qms_responsibility_assignments')
+            ->where('responsibility_id', $responsibilityId)
+            ->where('employee_id', (string)$subject['employee_id'])->find(),
+        'History failure rolls back assignment save'
+    );
+    responsibility_ui_assert(Session::get('error') === '操作失败，请联系管理员', 'History failure is shown as a generic error');
+
     responsibility_ui_run_action($app, 'saveAssignment', [
         'version_id' => $versionId,
         'responsibility_id' => $responsibilityId,
@@ -272,6 +349,10 @@ catalog_in_transaction(function () use ($app): void {
     $saveSuccess = responsibility_ui_history((string)$qualityManager['user_id'], 'saveAssignment');
     responsibility_ui_assert(str_contains((string)$saveSuccess['details'], 'outcome=success'), 'Successful assignment save is audited as success');
     responsibility_ui_assert((string)$saveSuccess['record_id'] === (string)$savedAssignment['id'], 'Successful assignment audit points to assignment');
+    responsibility_ui_assert(
+        Db::name('histories')->where('user_id', (string)$qualityManager['user_id'])->where('action', 'saveAssignment')->count() === 1,
+        'Successful assignment save creates exactly one audit row'
+    );
 
     $unappointed = responsibility_ui_user($companyId, 'UNAPPOINTED-APPROVER', 'staff');
     responsibility_ui_session($unappointed, true);
@@ -323,6 +404,66 @@ catalog_in_transaction(function () use ($app): void {
     $failure->invoke($controller, new DomainException('可安全展示的业务错误'), 'approval', $versionId);
     responsibility_ui_assert(Session::get('error') === '可安全展示的业务错误', 'Domain exception remains user-facing');
 });
+
+catalog_in_transaction(function () use ($app): void {
+    $companyId = catalog_company_id();
+    $admin = responsibility_ui_user($companyId, 'ATOMIC-ADMIN', 'admin');
+    $qualityManager = responsibility_ui_user($companyId, 'ATOMIC-QM', 'quality_manager');
+    $gm = responsibility_ui_user($companyId, 'ATOMIC-GM', 'staff');
+    $director = responsibility_ui_user($companyId, 'ATOMIC-DIRECTOR', 'staff');
+
+    responsibility_ui_session($qualityManager, true);
+    $draft = QmsResponsibilityCatalogService::createInitialDraft();
+    $versionId = (string)$draft['id'];
+    responsibility_ui_bind_ready_staff($companyId, $versionId, $gm, $director);
+
+    responsibility_ui_session($admin, true);
+    QmsResponsibilityApprovalService::registerCorporateIdentity([
+        'position_code' => 'company_general_manager',
+        'employee_id' => (string)$gm['employee_id'],
+        'source_document_number' => 'ATOMIC-GOV-001',
+        'source_excerpt' => '审计原子性测试治理证据',
+        'appointed_at' => date('Y-m-d'),
+    ]);
+    $bootstrap = QmsResponsibilityApprovalService::requestLabDirectorAppointment(
+        (string)$director['employee_id'],
+        date('Y-m-d')
+    );
+    responsibility_ui_session($gm, true);
+    QmsResponsibilityApprovalService::approveBootstrap((string)$bootstrap['id'], 'approved', '审计原子性测试批准');
+    responsibility_ui_assert(
+        (QmsResponsibilityValidationService::validateVersion($versionId, 'activation')['can_submit'] ?? false) === true,
+        'Atomic submission fixture can submit'
+    );
+
+    responsibility_ui_session($qualityManager, true);
+    Db::execute('SET @qms_test_fail_responsibility_history = 1');
+    Session::delete('error');
+    responsibility_ui_run_action($app, 'submitVersion', ['version_id' => $versionId]);
+    Db::execute('SET @qms_test_fail_responsibility_history = 0');
+    responsibility_ui_assert(
+        QmsResponsibilityApprovalService::versionStatus($versionId) === 'draft',
+        'History failure rolls back submitted version status'
+    );
+    responsibility_ui_assert(
+        Db::name('qms_responsibility_approvals')->where('chain_version_id', $versionId)->where('soft_delete', 0)->count() === 0,
+        'History failure rolls back submitted approval batches'
+    );
+    responsibility_ui_assert(Session::get('error') === '操作失败，请联系管理员', 'Submit history failure is shown as a generic error');
+
+    responsibility_ui_run_action($app, 'submitVersion', ['version_id' => $versionId]);
+    responsibility_ui_assert(
+        QmsResponsibilityApprovalService::versionStatus($versionId) === 'pending_approval',
+        'Submission succeeds after audit storage recovers'
+    );
+    responsibility_ui_assert(
+        Db::name('histories')->where('user_id', (string)$qualityManager['user_id'])->where('action', 'submitVersion')->count() === 1,
+        'Successful submission creates exactly one audit row'
+    );
+});
+
+Db::execute('SET @qms_test_fail_responsibility_history = 0');
+Db::execute('DROP TRIGGER IF EXISTS qms_test_fail_responsibility_history');
 
 catalog_in_transaction(function () use ($app): void {
     Session::delete('user');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\controller;
 
 use app\BaseController;
+use app\model\History;
 use app\service\QmsManualProcedureAlignmentService;
 use app\service\QmsManualProcedureTraceService;
 use app\service\QmsResponsibilityApprovalService;
@@ -35,12 +36,17 @@ final class PlanningResponsibility extends BaseController
             return redirect('/planning/responsibilities');
         }
         try {
-            $this->assertManagerWrite();
             $sourceVersionId = trim((string)$this->request->post('source_version_id', ''));
-            $version = $sourceVersionId === ''
-                ? QmsResponsibilityCatalogService::createInitialDraft()
-                : QmsResponsibilityDraftService::cloneEffectiveVersion($sourceVersionId);
-            $this->markAudit('success', (string)$version['id'], 'version_id');
+            $version = $this->auditedWrite(
+                function () use ($sourceVersionId): array {
+                    $this->assertManagerWrite();
+
+                    return $sourceVersionId === ''
+                        ? QmsResponsibilityCatalogService::createInitialDraft()
+                        : QmsResponsibilityDraftService::cloneEffectiveVersion($sourceVersionId);
+                },
+                static fn (array $version): array => [(string)$version['id'], 'version_id', (string)$version['id']]
+            );
             Session::flash('success', '责任链草案已建立，人员未绑定时仍可进行结构管理。');
 
             return $this->responsibilityRedirect((string)$version['id'], 'structure');
@@ -60,21 +66,39 @@ final class PlanningResponsibility extends BaseController
 
         $versionId = trim((string)$this->request->post('version_id', ''));
         try {
-            $this->assertManagerWrite();
             $competencyId = trim((string)$this->request->post('competency_record_id', ''));
             $certificateId = trim((string)$this->request->post('certificate_id', ''));
-            $assignment = QmsResponsibilityDraftService::saveAssignment(
-                trim((string)$this->request->post('responsibility_id', '')),
-                trim((string)$this->request->post('employee_id', '')),
-                $this->nullablePost('site_id'),
-                trim((string)$this->request->post('proposed_from', date('Y-m-d'))),
-                $this->nullablePost('proposed_until'),
-                [
-                    'competency_record_ids' => $competencyId === '' ? [] : [$competencyId],
-                    'certificate_ids' => $certificateId === '' ? [] : [$certificateId],
-                ]
+            $responsibilityId = trim((string)$this->request->post('responsibility_id', ''));
+            $employeeId = trim((string)$this->request->post('employee_id', ''));
+            $siteId = $this->nullablePost('site_id');
+            $proposedFrom = trim((string)$this->request->post('proposed_from', date('Y-m-d')));
+            $proposedUntil = $this->nullablePost('proposed_until');
+            $assignment = $this->auditedWrite(
+                function () use (
+                    $responsibilityId,
+                    $employeeId,
+                    $siteId,
+                    $proposedFrom,
+                    $proposedUntil,
+                    $competencyId,
+                    $certificateId
+                ): array {
+                    $this->assertManagerWrite();
+
+                    return QmsResponsibilityDraftService::saveAssignment(
+                        $responsibilityId,
+                        $employeeId,
+                        $siteId,
+                        $proposedFrom,
+                        $proposedUntil,
+                        [
+                            'competency_record_ids' => $competencyId === '' ? [] : [$competencyId],
+                            'certificate_ids' => $certificateId === '' ? [] : [$certificateId],
+                        ]
+                    );
+                },
+                static fn (array $assignment): array => [(string)$assignment['id'], 'assignment_id', (string)$assignment['id']]
             );
-            $this->markAudit('success', (string)$assignment['id'], 'assignment_id');
             Session::flash('success', '人员配置已保存为草案，尚未形成正式任命。');
 
             return $this->responsibilityRedirect($versionId, 'staffing');
@@ -91,9 +115,15 @@ final class PlanningResponsibility extends BaseController
         $versionId = trim((string)$this->request->post('version_id', ''));
         $assignmentId = trim((string)$this->request->post('assignment_id', ''));
         try {
-            $this->assertManagerWrite();
-            QmsResponsibilityDraftService::removeAssignment($assignmentId);
-            $this->markAudit('success', $assignmentId, 'assignment_id');
+            $this->auditedWrite(
+                function () use ($assignmentId): string {
+                    $this->assertManagerWrite();
+                    QmsResponsibilityDraftService::removeAssignment($assignmentId);
+
+                    return $assignmentId;
+                },
+                static fn (string $id): array => [$id, 'assignment_id', $id]
+            );
             Session::flash('success', '人员草案绑定已移除。');
 
             return $this->responsibilityRedirect($versionId, 'staffing');
@@ -109,10 +139,15 @@ final class PlanningResponsibility extends BaseController
         }
         $versionId = trim((string)$this->request->post('version_id', ''));
         try {
-            $this->assertManagerWrite();
             $mode = (string)$this->request->post('mode', 'structure');
-            $result = QmsResponsibilityValidationService::validateVersion($versionId, $mode);
-            $this->markAudit('success', $versionId, 'version_id');
+            $result = $this->auditedWrite(
+                function () use ($versionId, $mode): array {
+                    $this->assertManagerWrite();
+
+                    return QmsResponsibilityValidationService::validateVersion($versionId, $mode);
+                },
+                static fn (): array => [$versionId, 'version_id', $versionId]
+            );
             Session::flash('responsibility_validation', $result);
             Session::flash(
                 ($result['result'] ?? '') === 'pass' ? 'success' : 'warning',
@@ -132,9 +167,14 @@ final class PlanningResponsibility extends BaseController
         }
         $versionId = trim((string)$this->request->post('version_id', ''));
         try {
-            $this->assertManagerWrite();
-            QmsResponsibilityApprovalService::submitVersion($versionId);
-            $this->markAudit('success', $versionId, 'version_id');
+            $this->auditedWrite(
+                function () use ($versionId): array {
+                    $this->assertManagerWrite();
+
+                    return QmsResponsibilityApprovalService::submitVersion($versionId);
+                },
+                static fn (): array => [$versionId, 'version_id', $versionId]
+            );
             Session::flash('success', '责任链版本已提交，内容哈希已锁定并按业务身份流转签批。');
 
             return $this->responsibilityRedirect($versionId, 'approval');
@@ -149,15 +189,21 @@ final class PlanningResponsibility extends BaseController
             return redirect('/planning/responsibilities?view=approval');
         }
         try {
-            $this->assertAdmin();
-            $appointment = QmsResponsibilityApprovalService::registerCorporateIdentity([
+            $payload = [
                 'position_code' => 'company_general_manager',
                 'employee_id' => trim((string)$this->request->post('employee_id', '')),
                 'source_document_number' => trim((string)$this->request->post('source_document_number', '')),
                 'source_excerpt' => trim((string)$this->request->post('source_excerpt', '')),
                 'appointed_at' => trim((string)$this->request->post('appointed_at', date('Y-m-d'))),
-            ]);
-            $this->markAudit('success', (string)$appointment['id'], 'appointment_id');
+            ];
+            $appointment = $this->auditedWrite(
+                function () use ($payload): array {
+                    $this->assertAdmin();
+
+                    return QmsResponsibilityApprovalService::registerCorporateIdentity($payload);
+                },
+                static fn (array $appointment): array => [(string)$appointment['id'], 'appointment_id', (string)$appointment['id']]
+            );
             Session::flash('success', '公司总经理既有治理身份及来源证据已登记；该动作不表示由管理员任命。');
 
             return $this->responsibilityRedirect('', 'approval');
@@ -172,12 +218,16 @@ final class PlanningResponsibility extends BaseController
             return redirect('/planning/responsibilities?view=approval');
         }
         try {
-            $this->assertAdmin();
-            $approval = QmsResponsibilityApprovalService::requestLabDirectorAppointment(
-                trim((string)$this->request->post('employee_id', '')),
-                trim((string)$this->request->post('effective_from', date('Y-m-d')))
+            $employeeId = trim((string)$this->request->post('employee_id', ''));
+            $effectiveFrom = trim((string)$this->request->post('effective_from', date('Y-m-d')));
+            $approval = $this->auditedWrite(
+                function () use ($employeeId, $effectiveFrom): array {
+                    $this->assertAdmin();
+
+                    return QmsResponsibilityApprovalService::requestLabDirectorAppointment($employeeId, $effectiveFrom);
+                },
+                static fn (array $approval): array => [(string)$approval['id'], 'approval_id', (string)$approval['id']]
             );
-            $this->markAudit('success', (string)$approval['id'], 'approval_id');
             Session::flash('success', '实验室主任任命申请已流转给公司总经理签批。');
 
             return $this->responsibilityRedirect('', 'approval');
@@ -196,23 +246,28 @@ final class PlanningResponsibility extends BaseController
             $scope = (string)$this->request->post('approval_scope', 'assignment');
             $decision = (string)$this->request->post('decision', '');
             $comments = trim((string)$this->request->post('comments', ''));
-            if ($scope === 'governance_bootstrap') {
-                $approvalId = trim((string)$this->request->post('approval_id', ''));
-                QmsResponsibilityApprovalService::approveBootstrap(
-                    $approvalId,
-                    $decision,
-                    $comments
-                );
-                $this->markAudit('success', $approvalId, 'approval_id');
-            } else {
-                $result = QmsResponsibilityApprovalService::approveBatch(
-                    trim((string)$this->request->post('batch_key', '')),
-                    $decision,
-                    $comments
-                );
-                $approvedVersionId = trim((string)($result['version_id'] ?? $versionId));
-                $this->markAudit('success', $approvedVersionId, 'version_id');
-            }
+            $approvalId = trim((string)$this->request->post('approval_id', ''));
+            $batchKey = trim((string)$this->request->post('batch_key', ''));
+            $this->auditedWrite(
+                function () use ($scope, $approvalId, $batchKey, $decision, $comments, $versionId): array {
+                    if ($scope === 'governance_bootstrap') {
+                        QmsResponsibilityApprovalService::approveBootstrap($approvalId, $decision, $comments);
+
+                        return ['record_id' => $approvalId, 'subject_type' => 'approval_id'];
+                    }
+                    $result = QmsResponsibilityApprovalService::approveBatch($batchKey, $decision, $comments);
+
+                    return [
+                        'record_id' => trim((string)($result['version_id'] ?? $versionId)),
+                        'subject_type' => 'version_id',
+                    ];
+                },
+                static fn (array $audit): array => [
+                    (string)$audit['record_id'],
+                    (string)$audit['subject_type'],
+                    (string)$audit['record_id'],
+                ]
+            );
             Session::flash('success', '签批决定已记录；业务身份、禁止自批和版本哈希由签批服务实时复核。');
 
             return $this->responsibilityRedirect($versionId, 'approval');
@@ -491,13 +546,19 @@ final class PlanningResponsibility extends BaseController
     private function failure(Throwable $e, string $viewMode, string $versionId = '')
     {
         [$recordId, $subjectType, $subjectKey] = $this->auditSubjectFromRequest($versionId);
-        $this->markAudit(
-            'failed',
-            $recordId,
-            $subjectType,
-            $subjectKey,
-            $e instanceof DomainException ? 'domain' : 'internal'
-        );
+        try {
+            // The business transaction has already rolled back. This separate attempt
+            // record may fail independently, but it can never turn a failed write into success.
+            $this->writeAudit(
+                'failed',
+                $recordId,
+                $subjectType,
+                $subjectKey,
+                $e instanceof DomainException ? 'domain' : 'internal'
+            );
+        } catch (Throwable $auditError) {
+            Log::error('记录责任链失败尝试审计失败', ['exception' => $auditError]);
+        }
         $this->flashThrowable($e, '执行责任链写操作失败');
 
         return $this->responsibilityRedirect($versionId, $viewMode);
@@ -533,6 +594,70 @@ final class PlanningResponsibility extends BaseController
         ]);
     }
 
+    private function auditedWrite(callable $operation, callable $auditSubject)
+    {
+        return Db::transaction(function () use ($operation, $auditSubject) {
+            $result = $operation();
+            [$recordId, $subjectType, $subjectKey] = $auditSubject($result);
+            $this->writeAudit('success', (string)$recordId, (string)$subjectType, (string)$subjectKey);
+
+            return $result;
+        });
+    }
+
+    private function writeAudit(
+        string $outcome,
+        string $recordId,
+        string $subjectType,
+        string $subjectKey,
+        string $failureKind = ''
+    ): void {
+        $action = (string)$this->request->action();
+        if (
+            strtolower($action) === 'saveassignment'
+            && (string)$this->request->post('operation', '') === 'remove'
+        ) {
+            $action = 'removeAssignment';
+        }
+        $controller = (string)$this->request->controller();
+        $recordId = $this->compactAuditRecordId(trim($recordId), $subjectType);
+        $subjectKey = trim($subjectKey) !== '' ? trim($subjectKey) : $recordId;
+        $this->markAudit($outcome, $recordId, $subjectType, $subjectKey, $failureKind);
+        $details = implode(' ', array_filter([
+            'outcome=' . $this->auditDetailValue($outcome),
+            'subject_type=' . $this->auditDetailValue($subjectType),
+            'subject_key=' . $this->auditDetailValue($subjectKey),
+            $failureKind !== '' ? 'failure_kind=' . $this->auditDetailValue($failureKind) : '',
+            (string)$this->request->method(),
+            $controller . '/' . $action,
+        ]));
+        History::create([
+            'id' => qms_uuid(),
+            'model_name' => $controller,
+            'controller_name' => $controller,
+            'action' => $action,
+            'record_id' => $recordId,
+            'user_id' => Session::get('user.id'),
+            'details' => $details,
+            'created' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    private function compactAuditRecordId(string $value, string $subjectType): string
+    {
+        if (strlen($value) <= 36) {
+            return $value;
+        }
+        $prefix = substr(preg_replace('/[^a-z0-9_]+/i', '', $subjectType) ?: 'subject', 0, 7);
+
+        return $prefix . ':' . substr(hash('sha256', $value), 0, 35 - strlen($prefix));
+    }
+
+    private function auditDetailValue(string $value): string
+    {
+        return preg_replace('/\s+/', '_', trim($value)) ?: '-';
+    }
+
     private function auditSubjectFromRequest(string $versionId): array
     {
         $action = strtolower((string)$this->request->action());
@@ -540,6 +665,7 @@ final class PlanningResponsibility extends BaseController
             'saveassignment' => (string)$this->request->post('operation', 'save') === 'remove'
                 ? ['assignment_id', 'responsibility_id', 'version_id']
                 : ['responsibility_id', 'version_id'],
+            'removeassignment' => ['assignment_id', 'responsibility_id', 'version_id'],
             'approve' => ['approval_id', 'version_id', 'batch_key'],
             'registergeneralmanager', 'requestlabdirector' => ['employee_id', 'version_id'],
             'createinitialdraft' => ['source_version_id', 'version_id'],
