@@ -590,9 +590,9 @@ catalog_in_transaction(function () use ($app): void {
         responsibility_ui_contains($findingId, $effectiveHtml, 'Effective alignment HTML renders ' . $findingId);
     }
     foreach ([
-        'Y13-CX20' => '冲突',
-        'Y13-CX21' => '冲突',
-        'Y13-CX32' => '人工复核',
+        'Y13-CX20' => '存在冲突',
+        'Y13-CX21' => '存在冲突',
+        'Y13-CX32' => '需要人工确认',
     ] as $findingId => $statusLabel) {
         responsibility_ui_assert(
             preg_match(
@@ -606,8 +606,8 @@ catalog_in_transaction(function () use ($app): void {
     foreach (['期望岗位', '观察岗位', '来源责任项', 'baseline_hash'] as $label) {
         responsibility_ui_contains($label, $effectiveHtml, 'Alignment HTML exposes evidence field ' . $label);
     }
-    responsibility_ui_contains('冲突', $effectiveHtml, 'Effective alignment HTML renders conflict status');
-    responsibility_ui_contains('人工复核', $effectiveHtml, 'Effective alignment HTML renders review-required status');
+    responsibility_ui_contains('存在冲突', $effectiveHtml, 'Effective alignment HTML renders conflict status');
+    responsibility_ui_contains('需要人工确认', $effectiveHtml, 'Effective alignment HTML renders review-required status');
 
     $draft = QmsResponsibilityDraftService::cloneEffectiveVersion($effectiveId);
     $draftId = (string)$draft['id'];

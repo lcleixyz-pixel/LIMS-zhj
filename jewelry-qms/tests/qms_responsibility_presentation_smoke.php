@@ -65,4 +65,45 @@ foreach ($cases as [$group, $value, $expected]) {
 }
 presentation_assert_same('未识别状态', Presenter::label('version', 'unexpected'), 'unknown value fallback');
 
+$detail = Presenter::detail([
+    'status' => 'draft',
+    'chain_code' => 'core_governance',
+    'activities' => [[
+        'responsibilities' => [
+            [
+                'duty_type' => 'approve',
+                'assignment_mode' => 'named_person',
+                'fixed_position_name' => '实验室主任',
+                'activity_role_code' => null,
+                'dynamic_owner_code' => null,
+                'source_refs' => ['CNAS-CL01:2018 8.8.1'],
+                'assignments' => [],
+            ],
+            [
+                'duty_type' => 'verify',
+                'assignment_mode' => 'activity_instance',
+                'fixed_position_name' => null,
+                'activity_role_code' => 'risk_verifier',
+                'dynamic_owner_code' => null,
+                'source_refs' => ['CNAS-CL01:2018 8.5.2'],
+                'assignments' => [],
+            ],
+        ],
+    ]],
+]);
+presentation_assert_same('草案', (string)$detail['status_label'], 'detail status label');
+presentation_assert_same('批准', (string)$detail['activities'][0]['responsibilities'][0]['duty_type_label'], 'duty label');
+presentation_assert_same('实验室主任', (string)$detail['activities'][0]['responsibilities'][0]['responsible_party_label'], 'fixed position label');
+presentation_assert_same('风险措施验证人', (string)$detail['activities'][0]['responsibilities'][1]['responsible_party_label'], 'runtime role label');
+presentation_assert_same('2', (string)$detail['summary']['responsibility_count'], 'responsibility count');
+presentation_assert_same('1', (string)$detail['summary']['named_person_count'], 'named-person count');
+presentation_assert_same('1', (string)$detail['summary']['runtime_count'], 'runtime count');
+
+$validation = Presenter::validation([
+    'result' => 'blocker',
+    'issues' => [['severity' => 'warning', 'message' => '示例提醒']],
+]);
+presentation_assert_same('暂不能提交', (string)$validation['result_label'], 'validation result label');
+presentation_assert_same('提醒', (string)$validation['issues'][0]['severity_label'], 'issue severity label');
+
 echo "qms_responsibility_presentation_smoke passed\n";

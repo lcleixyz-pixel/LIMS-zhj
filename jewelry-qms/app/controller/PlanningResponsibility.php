@@ -11,6 +11,7 @@ use app\service\QmsResponsibilityApprovalService;
 use app\service\QmsResponsibilityAlignmentService;
 use app\service\QmsResponsibilityCatalogService;
 use app\service\QmsResponsibilityDraftService;
+use app\service\QmsResponsibilityPresentationService;
 use app\service\QmsResponsibilityValidationService;
 use DomainException;
 use Throwable;
@@ -151,7 +152,9 @@ final class PlanningResponsibility extends BaseController
             Session::flash('responsibility_validation', $result);
             Session::flash(
                 ($result['result'] ?? '') === 'pass' ? 'success' : 'warning',
-                '责任链校验完成：' . ($result['result'] ?? 'unknown') . '，发现 ' . count($result['issues'] ?? []) . ' 项。'
+                '责任链校验完成：'
+                    . QmsResponsibilityPresentationService::label('validation', (string)($result['result'] ?? ''))
+                    . '，发现 ' . count($result['issues'] ?? []) . ' 项。'
             );
 
             return $this->responsibilityRedirect($versionId, 'approval');
@@ -327,28 +330,38 @@ final class PlanningResponsibility extends BaseController
         $alignmentData = $viewMode === 'alignment'
             ? $this->alignmentData($detail, $versionId)
             : ['state' => 'not_requested', 'findings' => [], 'message' => '', 'version' => []];
+        $approvalHistory = QmsResponsibilityPresentationService::approvalHistory(
+            $this->approvalHistory($companyId, $versionId)
+        );
+        $effectiveAppointments = QmsResponsibilityPresentationService::effectiveAppointments(
+            $this->effectiveAppointments(
+                $companyId,
+                $detail && (string)$detail['status'] === 'effective' ? $versionId : ''
+            )
+        );
+        $validationResult = Session::get('responsibility_validation');
+        $validationResult = QmsResponsibilityPresentationService::validation(
+            is_array($validationResult) ? $validationResult : null
+        );
 
         View::assign([
             'pageTitle' => '活动级责任链',
             'viewMode' => $viewMode,
-            'versions' => $versions,
+            'versions' => QmsResponsibilityPresentationService::versions($versions),
             'versionId' => $versionId,
-            'detail' => $detail,
+            'detail' => QmsResponsibilityPresentationService::detail($detail),
             'managerCanEdit' => in_array((string)Session::get('user.role', 'staff'), self::MANAGER_ROLES, true),
             'isAdmin' => (string)Session::get('user.role', 'staff') === 'admin',
             'employees' => Db::name('employees')->where('company_id', $companyId)->where('publish', 1)->where('soft_delete', 0)->order('name')->select()->toArray(),
             'sites' => Db::name('sites')->where('company_id', $companyId)->where('status', 'active')->where('publish', 1)->where('soft_delete', 0)->order('sort_order')->select()->toArray(),
             'competencyEvidence' => Db::name('competency_records')->alias('c')->leftJoin('employees e', 'e.id=c.employee_id')->where('c.company_id', $companyId)->where('c.publish', 1)->where('c.soft_delete', 0)->field('c.id,c.employee_id,c.test_item,c.assessment_date,c.result,e.name employee_name')->order('e.name,c.assessment_date', 'desc')->select()->toArray(),
             'certificateEvidence' => Db::name('employee_certificates')->alias('c')->leftJoin('employees e', 'e.id=c.employee_id')->where('c.company_id', $companyId)->where('c.publish', 1)->where('c.soft_delete', 0)->field('c.id,c.employee_id,c.certificate_type,c.certificate_number,c.status,e.name employee_name')->order('e.name,c.certificate_type')->select()->toArray(),
-            'pendingBatch' => $pendingBatch,
+            'pendingBatch' => QmsResponsibilityPresentationService::pendingBatch($pendingBatch),
             'bootstrapApprovals' => $this->bootstrapApprovals($companyId, $employeeId),
-            'approvalHistory' => $this->approvalHistory($companyId, $versionId),
-            'effectiveAppointments' => $this->effectiveAppointments(
-                $companyId,
-                $detail && (string)$detail['status'] === 'effective' ? $versionId : ''
-            ),
-            'validationResult' => Session::get('responsibility_validation'),
-            'alignmentData' => $alignmentData,
+            'approvalHistory' => $approvalHistory,
+            'effectiveAppointments' => $effectiveAppointments,
+            'validationResult' => $validationResult,
+            'alignmentData' => QmsResponsibilityPresentationService::alignment($alignmentData),
         ]);
 
         return View::fetch('planning_responsibility/index');
