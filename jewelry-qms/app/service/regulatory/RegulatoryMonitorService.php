@@ -203,13 +203,12 @@ final class RegulatoryMonitorService
     {
         $message = preg_split('/(?:Stack trace:|\n\s*#0\b)/i', $message, 2)[0] ?? $message;
         $patterns = [
-            '/\b(?:authorization|proxy-authorization)\s*:\s*[^\r\n]*/iu' => 'Authorization=[REDACTED]',
-            '/\b(?:cookie|set-cookie)\s*:\s*[^\r\n]*/iu' => 'Cookie=[REDACTED]',
-            '/\bbearer\s+[^\s,;]+/iu' => 'Bearer [REDACTED]',
-            '/\b(?:password|passwd|pwd|token|api[_-]?key|secret)\s*[=:]\s*[^\s,;]+/iu' => 'credential=[REDACTED]',
-            '/\b(?:dsn|database_url|db_(?:host|user|pass))\s*[=:]\s*[^\s,;]+/iu' => 'connection=[REDACTED]',
-            '#\b(?:mysql|mariadb|postgres(?:ql)?|sqlsrv|mongodb|redis)://[^\s]+#iu' => '[REDACTED_DSN]',
-            '#\bhttps?://[^\s/@:]+:[^\s/@]+@#iu' => 'https://[REDACTED]@',
+            '/\b(?:authorization|proxy-authorization|cookie|set-cookie)\s*:\s*[^\r\n]*/iu' => '[REDACTED]',
+            '#(?<![\p{L}\p{N}_])(?:mysql|mariadb|pgsql|postgres(?:ql)?|sqlsrv|oci|sqlite|odbc|firebird|ibm|informix|cubrid|mongodb|redis):(?://)?[^\r\n]*#iu' => '[REDACTED]',
+            '#\b(?:https?|ftp)://[^\s/@:]+:[^\s/@]+@[^\r\n]*#iu' => '[REDACTED]',
+            '/\b(?:authorization|proxy-authorization|cookie|set-cookie|password|passwd|pwd|token|api[_-]?key|secret|dsn|database_(?:url|dsn)|db_(?:dsn|host|name|user|pass(?:word)?))\s*[=:]\s*(?:"[^"]*"|\'[^\']*\'|[^\s,;]+)/iu' => '[REDACTED]',
+            '/\bbearer\s+[^\s,;]+/iu' => '[REDACTED]',
+            '/\b(?:authorization|proxy-authorization|cookie|set-cookie|password|passwd|pwd|token|api[_-]?key|secret|dsn|database_(?:url|dsn)|db_(?:dsn|host|name|user|pass(?:word)?))\b/iu' => '[REDACTED]',
         ];
         foreach ($patterns as $pattern => $replacement) {
             $message = (string)preg_replace($pattern, $replacement, $message);

@@ -7,6 +7,7 @@ use Closure;
 use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
+use RuntimeException;
 use Throwable;
 use think\facade\Db;
 
@@ -132,20 +133,28 @@ final class RegulatoryCandidateService
                 $sourceKey,
                 $sourceItemKey,
                 $contentHash,
-                true
+                false
             );
             if (is_array($existing)) {
-                return $this->existingResult($existing, $seenAt);
+                $lockedExisting = $this->findExisting(
+                    $companyId,
+                    $sourceKey,
+                    $sourceItemKey,
+                    $contentHash,
+                    true
+                );
+                if (is_array($lockedExisting)) {
+                    return $this->existingResult($lockedExisting, $seenAt);
+                }
             }
 
-            $previous = Db::name('qms_external_change_candidates')
-                ->where('company_id', $companyId)
-                ->where('source_key', $sourceKey)
-                ->where('source_item_key', $sourceItemKey)
-                ->where('content_hash', '<>', $contentHash)
-                ->order(['first_seen_at' => 'desc', 'created' => 'desc', 'id' => 'desc'])
-                ->lock(true)
-                ->find();
+            $versions = $this->lockVersionChain($companyId, $sourceKey, $sourceItemKey);
+            foreach ($versions as $version) {
+                if (hash_equals((string)$version['content_hash'], $contentHash)) {
+                    return $this->existingResult($version, $seenAt);
+                }
+            }
+            $previous = $this->resolveChainTail($versions);
 
             $candidate = [
                 'id' => qms_uuid(),
@@ -167,7 +176,7 @@ final class RegulatoryCandidateService
                 'evidence_summary' => $normalized['evidence_summary'],
                 'evidence_refs' => $this->encodeJson($normalized['evidence_refs']),
                 'evidence_json' => $this->encodeJson($normalized['evidence_json']),
-                'supersedes_candidate_id' => is_array($previous) ? (string)$previous['id'] : null,
+                'supersedes_candidate_id' => $previous !== null ? (string)$previous['id'] : null,
                 'relevance' => 'unknown',
                 'preliminary_applicability' => 'needs_review',
                 'impact_analysis' => null,
@@ -209,7 +218,7 @@ final class RegulatoryCandidateService
                 false
             );
             if (!is_array($stored)) {
-                throw new \RuntimeException('候选写入后无法读取');
+                throw new RuntimeException('候选写入后无法读取');
             }
 
             return [
@@ -292,6 +301,123 @@ final class RegulatoryCandidateService
         return is_array($row) ? $row : null;
     }
 
+    /** @return array<int, array<string, mixed>> */
+    private function lockVersionChain(string $companyId, string $sourceKey, string $sourceItemKey): array
+    {
+        // This current read locks the whole item chain/range so concurrent new versions wait,
+        // then see the version committed by the transaction that acquired the lock first.
+        $result = Db::name('qms_external_change_candidates')
+            ->where('company_id', $companyId)
+            ->where('source_key', $sourceKey)
+            ->where('source_item_key', $sourceItemKey)
+            ->order('id', 'asc')
+            ->lock(true)
+            ->select();
+        if (is_object($result) && method_exists($result, 'toArray')) {
+            $result = $result->toArray();
+        }
+        if (!is_array($result)) {
+            throw new RuntimeException('候选版本链数据完整性错误：锁定结果不可读');
+        }
+
+        return array_values($result);
+    }
+
+    /** @param array<int, array<string, mixed>> $versions */
+    private function resolveChainTail(array $versions): ?array
+    {
+        if ($versions === []) {
+            return null;
+        }
+
+        $byId = [];
+        foreach ($versions as $version) {
+            $id = trim((string)($version['id'] ?? ''));
+            if ($id === '' || isset($byId[$id])) {
+                throw new RuntimeException('候选版本链数据完整性错误：存在空或重复版本标识');
+            }
+            $byId[$id] = $version;
+        }
+
+        $referencedAsParent = [];
+        $childByParent = [];
+        $rootIds = [];
+        foreach ($byId as $id => $version) {
+            $parentId = trim((string)($version['supersedes_candidate_id'] ?? ''));
+            if ($parentId === '') {
+                $rootIds[] = $id;
+                continue;
+            }
+            if ($parentId === $id) {
+                throw new RuntimeException('候选版本链数据完整性错误：检测到自引用环');
+            }
+            if (!isset($byId[$parentId])) {
+                throw new RuntimeException('候选版本链数据完整性错误：检测到断链');
+            }
+            if (isset($childByParent[$parentId])) {
+                throw new RuntimeException('候选版本链数据完整性错误：检测到分叉');
+            }
+            $childByParent[$parentId] = $id;
+            $referencedAsParent[$parentId] = true;
+        }
+
+        $fullyVisited = [];
+        foreach (array_keys($byId) as $startId) {
+            $path = [];
+            $cursorId = $startId;
+            while (true) {
+                if (isset($path[$cursorId])) {
+                    throw new RuntimeException('候选版本链数据完整性错误：检测到环');
+                }
+                if (isset($fullyVisited[$cursorId])) {
+                    break;
+                }
+                $path[$cursorId] = true;
+                $parentId = trim((string)($byId[$cursorId]['supersedes_candidate_id'] ?? ''));
+                if ($parentId === '') {
+                    break;
+                }
+                $cursorId = $parentId;
+            }
+            foreach (array_keys($path) as $visitedId) {
+                $fullyVisited[$visitedId] = true;
+            }
+        }
+
+        $tailIds = array_values(array_filter(
+            array_keys($byId),
+            static fn (string $id): bool => !isset($referencedAsParent[$id])
+        ));
+        if (count($tailIds) !== 1) {
+            throw new RuntimeException('候选版本链数据完整性错误：链尾数量不是一');
+        }
+        if (count($rootIds) !== 1) {
+            throw new RuntimeException('候选版本链数据完整性错误：根版本数量不是一');
+        }
+
+        $visited = [];
+        $cursorId = $tailIds[0];
+        while (true) {
+            if (isset($visited[$cursorId])) {
+                throw new RuntimeException('候选版本链数据完整性错误：检测到环');
+            }
+            $visited[$cursorId] = true;
+            $parentId = trim((string)($byId[$cursorId]['supersedes_candidate_id'] ?? ''));
+            if ($parentId === '') {
+                break;
+            }
+            if (!isset($byId[$parentId])) {
+                throw new RuntimeException('候选版本链数据完整性错误：检测到断链');
+            }
+            $cursorId = $parentId;
+        }
+        if (count($visited) !== count($byId)) {
+            throw new RuntimeException('候选版本链数据完整性错误：存在未连接版本');
+        }
+
+        return $byId[$tailIds[0]];
+    }
+
     private function existingResult(array $existing, string $seenAt): array
     {
         $lastSeen = (string)($existing['last_seen_at'] ?? '');
@@ -304,7 +430,7 @@ final class RegulatoryCandidateService
             ->where('id', (string)$existing['id'])
             ->find();
         if (!is_array($stored)) {
-            throw new \RuntimeException('既有候选更新后无法读取');
+            throw new RuntimeException('既有候选更新后无法读取');
         }
 
         return [

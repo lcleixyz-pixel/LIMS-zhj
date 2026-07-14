@@ -31,6 +31,60 @@ function candidate_assert_same(mixed $expected, mixed $actual, string $message):
     }
 }
 
+function candidate_assert_throws_integrity(callable $callback, string $message, string $expectedKind): void
+{
+    try {
+        $callback();
+    } catch (Throwable $exception) {
+        candidate_assert(
+            str_contains($exception->getMessage(), '完整性')
+                && str_contains($exception->getMessage(), $expectedKind),
+            $message . '; unexpected error: ' . $exception->getMessage()
+        );
+        return;
+    }
+
+    throw new RuntimeException($message . '; expected a data integrity exception');
+}
+
+function insert_chain_candidate(
+    string $id,
+    string $companyId,
+    string $runId,
+    string $sourceKey,
+    string $sourceItemKey,
+    ?string $supersedesId,
+    string $timestamp
+): void {
+    Db::name('qms_external_change_candidates')->insert([
+        'id' => $id,
+        'company_id' => $companyId,
+        'monitor_run_id' => $runId,
+        'source_key' => $sourceKey,
+        'source_mode' => 'html_list',
+        'source_item_key' => $sourceItemKey,
+        'source_url' => 'https://www.samr.gov.cn/chain/' . $id . '.html',
+        'normalized_url' => 'https://www.samr.gov.cn/chain/' . $id . '.html',
+        'title' => '人工构造链记录 ' . $id,
+        'announcement_number' => $sourceItemKey,
+        'published_date' => '2026-07-14',
+        'first_seen_at' => $timestamp,
+        'last_seen_at' => $timestamp,
+        'content_hash' => hash('sha256', $id),
+        'evidence_refs' => '[]',
+        'evidence_json' => '{}',
+        'supersedes_candidate_id' => $supersedesId,
+        'relevance' => 'unknown',
+        'preliminary_applicability' => 'needs_review',
+        'impact_analysis' => null,
+        'review_status' => 'pending',
+        'publish' => 1,
+        'soft_delete' => 0,
+        'created' => $timestamp,
+        'modified' => $timestamp,
+    ]);
+}
+
 function candidate_json(mixed $value): mixed
 {
     if (is_array($value)) {
@@ -230,6 +284,126 @@ try {
     candidate_assert_same('deferred', $oldAfterVersion['review_status'], 'Creating a new version must not alter old review status');
     candidate_assert_same('保留人工判断', $oldAfterVersion['review_comment'], 'Creating a new version must not alter old review comment');
 
+    $sameSecondIds = [
+        'ffffffff-ffff-4fff-8fff-fffffffffff1',
+        '00000000-0000-4000-8000-000000000002',
+        '11111111-1111-4111-8111-111111111113',
+    ];
+    $sameSecondIdQueue = $sameSecondIds;
+    $sameSecondInserter = static function (array $data) use (&$sameSecondIdQueue): void {
+        $data['id'] = array_shift($sameSecondIdQueue);
+        Db::name('qms_external_change_candidates')->insert($data);
+    };
+    $sameSecondService = new RegulatoryCandidateService(
+        static fn (): DateTimeImmutable => new DateTimeImmutable('2026-07-14 11:30:00'),
+        $sameSecondInserter
+    );
+    $sameSecondItems = [];
+    for ($version = 1; $version <= 3; $version++) {
+        $item = $v1;
+        $item['announcement_number'] = 'CHAIN-SAME-SECOND-2026';
+        $item['canonical_url'] = 'https://www.samr.gov.cn/chain/same-second-v' . $version . '.html';
+        $item['title'] = '同秒版本链 v' . $version;
+        $item['summary'] = '同秒版本链正文 v' . $version;
+        $item['evidence']['raw_text'] = '同秒版本链完整证据 v' . $version;
+        $sameSecondItems[] = $item;
+    }
+    $sameSecondV1 = $sameSecondService->record(
+        $companyId,
+        $runId,
+        'chain-same-second',
+        'html_list',
+        $sameSecondItems[0]
+    );
+    $sameSecondV2 = $sameSecondService->record(
+        $companyId,
+        $runId,
+        'chain-same-second',
+        'html_list',
+        $sameSecondItems[1]
+    );
+    $sameSecondV3 = $sameSecondService->record(
+        $companyId,
+        $runId,
+        'chain-same-second',
+        'html_list',
+        $sameSecondItems[2]
+    );
+    array_push($candidateIds, ...$sameSecondIds);
+    candidate_assert_same($sameSecondIds[0], $sameSecondV1['candidate']['id'], 'Controlled v1 id must be used');
+    candidate_assert_same($sameSecondIds[1], $sameSecondV2['candidate']['id'], 'Controlled v2 id must be used');
+    candidate_assert_same($sameSecondIds[2], $sameSecondV3['candidate']['id'], 'Controlled v3 id must be used');
+    candidate_assert_same($sameSecondIds[0], $sameSecondV2['candidate']['supersedes_candidate_id'], 'Same-second v2 must supersede v1');
+    candidate_assert_same($sameSecondIds[1], $sameSecondV3['candidate']['supersedes_candidate_id'], 'Same-second v3 must supersede the actual tail v2');
+
+    $corruptCases = [
+        'fork' => [
+            'expected' => '分叉',
+            'rows' => [
+                ['20000000-0000-4000-8000-000000000001', null],
+                ['20000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000001'],
+                ['20000000-0000-4000-8000-000000000003', '20000000-0000-4000-8000-000000000001'],
+            ],
+        ],
+        'broken' => [
+            'expected' => '断链',
+            'rows' => [
+                ['30000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-999999999999'],
+            ],
+        ],
+        'cycle' => [
+            'expected' => '环',
+            'rows' => [
+                ['40000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000002'],
+                ['40000000-0000-4000-8000-000000000002', '40000000-0000-4000-8000-000000000001'],
+            ],
+        ],
+    ];
+    foreach ($corruptCases as $case => $definition) {
+        $sourceKey = 'chain-corrupt-' . $case;
+        $sourceItemKey = 'CHAIN-CORRUPT-' . strtoupper($case);
+        foreach ($definition['rows'] as [$id, $parentId]) {
+            insert_chain_candidate(
+                $id,
+                $companyId,
+                $runId,
+                $sourceKey,
+                $sourceItemKey,
+                $parentId,
+                '2026-07-14 11:40:00'
+            );
+            $candidateIds[] = $id;
+        }
+        $newCorruptItem = $v2;
+        $newCorruptItem['announcement_number'] = $sourceItemKey;
+        $newCorruptItem['canonical_url'] = 'https://www.samr.gov.cn/chain/corrupt-' . $case . '.html';
+        $beforeCount = Db::name('qms_external_change_candidates')
+            ->where('company_id', $companyId)
+            ->where('source_key', $sourceKey)
+            ->where('source_item_key', $sourceItemKey)
+            ->count();
+        candidate_assert_throws_integrity(
+            static fn () => $candidateService->record(
+                $companyId,
+                $runId,
+                $sourceKey,
+                'html_list',
+                $newCorruptItem
+            ),
+            'Corrupt ' . $case . ' chain must fail closed',
+            $definition['expected']
+        );
+        candidate_assert_same(
+            $beforeCount,
+            Db::name('qms_external_change_candidates')
+                ->where('company_id', $companyId)
+                ->where('source_key', $sourceKey)
+                ->where('source_item_key', $sourceItemKey)
+                ->count(),
+            'Corrupt ' . $case . ' chain must not insert a candidate'
+        );
+    }
+
     foreach ([
         ['title' => str_repeat('题', 301), 'message' => 'title'],
         ['announcement_number' => str_repeat('N', 121), 'message' => 'announcement_number'],
@@ -306,8 +480,19 @@ try {
     candidate_assert(!in_array('cma_capability_query', $fetchedKeys, true), 'Manual-only source must never invoke fetcher');
     candidate_assert_same(2, $allSuccess['candidate_new_count'] + $allSuccess['candidate_existing_count'], 'Run candidate counts must cover parsed items');
 
-    $secretError = "Authorization: Bearer super-secret\nCookie: sid=secret; preference=private\n"
-        . 'password=hunter2 token=abc123 dsn=mysql://root:dbpass@db/jewelry '
+    $secretError = "法规来源连接失败，请稍后重试\n"
+        . "检测到 Authorization Cookie token password secret 标签\n"
+        . "Authorization: Bearer authorization-value\n"
+        . "Cookie: sid=cookie-value; preference=private\n"
+        . "PDO=mysql:host=pdo-host.internal;port=3306;dbname=pdo-secret-db;user=pdo-user;password=pdo-pass\n"
+        . "pgsql:host=pg-host.internal;port=5432;dbname=pg-secret-db;user=pg-user;password=pg-pass\n"
+        . "sqlsrv:Server=sql-host.internal;Database=sql-secret-db;UID=sql-user;PWD=sql-pass\n"
+        . "oci:dbname=//oci-host.internal:1521/oci-secret-db;charset=UTF8;user=oci-user;password=oci-pass\n"
+        . "sqlite:/private/sqlite-secret-db.sqlite\n"
+        . "DB_DSN=odbc:Driver=driver-value;Server=odbc-host.internal;Database=odbc-secret-db;UID=odbc-user;PWD=odbc-pass\n"
+        . "DATABASE_URL=pgsql://url-user:url-pass@url-host.internal/url-secret-db\n"
+        . "DB_HOST=env-host.internal DB_NAME=env-secret-db DB_USER=env-user DB_PASS=env-pass\n"
+        . "token=token-value password=password-value secret=secret-value\n"
         . str_repeat('detail-', 120);
     $partialFetcher = static function (array $source) use ($fixtureBodies, $secretError): string {
         if ($source['key'] === 'cnas_lab_notice') {
@@ -329,12 +514,55 @@ try {
     $partialRow = Db::name('qms_regulatory_monitor_runs')->where('id', $partial['run_id'])->find();
     candidate_assert(is_array($partialRow), 'Partial run must be persisted');
     candidate_assert(strlen((string)$partialRow['error_summary']) <= 1000, 'Persisted error summary must have a hard length bound');
-    foreach (['super-secret', 'sid=secret', 'preference=private', 'hunter2', 'abc123', 'mysql://', 'root:dbpass', 'Authorization:', 'Cookie:'] as $leak) {
-        candidate_assert(!str_contains((string)$partialRow['error_summary'], $leak), 'Error summary leaked secret fragment: ' . $leak);
-    }
+    $partialSourceStats = candidate_json($partialRow['source_stats']);
     $partialResult = candidate_json($partialRow['result_json']);
     candidate_assert_same('partial_failed', $partialResult['status'], 'Persisted result JSON must retain status');
     candidate_assert_same(2, count($partialResult['sources']), 'Persisted result JSON must retain source-level summaries');
+    $returnedFailedSource = array_values(array_filter(
+        $partial['sources'],
+        static fn (array $source): bool => $source['status'] === 'failed'
+    ));
+    $storedFailedSource = array_values(array_filter(
+        $partialSourceStats['sources'],
+        static fn (array $source): bool => $source['status'] === 'failed'
+    ));
+    $resultFailedSource = array_values(array_filter(
+        $partialResult['sources'],
+        static fn (array $source): bool => $source['status'] === 'failed'
+    ));
+    candidate_assert_same(1, count($returnedFailedSource), 'Returned run result must contain one failed source error');
+    candidate_assert_same(1, count($storedFailedSource), 'Stored source stats must contain one failed source error');
+    candidate_assert_same(1, count($resultFailedSource), 'Stored result JSON must contain one failed source error');
+    $sanitizedSurfaces = [
+        'returned source error' => (string)$returnedFailedSource[0]['error'],
+        'source_stats source error' => (string)$storedFailedSource[0]['error'],
+        'result_json source error' => (string)$resultFailedSource[0]['error'],
+        'error_summary' => (string)$partialRow['error_summary'],
+    ];
+    $sensitiveFragments = [
+        'authorization', 'cookie', 'database_url', 'db_dsn', 'db_host', 'db_name', 'db_user', 'db_pass',
+        'token', 'password', 'secret', 'credential=', 'connection=',
+        'authorization-value', 'cookie-value', 'preference=private',
+        'pdo-host.internal', 'pdo-secret-db', 'pdo-user', 'pdo-pass',
+        'pg-host.internal', 'pg-secret-db', 'pg-user', 'pg-pass',
+        'sql-host.internal', 'sql-secret-db', 'sql-user', 'sql-pass',
+        'oci-host.internal', 'oci-secret-db', 'oci-user', 'oci-pass',
+        'sqlite-secret-db.sqlite',
+        'odbc-host.internal', 'odbc-secret-db', 'odbc-user', 'odbc-pass', 'driver-value',
+        'url-host.internal', 'url-secret-db', 'url-user', 'url-pass',
+        'env-host.internal', 'env-secret-db', 'env-user', 'env-pass',
+        'mysql:host=', 'pgsql:host=', 'pgsql://', 'sqlsrv:', 'oci:', 'sqlite:', 'odbc:',
+    ];
+    foreach ($sanitizedSurfaces as $surface => $text) {
+        candidate_assert(str_contains($text, '法规来源连接失败'), $surface . ' must retain a useful non-sensitive summary');
+        candidate_assert(str_contains($text, '[REDACTED]'), $surface . ' must visibly mark redaction');
+        foreach ($sensitiveFragments as $fragment) {
+            candidate_assert(
+                stripos($text, $fragment) === false,
+                $surface . ' leaked sensitive fragment or label: ' . $fragment
+            );
+        }
+    }
     candidate_assert(isset($partialRow['execution_version'], $partialRow['source_config_version'], $partialRow['rule_version']), 'Run must persist collector, source config and rule versions');
 
     $allFailedService = new RegulatoryMonitorService(
