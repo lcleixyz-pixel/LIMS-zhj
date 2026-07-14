@@ -956,16 +956,60 @@ final class QmsResponsibilityApprovalService
 
     private static function businessOwners(string $positionCode, string $companyId, bool $lock): array
     {
-        $query = self::activeRoleOwnerQuery($positionCode, $companyId);
         if ($positionCode === self::GM_CODE) {
-            $query->where('ea.source_kind', 'corporate_evidence');
-        } elseif ($positionCode === self::DIRECTOR_CODE) {
-            $query->where('ea.source_kind', 'responsibility_chain');
+            $query = self::activeRoleOwnerQuery($positionCode, $companyId)
+                ->where('ea.source_kind', 'corporate_evidence');
+            return self::ownerIds($query, $lock);
         }
+
+        if ($positionCode === self::DIRECTOR_CODE) {
+            $effectiveQuery = self::activeRoleOwnerQuery($positionCode, $companyId)
+                ->join(
+                    'qms_responsibility_chain_versions v',
+                    'v.id=ea.source_chain_version_id AND v.company_id=ea.company_id'
+                )
+                ->where('ea.source_kind', 'responsibility_chain')
+                ->where('v.status', 'effective')
+                ->where('v.publish', 1)
+                ->where('v.soft_delete', 0);
+            $effectiveOwners = self::ownerIds($effectiveQuery, $lock);
+            if (self::hasEffectiveResponsibilityChain($companyId, $lock)) {
+                return $effectiveOwners;
+            }
+
+            $bootstrapQuery = self::activeRoleOwnerQuery($positionCode, $companyId)
+                ->where('ea.source_kind', 'responsibility_chain')
+                ->whereNull('ea.source_chain_version_id');
+            return self::ownerIds($bootstrapQuery, $lock);
+        }
+
+        return [];
+    }
+
+    private static function hasEffectiveResponsibilityChain(string $companyId, bool $lock): bool
+    {
+        $query = Db::name('qms_responsibility_chain_versions')
+            ->where('company_id', $companyId)
+            ->where('status', 'effective')
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->order('id');
         if ($lock) {
             $query->lock(true);
         }
-        $ids = array_values(array_unique(array_map('strval', $query->order('ea.employee_id,ea.id')->column('ea.employee_id'))));
+
+        return (bool)$query->field('id')->find();
+    }
+
+    private static function ownerIds(mixed $query, bool $lock): array
+    {
+        if ($lock) {
+            $query->lock(true);
+        }
+        $ids = array_values(array_unique(array_map(
+            'strval',
+            $query->order('ea.employee_id,ea.id')->column('ea.employee_id')
+        )));
         sort($ids, SORT_STRING);
         return $ids;
     }

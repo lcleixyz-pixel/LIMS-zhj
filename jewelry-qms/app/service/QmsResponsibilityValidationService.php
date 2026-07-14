@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\service;
 
 use DateTimeImmutable;
+use DateTimeZone;
 use DomainException;
 use think\facade\Config;
 use think\facade\Db;
@@ -246,7 +247,10 @@ final class QmsResponsibilityValidationService
             );
         }
 
-        if (!self::appointmentDatesValid($assignment)) {
+        if (!self::appointmentDatesValid(
+            $assignment,
+            (string)$responsibility['assignment_mode'] === 'named_person'
+        )) {
             $issues[] = self::issue(
                 'appointment_dates_invalid',
                 $severity,
@@ -341,11 +345,15 @@ final class QmsResponsibilityValidationService
         return $primarySiteId === '' || $primarySiteId === $siteId;
     }
 
-    private static function appointmentDatesValid(array $assignment): bool
+    private static function appointmentDatesValid(array $assignment, bool $immediateActivationRequired): bool
     {
         $from = trim((string)($assignment['proposed_from'] ?? ''));
         $until = trim((string)($assignment['proposed_until'] ?? ''));
         if (!self::isDate($from)) {
+            return false;
+        }
+        $today = self::currentDate();
+        if ($immediateActivationRequired && $from > $today) {
             return false;
         }
         if ($until === '') {
@@ -355,7 +363,17 @@ final class QmsResponsibilityValidationService
             return false;
         }
 
-        return $until >= date('Y-m-d');
+        return $until >= $today;
+    }
+
+    private static function currentDate(): string
+    {
+        $timezone = trim((string)Config::get('app.default_timezone'));
+        if ($timezone === '') {
+            $timezone = date_default_timezone_get();
+        }
+
+        return (new DateTimeImmutable('now', new DateTimeZone($timezone)))->format('Y-m-d');
     }
 
     private static function isDate(string $value): bool
@@ -432,11 +450,65 @@ final class QmsResponsibilityValidationService
 
     private static function approvalOwners(string $companyId, bool $lockingRead): array
     {
-        $today = date('Y-m-d');
-        $query = Db::name('employee_appointments')
+        $generalManagers = self::approvalOwnerIds(
+            self::activeApprovalOwnerQuery($companyId)
+                ->where('p.code', 'company_general_manager')
+                ->where('ea.source_kind', 'corporate_evidence'),
+            $lockingRead
+        );
+
+        $effectiveDirectors = self::approvalOwnerIds(
+            self::activeApprovalOwnerQuery($companyId)
+                ->join(
+                    'qms_responsibility_chain_versions v',
+                    'v.id = ea.source_chain_version_id AND v.company_id = ea.company_id'
+                )
+                ->where('p.code', 'lab_director')
+                ->where('ea.source_kind', 'responsibility_chain')
+                ->where('v.status', 'effective')
+                ->where('v.publish', 1)
+                ->where('v.soft_delete', 0),
+            $lockingRead
+        );
+        $labDirectors = $effectiveDirectors;
+        if (!self::hasEffectiveResponsibilityChain($companyId, $lockingRead)) {
+            $labDirectors = self::approvalOwnerIds(
+                self::activeApprovalOwnerQuery($companyId)
+                    ->where('p.code', 'lab_director')
+                    ->where('ea.source_kind', 'responsibility_chain')
+                    ->whereNull('ea.source_chain_version_id'),
+                $lockingRead
+            );
+        }
+
+        return [
+            'company_general_manager' => $generalManagers,
+            'lab_director' => $labDirectors,
+        ];
+    }
+
+    private static function hasEffectiveResponsibilityChain(string $companyId, bool $lockingRead): bool
+    {
+        $query = Db::name('qms_responsibility_chain_versions')
+            ->where('company_id', $companyId)
+            ->where('status', 'effective')
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->order('id');
+        if ($lockingRead) {
+            $query->lock(true);
+        }
+
+        return (bool)$query->field('id')->find();
+    }
+
+    private static function activeApprovalOwnerQuery(string $companyId): mixed
+    {
+        $today = self::currentDate();
+        return Db::name('employee_appointments')
             ->alias('ea')
             ->join('employees e', 'e.id = ea.employee_id AND e.company_id = ea.company_id')
-            ->leftJoin(
+            ->join(
                 'qms_positions p',
                 "p.id = ea.position_id AND p.company_id = ea.company_id AND p.review_status = 'published' AND p.publish = 1 AND p.soft_delete = 0"
             )
@@ -452,40 +524,20 @@ final class QmsResponsibilityValidationService
             })
             ->where('e.company_id', $companyId)
             ->where('e.publish', 1)
-            ->where('e.soft_delete', 0)
-            ->field('ea.employee_id,ea.source_kind,p.code position_code')
-            ->order('ea.employee_id,ea.id');
+            ->where('e.soft_delete', 0);
+    }
+
+    private static function approvalOwnerIds(mixed $query, bool $lockingRead): array
+    {
         if ($lockingRead) {
             $query->lock(true);
         }
-        $appointments = $query->select()->toArray();
-
-        $owners = [
-            'company_general_manager' => [],
-            'lab_director' => [],
-        ];
-        foreach ($appointments as $appointment) {
-            $employeeId = (string)$appointment['employee_id'];
-            $positionCode = trim((string)($appointment['position_code'] ?? ''));
-
-            if (
-                $positionCode === 'company_general_manager'
-                && (string)$appointment['source_kind'] === 'corporate_evidence'
-            ) {
-                $owners['company_general_manager'][$employeeId] = true;
-            }
-            if (
-                $positionCode === 'lab_director'
-                && (string)$appointment['source_kind'] === 'responsibility_chain'
-            ) {
-                $owners['lab_director'][$employeeId] = true;
-            }
-        }
-
-        return [
-            'company_general_manager' => array_keys($owners['company_general_manager']),
-            'lab_director' => array_keys($owners['lab_director']),
-        ];
+        $ids = array_values(array_unique(array_map(
+            'strval',
+            $query->order('ea.employee_id,ea.id')->column('ea.employee_id')
+        )));
+        sort($ids, SORT_STRING);
+        return $ids;
     }
 
     private static function hasLabDirectorApprovedAssignments(

@@ -6,6 +6,7 @@ require __DIR__ . '/support/qms_responsibility_fixture.php';
 use app\service\QmsResponsibilityApprovalService;
 use app\service\QmsResponsibilityCatalogService;
 use app\service\QmsResponsibilityDraftService;
+use app\service\QmsResponsibilityValidationService;
 use think\facade\Db;
 use think\facade\Session;
 
@@ -637,6 +638,43 @@ catalog_in_transaction(function (): void {
         catalog_assert(($metadata['session_id'] ?? '') !== '' && ($metadata['employee_id'] ?? '') !== '', 'Each signature records session and employee');
     }
 
+    // V1 only supports immediate activation. A future-dated named assignment in V2
+    // must not be submitted or replace the still-effective V1.
+    $futureClone = QmsResponsibilityDraftService::cloneEffectiveVersion($versionId);
+    $futureVersionId = (string)$futureClone['version']['id'];
+    $futureAssignmentId = (string)Db::name('qms_responsibility_assignments')->alias('ra')
+        ->join('qms_activity_responsibilities r', 'r.id=ra.responsibility_id AND r.company_id=ra.company_id')
+        ->join('qms_responsibility_activities a', 'a.id=r.activity_id AND a.company_id=r.company_id')
+        ->where('a.chain_version_id', $futureVersionId)
+        ->where('r.assignment_mode', 'named_person')
+        ->where('ra.status', 'draft')->where('ra.soft_delete', 0)
+        ->order('a.sort_order,r.sort_order,ra.id')->value('ra.id');
+    catalog_assert($futureAssignmentId !== '', 'Future-date fixture has a named-person assignment');
+    Db::name('qms_responsibility_assignments')->where('id', $futureAssignmentId)->update([
+        'proposed_from' => date('Y-m-d', strtotime('+1 day')),
+    ]);
+    $futureValidation = QmsResponsibilityValidationService::validateVersion($futureVersionId, 'activation');
+    catalog_assert(
+        in_array('appointment_dates_invalid', array_column($futureValidation['issues'], 'code'), true),
+        'A future-dated named assignment blocks immediate activation'
+    );
+    catalog_assert(($futureValidation['can_submit'] ?? true) === false, 'Future-dated V2 cannot be submitted');
+    $oldAppointmentIds = array_map('strval', Db::name('employee_appointments')
+        ->where('source_chain_version_id', $versionId)->where('status', 'active')->order('id')->column('id'));
+    approval_session($qualityManager['user']);
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityApprovalService::submitVersion($futureVersionId),
+        'Future-dated V2 is rejected at submission'
+    );
+    catalog_assert(QmsResponsibilityApprovalService::versionStatus($futureVersionId) === 'draft', 'Rejected future V2 remains draft');
+    catalog_assert(QmsResponsibilityApprovalService::versionStatus($versionId) === 'effective', 'Rejected future V2 leaves V1 effective');
+    catalog_assert(
+        array_map('strval', Db::name('employee_appointments')->where('source_chain_version_id', $versionId)
+            ->where('status', 'active')->order('id')->column('id')) === $oldAppointmentIds,
+        'Rejected future V2 leaves all V1 appointments active'
+    );
+    Db::name('qms_responsibility_chain_versions')->where('id', $futureVersionId)->update(['soft_delete' => 1]);
+
     // Legacy insert remains backward compatible through the database default.
     $legacyId = responsibility_fixture_row('employee_appointments', [
         'company_id' => $companyId,
@@ -767,6 +805,78 @@ catalog_in_transaction(function (): void {
     catalog_assert((int)Db::name('employee_appointments')->where('source_chain_version_id', $effectiveVersionId)->where('status', 'revoked')->count() > 0, 'Retry revokes old chain appointments');
     catalog_assert(Db::name('employee_appointments')->where('id', $legacyId)->value('status') === 'active', 'Supersession never revokes unrelated legacy appointments');
     catalog_assert((int)Db::name('employee_appointments')->where('source_kind', 'corporate_evidence')->where('status', 'active')->count() === 1, 'Corporate identity remains active after supersession');
+
+    // Replace lab director A with B through a full responsibility-chain version.
+    // V2 is still approved by the currently effective director A; after V2 activates,
+    // V3 must resolve only director B and ignore A's bootstrap fallback appointment.
+    $replacementDirector = approval_employee($companyId, 'REPLACEMENT-DIRECTOR', true, 'staff');
+    $replacementEvidenceId = responsibility_fixture_row('competency_records', [
+        'company_id' => $companyId,
+        'employee_id' => (string)$replacementDirector['employee']['id'],
+        'test_item' => '新实验室主任资格证据',
+        'assessment_date' => date('Y-m-d'),
+        'result' => 'qualified',
+        'valid_until' => date('Y-m-d', strtotime('+2 years')),
+    ]);
+    $directorChange = QmsResponsibilityDraftService::cloneEffectiveVersion($v2Id);
+    $directorChangeId = (string)$directorChange['version']['id'];
+    $directorAssignments = Db::name('qms_responsibility_assignments')->alias('ra')
+        ->join('qms_activity_responsibilities r', 'r.id=ra.responsibility_id AND r.company_id=ra.company_id')
+        ->join('qms_responsibility_activities a', 'a.id=r.activity_id AND a.company_id=r.company_id')
+        ->join('qms_positions p', 'p.id=r.fixed_position_id AND p.company_id=r.company_id')
+        ->where('a.chain_version_id', $directorChangeId)
+        ->where('p.code', 'lab_director')
+        ->where('ra.status', 'draft')->where('ra.soft_delete', 0)
+        ->field('ra.id,ra.responsibility_id,ra.site_id,ra.proposed_until')
+        ->order('a.sort_order,r.sort_order,ra.id')->select()->toArray();
+    catalog_assert($directorAssignments !== [], 'Director replacement fixture contains cloned director duties');
+    foreach ($directorAssignments as $directorAssignment) {
+        QmsResponsibilityDraftService::removeAssignment((string)$directorAssignment['id']);
+        QmsResponsibilityDraftService::saveAssignment(
+            (string)$directorAssignment['responsibility_id'],
+            (string)$replacementDirector['employee']['id'],
+            ($directorAssignment['site_id'] ?? null) ?: null,
+            date('Y-m-d'),
+            ($directorAssignment['proposed_until'] ?? null) ?: null,
+            ['competency_record_ids' => [$replacementEvidenceId]]
+        );
+    }
+
+    $directorChangeValidation = QmsResponsibilityValidationService::validateVersion($directorChangeId, 'activation');
+    catalog_assert(($directorChangeValidation['result'] ?? '') === 'pass', 'Director B change validates while director A remains the current approver');
+    approval_session($qualityManager['user']);
+    QmsResponsibilityApprovalService::submitVersion($directorChangeId);
+    $directorChangeGmBatch = approval_pending_for($directorChangeId, (string)$gm['employee']['id']);
+    $directorChangeOldDirectorBatch = approval_pending_for($directorChangeId, (string)$director['employee']['id']);
+    approval_session($gm['user']);
+    QmsResponsibilityApprovalService::approveBatch((string)$directorChangeGmBatch['batch_key'], 'approved', '总经理批准主任由A更换为B');
+    approval_session($director['user']);
+    QmsResponsibilityApprovalService::approveBatch((string)$directorChangeOldDirectorBatch['batch_key'], 'approved', '当前主任A批准其他责任项');
+    catalog_assert(QmsResponsibilityApprovalService::versionStatus($directorChangeId) === 'effective', 'Director B version activates');
+    catalog_assert(Db::name('employee_appointments')->where('id', (string)$directorAppointment['id'])->value('status') === 'active', 'Bootstrap evidence for director A is preserved');
+
+    $afterDirectorChange = QmsResponsibilityDraftService::cloneEffectiveVersion($directorChangeId);
+    $afterDirectorChangeId = (string)$afterDirectorChange['version']['id'];
+    $effectiveDirectorAppointmentId = (string)Db::name('employee_appointments')
+        ->where('source_chain_version_id', $directorChangeId)
+        ->where('employee_id', (string)$replacementDirector['employee']['id'])
+        ->where('appointment_type', 'role')->where('status', 'active')
+        ->order('id')->value('id');
+    catalog_assert($effectiveDirectorAppointmentId !== '', 'Effective V2 contains director B appointment evidence');
+    Db::name('employee_appointments')->where('id', $effectiveDirectorAppointmentId)->update(['status' => 'revoked']);
+    $missingEffectiveDirector = QmsResponsibilityValidationService::validateVersion($afterDirectorChangeId, 'activation');
+    catalog_assert(
+        in_array('approval_owner_missing', array_column($missingEffectiveDirector['issues'], 'code'), true),
+        'An effective chain never falls back to bootstrap when its director appointment is missing'
+    );
+    Db::name('employee_appointments')->where('id', $effectiveDirectorAppointmentId)->update(['status' => 'active']);
+    $afterDirectorValidation = QmsResponsibilityValidationService::validateVersion($afterDirectorChangeId, 'activation');
+    catalog_assert(($afterDirectorValidation['result'] ?? '') === 'pass', 'V3 resolves only effective-chain director B without bootstrap ambiguity');
+    catalog_assert(($afterDirectorValidation['can_submit'] ?? false) === true, 'V3 remains submittable after director replacement');
+    approval_session($qualityManager['user']);
+    QmsResponsibilityApprovalService::submitVersion($afterDirectorChangeId);
+    $afterDirectorBatch = approval_pending_for($afterDirectorChangeId, (string)$replacementDirector['employee']['id']);
+    catalog_assert(($afterDirectorBatch['items'] ?? []) !== [], 'V3 routes non-director approvals to effective director B');
 });
 
 // Two real database connections prove that a concurrent evidence update and final activation serialize.
