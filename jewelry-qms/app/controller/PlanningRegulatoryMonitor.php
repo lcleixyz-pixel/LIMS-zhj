@@ -8,6 +8,7 @@ use app\service\FieldAuditService;
 use app\service\regulatory\RegulatoryCandidateReviewService;
 use InvalidArgumentException;
 use RuntimeException;
+use think\App;
 use think\exception\HttpException;
 use think\facade\Config;
 use think\facade\Log;
@@ -16,10 +17,18 @@ use think\facade\View;
 
 class PlanningRegulatoryMonitor extends BaseController
 {
+    private ?RegulatoryCandidateReviewService $reviewService;
+
+    public function __construct(App $app, ?RegulatoryCandidateReviewService $reviewService = null)
+    {
+        $this->reviewService = $reviewService;
+        parent::__construct($app);
+    }
+
     public function index()
     {
         $this->assertControllerRole(['admin', 'quality_manager']);
-        $service = new RegulatoryCandidateReviewService();
+        $service = $this->service();
         try {
             $filters = [
                 'review_status' => trim((string)$this->request->get('review_status', '')),
@@ -54,7 +63,7 @@ class PlanningRegulatoryMonitor extends BaseController
     public function show()
     {
         $this->assertControllerRole(['admin', 'quality_manager']);
-        $service = new RegulatoryCandidateReviewService();
+        $service = $this->service();
         try {
             $candidate = $service->findCandidate((string)$this->request->get('id', ''));
         } catch (InvalidArgumentException|RuntimeException $exception) {
@@ -81,12 +90,12 @@ class PlanningRegulatoryMonitor extends BaseController
         $this->assertControllerRole(['quality_manager']);
         $candidateId = trim((string)$this->request->post('id', ''));
         try {
-            $candidate = (new RegulatoryCandidateReviewService())->review(
+            $candidate = $this->service()->review(
                 $candidateId,
                 trim((string)$this->request->post('review_status', '')),
                 (string)$this->request->post('review_comment', '')
             );
-            $this->markAudit((string)$candidate->id);
+            $this->markAudit((string)$candidate->id, 'success');
             Session::flash('success', '人工复核结论已保存。');
         } catch (\Throwable $exception) {
             $this->safeFailure($exception, '保存法规候选复核失败');
@@ -104,7 +113,7 @@ class PlanningRegulatoryMonitor extends BaseController
             $sources = [$sources];
         }
         try {
-            $result = (new RegulatoryCandidateReviewService())->runManual(
+            $result = $this->service()->runManual(
                 array_values($sources),
                 trim((string)$this->request->post('since', '')) ?: null,
                 $dryRun
@@ -112,7 +121,12 @@ class PlanningRegulatoryMonitor extends BaseController
             // DRY-RUN is an evidence-free rehearsal: its ambient transaction is
             // rolled back and it must not leave a route History row afterwards.
             if (!$dryRun) {
-                $this->markAudit((string)$result['run_id']);
+                $runStatus = (string)$result['status'];
+                $this->markAudit(
+                    (string)$result['run_id'],
+                    $runStatus === 'completed' ? 'success' : 'failed',
+                    $runStatus
+                );
             }
             $message = $dryRun ? 'DRY-RUN 已完成，未保存运行或候选记录。' : '手工监测已完成。';
             if (in_array((string)$result['status'], ['partial_failed', 'failed'], true)) {
@@ -174,12 +188,18 @@ class PlanningRegulatoryMonitor extends BaseController
         return (array)Config::get('qms.regulatory_monitor.run_status_labels', []);
     }
 
-    private function markAudit(string $recordId): void
+    private function markAudit(string $recordId, string $outcome, string $runStatus = ''): void
     {
         $this->request->withMiddleware(['qms_regulatory_audit' => [
-            'outcome' => 'success',
+            'outcome' => $outcome,
             'record_id' => $recordId,
+            'run_status' => $runStatus,
         ]]);
+    }
+
+    private function service(): RegulatoryCandidateReviewService
+    {
+        return $this->reviewService ??= new RegulatoryCandidateReviewService();
     }
 
     private function safeSourceUrl(array $candidate, array $sources): ?string

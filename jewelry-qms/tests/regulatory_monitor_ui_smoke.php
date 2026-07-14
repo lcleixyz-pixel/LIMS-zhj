@@ -38,7 +38,12 @@ function ui_set_enabled(bool $enabled): void
     Config::set($qms, 'qms');
 }
 
-function ui_run_controller_action(think\App $app, string $action, array $post)
+function ui_run_controller_action(
+    think\App $app,
+    string $action,
+    array $post,
+    ?RegulatoryCandidateReviewService $service = null
+)
 {
     $request = (new app\Request())
         ->setMethod('POST')
@@ -46,7 +51,7 @@ function ui_run_controller_action(think\App $app, string $action, array $post)
         ->setAction($action)
         ->withPost($post);
     $app->instance('request', $request);
-    $controller = new PlanningRegulatoryMonitor($app);
+    $controller = new PlanningRegulatoryMonitor($app, $service);
 
     return (new AuditLog())->handle($request, static fn () => $controller->{$action}());
 }
@@ -248,6 +253,7 @@ try {
     $httpReviewHistory = Db::name('histories')->where('user_id', 'ui-http-qm')->where('action', 'review')->order('created', 'desc')->find();
     ui_assert(is_array($httpReviewHistory), '成功人工复核必须进入 route audit');
     ui_assert((string)$httpReviewHistory['record_id'] === $ids['controller'], 'route audit 必须指向真实 candidate id');
+    ui_assert(str_contains((string)$httpReviewHistory['details'], 'outcome=success'), '成功复核审计必须明确 outcome=success');
     ui_assert(!str_contains((string)$httpReviewHistory['details'], '控制器人工复核审计测试'), '通用 history 不得写入人工理由或证据原文');
     ui_run_controller_action($app, 'review', [
         'id' => $ids['controller'],
@@ -286,7 +292,85 @@ try {
     ui_assert(is_array($httpRunHistory), 'admin actual 手工运行必须记录 route audit');
     $httpRunId = (string)$httpRunHistory['record_id'];
     ui_assert((string)Db::name('qms_regulatory_monitor_runs')->where('id', $httpRunId)->value('trigger_mode') === 'manual', 'actual route audit 必须指向真实 manual run id');
+    ui_assert(str_contains((string)$httpRunHistory['details'], 'outcome=success'), 'completed route audit 必须明确记录 outcome=success');
+    ui_assert(str_contains((string)$httpRunHistory['details'], 'run_status=completed'), 'completed route audit 必须明确记录 run_status=completed');
     Db::name('qms_regulatory_monitor_runs')->where('id', $httpRunId)->delete();
+
+    $offlineFixture = (string)file_get_contents($root . '/tests/fixtures/regulatory/samr_one_list_one_library.html');
+    $secretFailure = 'OFFLINE_SECRET token=leak-me evidence=<script>bad</script>';
+    $offlineService = new RegulatoryCandidateReviewService(
+        monitorFactory: static function (bool $dryRun) use ($offlineFixture, $secretFailure): app\service\regulatory\RegulatoryMonitorService {
+            return new app\service\regulatory\RegulatoryMonitorService(
+                sourceFetcher: static function (array $source) use ($offlineFixture, $secretFailure): string {
+                    if ((string)($source['key'] ?? '') === 'samr_rkjcs_notice') {
+                        return $offlineFixture;
+                    }
+                    throw new RuntimeException($secretFailure);
+                },
+                candidateService: $dryRun
+                    ? new app\service\regulatory\RegulatoryCandidateService(ownsTransaction: false)
+                    : null
+            );
+        }
+    );
+
+    $partialRunsBefore = Db::name('qms_regulatory_monitor_runs')->column('id');
+    ui_run_controller_action($app, 'run', [
+        'source' => ['samr_rkjcs_notice', 'xinjiang_samr_notice'],
+        'dry_run' => '0',
+    ], $offlineService);
+    $partialRunIds = array_values(array_diff(Db::name('qms_regulatory_monitor_runs')->column('id'), $partialRunsBefore));
+    ui_assert(count($partialRunIds) === 1, 'partial_failed 控制器必须仅创建一条 run');
+    $partialRunId = (string)$partialRunIds[0];
+    $partialHistory = Db::name('histories')->where('user_id', 'ui-http-admin')->where('action', 'run')->where('record_id', $partialRunId)->find();
+    ui_assert(is_array($partialHistory), 'partial_failed actual run 必须可追踪');
+    ui_assert((string)Db::name('qms_regulatory_monitor_runs')->where('id', $partialRunId)->value('status') === 'partial_failed', 'partial route audit 必须指向真实 run_id');
+    ui_assert(str_contains((string)$partialHistory['details'], 'outcome=failed'), 'partial_failed 不得伪装为成功审计');
+    ui_assert(str_contains((string)$partialHistory['details'], 'run_status=partial_failed'), 'partial audit 必须保留精确 run_status');
+    ui_assert(str_contains((string)$partialHistory['details'], 'POST PlanningRegulatoryMonitor/run'), 'partial audit 必须保留安全路由信息');
+    ui_assert(!str_contains((string)$partialHistory['details'], 'OFFLINE_SECRET') && !str_contains((string)$partialHistory['details'], 'leak-me'), 'partial audit 不得泄露来源错误');
+
+    $failedRunsBefore = Db::name('qms_regulatory_monitor_runs')->column('id');
+    ui_run_controller_action($app, 'run', [
+        'source' => ['xinjiang_samr_notice'],
+        'dry_run' => '0',
+    ], $offlineService);
+    $failedRunIds = array_values(array_diff(Db::name('qms_regulatory_monitor_runs')->column('id'), $failedRunsBefore));
+    ui_assert(count($failedRunIds) === 1, 'failed 控制器必须仅创建一条 run');
+    $failedRunId = (string)$failedRunIds[0];
+    $failedHistory = Db::name('histories')->where('user_id', 'ui-http-admin')->where('action', 'run')->where('record_id', $failedRunId)->find();
+    ui_assert(is_array($failedHistory), 'failed actual run 必须可追踪');
+    ui_assert((string)Db::name('qms_regulatory_monitor_runs')->where('id', $failedRunId)->value('status') === 'failed', 'failed route audit 必须指向真实 run_id');
+    ui_assert(str_contains((string)$failedHistory['details'], 'outcome=failed'), 'failed 不得伪装为成功审计');
+    ui_assert(str_contains((string)$failedHistory['details'], 'run_status=failed'), 'failed audit 必须保留精确 run_status');
+    ui_assert(!str_contains((string)$failedHistory['details'], 'OFFLINE_SECRET') && !str_contains((string)$failedHistory['details'], 'leak-me'), 'failed audit 不得泄露来源错误');
+
+    foreach ([$partialRunId, $failedRunId] as $runId) {
+        $notificationIds = Db::name('notifications')->where('notification_key', 'regulatory_monitor_failure:' . $runId)->column('id');
+        if ($notificationIds !== []) {
+            Db::name('notification_users')->whereIn('notification_id', $notificationIds)->delete();
+            Db::name('notifications')->whereIn('id', $notificationIds)->delete();
+        }
+        Db::name('qms_external_change_candidates')->where('monitor_run_id', $runId)->delete();
+        Db::name('qms_regulatory_monitor_runs')->where('id', $runId)->delete();
+    }
+
+    $exceptionHistoryCount = Db::name('histories')->where('user_id', 'ui-http-admin')->count();
+    $exceptionRunCount = Db::name('qms_regulatory_monitor_runs')->count();
+    $exceptionService = new RegulatoryCandidateReviewService(
+        monitorFactory: static function (): app\service\regulatory\RegulatoryMonitorService {
+            throw new RuntimeException('UNEXPECTED_DB_SECRET password=do-not-show');
+        }
+    );
+    Session::delete('error');
+    ui_run_controller_action($app, 'run', [
+        'source' => ['cma_capability_query'],
+        'dry_run' => '0',
+    ], $exceptionService);
+    ui_assert(Db::name('histories')->where('user_id', 'ui-http-admin')->count() === $exceptionHistoryCount, '控制器异常不得生成成功 route audit');
+    ui_assert(Db::name('qms_regulatory_monitor_runs')->count() === $exceptionRunCount, '服务工厂异常不得生成 run');
+    ui_assert(Session::get('error') === '操作失败，请查看服务日志。', '意外运行异常必须使用统一安全提示');
+    ui_assert(!str_contains((string)Session::get('error'), 'UNEXPECTED_DB_SECRET'), '意外异常原文不得显示给用户');
 
     foreach (['app/controller/PlanningRegulatoryMonitor.php', 'app/view/planning_regulatory_monitor/index.html', 'app/view/planning_regulatory_monitor/show.html'] as $relative) {
         ui_assert(is_file($root . '/' . $relative), '法规候选 UI 文件缺失: ' . $relative);

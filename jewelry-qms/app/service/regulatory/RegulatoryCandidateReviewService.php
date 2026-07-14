@@ -5,6 +5,7 @@ namespace app\service\regulatory;
 
 use app\model\QmsExternalChangeCandidate;
 use app\service\NotificationService;
+use Closure;
 use InvalidArgumentException;
 use RuntimeException;
 use think\facade\Config;
@@ -23,6 +24,12 @@ final class RegulatoryCandidateReviewService
     private const VIEW_ROLES = ['admin', 'quality_manager'];
     private const MIN_COMMENT_LENGTH = 2;
     private const MAX_COMMENT_LENGTH = 1000;
+    private ?Closure $monitorFactory;
+
+    public function __construct(?callable $monitorFactory = null)
+    {
+        $this->monitorFactory = $monitorFactory !== null ? Closure::fromCallable($monitorFactory) : null;
+    }
 
     /** @return list<array<string, mixed>> */
     public function listCandidates(array $filters = [], int $limit = 100): array
@@ -186,8 +193,14 @@ final class RegulatoryCandidateReviewService
         }
         $sourceKeys = $this->assertApprovedSources($sourceKeys);
         $candidateService = $dryRun ? new RegulatoryCandidateService(ownsTransaction: false) : null;
+        $monitor = $this->monitorFactory !== null
+            ? ($this->monitorFactory)($dryRun)
+            : new RegulatoryMonitorService(candidateService: $candidateService);
+        if (!$monitor instanceof RegulatoryMonitorService) {
+            throw new RuntimeException('法规监测服务工厂返回类型无效');
+        }
         $result = (new RegulatoryMonitorRunner())->run(
-            new RegulatoryMonitorService(candidateService: $candidateService),
+            $monitor,
             'manual',
             $sourceKeys,
             $since,

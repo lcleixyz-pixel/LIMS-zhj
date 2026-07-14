@@ -77,12 +77,18 @@ class AuditLog
             ];
             if (in_array(strtolower($action), $logActions, true)) {
                 try {
-                    $outcome = in_array((string)($responsibilityAudit['outcome'] ?? ''), ['success', 'failed'], true)
-                        ? (string)$responsibilityAudit['outcome']
-                        : ($isResponsibilityAction ? 'failed' : 'success');
-                    $subjectType = trim((string)($responsibilityAudit['subject_type'] ?? 'route_record'));
-                    $subjectKey = trim((string)($responsibilityAudit['subject_key'] ?? ''));
+                    $activeAudit = $isRegulatoryAction ? $regulatoryAudit : $responsibilityAudit;
+                    $outcome = in_array((string)($activeAudit['outcome'] ?? ''), ['success', 'failed'], true)
+                        ? (string)$activeAudit['outcome']
+                        : (($isResponsibilityAction || $isRegulatoryAction) ? 'failed' : 'success');
+                    $subjectType = trim((string)($activeAudit['subject_type'] ?? 'route_record'));
+                    $subjectKey = trim((string)($activeAudit['subject_key'] ?? ''));
                     $auditMeta = $isRegulatoryAction ? $regulatoryAudit : $responsibilityAudit;
+                    $regulatoryRunStatus = in_array(
+                        (string)($regulatoryAudit['run_status'] ?? ''),
+                        ['completed', 'partial_failed', 'failed'],
+                        true
+                    ) ? (string)$regulatoryAudit['run_status'] : '';
                     $recordId = $this->resolveRecordId(
                         $request,
                         $response,
@@ -100,7 +106,16 @@ class AuditLog
                             $method,
                             $controller . '/' . $action,
                         ]))
-                        : $method . ' ' . $controller . '/' . $action;
+                        : ($isRegulatoryAction
+                            ? implode(' ', array_filter([
+                                'outcome=' . $outcome,
+                                $regulatoryRunStatus !== ''
+                                    ? 'run_status=' . $this->detailValue($regulatoryRunStatus)
+                                    : '',
+                                $method,
+                                $controller . '/' . $action,
+                            ]))
+                            : $method . ' ' . $controller . '/' . $action);
                     History::create([
                         'id' => qms_uuid(),
                         'model_name' => $controller,
