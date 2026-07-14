@@ -472,7 +472,8 @@ catalog_in_transaction(function (): void {
     $labSelfApproval = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
     catalog_assert(validation_has_code($labSelfApproval, 'self_approval_conflict'), 'Lab director cannot approve own non-director assignment');
 
-    // Internal-audit independence only fires from runtime scope evidence.
+    // Synthetic activity-instance evidence is inserted directly into the validation fixture.
+    // This verifies the rule evaluator only; it does not claim a real internal-audit UI gate exists.
     validation_reset($versionId);
     validation_add_approval_owners($companyId, $positions, $siteId);
     $auditorId = validation_employee($companyId, $siteId, '内审员');
@@ -486,7 +487,7 @@ catalog_in_transaction(function (): void {
         'competence_snapshot' => validation_snapshot(['competency_record_ids' => [$auditorEvidenceId]]),
     ]);
     $selfAudit = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
-    catalog_assert(validation_has_code($selfAudit, 'self_audit_conflict'), 'Auditor overlapping audited owner is blocked');
+    catalog_assert(validation_has_code($selfAudit, 'self_audit_conflict'), 'Rule evaluator detects overlap in synthetic internal-audit activity evidence');
     Db::name('qms_responsibility_assignments')
         ->where('responsibility_id', (string)$responsibilities['ia_correction']['id'])
         ->delete();
@@ -497,9 +498,10 @@ catalog_in_transaction(function (): void {
             'audited_employee_ids' => [$auditorId],
         ])]);
     $selfAuditSnapshot = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
-    catalog_assert(validation_has_code($selfAuditSnapshot, 'self_audit_conflict'), 'Explicit audited employee snapshot is blocked');
+    catalog_assert(validation_has_code($selfAuditSnapshot, 'self_audit_conflict'), 'Rule evaluator detects an explicit audited employee in synthetic activity evidence');
 
-    // Risk executor and verifier conflict only under its explicit rule.
+    // Synthetic risk-activity evidence is likewise fixture-only. The first version records
+    // this rule but does not yet wire it into a real risk-activity close action.
     validation_reset($versionId);
     validation_add_approval_owners($companyId, $positions, $siteId);
     $riskEmployeeId = validation_employee($companyId, $siteId, '风险执行验证同人');
@@ -511,7 +513,7 @@ catalog_in_transaction(function (): void {
         'competence_snapshot' => validation_snapshot(['competency_record_ids' => [$riskEvidenceId]]),
     ]);
     $sameRiskPerson = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
-    catalog_assert(validation_has_code($sameRiskPerson, 'executor_verifier_conflict'), 'Risk executor cannot verify own measure');
+    catalog_assert(validation_has_code($sameRiskPerson, 'executor_verifier_conflict'), 'Rule evaluator detects the same executor and verifier in synthetic risk-activity evidence');
 
     $otherRiskEmployeeId = validation_employee($companyId, $siteId, '风险独立验证人');
     $otherRiskEvidenceId = validation_competency($companyId, $otherRiskEmployeeId);
@@ -522,7 +524,7 @@ catalog_in_transaction(function (): void {
         'competence_snapshot' => validation_snapshot(['competency_record_ids' => [$otherRiskEvidenceId]]),
     ]);
     $differentRiskPeople = QmsResponsibilityValidationService::validateVersion($versionId, 'activation');
-    validation_assert_no_code($differentRiskPeople, 'executor_verifier_conflict', 'Different risk executor and verifier pass separation');
+    validation_assert_no_code($differentRiskPeople, 'executor_verifier_conflict', 'Rule evaluator accepts separated people in synthetic risk-activity evidence');
 
     Db::name('qms_responsibility_assignments')
         ->where('responsibility_id', (string)$responsibilities['risk_verify']['id'])

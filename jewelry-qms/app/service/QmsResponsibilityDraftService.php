@@ -81,6 +81,10 @@ final class QmsResponsibilityDraftService
             foreach (['eligibility_rule', 'rule_codes', 'source_refs'] as $jsonField) {
                 $responsibility[$jsonField] = self::decodeJson($responsibility[$jsonField] ?? null);
             }
+            $responsibility['resolution_rules'] = self::runtimeResolutionRules(
+                (string)$responsibility['assignment_mode'],
+                (array)$responsibility['rule_codes']
+            );
             $responsibility['assignments'] = $assignmentsByResponsibility[(string)$responsibility['id']] ?? [];
             $responsibilitiesByActivity[(string)$responsibility['activity_id']][] = $responsibility;
 
@@ -97,6 +101,7 @@ final class QmsResponsibilityDraftService
                 'slot_kind' => (string)$responsibility['slot_kind'],
                 'assignment_mode' => (string)$responsibility['assignment_mode'],
                 'display_status' => '运行时指定',
+                'resolution_rules' => $responsibility['resolution_rules'],
             ];
         }
         unset($responsibility);
@@ -153,8 +158,8 @@ final class QmsResponsibilityDraftService
             $companyId = self::companyId();
             $context = self::responsibilityContext($responsibilityId, $companyId, true);
             self::assertDraftVersion($context);
-            if ((string)$context['assignment_mode'] === 'derived_from_scope') {
-                throw new DomainException('该动态责任槽在活动运行时指定，不得保存为永久人员任命。');
+            if ((string)$context['assignment_mode'] !== 'named_person') {
+                throw new DomainException('该运行时责任槽只能在具体活动或记录中指定，不得保存为责任链模板人员任命。');
             }
 
             $employee = Db::name('employees')
@@ -237,6 +242,27 @@ final class QmsResponsibilityDraftService
 
             return self::assignmentRow($assignmentId, $companyId);
         });
+    }
+
+    /** @return list<string> */
+    private static function runtimeResolutionRules(string $assignmentMode, array $ruleCodes): array
+    {
+        if ($assignmentMode === 'named_person') {
+            return [];
+        }
+
+        $messages = [];
+        if (in_array('no_self_audit', $ruleCodes, true)) {
+            $messages[] = '具体内审活动开始前必须登记内审员与被审核工作责任人并检查不得自审';
+        }
+        if (in_array('separate_executor_verifier', $ruleCodes, true)) {
+            $messages[] = '具体风险活动关闭前必须登记执行人与验证人并检查分离';
+        }
+        if ($messages === []) {
+            $messages[] = '需在具体活动或记录中留存当次责任人';
+        }
+
+        return $messages;
     }
 
     public static function removeAssignment(string $assignmentId): void

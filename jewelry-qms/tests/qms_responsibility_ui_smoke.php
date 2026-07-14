@@ -234,14 +234,32 @@ function responsibility_ui_render_alignment(think\App $app, ?string $versionId, 
     return (string)$controller->alignment();
 }
 
+function responsibility_ui_render_page(think\App $app, string $versionId, string $viewMode): string
+{
+    $requestSession = $app->make(think\Session::class);
+    $requestSession->init();
+    $request = (new app\Request())
+        ->setMethod('GET')
+        ->setController('PlanningResponsibility')
+        ->setAction('index')
+        ->withSession($requestSession)
+        ->withGet([
+            'view' => $viewMode,
+            'version_id' => $versionId,
+        ]);
+    $app->instance('request', $request);
+    $controller = new PlanningResponsibility($app);
+
+    return (string)$controller->index();
+}
+
 function responsibility_ui_bind_ready_staff(string $companyId, string $versionId, array $gm, array $director): void
 {
     $detail = QmsResponsibilityDraftService::versionDetail($versionId);
     $peopleBySlot = [];
-    $activityRoleBound = false;
     foreach ($detail['responsibilities'] as $responsibility) {
         $mode = (string)$responsibility['assignment_mode'];
-        if ($mode === 'derived_from_scope' || ($mode === 'activity_instance' && $activityRoleBound)) {
+        if ($mode !== 'named_person') {
             continue;
         }
 
@@ -251,7 +269,7 @@ function responsibility_ui_bind_ready_staff(string $companyId, string $versionId
         } elseif ($positionCode === 'lab_director') {
             $person = $director;
         } else {
-            $slot = $positionCode !== '' ? $positionCode : 'activity-instance';
+            $slot = $positionCode;
             $peopleBySlot[$slot] ??= responsibility_ui_user($companyId, 'READY-' . count($peopleBySlot), 'staff');
             $person = $peopleBySlot[$slot];
         }
@@ -271,11 +289,95 @@ function responsibility_ui_bind_ready_staff(string $companyId, string $versionId
             null,
             ['competency_record_ids' => [$competencyId]]
         );
-        if ($mode === 'activity_instance') {
-            $activityRoleBound = true;
-        }
     }
 }
+
+catalog_in_transaction(function () use ($app): void {
+    $companyId = catalog_company_id();
+    $admin = responsibility_ui_user($companyId, 'RUNTIME-UX-ADMIN', 'admin');
+    responsibility_ui_session($admin);
+    $draft = QmsResponsibilityCatalogService::createInitialDraft();
+    $versionId = (string)$draft['id'];
+    $detail = QmsResponsibilityDraftService::versionDetail($versionId);
+    $runtimeIds = [];
+    $namedIds = [];
+    foreach ($detail['responsibilities'] as $responsibility) {
+        if ((string)$responsibility['assignment_mode'] === 'named_person') {
+            $namedIds[] = (string)$responsibility['id'];
+        } else {
+            $runtimeIds[] = (string)$responsibility['id'];
+        }
+    }
+    responsibility_ui_assert(count($runtimeIds) === 9, 'Catalog exposes exactly nine runtime slots');
+    responsibility_ui_assert(count($namedIds) === 12, 'Catalog exposes exactly twelve named-person duties');
+
+    $structureHtml = responsibility_ui_render_page($app, $versionId, 'structure');
+    $staffingHtml = responsibility_ui_render_page($app, $versionId, 'staffing');
+    foreach ([$structureHtml, $staffingHtml] as $pageHtml) {
+        responsibility_ui_assert(
+            substr_count($pageHtml, 'data-runtime-slot="1"') === 9,
+            'Rendered responsibility page marks all nine runtime slots'
+        );
+        responsibility_ui_assert(
+            substr_count($pageHtml, 'data-assignment-mode="named_person"') === 12,
+            'Rendered responsibility page marks all twelve named-person duties'
+        );
+        responsibility_ui_contains(
+            '首版责任链只登记运行时职责规则，不会在模板签批时自动替代具体活动实例门禁。',
+            $pageHtml,
+            'Runtime page states the first-version enforcement boundary honestly'
+        );
+        responsibility_ui_contains(
+            '具体内审活动开始前必须登记内审员与被审核工作责任人并检查不得自审',
+            $pageHtml,
+            'Runtime page renders the no-self-audit instruction'
+        );
+        responsibility_ui_contains(
+            '具体风险活动关闭前必须登记执行人与验证人并检查分离',
+            $pageHtml,
+            'Runtime page renders the executor-verifier separation instruction'
+        );
+        responsibility_ui_contains(
+            '需在具体活动或记录中留存当次责任人',
+            $pageHtml,
+            'Runtime page renders the general runtime evidence instruction'
+        );
+    }
+
+    preg_match_all('/<tr data-runtime-slot="1".*?<\/tr>/su', $structureHtml, $structureRows);
+    responsibility_ui_assert(count($structureRows[0]) === 9, 'Structure HTML contains nine runtime rows');
+    foreach ($structureRows[0] as $runtimeRow) {
+        responsibility_ui_contains('badge text-bg-secondary">运行时指定', $runtimeRow, 'Runtime structure row uses the gray status');
+        responsibility_ui_assert(!str_contains($runtimeRow, 'text-bg-warning'), 'Runtime structure row never uses the yellow missing-person status');
+        responsibility_ui_assert(!str_contains($runtimeRow, '岗位尚未绑定人员'), 'Runtime structure row never claims a person is missing');
+    }
+
+    preg_match_all('/<section class="border rounded p-3 mb-2" data-runtime-slot="1".*?<\/section>/su', $staffingHtml, $staffingRuntimeSections);
+    responsibility_ui_assert(count($staffingRuntimeSections[0]) === 9, 'Staffing HTML contains nine runtime sections');
+    foreach ($staffingRuntimeSections[0] as $runtimeSection) {
+        responsibility_ui_contains('badge text-bg-secondary">运行时指定', $runtimeSection, 'Runtime staffing section uses the gray status');
+        responsibility_ui_assert(!str_contains($runtimeSection, 'text-bg-warning'), 'Runtime staffing section never uses the yellow missing-person status');
+        responsibility_ui_assert(!str_contains($runtimeSection, '岗位尚未绑定人员'), 'Runtime staffing section never claims a person is missing');
+        responsibility_ui_assert(!str_contains($runtimeSection, 'action="/planning/responsibilities/assignments/save"'), 'Runtime staffing section renders no permanent-person draft form');
+        responsibility_ui_assert(!str_contains($runtimeSection, '保存人员草案'), 'Runtime staffing section renders no permanent-person save button');
+    }
+    responsibility_ui_assert(
+        substr_count($staffingHtml, 'name="responsibility_id"') === 12,
+        'Only twelve named-person duties render personnel draft forms'
+    );
+
+    foreach (['structure', 'activation'] as $mode) {
+        $validation = QmsResponsibilityValidationService::validateVersion($versionId, $mode);
+        foreach ($validation['issues'] as $issue) {
+            if ((string)$issue['code'] === 'required_assignment_missing') {
+                responsibility_ui_assert(
+                    !in_array((string)$issue['responsibility_id'], $runtimeIds, true),
+                    ucfirst($mode) . ' validation never reports a runtime slot as a missing named person'
+                );
+            }
+        }
+    }
+});
 
 Db::execute('DROP TRIGGER IF EXISTS qms_test_fail_responsibility_history');
 Db::execute(<<<'SQL'

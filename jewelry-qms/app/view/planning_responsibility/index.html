@@ -50,6 +50,7 @@
 </div>
 
 {if $viewMode == 'structure'}
+<div class="alert alert-secondary small">首版责任链只登记运行时职责规则，不会在模板签批时自动替代具体活动实例门禁。真实活动仍须按下列提示登记当次责任人并人工核对。</div>
 {volist name="detail.activities" id="activity"}
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between"><strong>{$activity.name}</strong><span class="text-muted">{$activity.element_key}</span></div>
@@ -58,7 +59,7 @@
             <thead><tr><th>环节</th><th>职责类型</th><th>职责动作</th><th>责任岗位/角色</th><th>适用场所</th><th>绑定状态</th></tr></thead>
             <tbody>
             {volist name="activity.responsibilities" id="responsibility"}
-            <tr>
+            <tr data-runtime-slot="{if $responsibility.assignment_mode == 'named_person'}0{else}1{/if}" data-assignment-mode="{$responsibility.assignment_mode}">
                 <td><code>{$responsibility.step_code}</code></td>
                 <td>{$responsibility.duty_type}</td>
                 <td>{$responsibility.duty_text}</td>
@@ -69,7 +70,9 @@
                 </td>
                 <td>{if $activity.site_scope == 'all'}全机构{else}指定场所{/if}</td>
                 <td>
-                    {if $responsibility.assignment_mode == 'derived_from_scope'}<span class="badge text-bg-secondary">运行时指定</span>
+                    {if $responsibility.assignment_mode != 'named_person'}
+                    <span class="badge text-bg-secondary">运行时指定</span>
+                    <ul class="small text-muted mb-0 mt-1 ps-3">{volist name="responsibility.resolution_rules" id="resolutionRule"}<li>{$resolutionRule}</li>{/volist}</ul>
                     {elseif empty($responsibility.assignments)}<span class="badge text-bg-warning">岗位尚未绑定人员</span>
                     {else}<span class="badge text-bg-success">已配置 {$responsibility.assignments|count} 人</span>{/if}
                 </td>
@@ -84,19 +87,23 @@
 
 {if $viewMode == 'staffing'}
 <div class="alert alert-info">此处选人只形成草案。在资格校验和业务签批完成前，不作为任命或内部授权证据。</div>
+<div class="alert alert-secondary small">首版责任链只登记运行时职责规则，不会在模板签批时自动替代具体活动实例门禁。真实活动仍须按下列提示登记当次责任人并人工核对。</div>
 {volist name="detail.activities" id="activity"}
 <div class="card mb-3">
     <div class="card-header"><strong>{$activity.name}</strong></div>
     <div class="card-body">
         {volist name="activity.responsibilities" id="responsibility"}
-        <div class="border rounded p-3 mb-2">
+        <section class="border rounded p-3 mb-2" data-runtime-slot="{if $responsibility.assignment_mode == 'named_person'}0{else}1{/if}" data-assignment-mode="{$responsibility.assignment_mode}">
             <div class="d-flex justify-content-between gap-3">
                 <div><strong>{$responsibility.duty_text}</strong><div class="small text-muted">{$responsibility.step_code}</div></div>
                 <div>
-                    {if $responsibility.assignment_mode == 'derived_from_scope'}<span class="badge text-bg-secondary">运行时指定</span>
+                    {if $responsibility.assignment_mode != 'named_person'}<span class="badge text-bg-secondary">运行时指定</span>
                     {elseif empty($responsibility.assignments)}<span class="badge text-bg-warning">岗位尚未绑定人员</span>{/if}
                 </div>
             </div>
+            {if $responsibility.assignment_mode != 'named_person'}
+            <ul class="small text-muted mb-0 mt-2 ps-3">{volist name="responsibility.resolution_rules" id="resolutionRule"}<li>{$resolutionRule}</li>{/volist}</ul>
+            {else}
             {volist name="responsibility.assignments" id="assignment"}
             <div class="mt-2 d-flex align-items-center gap-2 flex-wrap">
                 <span class="badge text-bg-light">{$assignment.employee_name} ({$assignment.employee_number})</span>
@@ -113,7 +120,7 @@
                 {/if}
             </div>
             {/volist}
-            {if $responsibility.assignment_mode != 'derived_from_scope' && $managerCanEdit && $detail.status == 'draft'}
+            {if $managerCanEdit && $detail.status == 'draft'}
             <form method="post" action="/planning/responsibilities/assignments/save" class="row g-2 mt-2">
                 <input type="hidden" name="operation" value="save">
                 <input type="hidden" name="version_id" value="{$detail.id}">
@@ -126,7 +133,8 @@
                 <div class="col-lg-2"><button class="btn btn-sm btn-primary w-100" type="submit">保存人员草案</button></div>
             </form>
             {/if}
-        </div>
+            {/if}
+        </section>
         {/volist}
     </div>
 </div>

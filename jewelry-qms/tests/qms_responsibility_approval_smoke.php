@@ -89,15 +89,13 @@ function approval_prepare_version(string $companyId, string $gmId, string $direc
     $positions = approval_positions($companyId);
     $staff = [];
     $staffByPosition = [];
-    $activityRoleBound = false;
     $dynamicResponsibility = null;
     foreach ($detail['responsibilities'] as $responsibility) {
         $mode = (string)$responsibility['assignment_mode'];
-        if ($mode === 'derived_from_scope') {
-            $dynamicResponsibility ??= $responsibility;
-            continue;
-        }
-        if ($mode === 'activity_instance' && $activityRoleBound) {
+        if ($mode !== 'named_person') {
+            if ($mode === 'derived_from_scope') {
+                $dynamicResponsibility ??= $responsibility;
+            }
             continue;
         }
 
@@ -131,13 +129,11 @@ function approval_prepare_version(string $companyId, string $gmId, string $direc
             null,
             ['competency_record_ids' => [$competencyId]]
         );
-        if ($mode === 'activity_instance') {
-            $activityRoleBound = true;
-        }
     }
 
-    // Corrupt legacy/imported data can contain a direct row for a runtime dynamic slot.
-    // Submission and activation must never turn it into a permanent appointment.
+    // Synthetic runtime evidence is inserted directly because the responsibility-template
+    // write service rejects every runtime slot. This does not represent a real activity UI.
+    // Submission and activation must never turn imported/corrupt runtime data into an appointment.
     $illegalDynamicPerson = approval_employee($companyId, 'ILLEGAL-DYNAMIC', true, 'staff');
     $illegalDynamicCompetency = responsibility_fixture_row('competency_records', [
         'company_id' => $companyId,
@@ -484,9 +480,11 @@ catalog_in_transaction(function (): void {
 
     $gmBatch = approval_pending_for($versionId, (string)$gm['employee']['id']);
     catalog_assert(($gmBatch['subject_position_codes'] ?? []) === ['lab_director'], 'GM batch contains only lab director assignments');
+    catalog_assert(count($gmBatch['items']) === 3, 'GM batch contains the three named lab-director duties');
     $directorBatch = approval_pending_for($versionId, (string)$director['employee']['id']);
     catalog_assert(!in_array('lab_director', $directorBatch['subject_position_codes'] ?? [], true), 'Director batch excludes lab director');
     catalog_assert(!in_array('company_general_manager', $directorBatch['subject_position_codes'] ?? [], true), 'Director batch excludes corporate GM');
+    catalog_assert(count($directorBatch['items']) === 8, 'Director batch contains the eight other named-person duties');
     foreach (array_merge($gmBatch['items'], $directorBatch['items']) as $item) {
         foreach (['assignment_id', 'responsibility_id', 'employee_id', 'position_code', 'position_name', 'competence_snapshot', 'version_hash'] as $key) {
             catalog_assert(array_key_exists($key, $item), 'Pending item contains evidence field ' . $key);
@@ -586,7 +584,7 @@ catalog_in_transaction(function (): void {
     );
     $chainAppointments = Db::name('employee_appointments')->where('source_chain_version_id', $versionId)->where('status', 'active')->select()->toArray();
     catalog_assert($chainAppointments !== [], 'Activation creates chain appointments');
-    catalog_assert(count(array_filter($chainAppointments, static fn (array $row): bool => (string)$row['appointment_type'] === 'responsibility')) === 1, 'One prebound activity role creates one responsibility appointment');
+    catalog_assert(count(array_filter($chainAppointments, static fn (array $row): bool => (string)$row['appointment_type'] === 'responsibility')) === 0, 'Runtime activity roles create no responsibility-template appointments');
     $fixedAssignmentCount = (int)Db::name('qms_responsibility_assignments')->alias('ra')
         ->join('qms_activity_responsibilities r', 'r.id=ra.responsibility_id')
         ->join('qms_responsibility_activities a', 'a.id=r.activity_id')

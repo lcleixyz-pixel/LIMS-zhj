@@ -15,11 +15,12 @@ catalog_in_transaction(function (): void {
     catalog_assert(($detail['version']['id'] ?? '') === $versionId, 'Version detail identifies the draft');
     catalog_assert(count($detail['activities'] ?? []) === 3, 'Version detail contains three activities');
     catalog_assert(count($detail['responsibilities'] ?? []) === 21, 'Version detail contains twenty-one duties');
-    catalog_assert(($detail['named_person_unbound'] ?? 0) > 0, 'Named-person duties report unbound people');
+    catalog_assert(($detail['named_person_unbound'] ?? 0) === 12, 'Exactly twelve named-person duties report unbound people');
     catalog_assert(($detail['structure_test_allowed'] ?? false) === true, 'Unbound people do not block structure testing');
-    catalog_assert(count($detail['dynamic_slots'] ?? []) > 0, 'Dynamic slots are listed separately');
+    catalog_assert(count($detail['dynamic_slots'] ?? []) === 9, 'Exactly nine runtime slots are listed separately');
     foreach ($detail['dynamic_slots'] as $dynamicSlot) {
         catalog_assert(($dynamicSlot['display_status'] ?? '') === '运行时指定', 'Dynamic slot displays runtime assignment');
+        catalog_assert(($dynamicSlot['resolution_rules'] ?? []) !== [], 'Dynamic slot exposes runtime resolution instructions');
     }
 
     $companyId = catalog_company_id();
@@ -76,16 +77,17 @@ catalog_in_transaction(function (): void {
         'Derived dynamic owner cannot become a permanent assignment'
     );
 
-    $activityRoleAssignment = QmsResponsibilityDraftService::saveAssignment(
-        (string)$activityRoleDuty['id'],
-        $employeeId,
-        null,
-        '2026-07-14',
-        null,
-        ['competency_record_ids' => [$competencyId]]
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityDraftService::saveAssignment(
+            (string)$activityRoleDuty['id'],
+            $employeeId,
+            null,
+            '2026-07-14',
+            null,
+            ['competency_record_ids' => [$competencyId]]
+        ),
+        'Activity-instance role cannot become a responsibility-template assignment'
     );
-    catalog_assert(($activityRoleAssignment['status'] ?? '') === 'draft', 'Optional activity-role template assignment remains draft');
-    QmsResponsibilityDraftService::removeAssignment((string)$activityRoleAssignment['id']);
 
     $hashBefore = QmsResponsibilityDraftService::contentHash($versionId);
     catalog_assert($hashBefore === QmsResponsibilityDraftService::contentHash($versionId), 'Content hash is stable across repeated reads');

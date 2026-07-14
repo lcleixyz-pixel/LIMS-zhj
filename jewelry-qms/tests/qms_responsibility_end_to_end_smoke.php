@@ -77,12 +77,7 @@ function responsibility_e2e_user_roles(string $companyId): array
     return $roles;
 }
 
-/**
- * Bind all fixed named-person duties and one activity-instance role exactly as the
- * approved draft workflow does. Runtime-derived duties deliberately stay unbound.
- *
- * @return array<int,array{employee:array,user:array}>
- */
+/** Bind only template-level named-person duties; all runtime slots stay unbound. */
 function responsibility_e2e_bind_staff(
     string $companyId,
     string $versionId,
@@ -92,14 +87,10 @@ function responsibility_e2e_bind_staff(
     $detail = QmsResponsibilityDraftService::versionDetail($versionId);
     $peopleBySlot = [];
     $createdPeople = [];
-    $activityRoleBound = false;
 
     foreach ($detail['responsibilities'] as $responsibility) {
         $mode = (string)$responsibility['assignment_mode'];
-        if ($mode === 'derived_from_scope') {
-            continue;
-        }
-        if ($mode === 'activity_instance' && $activityRoleBound) {
+        if ($mode !== 'named_person') {
             continue;
         }
 
@@ -109,7 +100,7 @@ function responsibility_e2e_bind_staff(
         } elseif ($positionCode === 'lab_director') {
             $person = $labDirector;
         } else {
-            $slotKey = $positionCode !== '' ? $positionCode : 'activity-instance';
+            $slotKey = $positionCode;
             if (!isset($peopleBySlot[$slotKey])) {
                 $peopleBySlot[$slotKey] = responsibility_e2e_person(
                     $companyId,
@@ -138,9 +129,6 @@ function responsibility_e2e_bind_staff(
             null,
             ['competency_record_ids' => [$competencyId]]
         );
-        if ($mode === 'activity_instance') {
-            $activityRoleBound = true;
-        }
     }
 
     return $createdPeople;
@@ -211,6 +199,8 @@ catalog_in_transaction(function () use (&$evidence): void {
     );
     responsibility_e2e_assert(($gmBatch['items'] ?? []) !== [], 'general manager approval batch is present');
     responsibility_e2e_assert(($directorBatch['items'] ?? []) !== [], 'lab director approval batch is present');
+    responsibility_e2e_assert(count($gmBatch['items']) === 3, 'general manager receives the three lab-director duties');
+    responsibility_e2e_assert(count($directorBatch['items']) === 8, 'lab director receives the eight other named-person duties');
 
     responsibility_e2e_session($generalManager);
     QmsResponsibilityApprovalService::approveBatch((string)$gmBatch['batch_key'], 'approved', '端到端总经理批次批准');
@@ -227,7 +217,16 @@ catalog_in_transaction(function () use (&$evidence): void {
         ->where('status', 'active')
         ->where('soft_delete', 0)
         ->count();
-    responsibility_e2e_assert($appointmentCount > 0, 'effective responsibility appointments exist');
+    $appointmentGroups = Db::name('employee_appointments')
+        ->where('source_chain_version_id', $versionId)
+        ->where('source_kind', 'responsibility_chain')
+        ->where('status', 'active')
+        ->where('soft_delete', 0)
+        ->field('employee_id,position_id,site_id,appointment_type')
+        ->select()
+        ->toArray();
+    responsibility_e2e_assert($appointmentCount === count($appointmentGroups), 'appointment count matches persisted named-person groups');
+    responsibility_e2e_assert($appointmentCount === 4, 'twelve named-person duties aggregate into four effective role appointments');
 
     $change = QmsResponsibilityDraftService::cloneEffectiveVersion($versionId);
     responsibility_e2e_assert(($change['version']['status'] ?? '') === 'draft', 'change starts as a draft clone');
