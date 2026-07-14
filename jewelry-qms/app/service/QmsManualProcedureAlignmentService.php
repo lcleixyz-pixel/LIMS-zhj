@@ -59,7 +59,11 @@ final class QmsManualProcedureAlignmentService
                 'minimum_duration' => self::checkMinimumDuration($requirement, $procedure),
                 'internal_version_rule' => self::checkInternalVersionRule($requirement, $procedure),
                 'record_reference_consistency' => self::checkRecordReferenceConsistency($requirement, $procedure),
-                'responsibility_chain' => self::checkResponsibilityChain($requirement, $procedure),
+                'responsibility_chain' => self::checkResponsibilityChain(
+                    $requirement,
+                    $procedure,
+                    isset($inputs['role_catalog']) ? (array)$inputs['role_catalog'] : null
+                ),
                 default => null,
             };
             if ($finding === null) {
@@ -95,7 +99,7 @@ final class QmsManualProcedureAlignmentService
             ];
         }
 
-        return [
+        $result = [
             'schema_version' => '1.0',
             'generated_at' => date('Y-m-d H:i:s'),
             'pilot_id' => (string)$inputs['pilot_id'],
@@ -111,6 +115,11 @@ final class QmsManualProcedureAlignmentService
             'trace_gaps' => array_values(array_unique($traceGaps)),
             'blockers' => $blockers,
         ];
+        if (isset($inputs['responsibility_chain_version'])) {
+            $result['responsibility_chain_version'] = (array)$inputs['responsibility_chain_version'];
+        }
+
+        return $result;
     }
 
     private static function readJson(string $path): array
@@ -507,7 +516,11 @@ final class QmsManualProcedureAlignmentService
         ], $observed);
     }
 
-    private static function checkResponsibilityChain(array $requirement, array $procedure): array
+    private static function checkResponsibilityChain(
+        array $requirement,
+        array $procedure,
+        ?array $roleCatalog = null
+    ): array
     {
         $text = (string)$procedure['text'];
         $action = trim((string)($requirement['activity'] ?? $requirement['action'] ?? ''));
@@ -563,14 +576,55 @@ final class QmsManualProcedureAlignmentService
             ['公司总经理', '总经理', '经理', '最高管理者', '办公室负责人']
         ));
         $expectedRole = $requirement['expected']['role'] ?? null;
-        if ($roleNames === []) {
-            $status = 'missing';
-        } elseif ($expectedRole === null || $unconfirmedAliases !== [] || count($roleNames) > 1) {
-            $status = 'review_required';
-        } elseif (!in_array((string)$expectedRole, $roleNames, true)) {
-            $status = 'conflict';
+        $positionCodes = [];
+        $reviewRequiredAliases = [];
+        $unknownAliases = [];
+        if ($roleCatalog === null) {
+            if ($roleNames === []) {
+                $status = 'missing';
+            } elseif ($expectedRole === null || $unconfirmedAliases !== [] || count($roleNames) > 1) {
+                $status = 'review_required';
+            } elseif (!in_array((string)$expectedRole, $roleNames, true)) {
+                $status = 'conflict';
+            } else {
+                $status = 'consistent';
+            }
         } else {
-            $status = 'consistent';
+            $aliases = (array)($roleCatalog['aliases'] ?? []);
+            foreach ($roleNames as $roleName) {
+                $alias = (array)($aliases[$roleName] ?? []);
+                if ($alias === []) {
+                    $unknownAliases[] = $roleName;
+                    continue;
+                }
+                if ((string)($alias['confirmation_status'] ?? '') !== 'confirmed') {
+                    $reviewRequiredAliases[] = $roleName;
+                    continue;
+                }
+                $positionCode = trim((string)($alias['position_code'] ?? ''));
+                if ($positionCode === '') {
+                    $unknownAliases[] = $roleName;
+                    continue;
+                }
+                $positionCodes[$positionCode] = true;
+            }
+            $positionCodes = array_keys($positionCodes);
+            $expectedRoleCode = trim((string)($requirement['expected']['role_code'] ?? ''));
+            if ($roleNames === []) {
+                $status = 'missing';
+            } elseif ($reviewRequiredAliases !== [] || $unknownAliases !== [] || $expectedRoleCode === '') {
+                $status = 'review_required';
+            } elseif ($positionCodes === []) {
+                $status = 'review_required';
+            } elseif (array_values(array_diff($positionCodes, [$expectedRoleCode])) !== []) {
+                $status = 'conflict';
+            } else {
+                $status = 'consistent';
+            }
+            $unconfirmedAliases = array_values(array_unique(array_merge(
+                $reviewRequiredAliases,
+                $unknownAliases
+            )));
         }
         $firstEvidence = $evidenceRows[0] ?? null;
         if ($firstEvidence !== null && count($evidenceRows) > 1) {
@@ -580,11 +634,18 @@ final class QmsManualProcedureAlignmentService
             ))));
         }
 
-        return self::finding($requirement, $procedure, $status, $firstEvidence, [
+        $observed = [
             'roles' => $roleNames,
             'unconfirmed_aliases' => $unconfirmedAliases,
-            'activity' => $action,
-        ]);
+        ];
+        if ($roleCatalog !== null) {
+            $observed['position_codes'] = $positionCodes;
+            $observed['review_required_aliases'] = $reviewRequiredAliases;
+            $observed['unknown_aliases'] = $unknownAliases;
+        }
+        $observed['activity'] = $action;
+
+        return self::finding($requirement, $procedure, $status, $firstEvidence, $observed);
     }
 
     private static function extractHeadingSection(string $text, string $heading): ?array

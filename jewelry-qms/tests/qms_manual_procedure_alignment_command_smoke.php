@@ -55,6 +55,9 @@ try {
 
     $commandSource = file_get_contents(dirname(__DIR__) . '/app/command/QmsManualProcedureAlignmentCheck.php') ?: '';
     command_assert(str_contains($commandSource, "setName('qms:check-manual-procedure-alignment')"), 'Read-only command is defined');
+    command_assert(str_contains($commandSource, "'responsibility-version-id'"), 'Optional responsibility version input is defined');
+    command_assert(str_contains($commandSource, 'QmsResponsibilityAlignmentService::baselineForVersion'), 'Responsibility version is loaded through the read-only adapter');
+    command_assert(str_contains($commandSource, 'QmsResponsibilityAlignmentService::injectBaseline'), 'Responsibility baseline is injected before alignment');
     command_assert(!str_contains($commandSource, "addOption('apply'"), 'Read-only command has no apply option');
 
     $consoleSource = file_get_contents(dirname(__DIR__) . '/config/console.php') ?: '';

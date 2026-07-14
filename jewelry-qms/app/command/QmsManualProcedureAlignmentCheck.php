@@ -6,6 +6,7 @@ namespace app\command;
 use app\service\QmsManualProcedureAlignmentReportService;
 use app\service\QmsManualProcedureAlignmentService;
 use app\service\QmsManualProcedureTraceService;
+use app\service\QmsResponsibilityAlignmentService;
 use think\console\Command;
 use think\console\Input;
 use think\console\input\Option;
@@ -20,6 +21,12 @@ final class QmsManualProcedureAlignmentCheck extends Command
             ->addOption('procedure-dir', null, Option::VALUE_REQUIRED, '当前程序 Markdown 目录')
             ->addOption('output-dir', null, Option::VALUE_REQUIRED, '只读校验报告目录')
             ->addOption('trace-snapshot', null, Option::VALUE_REQUIRED, '测试用追溯快照；不提供时只读查询当前系统')
+            ->addOption(
+                'responsibility-version-id',
+                null,
+                Option::VALUE_REQUIRED,
+                '可选：使用指定责任链版本校准岗位职责要求'
+            )
             ->addOption('report-version', null, Option::VALUE_REQUIRED, '报告版本，例如 v0.1', 'v0.1')
             ->setDescription('沿现有追溯链检查手册要求与程序文件一致性；只读');
     }
@@ -30,6 +37,7 @@ final class QmsManualProcedureAlignmentCheck extends Command
         $procedureDir = trim((string)$input->getOption('procedure-dir'));
         $outputDir = trim((string)$input->getOption('output-dir'));
         $snapshotPath = trim((string)$input->getOption('trace-snapshot'));
+        $responsibilityVersionId = trim((string)$input->getOption('responsibility-version-id'));
         $reportVersion = trim((string)$input->getOption('report-version'));
         if ($specPath === '' || $procedureDir === '' || $outputDir === '') {
             $output->writeln('<error>必须提供 --spec、--procedure-dir 与 --output-dir</error>');
@@ -42,6 +50,10 @@ final class QmsManualProcedureAlignmentCheck extends Command
 
         try {
             $inputs = QmsManualProcedureAlignmentService::loadInputs($specPath, $procedureDir);
+            if ($responsibilityVersionId !== '') {
+                $baseline = QmsResponsibilityAlignmentService::baselineForVersion($responsibilityVersionId);
+                $inputs = QmsResponsibilityAlignmentService::injectBaseline($inputs, $baseline);
+            }
             $trace = $snapshotPath !== ''
                 ? QmsManualProcedureTraceService::fromSnapshot($snapshotPath)
                 : QmsManualProcedureTraceService::fromDatabase(

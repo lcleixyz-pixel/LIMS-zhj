@@ -97,6 +97,10 @@ alignment_assert(
     in_array('公司总经理', $findings['Y13-CX21']['observed']['unconfirmed_aliases'], true),
     'CX-21 reports the unconfirmed general-manager alias'
 );
+alignment_assert(
+    array_keys($findings['Y13-CX21']['observed']) === ['roles', 'unconfirmed_aliases', 'activity'],
+    'Without role_catalog the legacy raw-name finding shape remains unchanged'
+);
 alignment_assert($findings['Y13-CX32']['trace_source'] === 'fallback_target', 'CX-32 reports fallback trace source');
 alignment_assert(in_array('XZTC/CX-32-2022', $result['trace_gaps'], true), 'Trace gap is listed at report level');
 
