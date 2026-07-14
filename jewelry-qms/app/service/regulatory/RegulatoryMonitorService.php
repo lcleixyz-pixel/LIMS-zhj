@@ -48,12 +48,17 @@ final class RegulatoryMonitorService
     /**
      * @return array<string, mixed>
      */
-    public function run(string $triggerMode = 'manual', ?array $sourceKeys = null): array
+    public function run(
+        string $triggerMode = 'manual',
+        ?array $sourceKeys = null,
+        ?string $since = null
+    ): array
     {
         if (!in_array($triggerMode, ['scheduled', 'manual'], true)) {
             throw new InvalidArgumentException('trigger_mode 必须是 scheduled 或 manual');
         }
         $sourceKeys = $this->resolveSourceKeys($sourceKeys);
+        $since = $this->normalizeSince($since);
         $companyId = trim((string)Config::get('qms.company_id'));
         if ($companyId === '') {
             throw new RuntimeException('法规监测缺少 company_id 配置');
@@ -100,6 +105,8 @@ final class RegulatoryMonitorService
                 'item_failure_count' => 0,
                 'candidate_new_count' => 0,
                 'candidate_existing_count' => 0,
+                'filter_skipped_count' => 0,
+                'missing_published_date_count' => 0,
                 'requires_manual_verification' => false,
                 'message' => null,
                 'error' => null,
@@ -131,11 +138,31 @@ final class RegulatoryMonitorService
                 $sourceResult['item_count'] = count($items);
                 $itemErrors = [];
                 foreach ($items as $item) {
-                    $sourceResult['processed_count']++;
+                    $countedAsProcessed = false;
                     try {
                         if (!is_array($item)) {
                             throw new RuntimeException('来源适配器返回了无效候选条目');
                         }
+                        if ($since !== null) {
+                            $publishedDate = trim((string)($item['published_date'] ?? ''));
+                            if ($publishedDate !== '' && preg_match('/\A\d{4}-\d{2}-\d{2}\z/D', $publishedDate) === 1) {
+                                if (strcmp($publishedDate, $since) < 0) {
+                                    $sourceResult['filter_skipped_count']++;
+                                    continue;
+                                }
+                            } else {
+                                $sourceResult['missing_published_date_count']++;
+                                $sourceResult['requires_manual_verification'] = true;
+                                $sourceResult['message'] = '已保留无发布日期条目，需人工确认 since 边界';
+                                $item['monitor_filter'] = [
+                                    'since' => $since,
+                                    'disposition' => 'included_missing_date_manual_confirmation',
+                                    'reason' => 'published_date_missing_or_invalid',
+                                ];
+                            }
+                        }
+                        $sourceResult['processed_count']++;
+                        $countedAsProcessed = true;
                         $recorded = $this->candidateService->record(
                             $companyId,
                             $runId,
@@ -147,6 +174,9 @@ final class RegulatoryMonitorService
                         $sourceResult['candidate_new_count'] += (int)$recorded['new_count'];
                         $sourceResult['candidate_existing_count'] += (int)$recorded['existing_count'];
                     } catch (Throwable $itemException) {
+                        if (!$countedAsProcessed) {
+                            $sourceResult['processed_count']++;
+                        }
                         $sourceResult['item_failure_count']++;
                         $itemErrors[] = '条目 ' . $sourceResult['processed_count'] . ': '
                             . $this->sanitizeError($itemException->getMessage());
@@ -205,6 +235,7 @@ final class RegulatoryMonitorService
             'collector_version' => self::EXECUTION_VERSION,
             'source_config_version' => $sourceConfigVersion,
             'rule_version' => RegulatoryCandidateService::RULE_VERSION,
+            'since' => $since,
             'sources' => $sourceResults,
         ];
         $errorSummary = $errors === []
@@ -250,6 +281,22 @@ final class RegulatoryMonitorService
         }
 
         return array_values($resolved);
+    }
+
+    private function normalizeSince(?string $since): ?string
+    {
+        if ($since === null) {
+            return null;
+        }
+        if (preg_match('/\A\d{4}-\d{2}-\d{2}\z/D', $since) !== 1) {
+            throw new InvalidArgumentException('since 必须是严格的 YYYY-MM-DD 日期');
+        }
+        [$year, $month, $day] = array_map('intval', explode('-', $since));
+        if (!checkdate($month, $day, $year)) {
+            throw new InvalidArgumentException('since 必须是有效日期');
+        }
+
+        return $since;
     }
 
     private function sanitizeError(string $message, int $maximum = self::SOURCE_ERROR_MAX_LENGTH): string
