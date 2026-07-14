@@ -13,10 +13,6 @@ use think\facade\Db;
 use think\facade\Log;
 use think\facade\Session;
 
-class RegulatoryPromotionDomainException extends \RuntimeException
-{
-}
-
 class ExternalChangeEventService
 {
     public const STATUS_REGISTERED = 'registered';
@@ -172,8 +168,9 @@ class ExternalChangeEventService
         return $event;
     }
 
-    public static function promoteRegulatoryCandidate(string $candidateId, string $actorId): QmsExternalChangeEvent
+    final public static function promoteRegulatoryCandidate(string $candidateId, string $actorId): QmsExternalChangeEvent
     {
+        self::assertPromotionTestSeam();
         self::assertPromotionIdentity($candidateId, $actorId);
 
         try {
@@ -199,7 +196,7 @@ class ExternalChangeEventService
                         throw new RegulatoryPromotionDomainException('法规候选晋升状态异常，请人工核查');
                     }
 
-                    return self::findValidPromotedEvent($promotedEventId, $companyId);
+                    return self::findValidPromotedEvent($candidateId, $promotedEventId, $companyId);
                 }
                 if ($promotedEventId !== '') {
                     throw new RegulatoryPromotionDomainException('法规候选晋升关联异常，请人工核查');
@@ -208,6 +205,9 @@ class ExternalChangeEventService
                     throw new RegulatoryPromotionDomainException('仅已确认相关的法规候选可以晋升');
                 }
 
+                // The candidate row lock serializes retries for this candidate. The legacy
+                // global event-code allocator may still reject one of two different candidates;
+                // the unique key plus this transaction guarantees a complete rollback.
                 $officialUrl = self::officialCandidateUrl($candidate);
                 $eventData = self::normalizeInput([
                     'source_kind' => self::sourceKindForCandidate((string)$candidate->source_key),
@@ -249,7 +249,11 @@ class ExternalChangeEventService
         }
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * Test-only persistence seam. Production calls must use this exact service class.
+     *
+     * @param array<string, mixed> $data
+     */
     protected static function persistPromotedEvent(array $data): QmsExternalChangeEvent
     {
         $event = new QmsExternalChangeEvent();
@@ -258,6 +262,7 @@ class ExternalChangeEventService
         return $event;
     }
 
+    /** Test-only audit-failure seam. Production calls must use this exact service class. */
     protected static function writePromotionHistory(string $candidateId, string $eventId, string $actorId): void
     {
         History::create([
@@ -297,7 +302,20 @@ class ExternalChangeEventService
         }
     }
 
-    private static function findValidPromotedEvent(string $eventId, string $companyId): QmsExternalChangeEvent
+    private static function assertPromotionTestSeam(): void
+    {
+        if (static::class !== self::class
+            && strtolower(trim((string)getenv('APP_ENV'))) !== 'test'
+        ) {
+            throw new RegulatoryPromotionDomainException('法规候选晋升测试缝仅允许在 APP_ENV=test 使用');
+        }
+    }
+
+    private static function findValidPromotedEvent(
+        string $candidateId,
+        string $eventId,
+        string $companyId
+    ): QmsExternalChangeEvent
     {
         $event = QmsExternalChangeEvent::where('company_id', $companyId)
             ->where('publish', 1)
@@ -306,6 +324,35 @@ class ExternalChangeEventService
             ->find($eventId);
         if (!$event) {
             throw new RegulatoryPromotionDomainException('法规候选关联事件无效，请人工核查');
+        }
+
+        // Locking read is required here: a concurrent retry may have opened its
+        // REPEATABLE READ transaction before the first promotion committed.
+        $histories = Db::name('histories')
+            ->where('model_name', 'QmsExternalChangeCandidate')
+            ->where('record_id', $candidateId)
+            ->where('action', 'promoteRegulatoryCandidate')
+            ->lock(true)
+            ->select()
+            ->toArray();
+        if (count($histories) !== 1) {
+            throw new RegulatoryPromotionDomainException('法规候选晋升审计关联异常，请人工核查');
+        }
+
+        $history = $histories[0];
+        $historyActor = trim((string)($history['user_id'] ?? ''));
+        $expectedDetails = implode(' ', [
+            'outcome=success',
+            'candidate_id=' . $candidateId,
+            'event_id=' . $eventId,
+            'actor_id=' . $historyActor,
+        ]);
+        if ($historyActor === ''
+            || (string)($history['controller_name'] ?? '') !== 'ExternalChangeEventService'
+            || (string)($history['details'] ?? '') !== $expectedDetails
+            || trim((string)$event->created_by) !== $historyActor
+        ) {
+            throw new RegulatoryPromotionDomainException('法规候选晋升审计内容异常，请人工核查');
         }
 
         return $event;

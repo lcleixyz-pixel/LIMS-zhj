@@ -6,12 +6,15 @@ require __DIR__ . '/../app/common.php';
 
 use app\model\QmsExternalChangeEvent;
 use app\service\ExternalChangeEventService;
+use app\service\RegulatoryPromotionDomainException;
 use think\facade\Config;
 use think\facade\Db;
 use think\facade\Session;
 
 $app = new think\App();
 $app->initialize();
+$previousAppEnv = getenv('APP_ENV');
+putenv('APP_ENV=test');
 
 final class PromotionEventFailureService extends ExternalChangeEventService
 {
@@ -29,11 +32,14 @@ final class PromotionAuditFailureService extends ExternalChangeEventService
     }
 }
 
+final class PromotionSmokeAssertionFailed extends RuntimeException
+{
+}
+
 function promotion_assert(bool $condition, string $message): void
 {
     if (!$condition) {
-        fwrite(STDERR, $message . PHP_EOL);
-        exit(1);
+        throw new PromotionSmokeAssertionFailed($message);
     }
 }
 
@@ -104,7 +110,7 @@ function promotion_insert_candidate(array $candidate): void
     Db::name('qms_external_change_candidates')->insert($candidate);
 }
 
-/** @return array{process: resource, pipes: array<int, resource>} */
+/** @return array{process: resource, pipes: array<int, resource>, reaped: bool} */
 function promotion_start_worker(string $candidateId, string $actorId, string $barrier, int $worker): array
 {
     $command = implode(' ', array_map('escapeshellarg', [
@@ -125,17 +131,18 @@ function promotion_start_worker(string $candidateId, string $actorId, string $ba
     promotion_assert(is_resource($process), '必须能启动真实并发晋升进程');
     fclose($pipes[0]);
 
-    return ['process' => $process, 'pipes' => $pipes];
+    return ['process' => $process, 'pipes' => $pipes, 'reaped' => false];
 }
 
 /** @return array<string, mixed> */
-function promotion_finish_worker(array $worker): array
+function promotion_finish_worker(array &$worker): array
 {
     $stdout = stream_get_contents($worker['pipes'][1]);
     $stderr = stream_get_contents($worker['pipes'][2]);
     fclose($worker['pipes'][1]);
     fclose($worker['pipes'][2]);
     $exit = proc_close($worker['process']);
+    $worker['reaped'] = true;
     promotion_assert($exit === 0, '并发晋升子进程必须成功：' . trim((string)$stderr));
     $decoded = json_decode(trim((string)$stdout), true);
     promotion_assert(is_array($decoded), '并发晋升子进程必须返回 JSON');
@@ -168,11 +175,6 @@ if (($argv[1] ?? '') === '--worker') {
     }
 }
 
-promotion_assert(
-    method_exists(ExternalChangeEventService::class, 'promoteRegulatoryCandidate'),
-    'ExternalChangeEventService 必须提供候选晋升 API'
-);
-
 $companyId = trim((string)Config::get('qms.company_id'));
 $otherCompanyId = '99999999-9999-4999-8999-999999999999';
 $actorId = 'promotion-qm';
@@ -180,6 +182,8 @@ $runToken = substr(hash('sha256', qms_uuid()), 0, 10);
 $ids = [];
 $eventIds = [];
 $barriers = [];
+$workers = [];
+$testFailure = null;
 
 Db::execute("CREATE TABLE IF NOT EXISTS `field_change_logs` (
   `id` varchar(36) NOT NULL, `model_name` varchar(100) NOT NULL,
@@ -190,6 +194,18 @@ Db::execute("CREATE TABLE IF NOT EXISTS `field_change_logs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 try {
+    promotion_assert(
+        method_exists(ExternalChangeEventService::class, 'promoteRegulatoryCandidate'),
+        'ExternalChangeEventService 必须提供候选晋升 API'
+    );
+    $promotionMethod = new ReflectionMethod(ExternalChangeEventService::class, 'promoteRegulatoryCandidate');
+    promotion_assert($promotionMethod->isFinal(), '候选晋升 API 必须为 final，生产子类不得改写安全流程');
+    $promotionException = new ReflectionClass(RegulatoryPromotionDomainException::class);
+    promotion_assert(
+        str_ends_with((string)$promotionException->getFileName(), '/RegulatoryPromotionDomainException.php'),
+        '晋升领域异常必须位于独立 PSR-4 文件'
+    );
+
     Session::set('user', ['id' => $actorId, 'role' => 'quality_manager']);
 
     foreach (['pending', 'deferred', 'confirmed_not_applicable'] as $status) {
@@ -209,6 +225,20 @@ try {
     $permissionId = 'prom-perm-' . $runToken;
     $ids[] = $permissionId;
     promotion_insert_candidate(promotion_candidate($permissionId, $companyId));
+    putenv('APP_ENV=production');
+    $seamException = null;
+    try {
+        PromotionEventFailureService::promoteRegulatoryCandidate($permissionId, $actorId);
+    } catch (Throwable $exception) {
+        $seamException = $exception;
+    } finally {
+        putenv('APP_ENV=test');
+    }
+    promotion_assert(
+        $seamException instanceof RegulatoryPromotionDomainException
+            && str_contains($seamException->getMessage(), '测试缝'),
+        '非 APP_ENV=test 环境必须在进入持久化钩子前拒绝服务子类'
+    );
     foreach (['admin', 'staff', 'auditor', 'department_head'] as $role) {
         Session::set('user', ['id' => 'promotion-' . $role, 'role' => $role]);
         promotion_throws(
@@ -288,6 +318,53 @@ try {
         Db::name('histories')->where('model_name', 'QmsExternalChangeCandidate')->where('record_id', $successId)->where('action', 'promoteRegulatoryCandidate')->count() === 1,
         '顺序重复晋升不得创建第二条成功 History'
     );
+
+    $borrowedEventId = 'prom-borrow-' . $runToken;
+    $ids[] = $borrowedEventId;
+    $borrowedCandidate = promotion_candidate($borrowedEventId, $companyId, 'promoted');
+    $borrowedCandidate['promoted_event_id'] = (string)$event->id;
+    $borrowedCandidate['promoted_at'] = date('Y-m-d H:i:s');
+    promotion_insert_candidate($borrowedCandidate);
+    promotion_throws(
+        fn () => ExternalChangeEventService::promoteRegulatoryCandidate($borrowedEventId, $actorId),
+        '同机构有效但属于其他候选且无本候选 History 的事件不得幂等返回'
+    );
+
+    foreach (['missing_history', 'wrong_event', 'duplicate_history', 'actor_mismatch'] as $corruption) {
+        $corruptId = 'prom-' . substr(hash('sha256', $corruption . $runToken), 0, 16);
+        $ids[] = $corruptId;
+        promotion_insert_candidate(promotion_candidate($corruptId, $companyId));
+        $corruptEvent = ExternalChangeEventService::promoteRegulatoryCandidate($corruptId, $actorId);
+        $eventIds[] = (string)$corruptEvent->id;
+        $historyQuery = Db::name('histories')
+            ->where('model_name', 'QmsExternalChangeCandidate')
+            ->where('record_id', $corruptId)
+            ->where('action', 'promoteRegulatoryCandidate');
+        $corruptHistory = $historyQuery->find();
+        promotion_assert(is_array($corruptHistory), '损坏关联前必须存在真实晋升 History');
+
+        if ($corruption === 'missing_history') {
+            $historyQuery->delete();
+        } elseif ($corruption === 'wrong_event') {
+            $wrongDetails = str_replace(
+                'event_id=' . (string)$corruptEvent->id,
+                'event_id=' . (string)$event->id,
+                (string)$corruptHistory['details']
+            );
+            $historyQuery->update(['details' => $wrongDetails]);
+        } elseif ($corruption === 'duplicate_history') {
+            $duplicateHistory = $corruptHistory;
+            $duplicateHistory['id'] = qms_uuid();
+            Db::name('histories')->insert($duplicateHistory);
+        } else {
+            $historyQuery->update(['user_id' => 'different-promotion-qm']);
+        }
+
+        promotion_throws(
+            fn () => ExternalChangeEventService::promoteRegulatoryCandidate($corruptId, $actorId),
+            $corruption . ' 必须阻断幂等返回'
+        );
+    }
 
     foreach ([
         'cnas_lab_notice' => 'cnas',
@@ -435,16 +512,18 @@ try {
     promotion_insert_candidate(promotion_candidate($concurrentId, $companyId));
     $barrier = sys_get_temp_dir() . '/qms-promotion-' . $runToken;
     $barriers[] = $barrier;
-    $worker1 = promotion_start_worker($concurrentId, $actorId, $barrier, 1);
-    $worker2 = promotion_start_worker($concurrentId, $actorId, $barrier, 2);
+    $workers[] = promotion_start_worker($concurrentId, $actorId, $barrier, 1);
+    $worker1Index = array_key_last($workers);
+    $workers[] = promotion_start_worker($concurrentId, $actorId, $barrier, 2);
+    $worker2Index = array_key_last($workers);
     $deadline = microtime(true) + 10.0;
     while ((!is_file($barrier . '.1.ready') || !is_file($barrier . '.2.ready')) && microtime(true) < $deadline) {
         usleep(10000);
     }
     promotion_assert(is_file($barrier . '.1.ready') && is_file($barrier . '.2.ready'), '两个并发进程必须先到达同一屏障');
     file_put_contents($barrier . '.go', 'go');
-    $result1 = promotion_finish_worker($worker1);
-    $result2 = promotion_finish_worker($worker2);
+    $result1 = promotion_finish_worker($workers[$worker1Index]);
+    $result2 = promotion_finish_worker($workers[$worker2Index]);
     promotion_assert((string)$result1['event_id'] !== '', '并发进程必须返回 event_id');
     promotion_assert((string)$result1['event_id'] === (string)$result2['event_id'], '并发晋升必须返回同一 event_id');
     $eventIds[] = (string)$result1['event_id'];
@@ -456,8 +535,36 @@ try {
         Db::name('histories')->where('model_name', 'QmsExternalChangeCandidate')->where('record_id', $concurrentId)->where('action', 'promoteRegulatoryCandidate')->count() === 1,
         '并发晋升只能创建一条成功动作审计'
     );
+} catch (Throwable $exception) {
+    $testFailure = $exception;
 } finally {
     Session::delete('user');
+    if ($previousAppEnv === false) {
+        putenv('APP_ENV');
+    } else {
+        putenv('APP_ENV=' . $previousAppEnv);
+    }
+    foreach ($workers as &$worker) {
+        if (($worker['reaped'] ?? false) === true) {
+            continue;
+        }
+        if (is_resource($worker['process'] ?? null)) {
+            $status = proc_get_status($worker['process']);
+            if (is_array($status) && ($status['running'] ?? false)) {
+                proc_terminate($worker['process']);
+            }
+        }
+        foreach (($worker['pipes'] ?? []) as $pipe) {
+            if (is_resource($pipe)) {
+                fclose($pipe);
+            }
+        }
+        if (is_resource($worker['process'] ?? null)) {
+            proc_close($worker['process']);
+        }
+        $worker['reaped'] = true;
+    }
+    unset($worker);
     foreach ($barriers as $barrier) {
         @unlink($barrier . '.1.ready');
         @unlink($barrier . '.2.ready');
@@ -478,6 +585,14 @@ try {
         Db::name('field_change_logs')->where('model_name', 'QmsExternalChangeEvent')->whereIn('record_id', array_values(array_unique($eventIds)))->delete();
         Db::name('qms_external_change_events')->whereIn('id', array_values(array_unique($eventIds)))->delete();
     }
+}
+
+if ($testFailure instanceof PromotionSmokeAssertionFailed) {
+    fwrite(STDERR, $testFailure->getMessage() . PHP_EOL);
+    exit(1);
+}
+if ($testFailure !== null) {
+    throw $testFailure;
 }
 
 echo "regulatory_promotion_smoke passed\n";
