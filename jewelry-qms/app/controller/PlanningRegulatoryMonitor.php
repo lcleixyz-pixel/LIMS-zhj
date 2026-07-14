@@ -6,6 +6,7 @@ namespace app\controller;
 use app\BaseController;
 use app\service\FieldAuditService;
 use app\service\regulatory\RegulatoryCandidateReviewService;
+use app\service\regulatory\RegulatoryExportService;
 use InvalidArgumentException;
 use RuntimeException;
 use think\App;
@@ -18,10 +19,16 @@ use think\facade\View;
 class PlanningRegulatoryMonitor extends BaseController
 {
     private ?RegulatoryCandidateReviewService $reviewService;
+    private ?RegulatoryExportService $exportService;
 
-    public function __construct(App $app, ?RegulatoryCandidateReviewService $reviewService = null)
+    public function __construct(
+        App $app,
+        ?RegulatoryCandidateReviewService $reviewService = null,
+        ?RegulatoryExportService $exportService = null
+    )
     {
         $this->reviewService = $reviewService;
+        $this->exportService = $exportService;
         parent::__construct($app);
     }
 
@@ -142,6 +149,30 @@ class PlanningRegulatoryMonitor extends BaseController
         return redirect('/planning/regulatory-monitor');
     }
 
+    public function export()
+    {
+        $this->assertControllerRole(['admin', 'quality_manager']);
+        $candidateId = (string)$this->request->get('id', '');
+        try {
+            $service = $this->exportService();
+            $packet = $service->exportCandidate($candidateId);
+            $filename = $service->filename($candidateId);
+        } catch (InvalidArgumentException|RuntimeException $exception) {
+            throw new HttpException(404, '法规候选不存在或无权导出');
+        }
+
+        return json(
+            $packet,
+            200,
+            [
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Cache-Control' => 'no-store',
+                'X-Content-Type-Options' => 'nosniff',
+            ],
+            ['json_encode_param' => JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR]
+        );
+    }
+
     /** @param list<string> $allowed */
     private function assertControllerRole(array $allowed): void
     {
@@ -213,6 +244,11 @@ class PlanningRegulatoryMonitor extends BaseController
     private function service(): RegulatoryCandidateReviewService
     {
         return $this->reviewService ??= new RegulatoryCandidateReviewService();
+    }
+
+    private function exportService(): RegulatoryExportService
+    {
+        return $this->exportService ??= new RegulatoryExportService();
     }
 
     private function safeSourceUrl(array $candidate, array $sources): ?string

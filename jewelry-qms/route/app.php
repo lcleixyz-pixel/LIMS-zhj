@@ -124,6 +124,7 @@ Route::group(function () {
     Route::rule('planning/change-events', 'PlanningChangeEvent/index');
     Route::get('planning/regulatory-monitor', 'PlanningRegulatoryMonitor/index');
     Route::get('planning/regulatory-monitor/show', 'PlanningRegulatoryMonitor/show');
+    Route::get('planning/regulatory-monitor/export', 'PlanningRegulatoryMonitor/export');
     Route::post('planning/regulatory-monitor/review', 'PlanningRegulatoryMonitor/review');
     Route::post('planning/regulatory-monitor/run', 'PlanningRegulatoryMonitor/run');
     Route::post('planning/objectives/create-policy', 'PlanningObjective/createPolicy');
