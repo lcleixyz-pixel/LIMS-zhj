@@ -12,6 +12,7 @@ use DomainException;
 use Throwable;
 use think\facade\Config;
 use think\facade\Db;
+use think\facade\Log;
 use think\facade\Session;
 use think\facade\View;
 
@@ -36,6 +37,7 @@ final class PlanningResponsibility extends BaseController
             $version = $sourceVersionId === ''
                 ? QmsResponsibilityCatalogService::createInitialDraft()
                 : QmsResponsibilityDraftService::cloneEffectiveVersion($sourceVersionId);
+            $this->markAudit('success', (string)$version['id'], 'version_id');
             Session::flash('success', '责任链草案已建立，人员未绑定时仍可进行结构管理。');
 
             return $this->responsibilityRedirect((string)$version['id'], 'structure');
@@ -58,7 +60,7 @@ final class PlanningResponsibility extends BaseController
             $this->assertManagerWrite();
             $competencyId = trim((string)$this->request->post('competency_record_id', ''));
             $certificateId = trim((string)$this->request->post('certificate_id', ''));
-            QmsResponsibilityDraftService::saveAssignment(
+            $assignment = QmsResponsibilityDraftService::saveAssignment(
                 trim((string)$this->request->post('responsibility_id', '')),
                 trim((string)$this->request->post('employee_id', '')),
                 $this->nullablePost('site_id'),
@@ -69,6 +71,7 @@ final class PlanningResponsibility extends BaseController
                     'certificate_ids' => $certificateId === '' ? [] : [$certificateId],
                 ]
             );
+            $this->markAudit('success', (string)$assignment['id'], 'assignment_id');
             Session::flash('success', '人员配置已保存为草案，尚未形成正式任命。');
 
             return $this->responsibilityRedirect($versionId, 'staffing');
@@ -83,11 +86,11 @@ final class PlanningResponsibility extends BaseController
             return redirect('/planning/responsibilities?view=staffing');
         }
         $versionId = trim((string)$this->request->post('version_id', ''));
+        $assignmentId = trim((string)$this->request->post('assignment_id', ''));
         try {
             $this->assertManagerWrite();
-            QmsResponsibilityDraftService::removeAssignment(
-                trim((string)$this->request->post('assignment_id', ''))
-            );
+            QmsResponsibilityDraftService::removeAssignment($assignmentId);
+            $this->markAudit('success', $assignmentId, 'assignment_id');
             Session::flash('success', '人员草案绑定已移除。');
 
             return $this->responsibilityRedirect($versionId, 'staffing');
@@ -106,6 +109,7 @@ final class PlanningResponsibility extends BaseController
             $this->assertManagerWrite();
             $mode = (string)$this->request->post('mode', 'structure');
             $result = QmsResponsibilityValidationService::validateVersion($versionId, $mode);
+            $this->markAudit('success', $versionId, 'version_id');
             Session::flash('responsibility_validation', $result);
             Session::flash(
                 ($result['result'] ?? '') === 'pass' ? 'success' : 'warning',
@@ -127,6 +131,7 @@ final class PlanningResponsibility extends BaseController
         try {
             $this->assertManagerWrite();
             QmsResponsibilityApprovalService::submitVersion($versionId);
+            $this->markAudit('success', $versionId, 'version_id');
             Session::flash('success', '责任链版本已提交，内容哈希已锁定并按业务身份流转签批。');
 
             return $this->responsibilityRedirect($versionId, 'approval');
@@ -142,13 +147,14 @@ final class PlanningResponsibility extends BaseController
         }
         try {
             $this->assertAdmin();
-            QmsResponsibilityApprovalService::registerCorporateIdentity([
+            $appointment = QmsResponsibilityApprovalService::registerCorporateIdentity([
                 'position_code' => 'company_general_manager',
                 'employee_id' => trim((string)$this->request->post('employee_id', '')),
                 'source_document_number' => trim((string)$this->request->post('source_document_number', '')),
                 'source_excerpt' => trim((string)$this->request->post('source_excerpt', '')),
                 'appointed_at' => trim((string)$this->request->post('appointed_at', date('Y-m-d'))),
             ]);
+            $this->markAudit('success', (string)$appointment['id'], 'appointment_id');
             Session::flash('success', '公司总经理既有治理身份及来源证据已登记；该动作不表示由管理员任命。');
 
             return $this->responsibilityRedirect('', 'approval');
@@ -164,10 +170,11 @@ final class PlanningResponsibility extends BaseController
         }
         try {
             $this->assertAdmin();
-            QmsResponsibilityApprovalService::requestLabDirectorAppointment(
+            $approval = QmsResponsibilityApprovalService::requestLabDirectorAppointment(
                 trim((string)$this->request->post('employee_id', '')),
                 trim((string)$this->request->post('effective_from', date('Y-m-d')))
             );
+            $this->markAudit('success', (string)$approval['id'], 'approval_id');
             Session::flash('success', '实验室主任任命申请已流转给公司总经理签批。');
 
             return $this->responsibilityRedirect('', 'approval');
@@ -187,17 +194,21 @@ final class PlanningResponsibility extends BaseController
             $decision = (string)$this->request->post('decision', '');
             $comments = trim((string)$this->request->post('comments', ''));
             if ($scope === 'governance_bootstrap') {
+                $approvalId = trim((string)$this->request->post('approval_id', ''));
                 QmsResponsibilityApprovalService::approveBootstrap(
-                    trim((string)$this->request->post('approval_id', '')),
+                    $approvalId,
                     $decision,
                     $comments
                 );
+                $this->markAudit('success', $approvalId, 'approval_id');
             } else {
-                QmsResponsibilityApprovalService::approveBatch(
+                $result = QmsResponsibilityApprovalService::approveBatch(
                     trim((string)$this->request->post('batch_key', '')),
                     $decision,
                     $comments
                 );
+                $approvedVersionId = trim((string)($result['version_id'] ?? $versionId));
+                $this->markAudit('success', $approvedVersionId, 'version_id');
             }
             Session::flash('success', '签批决定已记录；业务身份、禁止自批和版本哈希由签批服务实时复核。');
 
@@ -228,7 +239,7 @@ final class PlanningResponsibility extends BaseController
             try {
                 $detail = QmsResponsibilityDraftService::versionDetail($versionId);
             } catch (Throwable $e) {
-                Session::flash('error', $e->getMessage());
+                $this->flashThrowable($e, '读取责任链版本失败');
                 $versionId = '';
             }
         }
@@ -239,6 +250,9 @@ final class PlanningResponsibility extends BaseController
             try {
                 $pendingBatch = QmsResponsibilityApprovalService::pendingBatchForApprover($versionId, $employeeId);
             } catch (Throwable $e) {
+                if (!$e instanceof DomainException) {
+                    Log::error('读取责任链待签批批次失败', ['exception' => $e]);
+                }
                 $pendingBatch = null;
             }
         }
@@ -336,9 +350,79 @@ final class PlanningResponsibility extends BaseController
 
     private function failure(Throwable $e, string $viewMode, string $versionId = '')
     {
-        Session::flash('error', $e->getMessage());
+        [$recordId, $subjectType, $subjectKey] = $this->auditSubjectFromRequest($versionId);
+        $this->markAudit(
+            'failed',
+            $recordId,
+            $subjectType,
+            $subjectKey,
+            $e instanceof DomainException ? 'domain' : 'internal'
+        );
+        $this->flashThrowable($e, '执行责任链写操作失败');
 
         return $this->responsibilityRedirect($versionId, $viewMode);
+    }
+
+    private function flashThrowable(Throwable $e, string $context): void
+    {
+        if ($e instanceof DomainException) {
+            Session::flash('error', $e->getMessage());
+            return;
+        }
+
+        Log::error($context, ['exception' => $e]);
+        Session::flash('error', '操作失败，请联系管理员');
+    }
+
+    private function markAudit(
+        string $outcome,
+        string $recordId,
+        string $subjectType,
+        ?string $subjectKey = null,
+        string $failureKind = ''
+    ): void {
+        $subjectKey = trim((string)($subjectKey ?? $recordId));
+        $this->request->withMiddleware([
+            'qms_responsibility_audit' => [
+                'outcome' => $outcome,
+                'record_id' => trim($recordId),
+                'subject_type' => $subjectType,
+                'subject_key' => $subjectKey,
+                'failure_kind' => $failureKind,
+            ],
+        ]);
+    }
+
+    private function auditSubjectFromRequest(string $versionId): array
+    {
+        $action = strtolower((string)$this->request->action());
+        $candidates = match ($action) {
+            'saveassignment' => (string)$this->request->post('operation', 'save') === 'remove'
+                ? ['assignment_id', 'responsibility_id', 'version_id']
+                : ['responsibility_id', 'version_id'],
+            'approve' => ['approval_id', 'version_id', 'batch_key'],
+            'registergeneralmanager', 'requestlabdirector' => ['employee_id', 'version_id'],
+            'createinitialdraft' => ['source_version_id', 'version_id'],
+            default => ['version_id', 'assignment_id', 'approval_id', 'responsibility_id', 'batch_key'],
+        };
+        foreach ($candidates as $field) {
+            $value = trim((string)$this->request->post($field, ''));
+            if ($value !== '') {
+                return [$value, $field, $value];
+            }
+        }
+        if ($versionId !== '') {
+            return [$versionId, 'version_id', $versionId];
+        }
+
+        $fingerprint = 'request:' . substr(hash('sha256', implode('|', [
+            (string)Session::get('user.id', ''),
+            (string)$this->request->controller(),
+            (string)$this->request->action(),
+            (string)Session::get('user.session_id', ''),
+        ])), 0, 28);
+
+        return [$fingerprint, 'request_attempt', $fingerprint];
     }
 
     private function responsibilityRedirect(string $versionId, string $viewMode)
