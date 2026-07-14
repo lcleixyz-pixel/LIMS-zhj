@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\middleware;
 
 use app\model\History;
+use think\facade\Log;
 use think\facade\Session;
 
 class AuditLog
@@ -127,6 +128,13 @@ class AuditLog
                         'created' => date('Y-m-d H:i:s'),
                     ]);
                 } catch (\Throwable $e) {
+                    $safeController = substr(preg_replace('/[^A-Za-z0-9_\\-]/', '_', (string)$controller) ?: 'unknown', 0, 80);
+                    $safeAction = substr(preg_replace('/[^A-Za-z0-9_-]/', '_', (string)$action) ?: 'unknown', 0, 80);
+                    Log::error(
+                        '[AuditLog] write failure exception=' . $e::class
+                        . ' controller=' . $safeController
+                        . ' action=' . $safeAction
+                    );
                 }
             }
         }

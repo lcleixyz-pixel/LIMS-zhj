@@ -20,15 +20,16 @@ final class RegulatoryMonitorRunner
         string $triggerMode,
         ?array $sourceKeys,
         ?string $since,
-        bool $dryRun
+        bool $dryRun,
+        ?string $actorId = null
     ): array {
         if (!$dryRun) {
-            return $service->run($triggerMode, $sourceKeys, $since);
+            return $service->run($triggerMode, $sourceKeys, $since, $actorId);
         }
 
         Db::startTrans();
         try {
-            return $service->run($triggerMode, $sourceKeys, $since);
+            return $service->run($triggerMode, $sourceKeys, $since, $actorId);
         } finally {
             Db::rollback();
         }

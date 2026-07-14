@@ -106,7 +106,7 @@ class PlanningRegulatoryMonitor extends BaseController
 
     public function run()
     {
-        $dryRun = filter_var($this->request->post('dry_run', false), FILTER_VALIDATE_BOOL);
+        $dryRun = $this->strictDryRun($this->request->post('dry_run', null));
         $this->assertControllerRole($dryRun ? ['admin', 'quality_manager'] : ['admin']);
         $sources = $this->request->post('source', []);
         if (!is_array($sources)) {
@@ -116,7 +116,8 @@ class PlanningRegulatoryMonitor extends BaseController
             $result = $this->service()->runManual(
                 array_values($sources),
                 trim((string)$this->request->post('since', '')) ?: null,
-                $dryRun
+                $dryRun,
+                (string)Session::get('user.id', '')
             );
             // DRY-RUN is an evidence-free rehearsal: its ambient transaction is
             // rolled back and it must not leave a route History row afterwards.
@@ -155,6 +156,18 @@ class PlanningRegulatoryMonitor extends BaseController
     private function role(): string
     {
         return trim((string)Session::get('user.role', 'staff'));
+    }
+
+    private function strictDryRun(mixed $raw): bool
+    {
+        if ($raw === 1 || $raw === '1') {
+            return true;
+        }
+        if ($raw === 0 || $raw === '0') {
+            return false;
+        }
+
+        throw new InvalidArgumentException('dry_run 必须明确为 0 或 1');
     }
 
     /** @return array<string, array<string, mixed>> */
@@ -210,6 +223,9 @@ class PlanningRegulatoryMonitor extends BaseController
         $candidateParts = parse_url($sourceUrl);
         $approvedParts = parse_url($approvedEntry);
         if (!is_array($candidateParts) || !is_array($approvedParts)) {
+            return null;
+        }
+        if (array_key_exists('user', $candidateParts) || array_key_exists('pass', $candidateParts)) {
             return null;
         }
         if (strtolower((string)($candidateParts['scheme'] ?? '')) !== 'https') {

@@ -216,24 +216,56 @@ try {
     $notificationCount = Db::name('notifications')->count();
     $fieldAuditCount = Db::name('field_change_logs')->count();
     $historyCount = Db::name('histories')->count();
-    $dryResult = $service->runManual(['cma_capability_query'], null, true);
+    $dryResult = $service->runManual(['cma_capability_query'], null, true, 'ui-qm');
     ui_assert((string)$dryResult['status'] === 'completed', 'quality_manager dry-run 应可执行');
     ui_assert(Db::name('qms_regulatory_monitor_runs')->count() === $runCount, 'UI dry-run 必须零运行记录持久化');
     ui_assert(Db::name('qms_external_change_candidates')->count() === $candidateCount, 'UI dry-run 必须零候选持久化');
     ui_assert(Db::name('notifications')->count() === $notificationCount, 'UI dry-run 必须零通知持久化');
     ui_assert(Db::name('field_change_logs')->count() === $fieldAuditCount, 'UI dry-run 必须零字段审计持久化');
     ui_assert(Db::name('histories')->count() === $historyCount, 'UI dry-run 必须零路由审计持久化');
-    ui_throws(fn () => $service->runManual(['cma_capability_query'], null, false), 'quality_manager 不得 actual 采集');
-    ui_throws(fn () => $service->runManual(['unknown_source'], null, true), '手工运行仅接受已批准 source key');
+    ui_throws(fn () => $service->runManual(['cma_capability_query'], null, false, 'ui-qm'), 'quality_manager 不得 actual 采集');
+    ui_throws(fn () => $service->runManual(['unknown_source'], null, true, 'ui-qm'), '手工运行仅接受已批准 source key');
 
     Session::set('user', ['id' => 'ui-admin', 'role' => 'admin']);
     $adminDryRunCount = Db::name('qms_regulatory_monitor_runs')->count();
     $adminHistoryCount = Db::name('histories')->count();
-    $adminDry = $service->runManual(['cma_capability_query'], null, true);
+    $adminDry = $service->runManual(['cma_capability_query'], null, true, 'ui-admin');
     ui_assert((string)$adminDry['status'] === 'completed', 'admin 也可执行 dry-run');
     ui_assert(Db::name('qms_regulatory_monitor_runs')->count() === $adminDryRunCount, 'admin dry-run 不得持久化');
     ui_assert(Db::name('histories')->count() === $adminHistoryCount, 'admin dry-run 不得留下 history');
-    $actual = $service->runManual(['cma_capability_query'], '2026-01-01', false);
+    $observedDryActor = null;
+    $dryActorFixture = (string)file_get_contents($root . '/tests/fixtures/regulatory/samr_one_list_one_library.html');
+    $dryActorService = new RegulatoryCandidateReviewService(
+        monitorFactory: static function (bool $dryRun) use (&$observedDryActor, $dryActorFixture): app\service\regulatory\RegulatoryMonitorService {
+            return new app\service\regulatory\RegulatoryMonitorService(
+                sourceFetcher: static function () use (&$observedDryActor, $dryActorFixture): string {
+                    $running = Db::name('qms_regulatory_monitor_runs')
+                        ->where('status', 'running')
+                        ->where('created_by', 'ui-admin')
+                        ->order('created', 'desc')
+                        ->order('id', 'desc')
+                        ->find();
+                    $observedDryActor = is_array($running) ? (string)$running['created_by'] : null;
+                    return $dryActorFixture;
+                },
+                candidateService: $dryRun
+                    ? new app\service\regulatory\RegulatoryCandidateService(ownsTransaction: false)
+                    : null
+            );
+        }
+    );
+    $dryActorCounts = [
+        'runs' => Db::name('qms_regulatory_monitor_runs')->count(),
+        'candidates' => Db::name('qms_external_change_candidates')->count(),
+    ];
+    $dryActorService->runManual(['samr_rkjcs_notice'], null, true, 'ui-admin');
+    ui_assert($observedDryActor === 'ui-admin', 'UI dry-run 必须在临时 run 的初始 INSERT 中写入 actor');
+    ui_assert(Db::name('qms_regulatory_monitor_runs')->count() === $dryActorCounts['runs'], 'actor dry-run 后 run 必须回滚');
+    ui_assert(Db::name('qms_external_change_candidates')->count() === $dryActorCounts['candidates'], 'actor dry-run 后 candidate 必须回滚');
+    $invalidActorRunCount = Db::name('qms_regulatory_monitor_runs')->count();
+    ui_throws(fn () => $service->runManual(['cma_capability_query'], null, false, 'bad actor!'), '非法 actor_id 必须在创建 run 前拒绝');
+    ui_assert(Db::name('qms_regulatory_monitor_runs')->count() === $invalidActorRunCount, '非法 actor_id 不得生成 run');
+    $actual = $service->runManual(['cma_capability_query'], '2026-01-01', false, 'ui-admin');
     ui_assert((string)$actual['status'] === 'completed', 'admin 可实际执行已批准 manual-only 来源');
     ui_assert((string)Db::name('qms_regulatory_monitor_runs')->where('id', $actual['run_id'])->value('trigger_mode') === 'manual', 'UI actual 必须记为 manual');
     Db::name('qms_regulatory_monitor_runs')->where('id', $actual['run_id'])->delete();
@@ -283,6 +315,27 @@ try {
     ui_assert(Db::name('histories')->count() === $httpDryBaseline['histories'], 'HTTP dry-run 必须零 histories 持久化');
 
     Session::set('user', ['id' => 'ui-http-admin', 'role' => 'admin']);
+    foreach ([true, false, null, [], 'bogus', 'true', 'false', '', 2, '01'] as $invalidDryRun) {
+        $invalidBaseline = [
+            'runs' => Db::name('qms_regulatory_monitor_runs')->count(),
+            'candidates' => Db::name('qms_external_change_candidates')->count(),
+            'notifications' => Db::name('notifications')->count(),
+            'histories' => Db::name('histories')->count(),
+        ];
+        $post = ['source' => ['cma_capability_query']];
+        if ($invalidDryRun !== null) {
+            $post['dry_run'] = $invalidDryRun;
+        }
+        ui_throws(
+            fn () => ui_run_controller_action($app, 'run', $post),
+            'dry_run 必须拒绝非严格 0/1 值: ' . var_export($invalidDryRun, true)
+        );
+        ui_assert(Db::name('qms_regulatory_monitor_runs')->count() === $invalidBaseline['runs'], '非法 dry_run 不得生成 run');
+        ui_assert(Db::name('qms_external_change_candidates')->count() === $invalidBaseline['candidates'], '非法 dry_run 不得生成 candidate');
+        ui_assert(Db::name('notifications')->count() === $invalidBaseline['notifications'], '非法 dry_run 不得生成 notification');
+        ui_assert(Db::name('histories')->count() === $invalidBaseline['histories'], '非法 dry_run 不得生成 history');
+    }
+
     ui_run_controller_action($app, 'run', [
         'source' => ['cma_capability_query'],
         'since' => '2026-01-01',
@@ -292,6 +345,8 @@ try {
     ui_assert(is_array($httpRunHistory), 'admin actual 手工运行必须记录 route audit');
     $httpRunId = (string)$httpRunHistory['record_id'];
     ui_assert((string)Db::name('qms_regulatory_monitor_runs')->where('id', $httpRunId)->value('trigger_mode') === 'manual', 'actual route audit 必须指向真实 manual run id');
+    ui_assert((string)Db::name('qms_regulatory_monitor_runs')->where('id', $httpRunId)->value('created_by') === 'ui-http-admin', 'UI actual run 初始 INSERT 必须写入当前操作人 created_by');
+    ui_assert((string)Db::name('qms_regulatory_monitor_runs')->where('id', $httpRunId)->value('modified_by') === 'ui-http-admin', 'UI actual run 必须同步 modified_by');
     ui_assert(str_contains((string)$httpRunHistory['details'], 'outcome=success'), 'completed route audit 必须明确记录 outcome=success');
     ui_assert(str_contains((string)$httpRunHistory['details'], 'run_status=completed'), 'completed route audit 必须明确记录 run_status=completed');
     Db::name('qms_regulatory_monitor_runs')->where('id', $httpRunId)->delete();
@@ -413,6 +468,9 @@ try {
     $layout = (string)file_get_contents($root . '/app/view/layout/main.html');
     ui_assert(str_contains($layout, "qms_can('planningregulatorymonitor')"), '导航必须按权限条件显示');
     ui_assert(str_contains($layout, "config('qms.regulatory_monitor.enabled')"), '导航必须受功能开关控制');
+    $auditLogSource = (string)file_get_contents($root . '/app/middleware/AuditLog.php');
+    ui_assert(str_contains($auditLogSource, 'Log::error'), 'AuditLog 写入失败不得空吞');
+    ui_assert(!str_contains($auditLogSource, '$e->getMessage()'), 'AuditLog 错误日志不得记录异常 message');
 
     $controllerObject = new PlanningRegulatoryMonitor($app);
     $safeSourceUrl = new ReflectionMethod(PlanningRegulatoryMonitor::class, 'safeSourceUrl');
@@ -429,6 +487,10 @@ try {
     ui_assert(
         $safeSourceUrl->invoke($controllerObject, ['source_key' => 'samr_rkjcs_notice', 'source_url' => 'https://www.samr.gov.cn:444/test'], $approvedSources) === null,
         '非批准端口不得渲染为可点击链接'
+    );
+    ui_assert(
+        $safeSourceUrl->invoke($controllerObject, ['source_key' => 'samr_rkjcs_notice', 'source_url' => 'https://user:pass@www.samr.gov.cn/test'], $approvedSources) === null,
+        '含 user/pass 的 URL 一律不得渲染为可点击链接'
     );
     ui_assert(
         $safeSourceUrl->invoke($controllerObject, ['source_key' => 'samr_rkjcs_notice', 'source_url' => 'https://www.samr.gov.cn/test'], $approvedSources) === 'https://www.samr.gov.cn/test',

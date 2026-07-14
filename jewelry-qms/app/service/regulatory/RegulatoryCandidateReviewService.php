@@ -183,7 +183,7 @@ final class RegulatoryCandidateReviewService
     }
 
     /** @return array<string, mixed> */
-    public function runManual(?array $sourceKeys, ?string $since, bool $dryRun): array
+    public function runManual(?array $sourceKeys, ?string $since, bool $dryRun, string $actorId): array
     {
         $this->assertEnabled();
         if ($dryRun) {
@@ -191,6 +191,7 @@ final class RegulatoryCandidateReviewService
         } else {
             $this->assertRole(['admin']);
         }
+        $this->assertActorId($actorId);
         $sourceKeys = $this->assertApprovedSources($sourceKeys);
         $candidateService = $dryRun ? new RegulatoryCandidateService(ownsTransaction: false) : null;
         $monitor = $this->monitorFactory !== null
@@ -204,7 +205,8 @@ final class RegulatoryCandidateReviewService
             'manual',
             $sourceKeys,
             $since,
-            $dryRun
+            $dryRun,
+            $actorId
         );
 
         if (!$dryRun) {
@@ -263,6 +265,15 @@ final class RegulatoryCandidateReviewService
     {
         if (!filter_var(Config::get('qms.regulatory_monitor.enabled', false), FILTER_VALIDATE_BOOL)) {
             throw new RuntimeException('法规监测功能未启用');
+        }
+    }
+
+    private function assertActorId(string $actorId): void
+    {
+        if ($actorId !== trim($actorId)
+            || preg_match('/\A[A-Za-z0-9][A-Za-z0-9._:@-]{0,35}\z/D', $actorId) !== 1
+        ) {
+            throw new InvalidArgumentException('actor_id 必须是 1–36 位安全标识符');
         }
     }
 

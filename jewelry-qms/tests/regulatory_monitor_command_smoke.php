@@ -200,6 +200,10 @@ try {
     $completedRunId = monitor_run_id($completedOutput);
     $createdRunIds[] = $completedRunId;
     monitor_assert(
+        Db::name('qms_regulatory_monitor_runs')->where('id', $completedRunId)->value('created_by') === null,
+        'CLI/manual command without a web actor must keep created_by null'
+    );
+    monitor_assert(
         Db::name('qms_external_change_candidates')->where('monitor_run_id', $completedRunId)->count() === 1,
         'Fixture run must execute parsing and candidate recording'
     );

@@ -51,7 +51,8 @@ final class RegulatoryMonitorService
     public function run(
         string $triggerMode = 'manual',
         ?array $sourceKeys = null,
-        ?string $since = null
+        ?string $since = null,
+        ?string $actorId = null
     ): array
     {
         if (!in_array($triggerMode, ['scheduled', 'manual'], true)) {
@@ -59,6 +60,7 @@ final class RegulatoryMonitorService
         }
         $sourceKeys = $this->resolveSourceKeys($sourceKeys);
         $since = $this->normalizeSince($since);
+        $actorId = $this->normalizeActorId($actorId);
         $companyId = trim((string)Config::get('qms.company_id'));
         if ($companyId === '') {
             throw new RuntimeException('法规监测缺少 company_id 配置');
@@ -81,6 +83,8 @@ final class RegulatoryMonitorService
             'soft_delete' => 0,
             'created' => $startedAt,
             'modified' => $startedAt,
+            'created_by' => $actorId,
+            'modified_by' => $actorId,
         ]);
 
         $successCount = 0;
@@ -262,6 +266,7 @@ final class RegulatoryMonitorService
             'result_json' => $this->encodeJson($result),
             'error_summary' => $errorSummary,
             'modified' => $finishedAt,
+            'modified_by' => $actorId,
         ]);
 
         return $result;
@@ -309,6 +314,20 @@ final class RegulatoryMonitorService
         }
 
         return $since;
+    }
+
+    private function normalizeActorId(?string $actorId): ?string
+    {
+        if ($actorId === null) {
+            return null;
+        }
+        if ($actorId !== trim($actorId)
+            || preg_match('/\A[A-Za-z0-9][A-Za-z0-9._:@-]{0,35}\z/D', $actorId) !== 1
+        ) {
+            throw new InvalidArgumentException('actor_id 必须是 1–36 位安全标识符');
+        }
+
+        return $actorId;
     }
 
     private function sinceDisposition(mixed $publishedDate, string $since): string
