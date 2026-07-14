@@ -495,6 +495,12 @@ catalog_in_transaction(function (): void {
         catalog_assert((string)$item['version_hash'] === (string)$submitted['content_hash'], 'Pending item is pinned to the locked version hash');
     }
 
+    approval_session($prepared['staff'][0]['user']);
+    responsibility_assert_throws(
+        fn () => QmsResponsibilityApprovalService::approveBatch((string)$gmBatch['batch_key'], 'approved', '无业务任命不得签批'),
+        'A staff user can reach the business approval service but cannot sign without the matching effective appointment'
+    );
+
     approval_session($gm['user']);
     $selfApprovalId = (string)$gmBatch['items'][0]['approval_id'];
     $originalSubjectId = (string)Db::name('qms_responsibility_approvals')->where('id', $selfApprovalId)->value('subject_employee_id');

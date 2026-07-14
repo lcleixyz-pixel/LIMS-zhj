@@ -42,7 +42,7 @@ class Employee extends CrudBase
             ->leftJoin('sites s', 's.id = a.site_id')
             ->where('a.employee_id', $id)
             ->where('a.soft_delete', 0)
-            ->field('a.appointment_type,a.position_name,a.appointment_scope,a.appointed_at,a.valid_until,a.source_document_number,a.status,p.name position_display,s.name site_name')
+            ->field('a.appointment_type,a.position_name,a.appointment_scope,a.appointed_at,a.valid_until,a.source_document_number,a.source_kind,a.source_chain_version_id,a.source_responsibility_id,a.source_approval_id,a.status,p.name position_display,s.name site_name')
             ->order('a.appointment_type', 'asc')
             ->order('a.position_name', 'asc')
             ->select()

@@ -33,7 +33,7 @@ return [
         'quality_manager' => [
             'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'approval', 'doc_category', 'doc_template',
             'compliance', 'ai_assistant', 'ai_chat',
-            'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningchangeevent', 'planningobjective',
+            'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningchangeevent', 'planningobjective', 'planningresponsibility',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
             'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',
@@ -42,16 +42,16 @@ return [
             'department', 'employee', 'site', 'equipment_transfer', 'user',
         ],
         'auditor' => [
-            'dashboard', 'calendar', 'compliance', 'document', 'record_form_template', 'record_form_instance', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
+            'dashboard', 'calendar', 'compliance', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'capa', 'nonconformity', 'complaint', 'notification',
         ],
         'department_head' => [
-            'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'capa', 'nonconformity', 'complaint',
+            'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'capa', 'nonconformity', 'complaint',
             'equipment', 'equipment_maintenance', 'equipment_transfer', 'equipment_authorization', 'calibration', 'reference_material',
             'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate', 'notification',
         ],
         'staff' => [
-            'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'complaint', 'notification',
+            'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'complaint', 'notification',
         ],
     ],
 

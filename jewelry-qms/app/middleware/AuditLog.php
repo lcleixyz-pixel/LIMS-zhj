@@ -15,6 +15,13 @@ class AuditLog
         if (Session::has('user.id') && $request->isPost()) {
             $controller = $request->controller();
             $action = $request->action();
+            if (
+                strtolower((string)$controller) === 'planningresponsibility'
+                && strtolower((string)$action) === 'saveassignment'
+                && (string)$request->post('operation', '') === 'remove'
+            ) {
+                $action = 'removeAssignment';
+            }
             $method = $request->method();
             $logActions = [
                 'add',
@@ -38,6 +45,13 @@ class AuditLog
                 'test',
                 'purge',
                 'send',
+                'createinitialdraft',
+                'saveassignment',
+                'removeassignment',
+                'validateversion',
+                'submitversion',
+                'registergeneralmanager',
+                'requestlabdirector',
             ];
             if (in_array(strtolower($action), $logActions, true)) {
                 try {

@@ -56,7 +56,7 @@
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">记录填报</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="/record_form_template/index">记录模板</a></li>
-                        <li><a class="dropdown-item" href="/record_form_instance/index">填写记录</a></li>
+                        <li><a class="dropdown-item" href="/record_form_instance/index">填写实例</a></li>
                         <li><a class="dropdown-item" href="/record_form_instance/reviewDashboard?year=2025">2025 运行确认</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="/record_form_template/review">模板复核</a></li>
@@ -122,10 +122,11 @@
                         <li><a class="dropdown-item" href="/supplier/qualified">合格供应商名录</a></li>
                     </ul>
                 </li>
-                {if condition="qms_can('planningdashboard')"}
+                {if condition="qms_can('planningdashboard') || qms_can('planningresponsibility')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">体系策划</a>
                     <ul class="dropdown-menu">
+                        {if condition="qms_can('planningdashboard')"}
                         <li><a class="dropdown-item" href="/planning/index">策划中心</a></li>
                         <li><a class="dropdown-item" href="/planning/elements">要素管理</a></li>
                         <li><a class="dropdown-item" href="/planning/sources">外部依据</a></li>
@@ -134,6 +135,10 @@
                         <li><a class="dropdown-item" href="/planning/traceability">追溯矩阵</a></li>
                         <li><a class="dropdown-item" href="/planning/change-events">变更事件</a></li>
                         <li><a class="dropdown-item" href="/planning/objectives">质量方针目标</a></li>
+                        {/if}
+                        {if condition="qms_can('planningresponsibility')"}
+                        <li><a class="dropdown-item" href="/planning/responsibilities">责任链</a></li>
+                        {/if}
                     </ul>
                 </li>
                 {/if}
