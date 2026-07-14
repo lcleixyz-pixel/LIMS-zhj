@@ -4,14 +4,16 @@ declare(strict_types=1);
 namespace app\service\regulatory;
 
 use Closure;
+use DateTimeImmutable;
+use DateTimeInterface;
+use InvalidArgumentException;
 use RuntimeException;
-use Throwable;
 use app\service\QmsDocumentStructureService;
 use think\facade\Db;
 
 final class RegulatoryImpactService
 {
-    public const RULE_VERSION = 'regulatory-impact-v1';
+    public const RULE_VERSION = 'regulatory-impact-v2';
 
     private const IMPACT_KEYS = [
         'cma_scope_mark',
@@ -32,6 +34,15 @@ final class RegulatoryImpactService
         'generated_at',
     ];
 
+    private const EVIDENCE_BODY_FIELDS = [
+        'evidence',
+        'raw_text',
+        'body_summary',
+        'body',
+        'text',
+        'content',
+    ];
+
     /** @var array<int, array<string, mixed>> */
     private const RULES = [
         [
@@ -45,14 +56,14 @@ final class RegulatoryImpactService
             'confidence' => 0.82,
         ],
         [
-            'rule_id' => 'REG-CMA-ONE-LIST-001',
+            'rule_id' => 'REG-CMA-ONE-LIST-DIRECT-001',
             'version' => '1',
-            'keywords' => ['一单一库', '资质认定事项清单', '能力项目库'],
+            'keywords' => ['证书及标志（CMA）', '一单一库范围'],
             'document_types' => [],
             'impact_key' => 'cma_scope_mark',
-            'explanation' => '“一单一库”的事项清单和能力项目库可能影响 CMA 范围及资质声明，需人工核对。',
+            'explanation' => '公告原文直接要求在“一单一库”范围内规范使用资质认定证书及标志（CMA），需人工核对现有范围和标志使用。',
             'conclusion' => 'likely',
-            'confidence' => 0.92,
+            'confidence' => 0.96,
         ],
         [
             'rule_id' => 'REG-QMS-001',
@@ -65,14 +76,24 @@ final class RegulatoryImpactService
             'confidence' => 0.84,
         ],
         [
-            'rule_id' => 'REG-QMS-ONE-LIST-001',
+            'rule_id' => 'REG-QMS-ONE-LIST-INFERENCE-001',
             'version' => '1',
-            'keywords' => ['质量管理体系文件'],
+            'keywords' => ['一单一库'],
             'document_types' => [],
             'impact_key' => 'qms_documents',
-            'explanation' => '“一单一库”要求明确涉及质量管理体系文件，需人工定位受影响手册、程序和记录。',
-            'conclusion' => 'likely',
-            'confidence' => 0.93,
+            'explanation' => '确定性业务规则推断，非公告原文直接要求：许可范围和动态管理变化可能需要人工复核体系文件及记录。',
+            'conclusion' => 'possible',
+            'confidence' => 0.78,
+        ],
+        [
+            'rule_id' => 'REG-QMS-DOCUMENT-TYPE-001',
+            'version' => '1',
+            'keywords' => ['动态管理机制'],
+            'document_types' => ['公示公告'],
+            'impact_key' => 'qms_documents',
+            'explanation' => '公示公告正文命中动态管理机制，可能需要人工复核相关体系文件和变更记录。',
+            'conclusion' => 'possible',
+            'confidence' => 0.72,
         ],
         [
             'rule_id' => 'REG-PER-001',
@@ -85,14 +106,14 @@ final class RegulatoryImpactService
             'confidence' => 0.78,
         ],
         [
-            'rule_id' => 'REG-PER-ONE-LIST-001',
+            'rule_id' => 'REG-PER-ONE-LIST-INFERENCE-001',
             'version' => '1',
-            'keywords' => ['人员授权范围'],
+            'keywords' => ['一单一库'],
             'document_types' => [],
             'impact_key' => 'personnel_authorization',
-            'explanation' => '“一单一库”要求明确涉及人员授权范围，需人工核对任命、授权和能力证据。',
-            'conclusion' => 'likely',
-            'confidence' => 0.91,
+            'explanation' => '确定性业务规则推断，非公告原文直接要求：能力项目范围变化可能需要人工复核相关岗位任命、授权和能力证据。',
+            'conclusion' => 'possible',
+            'confidence' => 0.74,
         ],
         [
             'rule_id' => 'REG-EQP-001',
@@ -105,14 +126,14 @@ final class RegulatoryImpactService
             'confidence' => 0.80,
         ],
         [
-            'rule_id' => 'REG-LIMS-ONE-LIST-001',
+            'rule_id' => 'REG-LIMS-ONE-LIST-INFERENCE-001',
             'version' => '1',
-            'keywords' => ['统一数据规则', '维护检验检测能力信息'],
+            'keywords' => ['一单一库'],
             'document_types' => [],
             'impact_key' => 'lims_rules',
-            'explanation' => '“一单一库”的统一数据规则可能影响 LIMS 能力范围、字段校验和提示规则，需人工核对。',
-            'conclusion' => 'likely',
-            'confidence' => 0.92,
+            'explanation' => '确定性业务规则推断，非公告原文直接要求：能力项目库变化可能需要人工复核 LIMS 能力目录、字段校验和提示规则。',
+            'conclusion' => 'possible',
+            'confidence' => 0.76,
         ],
         [
             'rule_id' => 'REG-LIMS-001',
@@ -137,11 +158,18 @@ final class RegulatoryImpactService
     ];
 
     private Closure $contextProvider;
+    private Closure $clock;
+    /** @var array<string, array{0: array<string, mixed>, 1: bool}> */
+    private array $contextCache = [];
 
-    public function __construct(?callable $contextProvider = null)
+    public function __construct(?callable $contextProvider = null, ?callable $clock = null)
     {
         $this->contextProvider = Closure::fromCallable(
-            $contextProvider ?? static fn (string $companyId): array => self::readOnlyOrganizationContext($companyId)
+            $contextProvider ?? static fn (string $companyId, string $asOf): array =>
+                self::readOnlyOrganizationContext($companyId, $asOf)
+        );
+        $this->clock = Closure::fromCallable(
+            $clock ?? static fn (): DateTimeImmutable => new DateTimeImmutable('now')
         );
     }
 
@@ -153,10 +181,11 @@ final class RegulatoryImpactService
      *   analysis_rationale: string
      * }
      */
-    public function analyze(array $item, string $companyId = ''): array
+    public function analyze(array $item, string $companyId = '', ?string $asOf = null): array
     {
         $input = $this->normalizedInput($item);
-        [$context, $contextAvailable] = $this->organizationContext(trim($companyId));
+        $analysisDate = $this->analysisDate($asOf);
+        [$context, $contextAvailable] = $this->organizationContext(trim($companyId), $analysisDate);
         $matches = array_fill_keys(self::IMPACT_KEYS, []);
         foreach ($this->rules() as $rule) {
             $evidence = $this->matchEvidence($rule, $input);
@@ -175,25 +204,33 @@ final class RegulatoryImpactService
             );
         }
 
-        $confidence = round(
-            array_sum(array_column($analysis, 'confidence')) / count(self::IMPACT_KEYS),
-            4
-        );
-        $matchedCount = count(array_filter(
+        $matchedAssessments = array_values(array_filter(
             $analysis,
             static fn (array $assessment): bool => $assessment['conclusion'] !== 'no_match'
         ));
+        $matchedCount = count($matchedAssessments);
+        $confidence = $matchedCount === 0
+            ? 0.0
+            : round(array_sum(array_column($matchedAssessments, 'confidence')) / $matchedCount, 4);
 
         return [
             'impact_analysis' => $analysis,
-            'analysis_rule_version' => self::RULE_VERSION,
+            'analysis_rule_version' => self::ruleVersion(),
             'analysis_confidence' => $confidence,
             'analysis_rationale' => sprintf(
-                '确定性规则命中 %d/6 类；%s；所有结论均需人工复核。',
+                '确定性规则命中 %d/6 类；总体置信度仅按 %d 个已命中影响聚合；%s；所有结论均需人工复核。',
+                $matchedCount,
                 $matchedCount,
                 $contextAvailable ? '机构上下文已只读取得' : '机构上下文数据未取得，需人工确认'
             ),
         ];
+    }
+
+    public static function ruleVersion(): string
+    {
+        $definition = json_encode(self::RULES, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+
+        return self::RULE_VERSION . '-' . substr(hash('sha256', $definition), 0, 12);
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -226,8 +263,49 @@ final class RegulatoryImpactService
             'announcement_number' => $this->normalizeText((string)($item['announcement_number'] ?? '')),
             'document_type' => $this->normalizeText((string)($item['document_type'] ?? '')),
             'summary' => $this->normalizeText((string)($item['summary'] ?? $item['evidence_summary'] ?? '')),
-            'evidence' => $this->normalizeText(implode(' ', $this->flattenText($item['evidence'] ?? $item['evidence_json'] ?? []))),
+            'evidence' => $this->evidenceBodyText($item['evidence'] ?? $item['evidence_json'] ?? []),
         ];
+    }
+
+    private function evidenceBodyText(mixed $value): string
+    {
+        if (is_scalar($value)) {
+            return $this->normalizeText((string)$value);
+        }
+        if (is_object($value)) {
+            $value = get_object_vars($value);
+        }
+        if (!is_array($value)) {
+            return '';
+        }
+        if (array_is_list($value)) {
+            $body = [];
+            foreach ($value as $item) {
+                if (is_scalar($item)) {
+                    $body[] = (string)$item;
+                    continue;
+                }
+                $text = $this->evidenceBodyText($item);
+                if ($text !== '') {
+                    $body[] = $text;
+                }
+            }
+
+            return $this->normalizeText(implode(' ', $body));
+        }
+
+        $body = [];
+        foreach ($value as $key => $item) {
+            $normalizedKey = strtolower((string)$key);
+            if (in_array($normalizedKey, self::OBSERVATION_TIME_FIELDS, true)
+                || !in_array($normalizedKey, self::EVIDENCE_BODY_FIELDS, true)
+            ) {
+                continue;
+            }
+            array_push($body, ...$this->flattenText($item));
+        }
+
+        return $this->normalizeText(implode(' ', $body));
     }
 
     /** @return array<int, string> */
@@ -258,14 +336,11 @@ final class RegulatoryImpactService
     {
         $documentTypes = (array)$rule['document_types'];
         if ($documentTypes !== []) {
-            $documentTypeMatched = false;
-            foreach ($documentTypes as $documentType) {
-                if ($input['document_type'] !== '' && mb_stripos($input['document_type'], (string)$documentType) !== false) {
-                    $documentTypeMatched = true;
-                    break;
-                }
-            }
-            if (!$documentTypeMatched) {
+            $normalizedDocumentTypes = array_map(
+                fn (mixed $documentType): string => $this->normalizeText((string)$documentType),
+                $documentTypes
+            );
+            if ($input['document_type'] === '' || !in_array($input['document_type'], $normalizedDocumentTypes, true)) {
                 return [];
             }
         }
@@ -273,13 +348,14 @@ final class RegulatoryImpactService
         $evidence = [];
         foreach ((array)$rule['keywords'] as $keyword) {
             foreach ($input as $field => $text) {
-                if ($text !== '' && mb_stripos($text, (string)$keyword) !== false) {
+                $position = $text !== '' ? $this->keywordPosition($text, (string)$keyword) : false;
+                if ($position !== false) {
                     $evidence[] = sprintf(
                         '规则 %s 命中关键词“%s”；输入证据[%s]：%s',
                         $rule['rule_id'],
                         $keyword,
                         $field,
-                        $this->evidenceSnippet($text, (string)$keyword)
+                        $this->evidenceSnippet($text, $position)
                     );
                 }
             }
@@ -345,18 +421,60 @@ final class RegulatoryImpactService
     }
 
     /** @return array{0: array<string, mixed>, 1: bool} */
-    private function organizationContext(string $companyId): array
+    private function organizationContext(string $companyId, string $asOf): array
     {
-        try {
-            $context = ($this->contextProvider)($companyId);
-            if (!is_array($context)) {
-                throw new RuntimeException('机构上下文提供者返回值不可读');
+        $cacheKey = $companyId . "\0" . $asOf;
+        if (isset($this->contextCache[$cacheKey])) {
+            return $this->contextCache[$cacheKey];
+        }
+
+        $context = ($this->contextProvider)($companyId, $asOf);
+        if (!is_array($context)) {
+            throw new RuntimeException('机构上下文提供者返回值不可读');
+        }
+        if (($context['available'] ?? true) === false) {
+            if (trim((string)($context['reason'] ?? '')) === '') {
+                throw new RuntimeException('机构上下文不可用时必须提供内部原因');
             }
 
-            return [$context, true];
-        } catch (Throwable) {
-            return [[], false];
+            return $this->contextCache[$cacheKey] = [[], false];
         }
+        if (!is_array($context['qms_structure_layers'] ?? null)) {
+            throw new RuntimeException('机构上下文结构层信息无效');
+        }
+        foreach ([
+            'active_employee_count',
+            'active_personnel_authorization_count',
+            'active_equipment_count',
+            'active_equipment_authorization_count',
+        ] as $countField) {
+            $value = $context[$countField] ?? null;
+            if (!is_int($value) || $value < 0) {
+                throw new RuntimeException('机构上下文计数无效：' . $countField);
+            }
+        }
+        $context['as_of'] = $asOf;
+
+        return $this->contextCache[$cacheKey] = [$context, true];
+    }
+
+    private function analysisDate(?string $asOf): string
+    {
+        if ($asOf === null || trim($asOf) === '') {
+            $now = ($this->clock)();
+            if (!$now instanceof DateTimeInterface) {
+                throw new RuntimeException('法规影响分析时钟必须返回日期时间对象');
+            }
+
+            return $now->format('Y-m-d');
+        }
+        $asOf = trim($asOf);
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $asOf);
+        if (!$date instanceof DateTimeImmutable || $date->format('Y-m-d') !== $asOf) {
+            throw new InvalidArgumentException('as_of 必须为有效的 YYYY-MM-DD 日期');
+        }
+
+        return $asOf;
     }
 
     private function contextEvidence(string $impactKey, array $context): string
@@ -367,12 +485,14 @@ final class RegulatoryImpactService
                 count((array)($context['qms_structure_layers'] ?? []))
             ),
             'personnel_authorization', 'training' => sprintf(
-                '只读机构提示：在岗人员 %d 项、有效任命/授权 %d 项，未列出个人姓名。',
+                '只读机构提示：截至 %s，在岗人员 %d 项、符合日期/状态/关联人员条件的任命或授权 %d 项，未列出个人姓名。',
+                (string)($context['as_of'] ?? ''),
                 (int)($context['active_employee_count'] ?? 0),
                 (int)($context['active_personnel_authorization_count'] ?? 0)
             ),
             'equipment_calibration' => sprintf(
-                '只读机构提示：在用设备 %d 台、有效设备授权 %d 项，需人工定位受影响对象。',
+                '只读机构提示：截至 %s，在用设备 %d 台、符合日期/状态/关联人员及设备条件的设备授权 %d 项，需人工定位受影响对象。',
+                (string)($context['as_of'] ?? ''),
                 (int)($context['active_equipment_count'] ?? 0),
                 (int)($context['active_equipment_authorization_count'] ?? 0)
             ),
@@ -380,12 +500,22 @@ final class RegulatoryImpactService
         };
     }
 
-    private function evidenceSnippet(string $text, string $keyword): string
+    private function keywordPosition(string $text, string $keyword): int|false
     {
-        $position = mb_stripos($text, $keyword);
-        if ($position === false) {
-            return mb_substr($text, 0, 120);
+        if (preg_match('/^[A-Za-z0-9]+$/D', $keyword) === 1) {
+            $pattern = '/(?<![A-Za-z0-9_])' . preg_quote($keyword, '/') . '(?![A-Za-z0-9_])/i';
+            if (preg_match($pattern, $text, $match, PREG_OFFSET_CAPTURE) !== 1) {
+                return false;
+            }
+
+            return mb_strlen(substr($text, 0, (int)$match[0][1]), 'UTF-8');
         }
+
+        return mb_stripos($text, $keyword, 0, 'UTF-8');
+    }
+
+    private function evidenceSnippet(string $text, int $position): string
+    {
         $start = max(0, $position - 30);
 
         return mb_substr($text, $start, 120);
@@ -397,38 +527,70 @@ final class RegulatoryImpactService
     }
 
     /** @return array<string, mixed> */
-    private static function readOnlyOrganizationContext(string $companyId): array
+    public static function readOnlyOrganizationContext(string $companyId, string $asOf): array
     {
         $layers = array_map(
             static fn (array $layer): string => (string)$layer['key'],
             QmsDocumentStructureService::structureLayerDefinitions()
         );
 
+        $appointmentRows = Db::query(
+            "SELECT COUNT(*) AS total
+             FROM employee_appointments appointment
+             INNER JOIN employees employee
+                ON employee.id = appointment.employee_id
+               AND employee.company_id = appointment.company_id
+             WHERE appointment.company_id = ?
+               AND appointment.status = 'active'
+               AND appointment.publish = 1
+               AND appointment.soft_delete = 0
+               AND appointment.appointed_at IS NOT NULL
+               AND appointment.appointed_at <= ?
+               AND (appointment.valid_until IS NULL OR appointment.valid_until >= ?)
+               AND employee.publish = 1
+               AND employee.soft_delete = 0",
+            [$companyId, $asOf, $asOf]
+        );
+        $equipmentAuthorizationRows = Db::query(
+            "SELECT COUNT(*) AS total
+             FROM equipment_authorizations authorization
+             INNER JOIN equipments equipment
+                ON equipment.id = authorization.equipment_id
+               AND equipment.company_id = authorization.company_id
+             INNER JOIN employees employee
+                ON employee.id = authorization.employee_id
+               AND employee.company_id = authorization.company_id
+             WHERE authorization.company_id = ?
+               AND authorization.status = 'active'
+               AND authorization.publish = 1
+               AND authorization.soft_delete = 0
+               AND authorization.authorized_date <= ?
+               AND (authorization.valid_until IS NULL OR authorization.valid_until >= ?)
+               AND equipment.status = 'active'
+               AND equipment.publish = 1
+               AND equipment.soft_delete = 0
+               AND employee.publish = 1
+               AND employee.soft_delete = 0",
+            [$companyId, $asOf, $asOf]
+        );
+
         return [
+            'available' => true,
+            'as_of' => $asOf,
             'qms_structure_layers' => $layers,
             'active_employee_count' => Db::name('employees')
                 ->where('company_id', $companyId)
                 ->where('publish', 1)
                 ->where('soft_delete', 0)
                 ->count(),
-            'active_personnel_authorization_count' => Db::name('employee_appointments')
-                ->where('company_id', $companyId)
-                ->where('status', 'active')
-                ->where('publish', 1)
-                ->where('soft_delete', 0)
-                ->count(),
+            'active_personnel_authorization_count' => (int)($appointmentRows[0]['total'] ?? 0),
             'active_equipment_count' => Db::name('equipments')
                 ->where('company_id', $companyId)
                 ->where('status', 'active')
                 ->where('publish', 1)
                 ->where('soft_delete', 0)
                 ->count(),
-            'active_equipment_authorization_count' => Db::name('equipment_authorizations')
-                ->where('company_id', $companyId)
-                ->where('status', 'active')
-                ->where('publish', 1)
-                ->where('soft_delete', 0)
-                ->count(),
+            'active_equipment_authorization_count' => (int)($equipmentAuthorizationRows[0]['total'] ?? 0),
         ];
     }
 }

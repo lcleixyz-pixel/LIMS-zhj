@@ -46,14 +46,14 @@ final class RegulatoryCandidateService
             }
         );
         if ($impactService instanceof RegulatoryImpactService) {
-            $this->impactAnalyzer = static fn (array $item, string $companyId): array =>
-                $impactService->analyze($item, $companyId);
+            $this->impactAnalyzer = static fn (array $item, string $companyId, string $asOf): array =>
+                $impactService->analyze($item, $companyId, $asOf);
         } elseif (is_callable($impactService)) {
             $this->impactAnalyzer = Closure::fromCallable($impactService);
         } else {
             $defaultImpactService = new RegulatoryImpactService();
-            $this->impactAnalyzer = static fn (array $item, string $companyId): array =>
-                $defaultImpactService->analyze($item, $companyId);
+            $this->impactAnalyzer = static fn (array $item, string $companyId, string $asOf): array =>
+                $defaultImpactService->analyze($item, $companyId, $asOf);
         }
     }
 
@@ -138,6 +138,9 @@ final class RegulatoryCandidateService
         $sourceItemKey = $this->sourceItemKey($normalized);
         $contentHash = $this->contentHash($item);
         $seenAt = $this->now();
+        $impactResult = $this->validatedImpactResult(
+            ($this->impactAnalyzer)($normalized, $companyId, substr($seenAt, 0, 10))
+        );
 
         return $this->withDeadlockRetry(
             fn (): array => Db::transaction(
@@ -149,7 +152,8 @@ final class RegulatoryCandidateService
                     $normalized,
                     $sourceItemKey,
                     $contentHash,
-                    $seenAt
+                    $seenAt,
+                    $impactResult
                 )
             )
         );
@@ -163,7 +167,8 @@ final class RegulatoryCandidateService
         array $normalized,
         string $sourceItemKey,
         string $contentHash,
-        string $seenAt
+        string $seenAt,
+        array $impactResult
     ): array {
         $versions = $this->lockVersionChain($companyId, $sourceKey, $sourceItemKey);
         $previous = $this->resolveChainTail($versions);
@@ -172,10 +177,6 @@ final class RegulatoryCandidateService
                 return $this->existingResult($version, $seenAt);
             }
         }
-
-        $impactResult = $this->validatedImpactResult(
-            ($this->impactAnalyzer)($normalized, $companyId)
-        );
 
         $candidate = [
             'id' => qms_uuid(),

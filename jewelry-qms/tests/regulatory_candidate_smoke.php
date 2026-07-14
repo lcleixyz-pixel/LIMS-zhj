@@ -305,7 +305,7 @@ try {
         );
     }
     candidate_assert_same(
-        RegulatoryImpactService::RULE_VERSION,
+        RegulatoryImpactService::ruleVersion(),
         $first['candidate']['analysis_rule_version'],
         'New candidate must persist impact rule version'
     );
@@ -361,6 +361,7 @@ try {
         'Repeated content must preserve analysis rule version'
     );
     candidate_assert_same(1, Db::name('qms_external_change_candidates')->where('id', $first['candidate']['id'])->count(), 'Repeated content must keep one row');
+    candidate_assert_same(1, $impactContextCalls, 'Multiple candidates on one analysis date must reuse one context snapshot');
 
     $impactCallsBeforeFailure = $impactContextCalls;
     $failureItem = $v1;
@@ -368,12 +369,18 @@ try {
     $failureItem['canonical_url'] = 'https://www.samr.gov.cn/rkjcs/tzgg/impact-failure.html';
     $failureItem['title'] = '影响规则异常回滚测试';
     $failureCandidateCount = Db::name('qms_external_change_candidates')->count();
+    $impactObservedTransaction = null;
     $failingImpactService = new RegulatoryCandidateService(
         static fn (): DateTimeImmutable => new DateTimeImmutable('2026-07-14 10:15:00'),
         null,
         null,
-        static function (array $item, string $analysisCompanyId): array {
-            throw new RuntimeException('impact-rule-fixture-failure');
+        static function (array $item, string $analysisCompanyId, ?string $asOf = null) use (&$impactObservedTransaction): array {
+            $transactionRow = Db::query(
+                'SELECT COUNT(*) AS transaction_state FROM information_schema.innodb_trx '
+                . 'WHERE trx_mysql_thread_id = CONNECTION_ID()'
+            );
+            $impactObservedTransaction = (int)($transactionRow[0]['transaction_state'] ?? -1);
+            throw new RuntimeException('impact-rule-fixture-failure password=impact-context-secret-token');
         }
     );
     try {
@@ -396,6 +403,16 @@ try {
         Db::name('qms_external_change_candidates')->count(),
         'Impact rule exception must roll back without a partial candidate'
     );
+    candidate_assert_same(0, $impactObservedTransaction, 'Impact analysis must fail before opening the candidate write transaction');
+    $impactSecretLeak = Db::query(
+        'SELECT COUNT(*) AS total FROM qms_external_change_candidates '
+        . 'WHERE COALESCE(evidence_summary, \'\') LIKE ? '
+        . 'OR COALESCE(analysis_rationale, \'\') LIKE ? '
+        . 'OR CAST(COALESCE(evidence_json, JSON_OBJECT()) AS CHAR) LIKE ? '
+        . 'OR CAST(COALESCE(impact_analysis, JSON_OBJECT()) AS CHAR) LIKE ?',
+        array_fill(0, 4, '%impact-context-secret-token%')
+    );
+    candidate_assert_same(0, (int)$impactSecretLeak[0]['total'], 'System impact error details must never be persisted');
     candidate_assert_same(
         $impactCallsBeforeFailure,
         $impactContextCalls,
@@ -672,6 +689,16 @@ try {
 
     $deadlockInsertCalls = 0;
     $deadlockBackoffs = [];
+    $deadlockImpactCalls = 0;
+    $deadlockImpactService = new RegulatoryImpactService(
+        static fn (string $analysisCompanyId, string $asOf): array => [
+            'qms_structure_layers' => [],
+            'active_employee_count' => 0,
+            'active_personnel_authorization_count' => 0,
+            'active_equipment_count' => 0,
+            'active_equipment_authorization_count' => 0,
+        ]
+    );
     $deadlockRetryService = new RegulatoryCandidateService(
         static fn (): DateTimeImmutable => new DateTimeImmutable('2026-07-14 12:00:03'),
         static function (array $data) use (&$deadlockInsertCalls): void {
@@ -686,6 +713,13 @@ try {
         },
         static function (int $attempt) use (&$deadlockBackoffs): void {
             $deadlockBackoffs[] = $attempt;
+        },
+        static function (array $item, string $analysisCompanyId, ?string $asOf = null) use (
+            &$deadlockImpactCalls,
+            $deadlockImpactService
+        ): array {
+            $deadlockImpactCalls++;
+            return $deadlockImpactService->analyze($item, $analysisCompanyId, $asOf);
         }
     );
     $deadlockItem = $noNumber;
@@ -701,6 +735,7 @@ try {
     candidate_assert_same('new', $deadlockRetry['status'], 'Deadlock retry must start a fresh transaction and succeed');
     candidate_assert_same(3, $deadlockInsertCalls, 'Deadlock retry must be bounded to the required attempts');
     candidate_assert_same([1, 2], $deadlockBackoffs, 'Backoff must run only between retry attempts');
+    candidate_assert_same(1, $deadlockImpactCalls, 'Deadlock retries must reuse one pre-transaction impact analysis');
 
     $deadlockExhaustedCalls = 0;
     $deadlockExhaustedService = new RegulatoryCandidateService(
