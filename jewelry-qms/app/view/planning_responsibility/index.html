@@ -1,27 +1,29 @@
-<div class="d-flex justify-content-between align-items-start mb-3">
+<div class="responsibility-workflow">
+<div class="responsibility-workflow__header d-flex justify-content-between align-items-start gap-3 mb-3">
     <div>
+        <div class="text-uppercase small text-muted mb-1">策划中心</div>
         <h4 class="mb-1">活动级责任链</h4>
-        <div class="text-muted small">管理“活动—岗位—职责—人员”；草案选人不等于任命，完成校验与签批后才生效。</div>
+        <div class="text-muted">依次定义职责、配置人员并完成签批，形成可追溯的正式授权。</div>
     </div>
     {if $detail}
     <form method="get" action="/planning/responsibilities" class="d-flex gap-2">
         <input type="hidden" name="view" value="{$viewMode}">
         <select name="version_id" class="form-select form-select-sm" onchange="this.form.submit()">
             {volist name="versions" id="version"}
-            <option value="{$version.id}" {if $version.id == $versionId}selected{/if}>v{$version.version_no} · {$version.status}</option>
+            <option value="{$version.id}" {if $version.id == $versionId}selected{/if}>v{$version.version_no} · {$version.status_label}</option>
             {/volist}
         </select>
     </form>
     {/if}
 </div>
 
-<ul class="nav nav-tabs mb-3">
-    <li class="nav-item"><a class="nav-link {if $viewMode == 'structure'}active{/if}" href="/planning/responsibilities?view=structure&version_id={$versionId}">责任结构</a></li>
-    <li class="nav-item"><a class="nav-link {if $viewMode == 'staffing'}active{/if}" href="/planning/responsibilities?view=staffing&version_id={$versionId}">人员配置</a></li>
-    <li class="nav-item"><a class="nav-link {if $viewMode == 'approval'}active{/if}" href="/planning/responsibilities?view=approval&version_id={$versionId}">校验与签批</a></li>
-    <li class="nav-item"><a class="nav-link {if $viewMode == 'effective'}active{/if}" href="/planning/responsibilities?view=effective&version_id={$versionId}">有效责任链</a></li>
-    <li class="nav-item"><a class="nav-link {if $viewMode == 'alignment'}active{/if}" href="/planning/responsibilities/alignment?view=alignment&version_id={$versionId}">文件对齐</a></li>
-</ul>
+<nav class="responsibility-workflow__steps mb-3" aria-label="责任链办理步骤">
+    <a class="responsibility-workflow__step {if $viewMode == 'structure'}active{/if}" href="/planning/responsibilities?view=structure&version_id={$versionId}">1. 定义职责</a>
+    <a class="responsibility-workflow__step {if $viewMode == 'staffing'}active{/if}" href="/planning/responsibilities?view=staffing&version_id={$versionId}">2. 配置人员</a>
+    <a class="responsibility-workflow__step {if $viewMode == 'approval'}active{/if}" href="/planning/responsibilities?view=approval&version_id={$versionId}">3. 校验并签批</a>
+    <a class="responsibility-workflow__step {if $viewMode == 'effective'}active{/if}" href="/planning/responsibilities?view=effective&version_id={$versionId}">4. 查看已生效责任链</a>
+    <a class="responsibility-workflow__auxiliary {if $viewMode == 'alignment'}active{/if}" href="/planning/responsibilities/alignment?view=alignment&version_id={$versionId}">文件对齐（辅助）</a>
+</nav>
 
 {if !$detail}
 <div class="card">
@@ -36,10 +38,13 @@
     </div>
 </div>
 {else}
-<div class="alert alert-light border d-flex flex-wrap gap-4 align-items-center">
+<div class="responsibility-workflow__summary alert alert-light border d-flex flex-wrap gap-4 align-items-center">
     <span><strong>版本：</strong>v{$detail.version_no}</span>
-    <span><strong>状态：</strong>{$detail.status}</span>
-    <span><strong>链编码：</strong>{$detail.chain_code}</span>
+    <span><strong>状态：</strong>{$detail.status_label}</span>
+    <span><strong>活动总数：</strong>{$detail.summary.activity_count}</span>
+    <span><strong>职责总数：</strong>{$detail.summary.responsibility_count}</span>
+    <span><strong>需提前指定人员：</strong>{$detail.summary.named_person_count}</span>
+    <span><strong>活动发生时指定：</strong>{$detail.summary.runtime_count}</span>
     {if $detail.named_person_unbound > 0}<span class="badge text-bg-warning">岗位尚未绑定人员：{$detail.named_person_unbound}</span>{/if}
     {if $detail.status == 'effective' && $managerCanEdit}
     <form method="post" action="/planning/responsibilities" class="ms-auto">
@@ -47,27 +52,34 @@
         <button class="btn btn-sm btn-outline-primary" type="submit">复制为修订草案</button>
     </form>
     {/if}
+    <details class="small ms-auto">
+        <summary>查看技术信息</summary>
+        <div class="mt-2 text-muted">责任链编码：<code>{$detail.chain_code}</code></div>
+    </details>
 </div>
 
 {if $viewMode == 'structure'}
-<div class="alert alert-secondary small">首版责任链只登记运行时职责规则，不会在模板签批时自动替代具体活动实例门禁。真实活动仍须按下列提示登记当次责任人并人工核对。</div>
+<div class="alert alert-secondary small">责任结构用于明确每项活动由谁组织、执行、审核或批准。需要在活动发生时指定的人员，仍须在当次活动中登记并核对。</div>
 {volist name="detail.activities" id="activity"}
 <div class="card mb-3">
-    <div class="card-header d-flex justify-content-between"><strong>{$activity.name}</strong><span class="text-muted">{$activity.element_key}</span></div>
+    <div class="card-header d-flex justify-content-between align-items-center"><strong>{$activity.name}</strong><span class="small text-muted">{if $activity.site_scope == 'all'}适用于全机构{else}适用于指定场所{/if}</span></div>
     <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
-            <thead><tr><th>环节</th><th>职责类型</th><th>职责动作</th><th>责任岗位/角色</th><th>适用场所</th><th>绑定状态</th></tr></thead>
+            <thead><tr><th>职责动作</th><th>职责类型</th><th>责任岗位或角色</th><th>人员指定方式</th><th>适用场所</th><th>当前状态</th></tr></thead>
             <tbody>
             {volist name="activity.responsibilities" id="responsibility"}
             <tr data-runtime-slot="{if $responsibility.assignment_mode == 'named_person'}0{else}1{/if}" data-assignment-mode="{$responsibility.assignment_mode}">
-                <td><code>{$responsibility.step_code}</code></td>
-                <td>{$responsibility.duty_type}</td>
-                <td>{$responsibility.duty_text}</td>
                 <td>
-                    {if $responsibility.fixed_position_name}{$responsibility.fixed_position_name}
-                    {elseif $responsibility.activity_role_code}{$responsibility.activity_role_code}
-                    {else}{$responsibility.dynamic_owner_code}{/if}
+                    <div>{$responsibility.duty_text}</div>
+                    <details class="small text-muted mt-1">
+                        <summary>查看技术信息</summary>
+                        <div>环节编码：<code>{$responsibility.step_code}</code></div>
+                        {if $responsibility.source_refs_label}<div>条款依据：{$responsibility.source_refs_label}</div>{/if}
+                    </details>
                 </td>
+                <td>{$responsibility.duty_type_label}</td>
+                <td>{$responsibility.responsible_party_label}</td>
+                <td>{$responsibility.assignment_mode_label}</td>
                 <td>{if $activity.site_scope == 'all'}全机构{else}指定场所{/if}</td>
                 <td>
                     {if $responsibility.assignment_mode != 'named_person'}
@@ -87,7 +99,7 @@
 
 {if $viewMode == 'staffing'}
 <div class="alert alert-info">此处选人只形成草案。在资格校验和业务签批完成前，不作为任命或内部授权证据。</div>
-<div class="alert alert-secondary small">首版责任链只登记运行时职责规则，不会在模板签批时自动替代具体活动实例门禁。真实活动仍须按下列提示登记当次责任人并人工核对。</div>
+<div class="alert alert-secondary small">需要在活动发生时指定的人员，仍须在当次活动中登记并核对。</div>
 {volist name="detail.activities" id="activity"}
 <div class="card mb-3">
     <div class="card-header"><strong>{$activity.name}</strong></div>
@@ -239,3 +251,4 @@
 </div>
 {/if}
 {/if}
+</div>

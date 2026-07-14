@@ -71,9 +71,33 @@ foreach ([
     responsibility_ui_contains('function ' . $method . '(', $controller, 'Controller exposes ' . $method);
 }
 
-foreach (['责任结构', '人员配置', '校验与签批', '有效责任链', '岗位尚未绑定人员', '运行时指定'] as $label) {
+foreach (['定义职责', '配置人员', '校验并签批', '已生效责任链', '岗位尚未绑定人员', '运行时指定'] as $label) {
     responsibility_ui_contains($label, $view, 'Responsibility page contains ' . $label);
 }
+foreach ([
+    '1. 定义职责',
+    '2. 配置人员',
+    '3. 校验并签批',
+    '4. 查看已生效责任链',
+    '文件对齐（辅助）',
+    '活动总数',
+    '职责总数',
+    '查看技术信息',
+] as $label) {
+    responsibility_ui_contains($label, $view, 'Responsibility workflow contains ' . $label);
+}
+foreach (['status_label', 'duty_type_label', 'responsible_party_label', 'assignment_mode_label'] as $field) {
+    responsibility_ui_contains($field, $view, 'Responsibility page renders presentation field ' . $field);
+}
+responsibility_ui_contains('responsibility-workflow', $view, 'Responsibility page owns a scoped workflow shell');
+responsibility_ui_assert(
+    !str_contains($view, '<strong>链编码：</strong>'),
+    'Chain code is not exposed in the primary summary'
+);
+responsibility_ui_assert(
+    !str_contains($view, '<th>环节</th>'),
+    'Raw step code is not a primary structure column'
+);
 foreach (['structure', 'staffing', 'approval', 'effective', 'alignment'] as $mode) {
     responsibility_ui_contains('view=' . $mode, $view, 'Responsibility page exposes view ' . $mode);
 }
@@ -323,7 +347,7 @@ catalog_in_transaction(function () use ($app): void {
             'Rendered responsibility page marks all twelve named-person duties'
         );
         responsibility_ui_contains(
-            '首版责任链只登记运行时职责规则，不会在模板签批时自动替代具体活动实例门禁。',
+            '需要在活动发生时指定的人员，仍须在当次活动中登记并核对。',
             $pageHtml,
             'Runtime page states the first-version enforcement boundary honestly'
         );
