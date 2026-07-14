@@ -6,8 +6,10 @@ namespace app\controller;
 use app\BaseController;
 use app\service\ExternalChangeEventService;
 use app\service\FieldAuditService;
+use app\service\RegulatoryPromotionDomainException;
 use app\service\regulatory\RegulatoryCandidateReviewService;
 use app\service\regulatory\RegulatoryExportService;
+use Closure;
 use InvalidArgumentException;
 use OutOfBoundsException;
 use RuntimeException;
@@ -23,15 +25,20 @@ class PlanningRegulatoryMonitor extends BaseController
 {
     private ?RegulatoryCandidateReviewService $reviewService;
     private ?RegulatoryExportService $exportService;
+    private Closure $promotion;
 
     public function __construct(
         App $app,
         ?RegulatoryCandidateReviewService $reviewService = null,
-        ?RegulatoryExportService $exportService = null
+        ?RegulatoryExportService $exportService = null,
+        ?callable $promotion = null
     )
     {
         $this->reviewService = $reviewService;
         $this->exportService = $exportService;
+        $this->promotion = Closure::fromCallable(
+            $promotion ?? [ExternalChangeEventService::class, 'promoteRegulatoryCandidate']
+        );
         parent::__construct($app);
     }
 
@@ -119,16 +126,16 @@ class PlanningRegulatoryMonitor extends BaseController
         $this->assertControllerRole(['quality_manager']);
         $candidateId = trim((string)$this->request->post('id', ''));
         try {
-            $event = ExternalChangeEventService::promoteRegulatoryCandidate(
+            $event = ($this->promotion)(
                 $candidateId,
                 trim((string)Session::get('user.id', ''))
             );
             Session::flash('success', '已晋升为外部变更事件，后续影响评估和修订仍需人工完成。');
 
             return redirect('/planning/change-events/view?id=' . rawurlencode((string)$event->id));
-        } catch (\Throwable $exception) {
+        } catch (RegulatoryPromotionDomainException $exception) {
             Log::warning(
-                '[RegulatoryPromotion] controller_failure exception_class={exception_class} candidate_id_hash={candidate_id_hash}',
+                '[RegulatoryPromotion] business_rejection exception_class={exception_class} candidate_id_hash={candidate_id_hash}',
                 [
                     'exception_class' => $exception::class,
                     'candidate_id_hash' => substr(hash('sha256', $candidateId), 0, 16),
@@ -137,6 +144,16 @@ class PlanningRegulatoryMonitor extends BaseController
             Session::flash('error', '法规候选暂无法晋升，请核对复核状态和关联记录。');
 
             return redirect('/planning/regulatory-monitor/show?id=' . rawurlencode($candidateId));
+        } catch (\Throwable $exception) {
+            Log::error(
+                '[RegulatoryPromotion] system_failure exception_class={exception_class} candidate_id_hash={candidate_id_hash}',
+                [
+                    'exception_class' => $exception::class,
+                    'candidate_id_hash' => substr(hash('sha256', $candidateId), 0, 16),
+                ]
+            );
+
+            throw $exception;
         }
     }
 

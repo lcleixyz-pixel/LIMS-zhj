@@ -32,7 +32,12 @@ function promotion_ui_expect_http(callable $callback, int $status, string $messa
     promotion_ui_assert(false, $message . '（预期异常）');
 }
 
-function promotion_ui_response(think\App $app, string $candidateId, array $extraPost = [])
+function promotion_ui_response(
+    think\App $app,
+    string $candidateId,
+    array $extraPost = [],
+    ?callable $promotion = null
+)
 {
     $request = (new app\Request())
         ->setMethod('POST')
@@ -40,7 +45,7 @@ function promotion_ui_response(think\App $app, string $candidateId, array $extra
         ->setAction('promote')
         ->withPost(array_merge(['id' => $candidateId], $extraPost));
     $app->instance('request', $request);
-    $controller = new PlanningRegulatoryMonitor($app);
+    $controller = new PlanningRegulatoryMonitor($app, null, null, $promotion);
 
     return (new AuditLog())->handle($request, static fn () => $controller->promote());
 }
@@ -174,6 +179,7 @@ $ids = [
     'staff' => 'pui-staff-' . $suffix,
     'other' => 'pui-other-' . $suffix,
     'invalid' => 'pui-invalid-' . $suffix,
+    'system' => 'pui-system-' . $suffix,
     'success' => 'pui-success-' . $suffix,
 ];
 $eventIds = [];
@@ -229,6 +235,53 @@ try {
             '被拒绝晋升不得留成功审计：' . $key
         );
     }
+
+    Session::delete('success');
+    Session::delete('error');
+    $injectedResponse = promotion_ui_response(
+        $app,
+        $ids['system'],
+        [],
+        static fn (string $candidateId, string $actorId): object => (object)['id' => 'pui-injected-event']
+    );
+    promotion_ui_assert(
+        (string)$injectedResponse->getHeader('Location') === '/planning/change-events/view?id=pui-injected-event',
+        '控制器必须使用构造器注入的晋升依赖'
+    );
+
+    Session::delete('success');
+    Session::delete('error');
+    $eventsBeforeSystemFailure = Db::name('qms_external_change_events')->count();
+    $systemFailure = new LogicException('sensitive-system-detail-must-not-be-rendered');
+    $caughtSystemFailure = null;
+    try {
+        promotion_ui_response(
+            $app,
+            $ids['system'],
+            [],
+            static function (string $candidateId, string $actorId) use ($systemFailure): never {
+                throw $systemFailure;
+            }
+        );
+    } catch (Throwable $exception) {
+        $caughtSystemFailure = $exception;
+    }
+    promotion_ui_assert($caughtSystemFailure === $systemFailure, '系统故障必须原样抛给框架形成 500，不得吞成 302');
+    $frameworkResponse = (new app\ExceptionHandle($app))->render($app->request, $caughtSystemFailure);
+    promotion_ui_assert($frameworkResponse->getCode() === 500, '传播的系统故障必须由框架渲染为 500');
+    promotion_ui_assert(Session::get('success') === null, '系统故障不得显示晋升成功');
+    promotion_ui_assert(Session::get('error') === null, '系统故障不得伪装为业务拒绝提示');
+    promotion_ui_assert(
+        Db::name('qms_external_change_events')->count() === $eventsBeforeSystemFailure,
+        '系统故障不得创建事件'
+    );
+    promotion_ui_assert(
+        Db::name('histories')->where('record_id', $ids['system'])->count() === 0,
+        '系统故障不得留下成功审计'
+    );
+    $systemCandidate = Db::name('qms_external_change_candidates')->where('id', $ids['system'])->find();
+    promotion_ui_assert((string)$systemCandidate['review_status'] === 'confirmed_applicable', '系统故障必须保持候选原状态');
+    promotion_ui_assert(empty($systemCandidate['promoted_event_id']), '系统故障不得留下候选事件关联');
 
     foreach (['other', 'invalid'] as $key) {
         Session::delete('success');
