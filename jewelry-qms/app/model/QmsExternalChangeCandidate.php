@@ -15,6 +15,7 @@ class QmsExternalChangeCandidate extends BaseModel
 
     protected $type = [
         'evidence_refs' => 'json',
+        'evidence_json' => 'json',
         'impact_analysis' => 'json',
     ];
 }

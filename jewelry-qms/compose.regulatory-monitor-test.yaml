@@ -14,7 +14,7 @@ services:
   db:
     # Docker Desktop 的单文件 bind 会错误改变脚本执行语义；测试镜像固定为 0644，
     # 让 MySQL 官方入口 source 现有脚本，迁移逻辑仍只维护在该脚本中。
-    image: lzhj-regulatory-test-db:local
+    image: !reset null
     pull_policy: build
     build:
       context: .

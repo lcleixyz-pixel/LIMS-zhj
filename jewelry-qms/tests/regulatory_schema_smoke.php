@@ -7,6 +7,8 @@ require __DIR__ . '/../app/common.php';
 $app = new think\App();
 $app->initialize();
 
+use app\model\QmsExternalChangeCandidate;
+use app\model\QmsRegulatoryMonitorRun;
 use think\facade\Db;
 
 function schema_assert(bool $condition, string $message): void
@@ -45,6 +47,39 @@ function data_type(string $table, string $column): string
     );
 
     return (string)($rows[0]['DATA_TYPE'] ?? '');
+}
+
+function column_length(string $table, string $column): int
+{
+    $rows = Db::query(
+        'SELECT CHARACTER_MAXIMUM_LENGTH FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+        [$table, $column]
+    );
+
+    return (int)($rows[0]['CHARACTER_MAXIMUM_LENGTH'] ?? 0);
+}
+
+function model_assert(bool $condition, string $message): void
+{
+    if (!$condition) {
+        throw new RuntimeException($message);
+    }
+}
+
+function normalize_json_value(mixed $value): mixed
+{
+    if (!is_array($value)) {
+        return $value;
+    }
+
+    foreach ($value as $key => $item) {
+        $value[$key] = normalize_json_value($item);
+    }
+    if (!array_is_list($value)) {
+        ksort($value);
+    }
+
+    return $value;
 }
 
 function run_migration(string $migration): void
@@ -87,7 +122,7 @@ foreach (['trigger_mode', 'started_at', 'finished_at', 'source_stats', 'candidat
     schema_assert(column_type($runTable, $column) !== '', 'Missing run column: ' . $column);
 }
 
-foreach (['source_key', 'source_item_key', 'source_url', 'normalized_url', 'content_hash', 'evidence_summary', 'evidence_refs', 'impact_analysis', 'reviewed_by', 'reviewed_at', 'review_comment', 'promoted_at'] as $column) {
+foreach (['source_key', 'source_item_key', 'source_url', 'normalized_url', 'content_hash', 'evidence_summary', 'evidence_refs', 'evidence_json', 'impact_analysis', 'reviewed_by', 'reviewed_at', 'review_comment', 'promoted_at'] as $column) {
     schema_assert(column_type($candidateTable, $column) !== '', 'Missing candidate column: ' . $column);
 }
 
@@ -96,6 +131,7 @@ foreach ([
     [$runTable, 'candidate_stats'],
     [$runTable, 'result_json'],
     [$candidateTable, 'evidence_refs'],
+    [$candidateTable, 'evidence_json'],
     [$candidateTable, 'impact_analysis'],
 ] as [$table, $column]) {
     schema_assert(data_type($table, $column) === 'json', $table . '.' . $column . ' must be JSON');
@@ -116,6 +152,18 @@ schema_assert(
 schema_assert(
     column_type($candidateTable, 'promoted_event_id') === column_type('qms_external_change_events', 'id'),
     'Candidate promoted_event_id type must match external change event id'
+);
+schema_assert(
+    column_length($candidateTable, 'title') === column_length('qms_external_change_events', 'source_name'),
+    'Candidate title length must match external change event source_name'
+);
+schema_assert(
+    column_length($candidateTable, 'source_url') === column_length('qms_external_change_events', 'source_url'),
+    'Candidate source_url length must match external change event source_url'
+);
+schema_assert(
+    column_length($candidateTable, 'announcement_number') === column_length('qms_external_change_events', 'announcement_number'),
+    'Candidate announcement_number length must match external change event announcement_number'
 );
 
 schema_assert(
@@ -138,19 +186,100 @@ schema_assert(
 run_migration($migration);
 run_migration($migration);
 
-$runModel = (string)file_get_contents(dirname(__DIR__) . '/app/model/QmsRegulatoryMonitorRun.php');
-$candidateModel = (string)file_get_contents(dirname(__DIR__) . '/app/model/QmsExternalChangeCandidate.php');
-foreach (['source_stats', 'candidate_stats', 'result_json'] as $field) {
-    schema_assert(str_contains($runModel, "'" . $field . "' => 'json'"), 'Run model converts ' . $field . ' as JSON');
+$runId = qms_uuid();
+$candidateId = qms_uuid();
+$runJson = [
+    'source_stats' => ['planned' => 2, 'successful' => 1, 'failed' => 1],
+    'candidate_stats' => ['new' => 1, 'duplicate' => 0, 'updated' => 0],
+    'result_json' => ['offline' => true, 'notes' => ['schema-smoke']],
+];
+$candidateJson = [
+    'evidence_refs' => [['kind' => 'official_page', 'locator' => 'notice-1']],
+    'evidence_json' => [
+        'original_title' => str_repeat('原', 350),
+        'original_url' => 'https://example.invalid/' . str_repeat('x', 550),
+    ],
+    'impact_analysis' => [
+        'cma_scope_mark' => ['status' => 'no_match'],
+        'cnas_accreditation' => ['status' => 'possible'],
+        'qms_documents' => ['status' => 'direct'],
+        'personnel_authorization' => ['status' => 'no_match'],
+        'methods_resources' => ['status' => 'possible'],
+        'lims_rules' => ['status' => 'direct'],
+    ],
+];
+$modelFailure = null;
+
+try {
+    $run = new QmsRegulatoryMonitorRun();
+    model_assert($run->getName() === $runTable, 'Run model table mapping is incorrect');
+    $run->save([
+        'id' => $runId,
+        'run_code' => 'REG-SCHEMA-' . $runId,
+        'trigger_mode' => 'manual',
+        'started_at' => date('Y-m-d H:i:s'),
+        'status' => 'completed',
+        'source_stats' => $runJson['source_stats'],
+        'candidate_stats' => $runJson['candidate_stats'],
+        'result_json' => $runJson['result_json'],
+        'rule_version' => 'schema-smoke-v1',
+    ]);
+
+    $candidate = new QmsExternalChangeCandidate();
+    model_assert($candidate->getName() === $candidateTable, 'Candidate model table mapping is incorrect');
+    $candidate->save([
+        'id' => $candidateId,
+        'monitor_run_id' => $runId,
+        'source_key' => 'schema-smoke',
+        'source_mode' => 'manual_only',
+        'source_item_key' => 'notice-' . $candidateId,
+        'title' => '法规监测候选模型往返测试',
+        'source_url' => 'https://example.invalid/notices/' . $candidateId,
+        'first_seen_at' => date('Y-m-d H:i:s'),
+        'last_seen_at' => date('Y-m-d H:i:s'),
+        'content_hash' => hash('sha256', $candidateId),
+        'evidence_refs' => $candidateJson['evidence_refs'],
+        'evidence_json' => $candidateJson['evidence_json'],
+        'impact_analysis' => $candidateJson['impact_analysis'],
+    ]);
+
+    $storedRun = QmsRegulatoryMonitorRun::find($runId);
+    $storedCandidate = QmsExternalChangeCandidate::find($candidateId);
+    model_assert($storedRun instanceof QmsRegulatoryMonitorRun, 'Run model record was not readable');
+    model_assert($storedCandidate instanceof QmsExternalChangeCandidate, 'Candidate model record was not readable');
+    foreach ($runJson as $field => $expected) {
+        model_assert(
+            normalize_json_value($storedRun->getAttr($field)) === normalize_json_value($expected),
+            'Run model JSON roundtrip failed: ' . $field
+        );
+    }
+    foreach ($candidateJson as $field => $expected) {
+        model_assert(
+            normalize_json_value($storedCandidate->getAttr($field)) === normalize_json_value($expected),
+            'Candidate model JSON roundtrip failed: ' . $field
+        );
+    }
+    foreach ([[$runTable, $runId], [$candidateTable, $candidateId]] as [$table, $id]) {
+        $timestamps = Db::name($table)->where('id', $id)->field(['created', 'modified'])->find();
+        model_assert(is_array($timestamps), $table . ' timestamps were not readable');
+        model_assert((string)$timestamps['created'] !== '', $table . ' created timestamp was not written');
+        model_assert((string)$timestamps['modified'] !== '', $table . ' modified timestamp was not written');
+    }
+
+    $storedCandidate->delete();
+    $storedRun->delete();
+    model_assert(Db::name($candidateTable)->where('id', $candidateId)->count() === 0, 'Candidate model delete failed');
+    model_assert(Db::name($runTable)->where('id', $runId)->count() === 0, 'Run model delete failed');
+} catch (Throwable $exception) {
+    $modelFailure = $exception;
+} finally {
+    Db::name($candidateTable)->where('id', $candidateId)->delete();
+    Db::name($runTable)->where('id', $runId)->delete();
 }
-foreach (['evidence_refs', 'impact_analysis'] as $field) {
-    schema_assert(str_contains($candidateModel, "'" . $field . "' => 'json'"), 'Candidate model converts ' . $field . ' as JSON');
-}
-foreach ([[$runModel, $runTable], [$candidateModel, $candidateTable]] as [$model, $table]) {
-    schema_assert(str_contains($model, "protected \$name = '" . $table . "'"), 'Model maps table ' . $table);
-    schema_assert(str_contains($model, "protected \$autoWriteTimestamp = 'datetime'"), 'Model declares datetime timestamps');
-    schema_assert(str_contains($model, "protected \$createTime = 'created'"), 'Model declares created timestamp');
-    schema_assert(str_contains($model, "protected \$updateTime = 'modified'"), 'Model declares modified timestamp');
+
+if ($modelFailure instanceof Throwable) {
+    fwrite(STDERR, $modelFailure->getMessage() . PHP_EOL);
+    exit(1);
 }
 
 echo "regulatory_schema_smoke passed\n";
