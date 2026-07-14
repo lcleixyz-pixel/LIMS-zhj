@@ -1,0 +1,26 @@
+services:
+  app:
+    ports: !override
+      - "127.0.0.1::8000"
+    volumes: !override
+      - .:/app
+      - ../docs:/docs:ro
+      - ../knowledge:/knowledge
+      - ../参考:/参考:ro
+      - ../现用文件:/现用文件:ro
+      - vendor:/app/vendor
+      - node_modules:/app/node_modules
+      - composer_cache:/tmp/composer-cache
+  db:
+    # Docker Desktop 的单文件 bind 会错误改变脚本执行语义；测试镜像固定为 0644，
+    # 让 MySQL 官方入口 source 现有脚本，迁移逻辑仍只维护在该脚本中。
+    image: lzhj-regulatory-test-db:local
+    pull_policy: build
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM mysql:8.4
+        COPY --chmod=0644 deploy/experience/db-init/02-apply-migrations.sh /docker-entrypoint-initdb.d/02-apply-migrations.sh
+    ports: !reset []
+    volumes:
+      - ./database/migrations:/qms-migrations:ro
