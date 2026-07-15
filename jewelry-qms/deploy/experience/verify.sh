@@ -28,7 +28,14 @@ if [[ -z "$app_id" || -z "$db_id" ]]; then
 fi
 
 echo "== Application loopback HTTP =="
-http_code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${HOST_PORT}/login/index")"
+http_code=""
+for attempt in {1..30}; do
+    http_code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${HOST_PORT}/login/index" 2>/dev/null || true)"
+    if [[ "$http_code" == "200" ]]; then
+        break
+    fi
+    sleep 2
+done
 echo "HTTP $http_code http://127.0.0.1:${HOST_PORT}/login/index"
 if [[ "$http_code" != "200" ]]; then
     echo "FAIL: application loopback endpoint did not return HTTP 200" >&2
@@ -40,6 +47,13 @@ db_health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status
 echo "db health=$db_health"
 if [[ "$db_health" != "healthy" ]]; then
     echo "FAIL: database container is not healthy" >&2
+    exit 1
+fi
+
+regulatory_table_count="$("${compose[@]}" exec -T db sh -lc 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u"$MYSQL_USER" "$MYSQL_DATABASE" -Nse "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='\''$MYSQL_DATABASE'\'' AND table_name IN ('\''qms_external_change_events'\'','\''qms_external_change_candidates'\'','\''qms_regulatory_monitor_runs'\'')"')"
+echo "regulatory tables=$regulatory_table_count/3"
+if [[ "$regulatory_table_count" != "3" ]]; then
+    echo "FAIL: regulatory monitor database tables are incomplete" >&2
     exit 1
 fi
 

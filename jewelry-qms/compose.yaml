@@ -9,6 +9,7 @@ services:
     environment:
       APP_DEBUG: "true"
       TZ: Asia/Shanghai
+      REGULATORY_MONITOR_ENABLED: "${REGULATORY_MONITOR_ENABLED:-0}"
       DB_TYPE: mysql
       DB_HOST: db
       DB_NAME: jewelry_qms

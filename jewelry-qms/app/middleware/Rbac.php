@@ -46,7 +46,7 @@ class Rbac
             'uploadcertificate',
             'approve', 'complete', 'refresh',
             'extract', 'confirm', 'reject',
-            'save', 'test', 'send', 'create', 'purge',
+            'save', 'test', 'send', 'create', 'purge', 'run',
         ];
         // 责任链签批以实时员工任命为业务身份，不以 RBAC 页面角色代替。
         // 这里只放行该控制器的 approve；无有效总经理/实验室主任任命仍会被 ApprovalService 拒绝。

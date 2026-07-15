@@ -1,0 +1,109 @@
+<div class="alert alert-warning border-warning" role="alert">
+    <strong>机器发现/规则初判，须人工确认</strong>
+    <div class="small mt-1">本页是隔离候选收件箱，不是现行外来依据或机构结论。“未命中规则”不等于“不适用”。</div>
+</div>
+
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">法规动态监测</h4>
+        <div class="text-muted small">官方来源月度检查、候选初判与人工复核入口。</div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">手工运行</h5></div>
+    <div class="card-body">
+        <form method="post" action="/planning/regulatory-monitor/run" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small text-muted">已批准来源</label>
+                <select name="source[]" class="form-select form-select-sm" multiple required>
+                    {foreach $sources as $sourceKey=>$source}
+                    <option value="{$sourceKey}">{$source.name|default=$sourceKey} ({$source.mode|default='-'})</option>
+                    {/foreach}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted">起始日期（可选）</label>
+                <input type="date" name="since" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" name="dry_run" value="1" class="btn btn-outline-primary btn-sm">DRY-RUN（不保存）</button>
+                {if $currentRole == 'admin'}
+                <button type="submit" name="dry_run" value="0" class="btn btn-danger btn-sm" onclick="return confirm('确定实际采集并保存候选？')">实际采集</button>
+                {/if}
+            </div>
+        </form>
+        <div class="small text-muted mt-2">quality_manager 仅可 DRY-RUN；实际采集仅 admin 可执行。系统不接受 fixture 路径或运行环境参数。</div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">运行健康</h5></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>开始时间</th><th>触发方式</th><th>状态</th><th>完成时间</th><th>规则版本</th></tr></thead>
+            <tbody>
+                {volist name="recentRuns" id="run"}
+                <tr>
+                    <td>{$run.started_at|default='-'}</td>
+                    <td>{$run.trigger_mode|default='-'}</td>
+                    <td>{$runStatusLabels[$run.status]|default=$run.status}</td>
+                    <td>{$run.finished_at|default='-'}</td>
+                    <td>{$run.rule_version|default='-'}</td>
+                </tr>
+                {/volist}
+                {empty name="recentRuns"}<tr><td colspan="5" class="text-center text-muted">暂无运行记录</td></tr>{/empty}
+            </tbody>
+        </table>
+        <div class="small text-muted mt-2">部分/全部失败会明确显示状态；详细技术错误仅记录在服务日志。</div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" action="/planning/regulatory-monitor" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small text-muted">复核状态</label>
+                <select name="review_status" class="form-select form-select-sm">
+                    <option value="">全部</option>
+                    {foreach $reviewStatusLabels as $key=>$label}
+                    <option value="{$key}" {if $filters.review_status == $key}selected{/if}>{$label}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label small text-muted">来源</label>
+                <select name="source_key" class="form-select form-select-sm">
+                    <option value="">全部</option>
+                    {foreach $sources as $sourceKey=>$source}
+                    <option value="{$sourceKey}" {if $filters.source_key == $sourceKey}selected{/if}>{$source.name|default=$sourceKey}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <div class="col-md-3"><button type="submit" class="btn btn-outline-primary btn-sm w-100">筛选</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">隔离候选清单</h5></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-hover align-middle">
+            <thead><tr><th>来源</th><th>标题/文号</th><th>发布/生效</th><th>初次/最近发现</th><th>复核状态</th><th>操作</th></tr></thead>
+            <tbody>
+                {volist name="items" id="item"}
+                <tr>
+                    <td>{$item.source_key}</td>
+                    <td><div>{$item.title}</div><div class="small text-muted">{$item.announcement_number|default='-'}</div></td>
+                    <td>{$item.published_date|default='-'} / {$item.effective_date|default='-'}</td>
+                    <td>{$item.first_seen_at|default='-'} / {$item.last_seen_at|default='-'}</td>
+                    <td>{$reviewStatusLabels[$item.review_status]|default=$item.review_status}</td>
+                    <td><a class="btn btn-sm btn-outline-info" href="/planning/regulatory-monitor/show?id={$item.id}">查看证据</a></td>
+                </tr>
+                {/volist}
+                {empty name="items"}<tr><td colspan="6" class="text-center text-muted">暂无候选。</td></tr>{/empty}
+            </tbody>
+        </table>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>

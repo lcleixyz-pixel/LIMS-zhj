@@ -1,4 +1,9 @@
 # jewelry-qms 周期任务定时（B1 容器内 busybox crond，2026-07-11）
+TZ=Asia/Shanghai
+
 # 每天 08:00（容器时区，compose 已设 TZ=Asia/Shanghai）跑全量提醒检查
 # 结果写 /tmp/reminders.log；改时间点：改下面这行的小时数（0-23），重建容器生效
 0 8 * * * cd /app && php think check:reminders --type=all >> /tmp/reminders.log 2>&1
+
+# 每月 1 日 09:00（Asia/Shanghai）执行法规动态监测。只有显式开启才运行，缺失或 0 默认安全关闭。
+0 9 1 * * cd /app && case "${REGULATORY_MONITOR_ENABLED:-0}" in 1|true|TRUE) /usr/local/bin/php /app/think qms:monitor-regulatory-changes --scheduled >> /tmp/regulatory-monitor.log 2>&1 ;; *) : ;; esac

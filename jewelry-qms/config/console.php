@@ -6,6 +6,7 @@ use app\command\AiPurgeChat;
 use app\command\CheckReminders;
 use app\command\ComplianceAssess;
 use app\command\CurrentFilesSeed;
+use app\command\MonitorRegulatoryChanges;
 use app\command\QmsManualProcedureAlignmentCheck;
 use app\command\QmsPreimportPackage;
 use app\command\RecordFormRebuildSchema;
@@ -19,6 +20,7 @@ return [
         CheckReminders::class,
         ComplianceAssess::class,
         CurrentFilesSeed::class,
+        MonitorRegulatoryChanges::class,
         QmsManualProcedureAlignmentCheck::class,
         QmsPreimportPackage::class,
         RecordFormRebuildSchema::class,

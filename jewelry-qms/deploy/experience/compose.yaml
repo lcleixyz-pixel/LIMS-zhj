@@ -17,7 +17,7 @@ services:
       - ../../database/migrations:/qms-migrations:ro
       - ./db-init/02-apply-migrations.sh:/docker-entrypoint-initdb.d/02-apply-migrations.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "test \"$$(mysql -h 127.0.0.1 -u\"$${MYSQL_USER}\" -p\"$${MYSQL_PASSWORD}\" \"$${MYSQL_DATABASE}\" -Nse \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$${MYSQL_DATABASE}' AND table_name='qms_external_change_events'\" 2>/dev/null)\" = 1"]
+      test: ["CMD-SHELL", "test \"$$(MYSQL_PWD=\"$${MYSQL_PASSWORD}\" mysql -h 127.0.0.1 -u\"$${MYSQL_USER}\" \"$${MYSQL_DATABASE}\" -Nse \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$${MYSQL_DATABASE}' AND table_name IN ('qms_external_change_events','qms_external_change_candidates','qms_regulatory_monitor_runs')\" 2>/dev/null)\" = 3"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -61,6 +61,7 @@ services:
     environment:
       APP_DEBUG: "false"
       TZ: Asia/Shanghai
+      REGULATORY_MONITOR_ENABLED: "${REGULATORY_MONITOR_ENABLED:-0}"
       DB_TYPE: mysql
       DB_HOST: db
       DB_NAME: ${MYSQL_DATABASE:-jewelry_qms}
