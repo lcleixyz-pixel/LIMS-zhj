@@ -28,7 +28,14 @@ if [[ -z "$app_id" || -z "$db_id" ]]; then
 fi
 
 echo "== Application loopback HTTP =="
-http_code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${HOST_PORT}/login/index")"
+http_code=""
+for attempt in {1..30}; do
+    http_code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${HOST_PORT}/login/index" 2>/dev/null || true)"
+    if [[ "$http_code" == "200" ]]; then
+        break
+    fi
+    sleep 2
+done
 echo "HTTP $http_code http://127.0.0.1:${HOST_PORT}/login/index"
 if [[ "$http_code" != "200" ]]; then
     echo "FAIL: application loopback endpoint did not return HTTP 200" >&2
