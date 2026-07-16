@@ -1,0 +1,2 @@
+070b6242a5e981fb82d5d99e54e5d11e00153db1e34d0a1eb6f885aa9caef2a2  .team/交接箱/2026-07-15-G2-R本地迁移预演/artifacts/source-jewelry_qms-before-g2r.sql.gz
+9e033a327b9fb1113860736fed31dc5eaea3815dc34a17d0ec64d7e0505d6eab  .team/交接箱/2026-07-15-G2-R本地迁移预演/artifacts/migration-database-g2r-sanitized.sql.gz

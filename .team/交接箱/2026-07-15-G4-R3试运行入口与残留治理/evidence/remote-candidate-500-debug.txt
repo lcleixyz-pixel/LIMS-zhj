@@ -1,0 +1,52 @@
+body_error_excerpt:
+2-<html>
+3-<head>
+4-    <meta charset="UTF-8">
+5:    <title>系统发生错误</title>
+6-    <meta name="robots" content="noindex,nofollow" />
+7-    <style>
+8-        /* Base */
+--
+63-            padding: 0;
+64-            margin: 0;
+65-        }
+66:        /* Exception Info */
+67-        .exception {
+68-            margin-top: 20px;
+69-        }
+--
+143-            border-bottom-right-radius: 4px;
+144-        }
+145-
+146:        /* Exception Variables */
+147-        .exception-var table{
+148-            width: 100%;
+149-            margin: 12px 0;
+--
+206-</head>
+207-<body>
+208-        <div class="exception">
+209:        <div class="info"><h1>页面错误！请稍后再试～</h1></div>
+210-    </div>
+211-        
+212-    
+body_tail:
+recent_log_tail:
+[2026-07-15T12:59:23+08:00][error] [Regulatory Monitor Command] system failure: app\service\regulatory\RegulatoryTransactionAbortedException
+[2026-07-15T12:59:24+08:00][error] [Regulatory Monitor Command] notification failure: RuntimeException
+[2026-07-15T14:20:08+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:20:23+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:21:39+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:21:43+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:21:46+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:21:49+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:21:53+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:02+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:07+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:10+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:28+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:33+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:36+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:40+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T16:21:20+08:00][error] [0]Cannot use object of type stdClass as array
+[2026-07-15T16:30:40+08:00][error] [2]Array to string conversion

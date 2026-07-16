@@ -1,0 +1,109 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">法规候选详情</h5>
+        <a href="/planning/regulatory-candidates" class="btn btn-sm btn-outline-secondary">返回候选池</a>
+    </div>
+    <div class="card-body">
+        <div class="alert {$effectiveStatus.class|default='alert-info'} small">
+            <strong>生效状态：</strong>{$effectiveStatus.label|default='生效日期待核验'}
+        </div>
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="mb-0">人工处置</h6></div>
+            <div class="card-body">
+                <div class="alert alert-light border small">
+                    本区只记录人工确认和转正式变更事件；不会自动修改体系文件、人员授权、记录模板、培训或 LIMS 规则。
+                </div>
+                {if $record.review_status == 'promoted' && $record.promoted_event_id}
+                <a href="/planning/change-events/view?id={$record.promoted_event_id}" class="btn btn-sm btn-primary">查看已转正式变更事件</a>
+                {else}
+                <form method="post" action="/planning/regulatory-candidates/review" class="d-flex flex-wrap gap-2 align-items-start mb-2">
+                    <input type="hidden" name="id" value="{$record.id}">
+                    <input type="text" name="review_comment" class="form-control form-control-sm" style="max-width:420px" placeholder="人工确认备注（可选）">
+                    <button type="submit" name="action" value="confirm_applicable" class="btn btn-sm btn-outline-success">确认适用</button>
+                    <button type="submit" name="action" value="confirm_not_applicable" class="btn btn-sm btn-outline-secondary">确认不适用</button>
+                    <button type="submit" name="action" value="defer" class="btn btn-sm btn-outline-warning">暂缓</button>
+                </form>
+                <form method="post" action="/planning/regulatory-candidates/promote" onsubmit="return confirm('确认转入正式变更事件？系统只建立事件台账，不会自动修改受控对象。')">
+                    <input type="hidden" name="id" value="{$record.id}">
+                    <input type="hidden" name="review_comment" value="由候选池人工确认转正式变更事件">
+                    <button type="submit" class="btn btn-sm btn-primary">转正式变更事件</button>
+                </form>
+                {/if}
+            </div>
+        </div>
+        <table class="table table-bordered align-middle">
+            <tr><th width="180">标题</th><td>{$record.title}</td></tr>
+            <tr><th>公告编号</th><td>{$record.announcement_number|default='-'}</td></tr>
+            <tr><th>来源</th><td>{$sourceLabel|default=$record.source_key}<div class="qms-technical-muted">技术编号：{$record.source_key} / {$record.source_mode}</div></td></tr>
+            <tr><th>来源信任</th><td><span class="badge bg-warning text-dark">{$sourceTrustLabel|default='来源状态未知'}</span><div class="qms-technical-muted">{$sourceTrust|default='unknown'}</div></td></tr>
+            <tr><th>原始链接</th><td>{if $record.source_url}<a href="{$record.source_url}" target="_blank" rel="noopener">{$record.source_url}</a>{else}-{/if}</td></tr>
+            <tr><th>发布日期/生效日期</th><td>{$record.published_date|default='-'} / {$record.effective_date|default='-'}</td></tr>
+            <tr><th>确认状态</th><td><span class="badge bg-secondary">{$reviewStatusLabels[$record.review_status]|default=$record.review_status}</span></td></tr>
+            <tr><th>初步适用性</th><td>{$applicabilityLabels[$record.preliminary_applicability]|default=$record.preliminary_applicability}</td></tr>
+            <tr><th>相关性</th><td>{$relevanceLabels[$record.relevance]|default=$record.relevance}</td></tr>
+            <tr><th>是否已转正式事件</th><td>{if $record.promoted_event_id}{$record.promoted_event_id}{else}<span class="text-muted">未转正式事件</span>{/if}</td></tr>
+            <tr><th>证据摘要</th><td>{$record.evidence_summary|nl2br|raw}</td></tr>
+            <tr><th>规则版本</th><td>{$record.analysis_rule_version|default='-'}</td></tr>
+            <tr><th>分析说明</th><td>{$record.analysis_rationale|default='-'}</td></tr>
+        </table>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">六类影响初判</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle">
+                <thead><tr><th>类别</th><th>初步结论</th><th>建议动作</th><th>证据</th><th>技术依据</th><th>置信度</th></tr></thead>
+                <tbody>
+                    {volist name="impactRows" id="row"}
+                    <tr>
+                        <td>{$row.label}</td>
+                        <td>{$conclusionLabels[$row.conclusion]|default=$row.conclusion}</td>
+                        <td>{$row.suggested_action}</td>
+                        <td>
+                            {volist name="row.evidence" id="e"}
+                            <div>{$e}</div>
+                            {/volist}
+                        </td>
+                        <td>
+                            <details>
+                                <summary>查看规则 ID</summary>
+                            {volist name="row.rule_ids" id="rule"}
+                            <code>{$rule}</code><br>
+                            {/volist}
+                            </details>
+                        </td>
+                        <td>{$row.confidence_label|default='-'}</td>
+                    </tr>
+                    {/volist}
+                </tbody>
+            </table>
+        </div>
+        <div class="alert alert-warning small mb-0">
+            本页只展示候选和影响范围。人工确认前，不得把 <code>likely</code> 或 <code>possible</code> 当作最终适用性结论；<code>no_match</code> 仅表示现有规则未命中。
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0">证据引用</h6></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead><tr><th>类型</th><th>标签</th><th>定位</th><th>链接</th></tr></thead>
+                <tbody>
+                    {volist name="evidenceRefs" id="ref"}
+                    <tr>
+                        <td>{$ref.kind|default='-'}</td>
+                        <td>{$ref.label|default='-'}</td>
+                        <td>{$ref.locator|default='-'}</td>
+                        <td>{if isset($ref.url) && $ref.url}<a href="{$ref.url}" target="_blank" rel="noopener">{$ref.url}</a>{else}-{/if}</td>
+                    </tr>
+                    {/volist}
+                    {empty name="evidenceRefs"}<tr><td colspan="4" class="text-center text-muted">暂无证据引用</td></tr>{/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

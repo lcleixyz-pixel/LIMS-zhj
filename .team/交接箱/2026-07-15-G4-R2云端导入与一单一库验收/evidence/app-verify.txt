@@ -1,0 +1,10 @@
+started_at=2026-07-15T15:46:44+08:00
+compose_ps:
+NAME                           IMAGE                                  COMMAND                  SERVICE   CREATED       STATUS                 PORTS
+jewelry-qms-experience-app-1   jewelry-qms-experience:amd64-64fdb2a   "jewelry-qms-entrypo…"   app       3 hours ago   Up 3 hours             127.0.0.1:18010->8000/tcp
+jewelry-qms-experience-db-1    jewelry-qms-mysql:8.4-amd64            "docker-entrypoint.s…"   db        3 hours ago   Up 3 hours (healthy)   
+local_login_status=200
+local_dashboard_redirect_status=302
+login_post_status=200
+dashboard_after_login_status=302
+dashboard_after_login_title=

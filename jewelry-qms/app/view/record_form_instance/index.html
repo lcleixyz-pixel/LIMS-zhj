@@ -1,10 +1,10 @@
 <div class="qms-page-header">
     <div>
         <h4>填写记录</h4>
-        <small class="text-muted">已填写的记录实例 · 可查看、编辑、打印、导出 PDF</small>
+        <small class="text-muted">已填写的记录实例 · 关注填写人、审核人和归档状态</small>
     </div>
     <div class="qms-page-actions">
-        <a href="/record_form_instance/reviewDashboard?year=2025" class="btn btn-sm btn-outline-success">2025 运行确认</a>
+        <a href="/record_form_instance/reviewDashboard?year=2025" class="btn btn-sm btn-outline-success">2025 年度记录运行确认</a>
         <a href="/record_form_template/index" class="btn btn-sm btn-primary">选择模板填写</a>
     </div>
 </div>
@@ -30,6 +30,8 @@
                         <th>编号</th>
                         <th>模板</th>
                         <th>状态</th>
+                        <th>填写人</th>
+                        <th>审核人</th>
                         <th>创建时间</th>
                         <th width="300">操作</th>
                     </tr>
@@ -41,12 +43,14 @@
                         <td>{$item.doc_number}</td>
                         <td>{if $item.template_name}{$item.template_name}{else}{$item.template.name|default=$item.template_id}{/if}</td>
                         <td>
-                            {if $item.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
-                            {elseif $item.status == 'generated'}<span class="badge badge-status-generated">已生成</span>
-                            {elseif $item.status == 'locked'}<span class="badge badge-status-archived">已归档</span>
-                            {elseif $item.status == 'voided'}<span class="badge badge-status-obsolete">已作废</span>
+                            {if $item.status == 'draft'}<span class="badge badge-status-draft">{$item.status_label}</span>
+                            {elseif $item.status == 'generated'}<span class="badge badge-status-generated">已形成PDF</span>
+                            {elseif $item.status == 'locked'}<span class="badge badge-status-archived">{$item.status_label}</span>
+                            {elseif $item.status == 'voided'}<span class="badge badge-status-obsolete">{$item.status_label}</span>
                             {else}<span class="badge badge-status-draft">{$item.status}</span>{/if}
                         </td>
+                        <td>{$item.filler_label|default='未记录'}</td>
+                        <td>{$item.reviewer_label|default='待审核'}</td>
                         <td>{$item.created|default='-'}</td>
                         <td>
                             <a href="/record_form_instance/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
@@ -64,7 +68,7 @@
                     </tr>
                     {/volist}
                     {empty name="items"}
-                    <tr><td colspan="6" class="text-center text-muted">暂无填写记录</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted">暂无填写记录</td></tr>
                     {/empty}
                 </tbody>
             </table>

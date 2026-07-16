@@ -50,6 +50,7 @@ foreach ([
     'planning/structures/view',
     'planning/structures/seed',
     'planning/traceability',
+    'planning/regulatory-candidates',
     'planning/objectives',
 ] as $path) {
     assert_contains($path, $route, 'Route exposes new planning path ' . $path);
@@ -62,6 +63,7 @@ foreach ([
     '/planning/clauses' => '条款库',
     '/planning/structures' => '文件结构化',
     '/planning/traceability' => '追溯矩阵',
+    '/planning/regulatory-candidates' => '法规候选池',
     '/planning/objectives' => '质量方针目标',
 ] as $path => $label) {
     assert_contains($path, $layout, 'Navigation exposes ' . $path);
@@ -75,6 +77,7 @@ foreach ([
     'planningclause',
     'planningstructure',
     'planningtraceability',
+    'planningregulatorycandidate',
     'planningobjective',
 ] as $permission) {
     assert_contains($permission, $config, 'Quality manager permissions include ' . $permission);

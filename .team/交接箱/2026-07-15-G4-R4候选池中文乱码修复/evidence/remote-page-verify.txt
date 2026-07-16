@@ -1,0 +1,3 @@
+candidate_pool_status=200
+candidate_pool_chinese_markers=一单一库,体系文件,市场监管总局,待人工确认,检验检测机构,能力项目/CMA 标志,
+candidate_pool_mojibake_count=0

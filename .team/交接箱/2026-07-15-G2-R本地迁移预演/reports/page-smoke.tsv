@@ -1,0 +1,5 @@
+path	http_status
+/login/index	200
+/	200
+/planning/responsibilities	200
+/planning/change-events	200

@@ -1,0 +1,112 @@
+{
+  "schema_version": "1.0",
+  "candidate": {
+    "id": "reg-2026-samr-14-yidanyiku",
+    "title": "市场监管总局关于对检验检测机构资质认定实施“一单一库”管理的公告",
+    "announcement_number": "2026年第14号",
+    "document_type": "samr_announcement",
+    "published_date": "2026-04-23",
+    "effective_date": "2026-06-01",
+    "first_seen_at": "2026-07-15T00:00:00+08:00",
+    "last_seen_at": "2026-07-15T00:00:00+08:00",
+    "content_hash": "d5a933097470c92f10b2177243658729c7c026d02bfe718817498f4114c46fe7",
+    "relevance": "涉及检验检测机构资质认定事项清单、能力项目库、CMA 标志使用和动态管理机制，需纳入质量管理体系外部依据候选复核。",
+    "preliminary_applicability": "possible",
+    "analysis_rule_version": "qms-regulatory-change-monitor-v0.1",
+    "analysis_confidence": 0.86
+  },
+  "source": {
+    "source_key": "samr-2026-14-yidanyiku",
+    "source_mode": "official_web_page",
+    "source_name": "国家市场监督管理总局",
+    "canonical_url": "https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/rkjcs/art/2026/art_ea608a4306a34b8bb1f3c548a91cffa8.html",
+    "evidence": {
+      "summary": "公告明确制定检验检测机构资质认定事项清单和能力项目库，要求严格依据“一单一库”办理资质认定，并规范资质认定证书及 CMA 标志使用。",
+      "references": [
+        {
+          "kind": "official_primary",
+          "label": "市场监管总局 2026 年第 14 号公告正文",
+          "locator": "公告正文第 1 至第 4 项及施行日期",
+          "url": "https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/rkjcs/art/2026/art_ea608a4306a34b8bb1f3c548a91cffa8.html"
+        }
+      ]
+    }
+  },
+  "impact_assessment": {
+    "cma_scope_mark": {
+      "conclusion": "likely",
+      "evidence": [
+        "公告要求检验检测机构在“一单一库”范围内申请资质认定。",
+        "公告要求依法依规使用资质认定证书及 CMA 标志。",
+        "未取得资质认定项目不得使用资质认定证书，不得在报告上标注 CMA。"
+      ],
+      "rule_ids": [
+        "samr_yidanyiku_cma_mark",
+        "capability_scope_mapping_required"
+      ],
+      "confidence": 0.92
+    },
+    "qms_documents": {
+      "conclusion": "likely",
+      "evidence": [
+        "公告及附件线索应进入外来文件候选。",
+        "能力项目库和事项清单可能影响能力范围、合同评审、报告模板、CMA 标志控制和外来文件台账。"
+      ],
+      "rule_ids": [
+        "external_document_candidate",
+        "controlled_template_review"
+      ],
+      "confidence": 0.88
+    },
+    "personnel_authorization": {
+      "conclusion": "possible",
+      "evidence": [
+        "授权签字人、技术负责人、质量负责人、合同评审和报告审核签发人员需理解新的资质认定范围和 CMA 标志边界。",
+        "公告本身未直接改变具体人员资格条件，需结合机构授权范围和岗位职责人工确认。"
+      ],
+      "rule_ids": [
+        "authorization_boundary_awareness",
+        "role_responsibility_review"
+      ],
+      "confidence": 0.7
+    },
+    "equipment_calibration": {
+      "conclusion": "no_match",
+      "evidence": [
+        "公告聚焦资质认定事项清单、能力项目库、CMA 标志和动态管理机制；现有规则未命中设备校准参数、周期或计量溯源要求变化。"
+      ],
+      "rule_ids": [
+        "equipment_calibration_no_direct_match"
+      ],
+      "confidence": 0.62
+    },
+    "lims_rules": {
+      "conclusion": "likely",
+      "evidence": [
+        "系统需在候选层识别能力项目对照、合同评审、CMA 标志控制、报告模板和外来文件台账影响。",
+        "候选晋升前不得自动修改正式对象，晋升后也应只形成外部变更事件和治理任务。"
+      ],
+      "rule_ids": [
+        "candidate_only_workflow",
+        "no_auto_write_controlled_objects"
+      ],
+      "confidence": 0.9
+    },
+    "training": {
+      "conclusion": "likely",
+      "evidence": [
+        "质量负责人、技术负责人、授权签字人、报告审核/签发和合同评审人员需要学习确认。",
+        "培训影响不得自动创建已完成培训或自动改变授权状态。"
+      ],
+      "rule_ids": [
+        "training_required_for_affected_roles",
+        "no_auto_training_completion"
+      ],
+      "confidence": 0.87
+    }
+  },
+  "review": {
+    "status": "pending_manual_review",
+    "reviewed_at": null
+  }
+}

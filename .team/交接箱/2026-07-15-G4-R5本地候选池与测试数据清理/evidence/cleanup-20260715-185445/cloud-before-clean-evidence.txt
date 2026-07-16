@@ -1,0 +1,47 @@
+remote_base=/www/server/jewelry-qms-experience/shared/snapshots/cleanup-20260715-185445-g4r5-clean
+59b642aabfd7ab36560a1fbdb675b158baf2c45b02ba52e33924b64d8f692880  /www/server/jewelry-qms-experience/shared/snapshots/cleanup-20260715-185445-g4r5-clean/cloud-before-clean-full.sql
+cloud_file_backup=none
+
+cloud_before_counts:
++------------+------------+
+| table_name | rows_found |
++------------+------------+
+| equipments |          1 |
++------------+------------+
++--------------------------+------------+
+| table_name               | rows_found |
++--------------------------+------------+
+| compliance_check_results |          4 |
++--------------------------+------------+
++------------------------+------------+
+| table_name             | rows_found |
++------------------------+------------+
+| equipment_maintenances |          1 |
++------------------------+------------+
++------------+------------+
+| table_name | rows_found |
++------------+------------+
+| documents  |          1 |
++------------+------------+
++---------------------+------------+
+| table_name          | rows_found |
++---------------------+------------+
+| qms_document_blocks |          1 |
++---------------------+------------+
++--------------------------+------------+
+| table_name               | rows_found |
++--------------------------+------------+
+| qms_structured_documents |          1 |
++--------------------------+------------+
++-----------------------+------------+
+| table_name            | rows_found |
++-----------------------+------------+
+| qms_agent_suggestions |          1 |
++-----------------------+------------+
++---------------------------------------+------------+
+| table_name                            | rows_found |
++---------------------------------------+------------+
+| record_form_instances TEST-LINK batch |          9 |
++---------------------------------------+------------+
+
+cloud_testlink_files:

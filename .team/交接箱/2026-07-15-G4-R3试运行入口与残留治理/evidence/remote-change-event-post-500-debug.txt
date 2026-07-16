@@ -1,0 +1,86 @@
+post_body_error_excerpt:
+2-<html>
+3-<head>
+4-    <meta charset="UTF-8">
+5:    <title>系统发生错误</title>
+6-    <meta name="robots" content="noindex,nofollow" />
+7-    <style>
+8-        /* Base */
+--
+63-            padding: 0;
+64-            margin: 0;
+65-        }
+66:        /* Exception Info */
+67-        .exception {
+68-            margin-top: 20px;
+69-        }
+--
+143-            border-bottom-right-radius: 4px;
+144-        }
+145-
+146:        /* Exception Variables */
+147-        .exception-var table{
+148-            width: 100%;
+149-            margin: 12px 0;
+--
+206-</head>
+207-<body>
+208-        <div class="exception">
+209:        <div class="info"><h1>页面错误！请稍后再试～</h1></div>
+210-    </div>
+211-        
+212-    
+log_tail:
+[2026-07-15T12:59:23+08:00][error] [Regulatory Monitor Command] system failure: app\service\regulatory\RegulatoryTransactionAbortedException
+[2026-07-15T12:59:24+08:00][error] [Regulatory Monitor Command] notification failure: RuntimeException
+[2026-07-15T14:20:08+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:20:23+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:21:39+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:21:43+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:21:46+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:21:49+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:21:53+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:02+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:07+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:10+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:28+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:33+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:36+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T14:23:40+08:00][error] [10501]SQLSTATE[42S02]: Base table or view not found: 1146 Table 'jewelry_qms.system_settings' doesn't exist
+[2026-07-15T16:21:20+08:00][error] [0]Cannot use object of type stdClass as array
+[2026-07-15T16:30:40+08:00][error] [2]Array to string conversion
+table_schema:
+*************************** 1. row ***************************
+       Table: qms_external_change_events
+Create Table: CREATE TABLE `qms_external_change_events` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `event_code` varchar(80) NOT NULL,
+  `source_kind` enum('cnas','samr','standard_platform','gb','internal','other') NOT NULL DEFAULT 'cnas',
+  `source_name` varchar(300) NOT NULL,
+  `source_url` varchar(500) DEFAULT NULL,
+  `announcement_number` varchar(120) DEFAULT NULL,
+  `old_source_id` varchar(36) DEFAULT NULL,
+  `new_source_id` varchar(36) DEFAULT NULL,
+  `old_version` varchar(80) DEFAULT NULL,
+  `new_version` varchar(80) DEFAULT NULL,
+  `published_date` date DEFAULT NULL,
+  `effective_date` date DEFAULT NULL,
+  `event_summary` text NOT NULL,
+  `graph_snapshot_hash` char(64) DEFAULT NULL,
+  `status` enum('registered','assessing','revising','closed','exempted') DEFAULT 'registered',
+  `close_reason` text,
+  `publish` tinyint(1) DEFAULT '1',
+  `soft_delete` tinyint(1) DEFAULT '0',
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  `modified_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `event_code` (`event_code`),
+  KEY `company_status` (`company_id`,`status`),
+  KEY `source_kind` (`source_kind`),
+  KEY `effective_date` (`effective_date`),
+  KEY `old_source_id` (`old_source_id`),
+  KEY `new_source_id` (`new_source_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci

@@ -104,6 +104,7 @@ function cleanup_external_change_event_smoke(string $eventCode): void
 $root = dirname(__DIR__);
 $schema = (string)file_get_contents($root . '/database/jewelry_qms.sql');
 $migration = (string)file_get_contents($root . '/database/migrations/20260704_external_change_events.sql');
+$candidateMigration = (string)file_get_contents($root . '/database/migrations/20260715_regulatory_candidates.sql');
 $route = (string)file_get_contents($root . '/route/app.php');
 $config = (string)file_get_contents($root . '/config/qms.php');
 $layout = (string)file_get_contents($root . '/app/view/layout/main.html');
@@ -122,6 +123,14 @@ foreach ([$schema, $migration] as $source) {
     assert_contains('new_source_id', $source, 'External change event schema links new source');
 }
 
+foreach ([$schema, $candidateMigration] as $source) {
+    assert_contains('qms_regulatory_monitor_runs', $source, 'Regulatory monitor schema declares run table');
+    assert_contains('qms_external_change_candidates', $source, 'Regulatory monitor schema declares candidate table');
+    assert_contains('impact_analysis', $source, 'Regulatory candidate schema stores six-category impact analysis');
+    assert_contains('review_status', $source, 'Regulatory candidate schema stores manual review status');
+    assert_contains("enum('pending','confirmed_applicable','confirmed_not_applicable','deferred','promoted')", $source, 'Regulatory candidate schema stores calibrated review statuses');
+}
+
 foreach ([
     'planning/change-events',
     'planning/change-events/transition',
@@ -131,8 +140,14 @@ foreach ([
 }
 
 assert_contains('/planning/change-events', $layout, 'Navigation exposes change events');
+assert_contains('/planning/regulatory-candidates', $layout, 'Navigation exposes regulatory candidates');
+assert_contains('planning/regulatory-candidates', $route, 'Route exposes regulatory candidate pool');
+assert_contains('planningregulatorycandidate', $config, 'Quality manager permissions include PlanningRegulatoryCandidate');
 assert_contains('planningchangeevent', $config, 'Quality manager permissions include PlanningChangeEvent');
 assert_contains('planning_change_event', $config, 'Status labels include planning change events');
+assert_contains('View::assign(\'record\', $this->emptyRecord())', $controller, 'Add view receives array data compatible with template dot access');
+assert_contains('View::assign(\'record\', array_merge($this->emptyRecord(), $data))', $controller, 'Validation redisplay receives array data compatible with template dot access');
+assert_contains('CREATE TABLE `system_settings`', $schema, 'Baseline schema includes system_settings required by page context middleware');
 assert_contains('QmsExternalChangeEvent', $fieldAudit, 'Field audit whitelists external change event');
 assert_contains('transition', $rbac, 'RBAC covers external change transitions');
 assert_contains('transition', $auditLog, 'Audit log covers external change transitions');

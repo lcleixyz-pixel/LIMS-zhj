@@ -1,0 +1,38 @@
+residue_check_after_failed_attempts:
+candidate_residue_before_retry	0
+run_residue_before_retry	0
+candidate_residue_before_retry2	0
+run_residue_before_retry2	0
+candidate_detail:
+reg-2026-samr-14-yidanyiku	市场监管总局关于对检验检测机构资质认定实施“一单一库”管理的公告	manual_only	pending	needs_review	unknown	likely	likely	possible	no_match	likely	likely	NULL
+monitor_run:
+g4r2-run-yidanyiku-20260715	G4-R2-YIDANYIKU-20260715	manual	completed	unverified
+before_counts:
+documents	39
+employees	12
+record_form_templates	145
+record_form_instances	12
+qms_structured_documents	190
+qms_external_change_events	0
+qms_external_change_candidates	0
+qms_regulatory_monitor_runs	0
+after_counts:
+documents	39
+employees	12
+record_form_templates	145
+record_form_instances	12
+qms_structured_documents	190
+qms_external_change_events	0
+qms_external_change_candidates	1
+qms_regulatory_monitor_runs	1
+diff_counts:
+--- /www/server/jewelry-qms-experience/shared/incoming/g4r2-yidanyiku-20260715/yidanyiku-formal-counts-before.tsv	2026-07-15 15:52:28.014110486 +0800
++++ /www/server/jewelry-qms-experience/shared/incoming/g4r2-yidanyiku-20260715/yidanyiku-formal-counts-after.tsv	2026-07-15 15:52:28.367125503 +0800
+@@ -4,5 +4,5 @@
+ record_form_instances	12
+ qms_structured_documents	190
+ qms_external_change_events	0
+-qms_external_change_candidates	0
+-qms_regulatory_monitor_runs	0
++qms_external_change_candidates	1
++qms_regulatory_monitor_runs	1

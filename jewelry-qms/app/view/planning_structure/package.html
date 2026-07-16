@@ -1,13 +1,35 @@
 <div class="qms-page-header">
     <div>
         <h4 class="mb-1">体系文件组合包</h4>
-        <div class="text-muted small">将当前结构化外部依据、质量手册、程序文件、作业指导书和记录表格组合为一份可归档 Markdown。</div>
+        <div class="text-muted small">这是质量体系的“总目录和证据包”预览，用来确认外部依据、质量手册、程序文件、作业指导书和记录表格是否能形成可追溯闭环。</div>
     </div>
     <div class="qms-page-actions">
         <a href="/planning/structures" class="btn btn-sm btn-outline-secondary">返回列表</a>
         <form method="post" action="/planning/structures/render-package" class="m-0">
             <button type="submit" class="btn btn-primary btn-sm">生成组合包</button>
         </form>
+    </div>
+</div>
+
+<div class="alert alert-info mb-3">
+    <div class="fw-semibold mb-2">质量负责人先看</div>
+    <div class="row g-3 small">
+        <div class="col-md-3">
+            <div class="fw-semibold">这个页面用来做什么</div>
+            <div>把体系文件、条款追溯、岗位职责和记录表格放在同一张总览里，便于说明“依据—文件—记录—岗位”的链条。</div>
+        </div>
+        <div class="col-md-3">
+            <div class="fw-semibold">先看是否成链</div>
+            <div>重点看条款级追溯、内容块追溯和变更影响，判断是否能支撑内审、管理评审或文件修订。</div>
+        </div>
+        <div class="col-md-3">
+            <div class="fw-semibold">看到历史快照怎么办</div>
+            <div>历史快照仅供追溯，表示旧归档里的内容块已重建；通常不用处理，也不要从这里编辑。</div>
+        </div>
+        <div class="col-md-3">
+            <div class="fw-semibold">什么时候生成新版</div>
+            <div>只有在确认当前结构化文件无误后再生成；生成会新增归档版本，不会自动删除旧证据。</div>
+        </div>
     </div>
 </div>
 
@@ -47,8 +69,8 @@
     <div class="card-body">
         <div class="row g-3 align-items-center">
             <div class="col-md-9">
-                <div class="fw-semibold mb-1">组合包首页包含体系要素追溯总览</div>
-                <div class="text-muted small">索引按“体系要素、主外部条款、手册章节、程序文件、记录表格、运行模块、岗位职责、缺口”汇总，条款编号和手册章节编号作为关联信息出现，不作为要素标题。</div>
+                <div class="fw-semibold mb-1">用于回答：每一项体系要求有没有文件和记录支撑？</div>
+                <div class="text-muted small">索引按“体系要素、主外部条款、手册章节、程序文件、记录表格、运行模块、岗位职责、缺口”汇总。业务复核时重点看是否缺文件、缺记录、缺岗位责任，不需要先理解技术字段。</div>
             </div>
             <div class="col-md-3 text-md-end">
                 <a href="/planning/traceability" class="btn btn-sm btn-outline-primary">查看追溯矩阵</a>
@@ -63,7 +85,7 @@
     </div>
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="text-muted small">组合包 manifest 保存每个结构化内容块的稳定键、关联对象和复核入口，支持条款级修改后的影响定位。</div>
+            <div class="text-muted small">这里把每个文件段落关联到条款、记录表格、岗位和运行模块。业务人员可把它当成“证据定位清单”：先看摘要，必要时再展开详情。</div>
             <div class="text-nowrap small">内容块 {$summary.latest_block_trace_count|default=0}</div>
         </div>
         <div class="table-responsive">
@@ -119,7 +141,13 @@
                                 {if $row.trace_review_url}
                                 <a href="{$row.trace_review_url}" class="btn btn-sm btn-outline-secondary">复核追溯</a>
                                 {/if}
+                                {if !empty($row.is_historical_snapshot)}
+                                <span class="badge bg-light text-muted" title="{$row.stale_reason|default=''}">历史快照 · 仅供追溯</span>
+                                {/if}
                             </div>
+                            {if !empty($row.is_historical_snapshot)}
+                            <div class="text-muted small mt-1">{$row.stale_reason|default='历史归档记录：仅供追溯，通常不用处理；当前内容块已重建或不存在。'}</div>
+                            {/if}
                         </td>
                     </tr>
                     {/volist}
@@ -171,7 +199,13 @@
                                 {if $row.trace_review_url}
                                 <a href="{$row.trace_review_url}" class="btn btn-sm btn-outline-secondary">复核追溯</a>
                                 {/if}
+                                {if !empty($row.is_historical_snapshot)}
+                                <span class="badge bg-light text-muted" title="{$row.stale_reason|default=''}">历史快照 · 仅供追溯</span>
+                                {/if}
                             </div>
+                            {if !empty($row.is_historical_snapshot)}
+                            <div class="text-muted small mt-1">{$row.stale_reason|default='历史归档记录：仅供追溯，通常不用处理；当前内容块已重建或不存在。'}</div>
+                            {/if}
                         </td>
                         <td>
                             {$row.revision_note|default='-'}
@@ -207,6 +241,7 @@
 <div class="card">
     <div class="card-header"><h5 class="mb-0">输出状态</h5></div>
     <div class="card-body">
+        <div class="alert alert-warning small mb-3">生成会新增归档版本，并记录最新存档路径和内容哈希；适合在确认当前结构化文件无误后操作。</div>
         <div class="row g-3">
             <div class="col-md-6">
                 <div class="text-muted small">输出路径</div>

@@ -38,6 +38,7 @@ class DashboardMetricService
             'labels' => $labels,
             'opened' => $opened,
             'closed' => $closed,
+            'has_data' => array_sum($opened) + array_sum($closed) > 0,
         ];
     }
 
@@ -53,6 +54,7 @@ class DashboardMetricService
         return [
             'labels' => $labels,
             'values' => $values,
+            'has_data' => array_sum($values) > 0,
         ];
     }
 
@@ -70,6 +72,7 @@ class DashboardMetricService
             'labels' => ['已覆盖', '未覆盖'],
             'values' => [$covered, max(0, $employees - $covered)],
             'rate' => $employees > 0 ? round($covered * 100 / $employees, 1) : 0.0,
+            'has_data' => $employees > 0,
         ];
     }
 
@@ -85,6 +88,7 @@ class DashboardMetricService
         return [
             'labels' => $labels,
             'values' => $values,
+            'has_data' => array_sum($values) > 0,
         ];
     }
 }

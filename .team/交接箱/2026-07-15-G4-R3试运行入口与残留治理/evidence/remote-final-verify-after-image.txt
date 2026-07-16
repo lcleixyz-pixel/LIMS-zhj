@@ -1,0 +1,17 @@
+current=/www/server/jewelry-qms-experience/releases/regmon-20260715-64fdb2a
+image=jewelry-qms-experience:amd64-64fdb2a-g4r3hotfix
+env_tag=QMS_IMAGE_TAG=amd64-64fdb2a-g4r3hotfix
+login_page_status=200
+candidate_pool_status=200
+candidate_detail_status=200
+change_event_add_status=200
+csrf_token_len=32
+post_event_status=302
+event_id_present=yes
+event_view_status=200
+final_counts:
+system_settings	1
+g4r3_events	0
+formal_events	0
+user_sessions	0
+candidate_yidanyiku_pending	1

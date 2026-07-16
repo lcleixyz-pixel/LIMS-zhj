@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace app\middleware;
 
+use app\model\QmsExternalChangeCandidate;
 use app\model\NotificationUser;
 use think\facade\Config;
 use think\facade\Session;
@@ -37,6 +38,13 @@ class Auth
         $notificationCount = NotificationUser::where('user_id', Session::get('user.id'))
             ->where('status', 0)
             ->count();
+        try {
+            $pendingRegulatoryCandidateCount = QmsExternalChangeCandidate::where('soft_delete', 0)
+                ->where('review_status', 'pending')
+                ->count();
+        } catch (\Throwable $exception) {
+            $pendingRegulatoryCandidateCount = 0;
+        }
 
         View::layout('layout/main');
         View::assign([
@@ -48,6 +56,7 @@ class Auth
             'environmentLabel' => $qmsConfig['environment_label'] ?? '',
             'environmentNotice' => $qmsConfig['environment_notice'] ?? '',
             'notificationCount' => $notificationCount,
+            'pendingRegulatoryCandidateCount' => $pendingRegulatoryCandidateCount,
         ]);
 
         return $next($request);

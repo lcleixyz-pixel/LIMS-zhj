@@ -33,7 +33,7 @@ return [
         'quality_manager' => [
             'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'approval', 'doc_category', 'doc_template',
             'compliance', 'ai_assistant', 'ai_chat',
-            'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningchangeevent', 'planningobjective', 'planningresponsibility',
+            'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningregulatorycandidate', 'planningchangeevent', 'planningobjective', 'planningresponsibility',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
             'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',

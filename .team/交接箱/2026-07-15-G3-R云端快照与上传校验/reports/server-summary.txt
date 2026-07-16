@@ -1,0 +1,8 @@
+current_target=/www/server/jewelry-qms-experience/releases/regmon-20260715-64fdb2a
+snapshot=/www/server/jewelry-qms-experience/shared/snapshots/20260715-152215-g3r-before-upload-complete
+incoming=/www/server/jewelry-qms-experience/shared/incoming/g3r-yidanyiku-20260715
+archive_sha=a969760b63f6d376f2348d6489845aa870fbc1a2547da46ae2e5e43cc14b5324
+archive_size=944558
+db_table_count=81
+regulatory_tables=3/3
+g2r_marker_tables=0

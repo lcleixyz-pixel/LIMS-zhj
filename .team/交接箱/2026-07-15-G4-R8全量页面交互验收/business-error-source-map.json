@@ -1,0 +1,392 @@
+[
+  {
+    "target": "/equipment_maintenance/view?id=00000000-0000-0000-0000-00000000b002",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/calendar/index",
+        "text": "前往处理"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=01b31b50-4280-4405-b0fc-a11c78871d83",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=01b31b50-4280-4405-b0fc-a11c78871d83",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=2540f826-9062-4969-8ee2-76fe4e7c8696",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=2540f826-9062-4969-8ee2-76fe4e7c8696",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=aa9a9a8d-2737-4d70-84ee-235b073a6a83",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=aa9a9a8d-2737-4d70-84ee-235b073a6a83",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=4734b4a3-16c5-4b6d-b226-72f286123c2e",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=4734b4a3-16c5-4b6d-b226-72f286123c2e",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=4e0eed28-a219-444a-87f9-e09b1ff9f6eb",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=4e0eed28-a219-444a-87f9-e09b1ff9f6eb",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=94172117-cea6-4033-acd9-d90803577b69",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=94172117-cea6-4033-acd9-d90803577b69",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=eecc9041-17ea-41c9-97b6-651626831b1a",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=eecc9041-17ea-41c9-97b6-651626831b1a",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=03135f0c-d3fb-41d4-939f-6f40d08e813c",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=03135f0c-d3fb-41d4-939f-6f40d08e813c",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=c1ce551e-d75d-4850-be56-f139e6940d59",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=c1ce551e-d75d-4850-be56-f139e6940d59",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=89500e7a-cb10-4de5-9bd0-f125950be09c",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=89500e7a-cb10-4de5-9bd0-f125950be09c",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=cce8a62b-46ea-46f3-818f-68adef79ffb0",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=cce8a62b-46ea-46f3-818f-68adef79ffb0",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=5bedb92c-3fee-4cb1-bc03-ca0c7f39a898",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=5bedb92c-3fee-4cb1-bc03-ca0c7f39a898",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=70a2c4d8-45cd-4b45-b7f7-2b15ca32d896",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=70a2c4d8-45cd-4b45-b7f7-2b15ca32d896",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=64e9fdb6-3732-4d47-87ab-3d55cd13aaaf",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=64e9fdb6-3732-4d47-87ab-3d55cd13aaaf",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=c65afe0c-44ee-496d-acca-956b531c2ff6",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=c65afe0c-44ee-496d-acca-956b531c2ff6",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=2c2cb689-7419-4818-b2ff-546511ed0649",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=2c2cb689-7419-4818-b2ff-546511ed0649",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=675bb021-b6af-4dec-8173-9040b3477cfc",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=675bb021-b6af-4dec-8173-9040b3477cfc",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/blocks/edit?id=8014b06c-c2ae-4d1a-9891-c818a7bb9338",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "编辑内容块"
+      }
+    ]
+  },
+  {
+    "target": "/planning/structures/links/review?block_id=8014b06c-c2ae-4d1a-9891-c818a7bb9338",
+    "sourceCount": 1,
+    "sources": [
+      {
+        "source": "/planning/structures/package",
+        "text": "复核追溯"
+      }
+    ]
+  }
+]

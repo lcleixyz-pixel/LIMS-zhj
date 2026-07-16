@@ -1,0 +1,12 @@
+repair_sql=/www/server/jewelry-qms-experience/shared/incoming/g4r4-mojibake-repair-20260715/yidanyiku-utf8mb4-repair.sql
+repair_sql_sha=b4b96a238a41e867e49ef9d53eed6abd87dc305f81926e813af18318de028d87  /www/server/jewelry-qms-experience/shared/incoming/g4r4-mojibake-repair-20260715/yidanyiku-utf8mb4-repair.sql
+after_text_sample:
+市场监管总局关于对检验检测机构资质认定实施“一单一库”管理的公告	公告明确制定检验检测机构资质认定事项清单和能力项目库，要求严格依据“一单一库”办理资质认定，并规范资质认定证书及 CMA 标志使用。	质量负责人、技术负责人、授权签字人、报告审核/签发和合同评审人员需要学习确认。
+after_status:
+reg-2026-samr-14-yidanyiku	pending	needs_review	high	1
+formal_counts_after:
+events	0
+candidates	1
+documents	39
+employees	12
+templates	145

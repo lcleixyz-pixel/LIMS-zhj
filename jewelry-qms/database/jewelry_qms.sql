@@ -160,6 +160,20 @@ CREATE TABLE `user_sessions` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `system_settings` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `setting_key` varchar(100) NOT NULL,
+  `setting_value` text,
+  `value_type` enum('string','json','secret') NOT NULL DEFAULT 'string',
+  `description` varchar(255) DEFAULT NULL,
+  `modified_by` varchar(36) DEFAULT NULL,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `company_setting_key` (`company_id`,`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统级配置';
+
 -- ========== 文件控制 ==========
 CREATE TABLE `doc_categories` (
   `id` varchar(36) NOT NULL,
@@ -1491,6 +1505,83 @@ CREATE TABLE `qms_external_change_events` (
   KEY `effective_date` (`effective_date`),
   KEY `old_source_id` (`old_source_id`),
   KEY `new_source_id` (`new_source_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `qms_regulatory_monitor_runs` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `run_code` varchar(80) NOT NULL COMMENT '监测批次编号',
+  `trigger_mode` enum('scheduled','manual') NOT NULL,
+  `started_at` datetime NOT NULL,
+  `finished_at` datetime DEFAULT NULL,
+  `source_stats` json DEFAULT NULL COMMENT '来源抓取统计',
+  `candidate_stats` json DEFAULT NULL COMMENT '候选生成统计',
+  `status` enum('running','completed','partial_failed','failed') NOT NULL DEFAULT 'running',
+  `result_json` json DEFAULT NULL,
+  `error_summary` text,
+  `execution_version` varchar(80) DEFAULT NULL,
+  `source_config_version` varchar(80) DEFAULT NULL,
+  `rule_version` varchar(80) DEFAULT NULL,
+  `publish` tinyint(1) DEFAULT 1,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  `modified_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `company_run_code` (`company_id`,`run_code`),
+  KEY `company_status` (`company_id`,`status`),
+  KEY `started_at` (`started_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `qms_external_change_candidates` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `monitor_run_id` varchar(36) NOT NULL,
+  `source_key` varchar(100) NOT NULL,
+  `source_mode` enum('html_list','manual_only') NOT NULL DEFAULT 'html_list',
+  `source_item_key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '来源项目唯一键',
+  `source_url` varchar(500) DEFAULT NULL,
+  `normalized_url` varchar(1000) DEFAULT NULL,
+  `title` varchar(300) NOT NULL,
+  `announcement_number` varchar(120) DEFAULT NULL,
+  `document_type` varchar(80) DEFAULT NULL,
+  `published_date` date DEFAULT NULL,
+  `effective_date` date DEFAULT NULL,
+  `first_seen_at` datetime NOT NULL,
+  `last_seen_at` datetime NOT NULL,
+  `content_hash` char(64) NOT NULL COMMENT '来源内容哈希',
+  `evidence_summary` text,
+  `evidence_refs` json DEFAULT NULL,
+  `evidence_json` json DEFAULT NULL COMMENT '候选证据快照',
+  `supersedes_candidate_id` varchar(36) DEFAULT NULL,
+  `relevance` enum('high','medium','low','unknown') NOT NULL DEFAULT 'unknown',
+  `preliminary_applicability` enum('likely_applicable','needs_review','likely_not_applicable') NOT NULL DEFAULT 'needs_review',
+  `impact_analysis` json DEFAULT NULL COMMENT '六类影响初判',
+  `analysis_rule_version` varchar(80) DEFAULT NULL,
+  `analysis_confidence` decimal(5,4) DEFAULT NULL,
+  `analysis_rationale` text,
+  `graph_snapshot_hash` char(64) DEFAULT NULL,
+  `review_status` enum('pending','confirmed_applicable','confirmed_not_applicable','deferred','promoted') NOT NULL DEFAULT 'pending',
+  `reviewed_by` varchar(36) DEFAULT NULL,
+  `reviewed_at` datetime DEFAULT NULL,
+  `review_comment` text,
+  `promoted_event_id` varchar(36) DEFAULT NULL,
+  `promoted_at` datetime DEFAULT NULL,
+  `promotion_error_summary` text,
+  `publish` tinyint(1) DEFAULT 1,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  `modified_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `company_source_item_content` (`company_id`,`source_key`,`source_item_key`,`content_hash`),
+  KEY `monitor_run_id` (`monitor_run_id`),
+  KEY `source_review_status` (`source_key`,`review_status`),
+  KEY `supersedes_candidate_id` (`supersedes_candidate_id`),
+  KEY `promoted_event_id` (`promoted_event_id`),
+  KEY `published_date` (`published_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `qms_quality_policies` (

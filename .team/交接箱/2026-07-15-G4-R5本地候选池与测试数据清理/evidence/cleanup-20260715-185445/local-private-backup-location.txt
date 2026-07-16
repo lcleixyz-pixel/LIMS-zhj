@@ -1,0 +1,8 @@
+private_backup_dir=jewelry-qms/runtime/private-backups/cleanup-20260715-185445-g4r5-clean
+total 11016
+-rw-r--r--@ 1 lc.leixyz  staff   4.8M Jul 15 18:54 local-before-clean-full.sql
+-rw-r--r--@ 1 lc.leixyz  staff   165B Jul 15 19:03 local-before-clean-full.sql.sha256
+-rw-r--r--@ 1 lc.leixyz  staff   578K Jul 15 18:54 local-testlink-files-before-clean.tgz
+-rw-r--r--@ 1 lc.leixyz  staff   175B Jul 15 19:03 local-testlink-files-before-clean.tgz.sha256
+
+jewelry-qms/runtime/.gitignore:1:*	jewelry-qms/runtime/private-backups/cleanup-20260715-185445-g4r5-clean/local-before-clean-full.sql

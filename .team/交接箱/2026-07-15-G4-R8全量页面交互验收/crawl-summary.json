@@ -1,0 +1,338 @@
+{
+  "generatedAt": "2026-07-15T12:21:44.693Z",
+  "startUrls": [
+    "/dashboard/index"
+  ],
+  "crawlStatus": "frontier_exhausted",
+  "queuedRemaining": 0,
+  "seen": 2977,
+  "pagesVisited": 2977,
+  "errors": [
+    {
+      "url": "/equipment_maintenance/view?id=00000000-0000-0000-0000-00000000b002",
+      "finalUrl": "/equipment_maintenance/view?id=00000000-0000-0000-0000-00000000b002",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in CrudBase.php line 306\n记录不存在\n        return View::fetch($this->viewPrefix . '/edit');\n\n    }\n\n\n\n    public function view()\n\n    {\n\n        $id = $this->request->param('id');\n\n        $model = $this->getModel();\n\n        $record = $model->find($id);\n\n        if (!$record) {\n\n            throw new HttpException(404, '记录不存在');\n\n        }\n\n        View::assign('record', $record);\n\n        View::assign('fields', $this->buildViewFields($record));\n\n        View::assign('pageTitle'",
+      "screenshot": "screenshots/054-equipment-maintenance-view-id-00000000-0000-0000-0000-00000000b002.png"
+    },
+    {
+      "url": "/planning/clauses/view?id=3b11e03a-03ab-4131-94e5-6ea8f0759564",
+      "sample": "Page.captureScreenshot returned no data for tab 5.",
+      "screenshot": ""
+    },
+    {
+      "url": "/planning/clauses/view?id=0b8555de-a056-42ed-b02d-d4c35ecc7a2d",
+      "sample": "Page.captureScreenshot returned no data for tab 5.",
+      "screenshot": ""
+    },
+    {
+      "url": "/planning/clauses/view?id=9954a6c3-e6e9-45e0-81b8-02e56ed37fbe",
+      "sample": "Page.captureScreenshot returned no data for tab 5.",
+      "screenshot": ""
+    },
+    {
+      "url": "/planning/clauses/view?id=af5de99c-dfe7-41ae-b90e-f41e91a3bfc4",
+      "sample": "Page.captureScreenshot returned no data for tab 5.",
+      "screenshot": ""
+    },
+    {
+      "url": "/planning/clauses/view?id=8d937bb9-6efa-4372-a52e-578641f27b8a",
+      "sample": "Page.captureScreenshot returned no data for tab 5.",
+      "screenshot": ""
+    },
+    {
+      "url": "/planning/structures/view?id=f5d11844-3466-4257-bfdb-01d851f1726a",
+      "sample": "Page.captureScreenshot returned no data for tab 5.",
+      "screenshot": ""
+    },
+    {
+      "url": "/planning/structures/view?id=45a2ee09-371b-4261-8067-ecdd053e7d49",
+      "sample": "Page.captureScreenshot returned no data for tab 5.",
+      "screenshot": ""
+    },
+    {
+      "url": "/planning/clauses/view?id=35b08bbb-75fa-4cfa-805f-ec57c1142c6f",
+      "sample": "Page.captureScreenshot returned no data for tab 5.",
+      "screenshot": ""
+    },
+    {
+      "url": "/planning/clauses/view?id=56e3490e-a4fc-4139-89c6-30803bc825eb",
+      "sample": "Page.captureScreenshot returned no data for tab 5.",
+      "screenshot": ""
+    },
+    {
+      "url": "/planning/clauses/view?id=cf8293cf-f204-4ad4-af0b-f69132da305c",
+      "sample": "Page.captureScreenshot returned no data for tab 5.",
+      "screenshot": ""
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1",
+      "finalUrl": "/planning/structures/blocks/edit?id=ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2043-planning-structures-blocks-edit-id-ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1",
+      "finalUrl": "/planning/structures/links/review?block_id=ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2044-planning-structures-links-review-block-id-ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=01b31b50-4280-4405-b0fc-a11c78871d83",
+      "finalUrl": "/planning/structures/blocks/edit?id=01b31b50-4280-4405-b0fc-a11c78871d83",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2045-planning-structures-blocks-edit-id-01b31b50-4280-4405-b0fc-a11c78871d83.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=01b31b50-4280-4405-b0fc-a11c78871d83",
+      "finalUrl": "/planning/structures/links/review?block_id=01b31b50-4280-4405-b0fc-a11c78871d83",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2046-planning-structures-links-review-block-id-01b31b50-4280-4405-b0fc-a11c78871d83.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=2540f826-9062-4969-8ee2-76fe4e7c8696",
+      "finalUrl": "/planning/structures/blocks/edit?id=2540f826-9062-4969-8ee2-76fe4e7c8696",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2047-planning-structures-blocks-edit-id-2540f826-9062-4969-8ee2-76fe4e7c8696.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=2540f826-9062-4969-8ee2-76fe4e7c8696",
+      "finalUrl": "/planning/structures/links/review?block_id=2540f826-9062-4969-8ee2-76fe4e7c8696",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2048-planning-structures-links-review-block-id-2540f826-9062-4969-8ee2-76fe4e7c8696.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=aa9a9a8d-2737-4d70-84ee-235b073a6a83",
+      "finalUrl": "/planning/structures/blocks/edit?id=aa9a9a8d-2737-4d70-84ee-235b073a6a83",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2049-planning-structures-blocks-edit-id-aa9a9a8d-2737-4d70-84ee-235b073a6a83.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=aa9a9a8d-2737-4d70-84ee-235b073a6a83",
+      "finalUrl": "/planning/structures/links/review?block_id=aa9a9a8d-2737-4d70-84ee-235b073a6a83",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2050-planning-structures-links-review-block-id-aa9a9a8d-2737-4d70-84ee-235b073a6a83.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=4734b4a3-16c5-4b6d-b226-72f286123c2e",
+      "finalUrl": "/planning/structures/blocks/edit?id=4734b4a3-16c5-4b6d-b226-72f286123c2e",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2051-planning-structures-blocks-edit-id-4734b4a3-16c5-4b6d-b226-72f286123c2e.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=4734b4a3-16c5-4b6d-b226-72f286123c2e",
+      "finalUrl": "/planning/structures/links/review?block_id=4734b4a3-16c5-4b6d-b226-72f286123c2e",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2052-planning-structures-links-review-block-id-4734b4a3-16c5-4b6d-b226-72f286123c2e.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=4e0eed28-a219-444a-87f9-e09b1ff9f6eb",
+      "finalUrl": "/planning/structures/blocks/edit?id=4e0eed28-a219-444a-87f9-e09b1ff9f6eb",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2053-planning-structures-blocks-edit-id-4e0eed28-a219-444a-87f9-e09b1ff9f6eb.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=4e0eed28-a219-444a-87f9-e09b1ff9f6eb",
+      "finalUrl": "/planning/structures/links/review?block_id=4e0eed28-a219-444a-87f9-e09b1ff9f6eb",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2054-planning-structures-links-review-block-id-4e0eed28-a219-444a-87f9-e09b1ff9f6eb.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=94172117-cea6-4033-acd9-d90803577b69",
+      "finalUrl": "/planning/structures/blocks/edit?id=94172117-cea6-4033-acd9-d90803577b69",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2055-planning-structures-blocks-edit-id-94172117-cea6-4033-acd9-d90803577b69.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=94172117-cea6-4033-acd9-d90803577b69",
+      "finalUrl": "/planning/structures/links/review?block_id=94172117-cea6-4033-acd9-d90803577b69",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2056-planning-structures-links-review-block-id-94172117-cea6-4033-acd9-d90803577b69.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=eecc9041-17ea-41c9-97b6-651626831b1a",
+      "finalUrl": "/planning/structures/blocks/edit?id=eecc9041-17ea-41c9-97b6-651626831b1a",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2057-planning-structures-blocks-edit-id-eecc9041-17ea-41c9-97b6-651626831b1a.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=eecc9041-17ea-41c9-97b6-651626831b1a",
+      "finalUrl": "/planning/structures/links/review?block_id=eecc9041-17ea-41c9-97b6-651626831b1a",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2058-planning-structures-links-review-block-id-eecc9041-17ea-41c9-97b6-651626831b1a.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=03135f0c-d3fb-41d4-939f-6f40d08e813c",
+      "finalUrl": "/planning/structures/blocks/edit?id=03135f0c-d3fb-41d4-939f-6f40d08e813c",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2059-planning-structures-blocks-edit-id-03135f0c-d3fb-41d4-939f-6f40d08e813c.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=03135f0c-d3fb-41d4-939f-6f40d08e813c",
+      "finalUrl": "/planning/structures/links/review?block_id=03135f0c-d3fb-41d4-939f-6f40d08e813c",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2060-planning-structures-links-review-block-id-03135f0c-d3fb-41d4-939f-6f40d08e813c.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=c1ce551e-d75d-4850-be56-f139e6940d59",
+      "finalUrl": "/planning/structures/blocks/edit?id=c1ce551e-d75d-4850-be56-f139e6940d59",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2061-planning-structures-blocks-edit-id-c1ce551e-d75d-4850-be56-f139e6940d59.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=c1ce551e-d75d-4850-be56-f139e6940d59",
+      "finalUrl": "/planning/structures/links/review?block_id=c1ce551e-d75d-4850-be56-f139e6940d59",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2062-planning-structures-links-review-block-id-c1ce551e-d75d-4850-be56-f139e6940d59.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=89500e7a-cb10-4de5-9bd0-f125950be09c",
+      "finalUrl": "/planning/structures/blocks/edit?id=89500e7a-cb10-4de5-9bd0-f125950be09c",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2063-planning-structures-blocks-edit-id-89500e7a-cb10-4de5-9bd0-f125950be09c.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=89500e7a-cb10-4de5-9bd0-f125950be09c",
+      "finalUrl": "/planning/structures/links/review?block_id=89500e7a-cb10-4de5-9bd0-f125950be09c",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2064-planning-structures-links-review-block-id-89500e7a-cb10-4de5-9bd0-f125950be09c.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=cce8a62b-46ea-46f3-818f-68adef79ffb0",
+      "finalUrl": "/planning/structures/blocks/edit?id=cce8a62b-46ea-46f3-818f-68adef79ffb0",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2065-planning-structures-blocks-edit-id-cce8a62b-46ea-46f3-818f-68adef79ffb0.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=cce8a62b-46ea-46f3-818f-68adef79ffb0",
+      "finalUrl": "/planning/structures/links/review?block_id=cce8a62b-46ea-46f3-818f-68adef79ffb0",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2066-planning-structures-links-review-block-id-cce8a62b-46ea-46f3-818f-68adef79ffb0.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=5bedb92c-3fee-4cb1-bc03-ca0c7f39a898",
+      "finalUrl": "/planning/structures/blocks/edit?id=5bedb92c-3fee-4cb1-bc03-ca0c7f39a898",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2067-planning-structures-blocks-edit-id-5bedb92c-3fee-4cb1-bc03-ca0c7f39a898.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=5bedb92c-3fee-4cb1-bc03-ca0c7f39a898",
+      "finalUrl": "/planning/structures/links/review?block_id=5bedb92c-3fee-4cb1-bc03-ca0c7f39a898",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2068-planning-structures-links-review-block-id-5bedb92c-3fee-4cb1-bc03-ca0c7f39a898.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=70a2c4d8-45cd-4b45-b7f7-2b15ca32d896",
+      "finalUrl": "/planning/structures/blocks/edit?id=70a2c4d8-45cd-4b45-b7f7-2b15ca32d896",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2069-planning-structures-blocks-edit-id-70a2c4d8-45cd-4b45-b7f7-2b15ca32d896.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=70a2c4d8-45cd-4b45-b7f7-2b15ca32d896",
+      "finalUrl": "/planning/structures/links/review?block_id=70a2c4d8-45cd-4b45-b7f7-2b15ca32d896",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2070-planning-structures-links-review-block-id-70a2c4d8-45cd-4b45-b7f7-2b15ca32d896.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=64e9fdb6-3732-4d47-87ab-3d55cd13aaaf",
+      "finalUrl": "/planning/structures/blocks/edit?id=64e9fdb6-3732-4d47-87ab-3d55cd13aaaf",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2071-planning-structures-blocks-edit-id-64e9fdb6-3732-4d47-87ab-3d55cd13aaaf.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=64e9fdb6-3732-4d47-87ab-3d55cd13aaaf",
+      "finalUrl": "/planning/structures/links/review?block_id=64e9fdb6-3732-4d47-87ab-3d55cd13aaaf",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2072-planning-structures-links-review-block-id-64e9fdb6-3732-4d47-87ab-3d55cd13aaaf.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=c65afe0c-44ee-496d-acca-956b531c2ff6",
+      "finalUrl": "/planning/structures/blocks/edit?id=c65afe0c-44ee-496d-acca-956b531c2ff6",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2073-planning-structures-blocks-edit-id-c65afe0c-44ee-496d-acca-956b531c2ff6.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=c65afe0c-44ee-496d-acca-956b531c2ff6",
+      "finalUrl": "/planning/structures/links/review?block_id=c65afe0c-44ee-496d-acca-956b531c2ff6",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2074-planning-structures-links-review-block-id-c65afe0c-44ee-496d-acca-956b531c2ff6.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=2c2cb689-7419-4818-b2ff-546511ed0649",
+      "finalUrl": "/planning/structures/blocks/edit?id=2c2cb689-7419-4818-b2ff-546511ed0649",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2075-planning-structures-blocks-edit-id-2c2cb689-7419-4818-b2ff-546511ed0649.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=2c2cb689-7419-4818-b2ff-546511ed0649",
+      "finalUrl": "/planning/structures/links/review?block_id=2c2cb689-7419-4818-b2ff-546511ed0649",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2076-planning-structures-links-review-block-id-2c2cb689-7419-4818-b2ff-546511ed0649.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=675bb021-b6af-4dec-8173-9040b3477cfc",
+      "finalUrl": "/planning/structures/blocks/edit?id=675bb021-b6af-4dec-8173-9040b3477cfc",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2077-planning-structures-blocks-edit-id-675bb021-b6af-4dec-8173-9040b3477cfc.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=675bb021-b6af-4dec-8173-9040b3477cfc",
+      "finalUrl": "/planning/structures/links/review?block_id=675bb021-b6af-4dec-8173-9040b3477cfc",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2078-planning-structures-links-review-block-id-675bb021-b6af-4dec-8173-9040b3477cfc.png"
+    },
+    {
+      "url": "/planning/structures/blocks/edit?id=8014b06c-c2ae-4d1a-9891-c818a7bb9338",
+      "finalUrl": "/planning/structures/blocks/edit?id=8014b06c-c2ae-4d1a-9891-c818a7bb9338",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 45\n结构化内容块不存在\n        View::assign('stepLabels', self::STEP_LABELS);\n\n\n\n        return View::fetch('planning_structure/view');\n\n    }\n\n\n\n    public function editBlock()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return View::fet",
+      "screenshot": "screenshots/2079-planning-structures-blocks-edit-id-8014b06c-c2ae-4d1a-9891-c818a7bb9338.png"
+    },
+    {
+      "url": "/planning/structures/links/review?block_id=8014b06c-c2ae-4d1a-9891-c818a7bb9338",
+      "finalUrl": "/planning/structures/links/review?block_id=8014b06c-c2ae-4d1a-9891-c818a7bb9338",
+      "title": "系统发生错误",
+      "sample": "#0 [0]HttpException in PlanningStructure.php line 57\n结构化内容块不存在\n        View::assign('detail', $detail);\n\n\n\n        return View::fetch('planning_structure/block_edit');\n\n    }\n\n\n\n    public function reviewLinks()\n\n    {\n\n        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));\n\n        if ($detail === []) {\n\n            throw new HttpException(404, '结构化内容块不存在');\n\n        }\n\n\n\n        View::assign('detail', $detail);\n\n\n\n        return Vi",
+      "screenshot": "screenshots/2080-planning-structures-links-review-block-id-8014b06c-c2ae-4d1a-9891-c818a7bb9338.png"
+    }
+  ],
+  "screenshotsDir": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.team/交接箱/2026-07-15-G4-R8全量页面交互验收/screenshots",
+  "skippedCount": 11972,
+  "buttonsCount": 21218
+}

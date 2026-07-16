@@ -1,0 +1,10 @@
+before_sql=/www/server/jewelry-qms-experience/shared/incoming/g4r4-mojibake-repair-20260715/yidanyiku-before-repair.sql
+before_sha=801d1e1eda214ca4155fef90f919a47ebe249471ab2d12d9a8a1311375eb9d40  /www/server/jewelry-qms-experience/shared/incoming/g4r4-mojibake-repair-20260715/yidanyiku-before-repair.sql
+before_text_sample:
+å¸‚åœºç›‘ç®¡æ€»å±€å…³äºŽå¯¹æ£€éªŒæ£€æµ‹æœºæž„èµ„è´¨è®¤å®šå®žæ–½â€œä¸€å•ä¸€åº“â€ç®¡ç†çš„å…¬å‘Š	å…¬å‘Šæ˜Žç¡®åˆ¶å®šæ£€éªŒæ£€æµ‹æœºæž„èµ„è´¨è®¤å®šäº‹é¡¹æ¸…å•å’Œèƒ½åŠ›é¡¹ç›®åº“ï¼Œè¦æ±‚ä¸¥æ ¼ä¾æ®â€œä¸€å•ä¸€åº“â€åŠžç†èµ„è´¨è®¤å®šï¼Œå¹¶è§„èŒƒèµ„è´¨è®¤å®šè¯ä¹¦åŠ CMA æ ‡å¿—ä½¿ç”¨ã€‚	è´¨é‡è´Ÿè´£äººã€æŠ€æœ¯è´Ÿè´£äººã€æŽˆæƒç­¾å­—äººã€æŠ¥å‘Šå®¡æ ¸/ç­¾å‘å’ŒåˆåŒè¯„å®¡äººå‘˜éœ€è¦å­¦ä¹ ç¡®è®¤ã€‚
+formal_counts_before:
+events	0
+candidates	1
+documents	39
+employees	12
+templates	145

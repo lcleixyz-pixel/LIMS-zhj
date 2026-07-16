@@ -1,0 +1,9 @@
+candidate_pool_status=200
+candidate_pool_chinese_markers=一单一库,体系文件,市场监管总局,待人工确认,检验检测机构,能力项目/CMA 标志,
+candidate_pool_mojibake_count=0
+
+candidate_detail_status=200
+candidate_detail_chinese_markers=一单一库,市场监管总局,检验检测机构,现有规则未命中,证据引用,质量负责人,较可能影响,
+candidate_detail_mojibake_count=0
+
+sessions_after_cleanup=0

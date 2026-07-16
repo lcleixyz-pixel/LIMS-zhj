@@ -1,0 +1,18 @@
+php_lint_change_event=No syntax errors detected in app/controller/PlanningChangeEvent.php
+php_lint_candidate=No syntax errors detected in app/controller/PlanningRegulatoryCandidate.php
+php_lint_candidate_model=No syntax errors detected in app/model/QmsExternalChangeCandidate.php
+candidate_pool_status=200
+candidate_pool_markers=待人工确认,法规候选池,能力项目/CMA 标志,
+candidate_detail_status=200
+candidate_detail_markers=未转正式事件,法规候选详情,现有规则未命中,较可能影响,
+change_event_add_status=200
+change_event_add_markers=事件编号,保存登记,登记外部变更事件,
+verify_event_code=G4R3-VERIFY-163206
+post_event_status=500
+post_event_location=
+db_verify_event_id=
+residual_counts_after_cleanup:
+g4r3_events	0
+user_sessions	0
+candidate_yidanyiku	1
+formal_events	0

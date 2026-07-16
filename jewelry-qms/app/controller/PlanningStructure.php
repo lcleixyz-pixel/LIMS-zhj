@@ -42,7 +42,9 @@ class PlanningStructure extends BaseController
     {
         $detail = QmsDocumentStructureService::blockEditDetail((string)$this->request->param('id', ''));
         if ($detail === []) {
-            throw new HttpException(404, '结构化内容块不存在');
+            Session::flash('warning', '该结构化内容块已不存在，可能来自历史组合包快照；现行内容请从结构化文件或组合包页面重新进入。');
+
+            return redirect('/planning/structures/package');
         }
 
         View::assign('detail', $detail);
@@ -54,7 +56,9 @@ class PlanningStructure extends BaseController
     {
         $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));
         if ($detail === []) {
-            throw new HttpException(404, '结构化内容块不存在');
+            Session::flash('warning', '该结构化内容块已不存在，可能来自历史组合包快照；现行追溯请从结构化文件或组合包页面重新进入。');
+
+            return redirect('/planning/structures/package');
         }
 
         View::assign('detail', $detail);

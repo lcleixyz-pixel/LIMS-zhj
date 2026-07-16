@@ -1,0 +1,60 @@
+run_id=cleanup-20260715-185445
+local_db_backup=jewelry-qms/runtime/private-backups/cleanup-20260715-185445-g4r5-clean/local-before-clean-full.sql
+5ee2ba8648affab731b7d7d63220367a6c103c666bda98861d84e217bf29190d  jewelry-qms/runtime/private-backups/cleanup-20260715-185445-g4r5-clean/local-before-clean-full.sql
+local_file_backup=jewelry-qms/runtime/private-backups/cleanup-20260715-185445-g4r5-clean/local-testlink-files-before-clean.tgz
+567f8706e2ae0ffd8750aed965d56272285fd97e70251cf0628e1720f76006f4  jewelry-qms/runtime/private-backups/cleanup-20260715-185445-g4r5-clean/local-testlink-files-before-clean.tgz
+
+local_before_counts:
++------------+------------+
+| table_name | rows_found |
++------------+------------+
+| equipments |          1 |
++------------+------------+
++--------------------------+------------+
+| table_name               | rows_found |
++--------------------------+------------+
+| compliance_check_results |          4 |
++--------------------------+------------+
++------------------------+------------+
+| table_name             | rows_found |
++------------------------+------------+
+| equipment_maintenances |          1 |
++------------------------+------------+
++------------+------------+
+| table_name | rows_found |
++------------+------------+
+| documents  |          1 |
++------------+------------+
++---------------------+------------+
+| table_name          | rows_found |
++---------------------+------------+
+| qms_document_blocks |          1 |
++---------------------+------------+
++--------------------------+------------+
+| table_name               | rows_found |
++--------------------------+------------+
+| qms_structured_documents |          1 |
++--------------------------+------------+
++-----------------------+------------+
+| table_name            | rows_found |
++-----------------------+------------+
+| qms_agent_suggestions |          1 |
++-----------------------+------------+
++---------------------------------------+------------+
+| table_name                            | rows_found |
++---------------------------------------+------------+
+| record_form_instances TEST-LINK batch |          9 |
++---------------------------------------+------------+
+
+local_testlink_files:
+public/uploads/record-form-pdf/30e3b4ae-13a9-41e3-8191-ee9b6b2ed3ef/TEST-LINK-20260709-191600-XZTC_BG-01-09_20260709191608.pdf
+public/uploads/record-form-pdf/30e3b4ae-13a9-41e3-8191-ee9b6b2ed3ef/TEST-LINK-20260709-191600-XZTC_BG-01-09_20260709191922.pdf
+public/uploads/record-form-pdf/338f4e68-f5ae-4a9b-8010-bd96fe126273/TEST-LINK-20260709-191600-XZTC_BG-01-01_20260709191600.pdf
+public/uploads/record-form-pdf/38d9ac1b-0947-4415-85b8-f7fd0283fe37/TEST-LINK-20260709-191600-XZTC_BG-01-03_20260709191602.pdf
+public/uploads/record-form-pdf/42ce8c56-8425-48e6-b97b-7767fa25fadf/TEST-LINK-20260709-191600-XZTC_BG-01-07_20260709191606.pdf
+public/uploads/record-form-pdf/809adced-952c-4e73-ae16-b33b7e270ecd/TEST-LINK-20260709-191600-XZTC_BG-01-02_20260709191601.pdf
+public/uploads/record-form-pdf/9eedda60-8958-480f-b67d-151e5c1935a0/TEST-LINK-20260709-191600-XZTC_BG-01-06_20260709191605.pdf
+public/uploads/record-form-pdf/ac076509-3578-4593-a1c2-3d8faa5ae7b4/TEST-LINK-20260709-191600-XZTC_BG-01-04_20260709191603.pdf
+public/uploads/record-form-pdf/acdbc9e1-5f33-4b66-a76b-bab2ffea8f00/TEST-LINK-20260709-191600-XZTC_BG-01-08_20260709191607.pdf
+public/uploads/record-form-pdf/e9f53ee8-de5e-4251-b141-30dd6bebcfa9/TEST-LINK-20260709-191600-XZTC_BG-01-05_20260709191604.pdf
+runtime/record-form-test-link/TEST-LINK-20260709-191600.json

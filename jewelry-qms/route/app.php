@@ -60,6 +60,7 @@ Route::group(function () {
     Route::post('record_form_template/reviewSchemaDraftFields', 'RecordFormTemplate/reviewSchemaDraftFields');
     Route::rule('record_form_template/view', 'RecordFormTemplate/view');
     Route::rule('record_form_template/delete', 'RecordFormTemplate/delete');
+    Route::post('record_form_template/obsolete', 'RecordFormTemplate/obsolete');
     Route::get('record_form_template/review', 'RecordFormTemplate/review');
     Route::post('record_form_template/updateReview', 'RecordFormTemplate/updateReview');
     Route::get('record_form_template/source', 'RecordFormTemplate/source');
@@ -122,6 +123,10 @@ Route::group(function () {
     Route::post('planning/change-events/upload-attachment', 'PlanningChangeEvent/uploadAttachment');
     Route::get('planning/change-events/download-attachment', 'PlanningChangeEvent/downloadAttachment');
     Route::rule('planning/change-events', 'PlanningChangeEvent/index');
+    Route::get('planning/regulatory-candidates/view', 'PlanningRegulatoryCandidate/view');
+    Route::post('planning/regulatory-candidates/review', 'PlanningRegulatoryCandidate/review');
+    Route::post('planning/regulatory-candidates/promote', 'PlanningRegulatoryCandidate/promote');
+    Route::get('planning/regulatory-candidates', 'PlanningRegulatoryCandidate/index');
     Route::post('planning/objectives/create-policy', 'PlanningObjective/createPolicy');
     Route::post('planning/objectives/create-objective', 'PlanningObjective/createObjective');
     Route::rule('planning/objectives', 'PlanningObjective/index');

@@ -18,6 +18,7 @@ use app\service\RecordFormSchemaService;
 use InvalidArgumentException;
 use RuntimeException;
 use think\exception\HttpException;
+use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
 
@@ -35,15 +36,65 @@ class RecordFormInstance extends BaseController
         }
 
         $items = $query->order('created', 'desc')->paginate(20);
-        foreach ($items as $item) {
-            $item->setAttr('pdf_token', $this->canExportPdf($item) ? $this->issuePdfActionToken((string)$item->id) : '');
-        }
+        $this->decorateInstanceRows($items);
 
         View::assign('items', $items);
         View::assign('pages', $items->render());
         View::assign('filter', ['keyword' => $this->request->param('keyword', '')]);
 
         return View::fetch('record_form_instance/index');
+    }
+
+    private function decorateInstanceRows(iterable $items): void
+    {
+        $userIds = [];
+        foreach ($items as $item) {
+            foreach (['created_by', 'modified_by'] as $field) {
+                $userId = trim((string)$item->{$field});
+                if ($userId !== '') {
+                    $userIds[] = $userId;
+                }
+            }
+        }
+
+        $userLabels = [];
+        if ($userIds !== []) {
+            try {
+                $users = Db::name('users')
+                    ->whereIn('id', array_values(array_unique($userIds)))
+                    ->select()
+                    ->toArray();
+                foreach ($users as $user) {
+                    $label = trim((string)($user['name'] ?? ''));
+                    if ($label === '') {
+                        $label = trim((string)($user['username'] ?? ''));
+                    }
+                    $userLabels[(string)$user['id']] = $label !== '' ? $label : (string)$user['id'];
+                }
+            } catch (\Throwable $exception) {
+                $userLabels = [];
+            }
+        }
+
+        foreach ($items as $item) {
+            $status = (string)$item->status;
+            $item->setAttr('pdf_token', $this->canExportPdf($item) ? $this->issuePdfActionToken((string)$item->id) : '');
+            $item->setAttr('status_label', self::recordStatusLabels()[$status] ?? $status);
+            $item->setAttr('filler_label', $userLabels[(string)$item->created_by] ?? ((string)$item->created_by !== '' ? (string)$item->created_by : '未记录'));
+            $item->setAttr('reviewer_label', in_array($status, ['locked', 'voided'], true)
+                ? ($userLabels[(string)$item->modified_by] ?? ((string)$item->modified_by !== '' ? (string)$item->modified_by : '未记录'))
+                : '待审核');
+        }
+    }
+
+    private static function recordStatusLabels(): array
+    {
+        return [
+            'draft' => '草稿',
+            'generated' => '已形成PDF',
+            'locked' => '已归档',
+            'voided' => '已作废',
+        ];
     }
 
     public function reviewDashboard()
@@ -102,6 +153,12 @@ class RecordFormInstance extends BaseController
 
     public function create()
     {
+        if (trim((string)$this->request->param('template_id', '')) === '') {
+            Session::flash('warning', '请先选择记录模板，再填写记录。');
+
+            return redirect('/record_form_template/index');
+        }
+
         $template = $this->findTemplate();
         if (!$this->isTemplateFillable($template)) {
             Session::flash('warning', '只有已完成高保真复核的已发布记录表格模板可填写');

@@ -38,7 +38,11 @@
         </div>
         <div class="col-md-3 text-end">
             <strong>{$user.name|default=''}</strong>
-            <a href="/notification/index" class="badge bg-danger ms-1 text-decoration-none">{$notificationCount|default=0}</a>
+            {if isset($notificationCount) && $notificationCount > 0}
+            <a href="/notification/index" class="badge bg-danger ms-1 text-decoration-none">{$notificationCount}</a>
+            {else}
+            <a href="/notification/index" class="badge bg-secondary ms-1 text-decoration-none" title="暂无未读通知">0</a>
+            {/if}
             <br>
             <a href="/login/changePassword" class="btn btn-sm btn-outline-secondary">修改密码</a>
             <a href="/login/logout" class="btn btn-sm btn-primary">退出</a>
@@ -128,16 +132,29 @@
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">体系策划</a>
                     <ul class="dropdown-menu">
                         {if condition="qms_can('planningdashboard')"}
+                        <li><h6 class="dropdown-header text-muted">策划与要素</h6></li>
                         <li><a class="dropdown-item" href="/planning/index">策划中心</a></li>
                         <li><a class="dropdown-item" href="/planning/elements">要素管理</a></li>
+                        <li><a class="dropdown-item" href="/planning/objectives">质量方针目标</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">文件与追溯</h6></li>
                         <li><a class="dropdown-item" href="/planning/sources">外部依据</a></li>
                         <li><a class="dropdown-item" href="/planning/clauses">条款库</a></li>
                         <li><a class="dropdown-item" href="/planning/structures">文件结构化</a></li>
                         <li><a class="dropdown-item" href="/planning/traceability">追溯矩阵</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">外部变化管理</h6></li>
+                        <li>
+                            <a class="dropdown-item d-flex justify-content-between align-items-center" href="/planning/regulatory-candidates">
+                                <span>法规候选池</span>
+                                {if isset($pendingRegulatoryCandidateCount) && $pendingRegulatoryCandidateCount > 0}<span class="badge bg-danger qms-badge-counter">{$pendingRegulatoryCandidateCount}</span>{/if}
+                            </a>
+                        </li>
                         <li><a class="dropdown-item" href="/planning/change-events">变更事件</a></li>
-                        <li><a class="dropdown-item" href="/planning/objectives">质量方针目标</a></li>
                         {/if}
                         {if condition="qms_can('planningresponsibility')"}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">岗位责任</h6></li>
                         <li><a class="dropdown-item" href="/planning/responsibilities">责任链</a></li>
                         {/if}
                     </ul>

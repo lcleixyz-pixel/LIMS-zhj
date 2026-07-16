@@ -1,0 +1,23 @@
+login=302 redirect=http://127.0.0.1:8010/dashboard/index
+/dashboard/index	200	bad_markers=0
+/planning/regulatory-candidates	200	bad_markers=0
+/planning/change-events	200	bad_markers=0
+/planning/change-events/add	200	bad_markers=0
+/record_form_instance/index	200	bad_markers=0
+/equipment/index	200	bad_markers=0
+/planning/structures	200	bad_markers=0
+/record_form_template/index	200	bad_markers=0
+/compliance/index	200	bad_markers=0
+
+php_smoke:
+No syntax errors detected in app/controller/PlanningRegulatoryCandidate.php
+No syntax errors detected in app/model/QmsExternalChangeCandidate.php
+qms_planning_ui_smoke passed
+qms_external_change_event_smoke passed
+
+recent_sessions_cleanup:
++-----------------------+
+| recent_local_sessions |
++-----------------------+
+|                     0 |
++-----------------------+

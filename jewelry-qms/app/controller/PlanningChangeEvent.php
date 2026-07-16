@@ -58,7 +58,7 @@ class PlanningChangeEvent extends BaseController
             $errors = ExternalChangeEventService::validateData($data, true);
             if ($errors !== []) {
                 Session::flash('validation_errors', $errors);
-                View::assign('record', (object)array_merge($this->emptyRecord(), $data));
+                View::assign('record', array_merge($this->emptyRecord(), $data));
                 $this->assignCommonContext();
 
                 return View::fetch('planning_change_event/add');
@@ -71,7 +71,7 @@ class PlanningChangeEvent extends BaseController
             return redirect('/planning/change-events/view?id=' . $event->id);
         }
 
-        View::assign('record', (object)$this->emptyRecord());
+        View::assign('record', $this->emptyRecord());
         $this->assignCommonContext();
 
         return View::fetch('planning_change_event/add');

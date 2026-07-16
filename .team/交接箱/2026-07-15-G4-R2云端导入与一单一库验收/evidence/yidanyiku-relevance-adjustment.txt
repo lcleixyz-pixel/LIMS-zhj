@@ -1,0 +1,11 @@
+candidate_after_relevance_adjustment:
+reg-2026-samr-14-yidanyiku	pending	needs_review	high	likely	likely	possible	no_match	likely	likely	NULL
+formal_counts_after_adjustment:
+documents	39
+employees	12
+record_form_templates	145
+record_form_instances	12
+qms_structured_documents	190
+qms_external_change_events	0
+qms_external_change_candidates	1
+qms_regulatory_monitor_runs	1

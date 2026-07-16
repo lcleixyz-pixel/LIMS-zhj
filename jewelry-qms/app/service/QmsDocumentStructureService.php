@@ -3031,15 +3031,55 @@ class QmsDocumentStructureService
 
     private static function normalizePackageBlockTraceRows(array $rows): array
     {
+        $blockIds = [];
+        $structuredIds = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $blockId = (string)($row['block_id'] ?? '');
+            $structuredId = (string)($row['structured_document_id'] ?? '');
+            if ($blockId !== '') {
+                $blockIds[] = $blockId;
+            }
+            if ($structuredId !== '') {
+                $structuredIds[] = $structuredId;
+            }
+        }
+        $blockIds = array_values(array_unique($blockIds));
+        $structuredIds = array_values(array_unique($structuredIds));
+        $existingBlockIds = $blockIds === []
+            ? []
+            : array_map('strval', QmsDocumentBlock::whereIn('id', $blockIds)->where('soft_delete', 0)->column('id'));
+        $existingStructuredIds = $structuredIds === []
+            ? []
+            : array_map('strval', QmsStructuredDocument::whereIn('id', $structuredIds)->where('soft_delete', 0)->column('id'));
+        $existingBlockMap = array_fill_keys($existingBlockIds, true);
+        $existingStructuredMap = array_fill_keys($existingStructuredIds, true);
+
         foreach ($rows as &$row) {
             if (!is_array($row)) {
                 $row = [];
             }
             $structuredId = (string)($row['structured_document_id'] ?? '');
             $blockId = (string)($row['block_id'] ?? '');
-            $row['document_url'] = (string)($row['document_url'] ?? ($structuredId !== '' ? '/planning/structures/view?id=' . $structuredId : ''));
-            $row['block_edit_url'] = (string)($row['block_edit_url'] ?? ($blockId !== '' ? '/planning/structures/blocks/edit?id=' . $blockId : ''));
-            $row['trace_review_url'] = (string)($row['trace_review_url'] ?? ($blockId !== '' ? '/planning/structures/links/review?block_id=' . $blockId : ''));
+            $blockExists = $blockId !== '' && isset($existingBlockMap[$blockId]);
+            $structuredExists = $structuredId !== '' && isset($existingStructuredMap[$structuredId]);
+            $row['block_exists'] = $blockExists;
+            $row['structured_document_exists'] = $structuredExists;
+            $row['is_historical_snapshot'] = $blockId !== '' && !$blockExists;
+            $row['stale_reason'] = $row['is_historical_snapshot']
+                ? '历史归档记录：仅供追溯，通常不用处理；当前内容块已重建或不存在，已关闭现行编辑入口。'
+                : '';
+            $row['document_url'] = $structuredExists
+                ? (string)($row['document_url'] ?? ($structuredId !== '' ? '/planning/structures/view?id=' . $structuredId : ''))
+                : '';
+            $row['block_edit_url'] = $blockExists
+                ? (string)($row['block_edit_url'] ?? ($blockId !== '' ? '/planning/structures/blocks/edit?id=' . $blockId : ''))
+                : '';
+            $row['trace_review_url'] = $blockExists
+                ? (string)($row['trace_review_url'] ?? ($blockId !== '' ? '/planning/structures/links/review?block_id=' . $blockId : ''))
+                : '';
             $row['trace_targets'] = is_array($row['trace_targets'] ?? null) ? $row['trace_targets'] : [];
             $row['trace_summary'] = (string)($row['trace_summary'] ?? self::changeImpactTraceSummary(['links' => []]));
         }

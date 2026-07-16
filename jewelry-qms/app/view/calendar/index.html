@@ -36,6 +36,7 @@
                     </td>
                     <td>
                         {if $item.url != '#'}<a href="{$item.url}" class="btn btn-sm btn-outline-primary">前往处理</a>{else}<span class="text-muted">-</span>{/if}
+                        {if !empty($item.link_status_text)}<div class="text-muted small mt-1">{$item.link_status_text}</div>{/if}
                     </td>
                 </tr>
                 {/volist}

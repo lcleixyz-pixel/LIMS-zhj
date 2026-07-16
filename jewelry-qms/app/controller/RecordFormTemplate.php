@@ -16,6 +16,7 @@ use app\service\RecordFormSchemaService;
 use InvalidArgumentException;
 use RuntimeException;
 use think\exception\HttpException;
+use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
 
@@ -203,7 +204,7 @@ class RecordFormTemplate extends BaseController
         View::assign('schemaSuggestionId', $schemaSuggestionId);
         if ($this->request->isPost()) {
             $data = $this->request->post();
-            $errors = $this->validateTemplateInput($data);
+            $errors = $this->validateTemplateInput($data, (string)$record->id);
             if ($errors !== []) {
                 $this->flashValidationErrors($errors);
                 $record->setAttrs($data);
@@ -380,9 +381,35 @@ class RecordFormTemplate extends BaseController
         }
 
         $record = $this->findTemplate();
+        if ((string)$record->status !== 'draft') {
+            Session::flash('warning', '已发布或已作废模板不能物理删除，请使用作废/换版流程并保留历史记录。');
+
+            return redirect('/record_form_template/index');
+        }
         $record->soft_delete = 1;
         $record->save();
         Session::flash('success', '记录表格模板已删除');
+
+        return redirect('/record_form_template/index');
+    }
+
+    public function obsolete()
+    {
+        if (!$this->request->isPost()) {
+            Session::flash('warning', '请从模板列表使用作废按钮操作。');
+
+            return redirect('/record_form_template/index');
+        }
+
+        $record = $this->findTemplate();
+        if ((string)$record->status === 'draft') {
+            Session::flash('warning', '草稿模板可删除；已发布模板才走作废/换版流程。');
+
+            return redirect('/record_form_template/index');
+        }
+
+        $record->save(['status' => 'obsolete']);
+        Session::flash('success', '记录表格模板已作废，历史记录已保留；如需继续使用请建立新版本。');
 
         return redirect('/record_form_template/index');
     }
@@ -522,9 +549,31 @@ class RecordFormTemplate extends BaseController
 
     private function decorateTemplateRows(iterable $items): void
     {
+        $docNumbers = [];
+        foreach ($items as $item) {
+            $docNumber = trim((string)$item->doc_number);
+            if ($docNumber !== '') {
+                $docNumbers[] = $docNumber;
+            }
+        }
+        $duplicateCounts = [];
+        if ($docNumbers !== []) {
+            $rows = Db::name('record_form_templates')
+                ->field('doc_number, COUNT(*) AS duplicate_count')
+                ->where('soft_delete', 0)
+                ->whereIn('doc_number', array_values(array_unique($docNumbers)))
+                ->group('doc_number')
+                ->having('COUNT(*) > 1')
+                ->select()
+                ->toArray();
+            foreach ($rows as $row) {
+                $duplicateCounts[(string)$row['doc_number']] = (int)$row['duplicate_count'];
+            }
+        }
         foreach ($items as $item) {
             $item->setAttr('fillable', $this->isTemplateFillable($item));
             $item->setAttr('source_file_available', $this->sourceFileAvailable($item));
+            $item->setAttr('duplicate_doc_number_count', $duplicateCounts[(string)$item->doc_number] ?? 0);
         }
     }
 
@@ -588,12 +637,21 @@ class RecordFormTemplate extends BaseController
         return $summary;
     }
 
-    private function validateTemplateInput(array $data): array
+    private function validateTemplateInput(array $data, string $currentId = ''): array
     {
         $errors = [];
 
-        if (trim((string)($data['doc_number'] ?? '')) === '') {
+        $docNumber = trim((string)($data['doc_number'] ?? ''));
+        if ($docNumber === '') {
             $errors[] = '编号不能为空';
+        } else {
+            $query = TemplateModel::where('soft_delete', 0)->where('doc_number', $docNumber);
+            if ($currentId !== '') {
+                $query->where('id', '<>', $currentId);
+            }
+            if ((int)$query->count() > 0) {
+                $errors[] = '编号已存在：受控记录表格编号应唯一，请走换版或作废流程。';
+            }
         }
         if (trim((string)($data['name'] ?? '')) === '') {
             $errors[] = '名称不能为空';

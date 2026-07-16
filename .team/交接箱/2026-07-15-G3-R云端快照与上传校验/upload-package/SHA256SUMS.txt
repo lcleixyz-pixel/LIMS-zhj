@@ -1,0 +1,9 @@
+b8f7d5ec08492e1374ecc11841c7ad544be05a68914d3a52fb633484ebe5d8a2  ./01-本地迁移预演记录-v0.1.md
+0161bf90a75154421da4f90fbb148909ac10447e4bab5aa19b83450fe8a43f6c  ./02-敏感数据排除清单-v0.1.md
+a6f4a3a81311395efff93c0a3489e5d064cab1df413163261b7fad84539614c4  ./03-一单一库本地验收记录-v0.1.md
+daf461b2f279b35db1a4938c4d8ff92f57f9c523371643f06865565e6a02ee61  ./README-G3-R.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./SHA256SUMS.txt
+0404a1022239daf8dcb4f71a2564d889f1e476a633d4220363cd2a590309ffd2  ./artifacts/candidate-reg-2026-samr-14-yidanyiku-review-packet-v1.0.json
+9e033a327b9fb1113860736fed31dc5eaea3815dc34a17d0ec64d7e0505d6eab  ./artifacts/migration-database-g2r-sanitized.sql.gz
+c8301d1137c49ccb5cc308820c9f66bdb66696888f73875eaa0849a5ac115987  ./reports/candidate-validation.json
+e024a6d735bdf9ac1aedb4dc60c366c77de2d33898c749f7576c02db9bd4b2f2  ./reports/一单一库候选复核包-v0.1.md

@@ -1,0 +1,4 @@
+qms_responsibility_schema_smoke passed
+qms_responsibility_presentation_smoke passed
+qms_manual_procedure_alignment_rules_smoke deterministic rules passed
+qms experience deploy bootstrap smoke passed

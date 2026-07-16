@@ -5,7 +5,7 @@
         <small class="text-muted">机构运营概览 · {:date('Y-m-d')}</small>
     </div>
     <div class="qms-page-actions">
-        <a href="/record_form_instance/create?template_id=" class="btn btn-sm btn-primary">新建记录</a>
+        <a href="/record_form_template/index" class="btn btn-sm btn-primary">选择模板填写</a>
         <a href="/calendar/index" class="btn btn-sm btn-outline-primary">本月待办</a>
     </div>
 </div>
@@ -170,7 +170,22 @@ function qmsChart(id, options) {
     chart.setOption(options);
     window.addEventListener('resize', function () { chart.resize(); });
 }
-qmsChart('capaTrendChart', {
+function qmsHasData(dataset) {
+    if (!dataset) return false;
+    if (dataset.has_data !== undefined) return !!dataset.has_data;
+    if (Array.isArray(dataset.values)) return dataset.values.reduce(function (sum, value) { return sum + Number(value || 0); }, 0) > 0;
+    return false;
+}
+function qmsChartOrEmpty(id, dataset, options, emptyText) {
+    const node = document.getElementById(id);
+    if (!node) return;
+    if (!qmsHasData(dataset)) {
+        node.innerHTML = '<div class="qms-chart-empty">' + emptyText + '</div>';
+        return;
+    }
+    qmsChart(id, options);
+}
+qmsChartOrEmpty('capaTrendChart', qmsChartData.capaTrend, {
     tooltip: { trigger: 'axis' },
     legend: { data: ['新建', '关闭'] },
     xAxis: { type: 'category', data: qmsChartData.capaTrend.labels },
@@ -179,20 +194,20 @@ qmsChart('capaTrendChart', {
         { name: '新建', type: 'line', smooth: true, data: qmsChartData.capaTrend.opened },
         { name: '关闭', type: 'line', smooth: true, data: qmsChartData.capaTrend.closed }
     ]
-});
-qmsChart('calibrationResultChart', {
+}, '暂无 CAPA 数据');
+qmsChartOrEmpty('calibrationResultChart', qmsChartData.calibrationResults, {
     tooltip: { trigger: 'item' },
     series: [{ type: 'pie', radius: ['45%', '70%'], data: qmsChartData.calibrationResults.labels.map(function (label, index) { return { name: label, value: qmsChartData.calibrationResults.values[index] }; }) }]
-});
-qmsChart('trainingCoverageChart', {
+}, '暂无校准记录');
+qmsChartOrEmpty('trainingCoverageChart', qmsChartData.trainingCoverage, {
     title: { text: qmsChartData.trainingCoverage.rate + '%', left: 'center', top: '42%', textStyle: { fontSize: 22 } },
     tooltip: { trigger: 'item' },
     series: [{ type: 'pie', radius: ['55%', '75%'], data: qmsChartData.trainingCoverage.labels.map(function (label, index) { return { name: label, value: qmsChartData.trainingCoverage.values[index] }; }) }]
-});
-qmsChart('auditFindingChart', {
+}, '暂无培训覆盖数据');
+qmsChartOrEmpty('auditFindingChart', qmsChartData.auditFindings, {
     tooltip: { trigger: 'axis' },
     xAxis: { type: 'category', data: qmsChartData.auditFindings.labels },
     yAxis: { type: 'value', minInterval: 1 },
     series: [{ type: 'bar', data: qmsChartData.auditFindings.values }]
-});
+}, '暂无内审发现数据');
 </script>

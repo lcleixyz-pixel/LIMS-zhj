@@ -1,0 +1,15 @@
+local_candidate_pool_schema_tables:
+qms_external_change_candidates
+qms_regulatory_monitor_runs
+
+local_candidate_pool_http:
+login_status=302 redirect=http://127.0.0.1:8010/dashboard/index
+candidate_pool_auth_status=200
+markers=法规候选池,候选事项,暂无法规候选
+recent_local_sessions=0
+
+local_php_smoke:
+No syntax errors detected in app/controller/PlanningRegulatoryCandidate.php
+No syntax errors detected in app/model/QmsExternalChangeCandidate.php
+qms_planning_ui_smoke passed
+qms_external_change_event_smoke passed

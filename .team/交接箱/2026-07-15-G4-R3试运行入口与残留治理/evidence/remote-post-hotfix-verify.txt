@@ -1,0 +1,5 @@
+php_lint_change_event=No syntax errors detected in app/controller/PlanningChangeEvent.php
+php_lint_candidate=No syntax errors detected in app/controller/PlanningRegulatoryCandidate.php
+php_lint_candidate_model=No syntax errors detected in app/model/QmsExternalChangeCandidate.php
+candidate_pool_status=500
+candidate_pool_markers=

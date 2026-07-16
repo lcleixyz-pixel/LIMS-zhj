@@ -1,0 +1,2 @@
+candidate_residue_before_retry2	0
+run_residue_before_retry2	0

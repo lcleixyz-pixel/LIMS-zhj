@@ -1,0 +1,6 @@
+qms_clause_remediation_smoke passed
+qms_clause_remediation_live_verify passed
+qms_planning_ui_smoke passed
+qms_planning_schema_smoke passed
+login HTTP 200
+planning_clauses HTTP 302

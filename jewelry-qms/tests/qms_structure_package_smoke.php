@@ -295,6 +295,11 @@ assert_contains('体系文件组合包', $indexView, 'Structure index links to t
 
 $packageView = file_get_contents(dirname(__DIR__) . '/app/view/planning_structure/package.html') ?: '';
 assert_contains('外部依据、质量手册、程序文件、作业指导书和记录表格', $packageView, 'Package page describes the full structured document scope');
+assert_contains('质量负责人先看', $packageView, 'Package page provides a business-oriented first-read guide');
+assert_contains('这个页面用来做什么', $packageView, 'Package page explains its business purpose before technical traceability details');
+assert_contains('不用处理', $packageView, 'Package page tells business users which historical rows do not require action');
+assert_contains('仅供追溯', $packageView, 'Package page labels historical evidence as trace-only instead of active work');
+assert_contains('生成会新增归档版本', $packageView, 'Package page warns that rendering creates a new archive version');
 assert_contains('条款级追溯索引', $packageView, 'Package page exposes the traceability index included in the package');
 assert_contains('体系要素', $packageView, 'Package page names elements in the traceability index description');
 assert_contains('document_count_by_role.external_basis', $packageView, 'Package page shows external basis count');

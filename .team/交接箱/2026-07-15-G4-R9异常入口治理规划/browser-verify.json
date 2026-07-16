@@ -1,0 +1,38 @@
+[
+  {
+    "inputUrl": "/planning/structures/package",
+    "finalUrl": "/planning/structures/package",
+    "title": "珠宝检测实验室质量管理系统 - 系统管理员",
+    "hasSystemError": false,
+    "hasExpectedGuardText": true,
+    "screenshot": "screenshots/01-planning-structures-package.png",
+    "bodySample": "珠宝检测实验室质量管理系统\n珠宝检测实验室 QMS\nCMA/CNAS 质量管理体系\n系统管理员 0\n修改密码 退出\n工作台\n本月待办\n记录填报\n体系文件\n审核准备\n审核与评审\n质量改进\n资源管理\n体系策划\n系统设置\n体系文件组合包\n将当前结构化外部依据、质量手册、程序文件、作业指导书和记录表格组合为一份可归档 Markdown。\n返回列表\n生成组合包\n外部依据\n5\n质量手册\n1\n程序文件\n37\n作业指导书\n0\n记录表格\n145\n总文档数\n188\n条款级追溯索引\n组合包首页包含体系要素追溯总览\n索引按“体系要素、主外部条款、手册章节、程序文件、记录表格、运行模块、岗位职责、缺口”汇总，条款编号和"
+  },
+  {
+    "inputUrl": "/calendar/index",
+    "finalUrl": "/calendar/index",
+    "title": "珠宝检测实验室质量管理系统 - 系统管理员",
+    "hasSystemError": false,
+    "hasExpectedGuardText": true,
+    "screenshot": "screenshots/02-calendar-index.png",
+    "bodySample": "珠宝检测实验室质量管理系统\n珠宝检测实验室 QMS\nCMA/CNAS 质量管理体系\n系统管理员 0\n修改密码 退出\n工作台\n本月待办\n记录填报\n体系文件\n审核准备\n审核与评审\n质量改进\n资源管理\n体系策划\n系统设置\n本月体系待办（2026年7月）\n到期范围 2026-07-01 ~ 2026-07-31\n标题\t类型\t到期日\t剩余天数\t状态\t操作\n期间核查到期提醒\tcalibration\t2026-07-12\t已过期\t已过期\t-\n关联记录不存在，请复核提醒来源\n💬\n© 2026 珠宝检测实验室质量管理系统 v2.1.0\n0.023266s"
+  },
+  {
+    "inputUrl": "/planning/structures/blocks/edit?id=ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1",
+    "finalUrl": "/planning/structures/package",
+    "title": "珠宝检测实验室质量管理系统 - 系统管理员",
+    "hasSystemError": false,
+    "hasExpectedGuardText": true,
+    "screenshot": "screenshots/03-planning-structures-blocks-edit-id-ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1.png",
+    "bodySample": "珠宝检测实验室质量管理系统\n珠宝检测实验室 QMS\nCMA/CNAS 质量管理体系\n系统管理员 0\n修改密码 退出\n工作台\n本月待办\n记录填报\n体系文件\n审核准备\n审核与评审\n质量改进\n资源管理\n体系策划\n系统设置\n该结构化内容块已不存在，可能来自历史组合包快照；现行内容请从结构化文件或组合包页面重新进入。\n体系文件组合包\n将当前结构化外部依据、质量手册、程序文件、作业指导书和记录表格组合为一份可归档 Markdown。\n返回列表\n生成组合包\n外部依据\n5\n质量手册\n1\n程序文件\n37\n作业指导书\n0\n记录表格\n145\n总文档数\n188\n条款级追溯索引\n组合包首页包含体系要素追溯总览\n索引按“"
+  },
+  {
+    "inputUrl": "/planning/structures/links/review?block_id=ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1",
+    "finalUrl": "/planning/structures/package",
+    "title": "珠宝检测实验室质量管理系统 - 系统管理员",
+    "hasSystemError": false,
+    "hasExpectedGuardText": true,
+    "screenshot": "screenshots/04-planning-structures-links-review-block-id-ae45ee91-c6ab-409c-b5fd-71e8bf0dc3f1.png",
+    "bodySample": "珠宝检测实验室质量管理系统\n珠宝检测实验室 QMS\nCMA/CNAS 质量管理体系\n系统管理员 0\n修改密码 退出\n工作台\n本月待办\n记录填报\n体系文件\n审核准备\n审核与评审\n质量改进\n资源管理\n体系策划\n系统设置\n该结构化内容块已不存在，可能来自历史组合包快照；现行追溯请从结构化文件或组合包页面重新进入。\n体系文件组合包\n将当前结构化外部依据、质量手册、程序文件、作业指导书和记录表格组合为一份可归档 Markdown。\n返回列表\n生成组合包\n外部依据\n5\n质量手册\n1\n程序文件\n37\n作业指导书\n0\n记录表格\n145\n总文档数\n188\n条款级追溯索引\n组合包首页包含体系要素追溯总览\n索引按“"
+  }
+]
