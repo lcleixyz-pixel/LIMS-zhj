@@ -48,7 +48,51 @@ root:www 640 /www/server/jewelry-qms-experience/shared/.htpasswd
 - 登录页标题正常；
 - 外层 BasicAuth 已完成轮换。
 
-## 4. 后续提醒
+## 4. 轮换后收口复验
+
+轮换并更新本机钥匙串后，重新执行公网与登录后页面烟测：
+
+```text
+{
+  "http_root_code": "301",
+  "https_without_basic_auth_code": "401",
+  "login_get_code": "200",
+  "admin_login_post_code": "302",
+  "dashboard_code": "200",
+  "candidates_code": "200",
+  "candidate_detail_code": "200",
+  "change_events_code": "200",
+  "traceability_code": "200",
+  "template_review_code": "200",
+  "login_title_ok": true,
+  "dashboard_env_banner_ok": true,
+  "candidate_pool_entry_ok": true,
+  "month_todo_wording_ok": true,
+  "no_empty_template_create_link_on_dashboard": true,
+  "candidates_yidanyiku_ok": true,
+  "candidate_detail_impact_terms_ok": true,
+  "candidate_no_auto_write_warning_ok": true,
+  "change_events_page_ok": true,
+  "traceability_page_ok": true,
+  "template_review_has_uuid_fill_links": true,
+  "replacement_char_counts": {
+    "login.html": 0,
+    "dashboard.html": 0,
+    "candidates.html": 0,
+    "candidate_detail.html": 0,
+    "change_events.html": 0,
+    "traceability.html": 1,
+    "template_review.html": 0
+  }
+}
+```
+
+收口判断：
+
+- 访问链路、登录链路、法规候选池、候选详情、变更事件、模板试填入口均可打开；
+- 首页不再出现空 `template_id` 的新建记录入口；
+- 溯源链页面仍有 1 个旧内容替换字符，继续作为 C4/试运行问题处理，不触发本次回退。
+
+## 5. 后续提醒
 
 后续再做公网烟测时，禁止输出 `redirect_url`、完整请求 URL 或任何可能包含 `user:password@host` 的字段。
-
