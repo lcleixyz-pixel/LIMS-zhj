@@ -1,0 +1,10 @@
+username	name	role	publish	soft_delete	last_login	hash_prefix
+admin	系统管理员	admin	1	0	2026-07-16 10:23:56	$2y$10$92IXUNpkjO0rO
+qm_test	质量负责人	quality_manager	1	0	2026-07-11 18:06:35	$2y$12$uTWSkJTcX3jcH
+auditor_test	内审员测试	auditor	1	0	2026-07-16 10:23:59	$2y$12$jxnM1kgcLjnuJ
+head_test	部门负责人测试	department_head	1	0	2026-07-16 10:24:01	$2y$12$jxnM1kgcLjnuJ
+staff_test	一般人员测试	staff	1	0	2026-07-16 10:24:03	$2y$12$jxnM1kgcLjnuJ
+id	title	message	type	link_controller	link_action	link_id	due_date	notification_key	publish	soft_delete
+779dcd3f-d9e8-4f1b-9d25-41df8ebb3cd0	期间核查到期提醒	期间核查计划将于 2026-07-12 到期	calibration	equipment_maintenance	view	00000000-0000-0000-0000-00000000b002	2026-07-12	equipment_verification_due:00000000-0000-0000-0000-00000000b002:2026-07	1	0
+id	doc_number	record_title	status	generated_pdf_name	field_sample
+011c83e3-21c5-4093-b8c3-1e793c1f40b1	XZTC/BG-01-02	2026运行记录-XZTC/BG-01-02-人员培训记录表-001	generated	2026_-XZTC_BG-01-02-_-001_20260709190749.pdf	{\n    "training_date": "2026-07-09",\n    "training_topic": "珠宝检测实验室安全操作规程培训",\n    "trainer": "李明",\n    "training_content": "1. 实验室安全操作规范与注意事项；\\r\\n2. 仪器设备正确使用与日常维护；\\r\\n3. 危险化学品储存与管理要求；\\r\\n4. 应急预案处理流程与演练；\\r\\n5. 个人防护用品正确佩戴方法。",\n    "attendees": [],\n    "effect_evaluation": "本次培训采用理论讲解与实操演练相结合的方式，参训人员均通过现场考核。培训后员工安全意识显著提升，能够熟练掌握实验室安全操作规程，培训效果良好。"\n}

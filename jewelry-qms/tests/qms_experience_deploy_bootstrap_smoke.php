@@ -9,6 +9,14 @@ function assert_contains(string $needle, string $haystack, string $message): voi
     }
 }
 
+function assert_not_contains(string $needle, string $haystack, string $message): void
+{
+    if (str_contains($haystack, $needle)) {
+        fwrite(STDERR, "Assertion failed: {$message}\n");
+        exit(1);
+    }
+}
+
 $root = dirname(__DIR__);
 $compose = (string)file_get_contents($root . '/deploy/experience/compose.yaml');
 $envExample = (string)file_get_contents($root . '/deploy/experience/.env.example');
@@ -30,12 +38,18 @@ if (!is_file($migrationInitPath)) {
     fwrite(STDERR, "Assertion failed: migration init script exists\n");
     exit(1);
 }
+if ((fileperms($migrationInitPath) & 0111) === 0) {
+    fwrite(STDERR, "Assertion failed: migration init script must have an executable file mode for mysql docker-entrypoint\n");
+    exit(1);
+}
 
 $bootstrap = (string)file_get_contents($bootstrapPath);
 $migrationInit = (string)file_get_contents($migrationInitPath);
 assert_contains('RecordFormTemplate::count()', $bootstrap, 'template seed is guarded by a true empty-table check');
 assert_contains('RecordFormFixtureService::seed()', $bootstrap, 'stable built-in templates are seeded');
 assert_contains('/qms-migrations/*.sql', $migrationInit, 'all migrations are applied in filename order');
+assert_not_contains('docker_process_sql', $migrationInit, 'migration init script must not rely on mysql entrypoint private shell functions');
+assert_contains('mysql "${mysql_args[@]}" "$database"', $migrationInit, 'migration init script applies SQL through mysql client directly');
 
 $lock = json_decode((string)file_get_contents($root . '/package-lock.json'), true, 512, JSON_THROW_ON_ERROR);
 $playwrightVersion = (string)($lock['packages']['node_modules/playwright']['version'] ?? '0.0.0');
