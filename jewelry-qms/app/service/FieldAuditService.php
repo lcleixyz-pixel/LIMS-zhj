@@ -16,9 +16,14 @@ class FieldAuditService
         'Equipment' => ['status', 'next_calibration_date', 'last_calibration_date', 'site_id'],
         'AuditFinding' => ['status', 'capa_id'],
         'QmsExternalChangeEvent' => ['status', 'old_source_id', 'new_source_id', 'effective_date', 'graph_snapshot_hash', 'close_reason'],
+        'QmsExternalChangeCandidate' => [
+            'review_status', 'review_comment', 'reviewed_by', 'reviewed_at',
+            'promoted_event_id', 'promoted_at',
+        ],
     ];
 
     protected static array $sensitiveFields = ['password'];
+    protected static array $redactedFields = ['review_comment'];
     protected static array $jsonFields = ['field_values', 'participants'];
     protected static ?bool $tableReady = null;
 
@@ -42,6 +47,9 @@ class FieldAuditService
 
         try {
             if (!self::isTableReady()) {
+                if (self::modelName($model) === 'QmsExternalChangeCandidate') {
+                    throw new \RuntimeException('法规候选复核审计表不可用');
+                }
                 return;
             }
 
@@ -82,6 +90,11 @@ class FieldAuditService
             }
         } catch (\Throwable $exception) {
             Log::error('Field audit capture failed: ' . $exception->getMessage());
+            // Regulatory review decisions are gated actions: never commit the
+            // business decision when its field audit cannot be persisted.
+            if (self::modelName($model) === 'QmsExternalChangeCandidate') {
+                throw $exception;
+            }
         }
     }
 
@@ -111,6 +124,9 @@ class FieldAuditService
     {
         if ($value === null) {
             return null;
+        }
+        if (in_array($field, self::$redactedFields, true)) {
+            return '[已变更]';
         }
         if (in_array($field, self::$jsonFields, true) || is_array($value) || is_object($value)) {
             return '[已变更]';

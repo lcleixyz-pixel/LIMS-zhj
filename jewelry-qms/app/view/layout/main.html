@@ -231,6 +231,9 @@
                             </a>
                         </li>
                         <li><a class="dropdown-item" href="/planning/change-events">变更事件</a></li>
+                        {if condition="config('qms.regulatory_monitor.enabled') && qms_can('planningregulatorymonitor')"}
+                        <li><a class="dropdown-item" href="/planning/regulatory-monitor">法规监测运行</a></li>
+                        {/if}
                         {/if}
                         {if condition="qms_can('planningresponsibility')"}
                         <li><hr class="dropdown-divider"></li>

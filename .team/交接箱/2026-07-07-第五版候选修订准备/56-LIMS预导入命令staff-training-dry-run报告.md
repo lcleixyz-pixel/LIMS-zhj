@@ -63,9 +63,9 @@
 - release_execution_fields: 0
 - release_execution_trial_instances: 0
 - manual_revision_status: not_provided
-- manual_revision_target_doc_number: 
+- manual_revision_target_doc_number:
 - manual_revision_pending_human_decisions: 0
-- manual_revision_existing_route: 
+- manual_revision_existing_route:
 - staff_training_status: passed
 - staff_training_source_items: 29
 - staff_training_tasks: 88

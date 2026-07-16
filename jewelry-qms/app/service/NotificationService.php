@@ -356,6 +356,52 @@ class NotificationService
         );
     }
 
+    /** @param array<string, mixed> $result */
+    public static function notifyRegulatoryMonitorFailure(array $result): void
+    {
+        $status = (string)($result['status'] ?? '');
+        if ($status === 'completed') {
+            return;
+        }
+        if (!in_array($status, ['partial_failed', 'failed'], true)) {
+            throw new \InvalidArgumentException('法规监测通知状态无效');
+        }
+        $runId = trim((string)($result['run_id'] ?? ''));
+        if ($runId === '') {
+            throw new \InvalidArgumentException('法规监测通知缺少 run_id');
+        }
+
+        $successCount = max(0, (int)($result['success_count'] ?? 0));
+        $failureCount = max(0, (int)($result['failure_count'] ?? 0));
+        $candidateNewCount = max(0, (int)($result['candidate_new_count'] ?? 0));
+        $candidateExistingCount = max(0, (int)($result['candidate_existing_count'] ?? 0));
+        $message = sprintf(
+            '法规监测运行 %s 状态 %s：成功 %d，失败 %d，新增候选 %d，已有候选 %d。请进入法规候选清单查看并人工处理。',
+            $runId,
+            $status,
+            $successCount,
+            $failureCount,
+            $candidateNewCount,
+            $candidateExistingCount
+        );
+        $userIds = array_values(array_unique(array_merge(
+            self::roleUserIds('admin'),
+            self::roleUserIds('quality_manager')
+        )));
+
+        self::notifyUsers(
+            '法规监测运行异常',
+            $message,
+            'general',
+            $userIds,
+            null,
+            'index',
+            null,
+            null,
+            'regulatory_monitor_failure:' . $runId
+        );
+    }
+
     protected static function attachRecipients(string $notificationId, array $userIds): void
     {
         foreach (array_unique($userIds) as $userId) {
@@ -372,7 +418,11 @@ class NotificationService
 
     protected static function roleUserIds(string $role): array
     {
-        return User::where('role', $role)->where('publish', 1)->where('soft_delete', 0)->column('id');
+        return User::where('company_id', Config::get('qms.company_id'))
+            ->where('role', $role)
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->column('id');
     }
 
     protected static function monthPeriod(string $date): string
