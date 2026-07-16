@@ -20,6 +20,14 @@ IMAGE="jewelry-qms-experience:amd64-g4r12-pr31"
 REMOTE_DIR="/root/qms-upload-20260716-g4r12-pr31"
 TREE_HASH="863cfe4e48649155f4b4294004fa976a7fbdb654"
 PR_NUMBER="32"
+SSH_KEY="${SSH_KEY:-$HOME/.ssh/zhj_qms_g1_ed25519}"
+
+SSH_OPTS=(-o StrictHostKeyChecking=yes)
+SCP_OPTS=(-o StrictHostKeyChecking=yes)
+if [[ -f "$SSH_KEY" ]]; then
+  SSH_OPTS=(-i "$SSH_KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
+  SCP_OPTS=(-i "$SSH_KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes)
+fi
 
 usage() {
   cat <<'USAGE'
@@ -40,6 +48,7 @@ Safety:
   - help/local-preflight do not write to GitHub or server.
   - All other modes require:
       export G4_R12_C2_APPROVAL="批准 G4-R12-C2"
+  - SSH defaults to ~/.ssh/zhj_qms_g1_ed25519 when present; override with SSH_KEY=...
   - This script never switches current, never starts containers, and never edits shared .env.
   - No single "do everything" mode is provided; execute stepwise and record evidence.
 USAGE
@@ -100,7 +109,7 @@ push_docs() {
 
 remote_readonly() {
   require_approval "remote-readonly"
-  ssh "$SERVER" "BASE='$BASE' bash -se" <<'REMOTE'
+  ssh "${SSH_OPTS[@]}" "$SERVER" "BASE='$BASE' bash -se" <<'REMOTE'
 set -euo pipefail
 hostname
 date
@@ -125,7 +134,7 @@ REMOTE
 
 snapshot() {
   require_approval "snapshot"
-  ssh "$SERVER" "BASE='$BASE' RELEASE_ID='$RELEASE_ID' bash -se" <<'REMOTE'
+  ssh "${SSH_OPTS[@]}" "$SERVER" "BASE='$BASE' RELEASE_ID='$RELEASE_ID' bash -se" <<'REMOTE'
 set -euo pipefail
 STAMP="$(date +%Y%m%d-%H%M%S)-before-$RELEASE_ID"
 SNAPSHOT="$BASE/shared/snapshots/$STAMP"
@@ -134,10 +143,12 @@ cd "$BASE/current/jewelry-qms"
 
 docker compose --env-file "$BASE/shared/.env" -f deploy/experience/compose.yaml \
   exec -T db sh -c 'exec mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --single-transaction "$MYSQL_DATABASE"' \
+  < /dev/null \
   > "$SNAPSHOT/database.sql"
 
 docker compose --env-file "$BASE/shared/.env" -f deploy/experience/compose.yaml \
-  exec -T app tar czf - -C /app/public uploads \
+  exec -T app sh -lc 'tar czf - -C /app/public uploads' \
+  < /dev/null \
   > "$SNAPSHOT/uploads.tar.gz"
 
 test -s "$SNAPSHOT/database.sql"
@@ -151,17 +162,17 @@ REMOTE
 
 upload() {
   require_approval "upload"
-  ssh "$SERVER" "install -d -m 700 '$REMOTE_DIR'"
-  scp "$OUT_DIR/LIMS-zhj-experience-$RELEASE_ID.tar.gz" "$SERVER:$REMOTE_DIR/"
-  scp "$OUT_DIR/LIMS-zhj-experience-app-image-$RELEASE_ID.tar.gz" "$SERVER:$REMOTE_DIR/"
-  scp "$OUT_DIR/LIMS-zhj-experience-$RELEASE_ID-SHA256SUMS.txt" "$SERVER:$REMOTE_DIR/"
-  scp "$OUT_DIR/release-manifest-$RELEASE_ID.json" "$SERVER:$REMOTE_DIR/"
-  scp "$OUT_DIR/release-manifest-$RELEASE_ID.SHA256.txt" "$SERVER:$REMOTE_DIR/"
+  ssh "${SSH_OPTS[@]}" "$SERVER" "install -d -m 700 '$REMOTE_DIR'"
+  scp "${SCP_OPTS[@]}" "$OUT_DIR/LIMS-zhj-experience-$RELEASE_ID.tar.gz" "$SERVER:$REMOTE_DIR/"
+  scp "${SCP_OPTS[@]}" "$OUT_DIR/LIMS-zhj-experience-app-image-$RELEASE_ID.tar.gz" "$SERVER:$REMOTE_DIR/"
+  scp "${SCP_OPTS[@]}" "$OUT_DIR/LIMS-zhj-experience-$RELEASE_ID-SHA256SUMS.txt" "$SERVER:$REMOTE_DIR/"
+  scp "${SCP_OPTS[@]}" "$OUT_DIR/release-manifest-$RELEASE_ID.json" "$SERVER:$REMOTE_DIR/"
+  scp "${SCP_OPTS[@]}" "$OUT_DIR/release-manifest-$RELEASE_ID.SHA256.txt" "$SERVER:$REMOTE_DIR/"
 }
 
 verify_load() {
   require_approval "verify-load"
-  ssh "$SERVER" "REMOTE_DIR='$REMOTE_DIR' IMAGE='$IMAGE' bash -se" <<'REMOTE'
+  ssh "${SSH_OPTS[@]}" "$SERVER" "REMOTE_DIR='$REMOTE_DIR' IMAGE='$IMAGE' bash -se" <<'REMOTE'
 set -euo pipefail
 cd "$REMOTE_DIR"
 sha256sum -c LIMS-zhj-experience-20260716-g4r12-pr31-SHA256SUMS.txt
@@ -173,7 +184,7 @@ REMOTE
 
 unpack_release() {
   require_approval "unpack-release"
-  ssh "$SERVER" "BASE='$BASE' RELEASE_ID='$RELEASE_ID' REMOTE_DIR='$REMOTE_DIR' bash -se" <<'REMOTE'
+  ssh "${SSH_OPTS[@]}" "$SERVER" "BASE='$BASE' RELEASE_ID='$RELEASE_ID' REMOTE_DIR='$REMOTE_DIR' bash -se" <<'REMOTE'
 set -euo pipefail
 if [ -e "$BASE/releases/$RELEASE_ID" ]; then
   echo "release already exists: $BASE/releases/$RELEASE_ID" >&2
@@ -193,7 +204,7 @@ REMOTE
 
 compose_check() {
   require_approval "compose-check"
-  ssh "$SERVER" "BASE='$BASE' RELEASE_ID='$RELEASE_ID' bash -se" <<'REMOTE'
+  ssh "${SSH_OPTS[@]}" "$SERVER" "BASE='$BASE' RELEASE_ID='$RELEASE_ID' bash -se" <<'REMOTE'
 set -euo pipefail
 CHECK_ENV="$BASE/shared/.env.check-$RELEASE_ID"
 cp "$BASE/shared/.env" "$CHECK_ENV"
