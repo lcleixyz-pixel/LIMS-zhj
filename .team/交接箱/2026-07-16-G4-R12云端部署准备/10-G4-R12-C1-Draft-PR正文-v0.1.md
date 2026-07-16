@@ -43,7 +43,7 @@ image_id:   sha256:5340c9b640df85c1ecb0e68bfb194f3f44e3e2e6ba2917048c91616f67b28
 /Users/lc.leixyz/Documents/AI工作台/05-Codex输出归档/2026-07-16-QMS云端部署准备/G4R12-PR31集成候选发布包/
 ```
 
-说明：本 PR 后续追加了部署交接与发布清单文档提交，但 `jewelry-qms/` 源码树未变化；`20260716-g4r12-pr31` 候选包仍与当前 PR HEAD 的 `jewelry-qms/` 内容一致。
+说明：本 PR 后续追加了部署交接、发布清单和 G4-R11 B2/B3 追加复验文档提交，但 `jewelry-qms/` 源码树未变化；`20260716-g4r12-pr31` 候选包仍与当前 PR HEAD 的 `jewelry-qms/` 内容一致。
 
 ## 已验证
 

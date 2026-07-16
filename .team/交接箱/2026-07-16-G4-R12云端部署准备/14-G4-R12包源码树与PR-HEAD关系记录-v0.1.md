@@ -15,12 +15,14 @@
 - C2 云端上传仍使用 `20260716-g4r12-pr31` 候选包；
 - 审查时应区分“PR 审查 HEAD”和“部署包内源码树”。
 
-## 当前 HEAD
+## 复核基准 HEAD
 
 ```text
 branch: codex/g4-r12-pr31-integrated-deploy-prep
-HEAD:   3f4a06587687fd7675021fc181fd590be25aec99
+review_base_HEAD: 5931cbf1e048f1c81390f3a804e3c3d4ebd3238f
 ```
+
+说明：本文件自身的提交会让分支 HEAD 继续前进，但只修改 `.team/交接箱` 文档，不改变 `jewelry-qms/` 源码树。后续如需再次核对，以 `git rev-parse HEAD:jewelry-qms` 为准。
 
 ## `jewelry-qms/` 树哈希核对
 
@@ -30,6 +32,8 @@ HEAD:jewelry-qms      863cfe4e48649155f4b4294004fa976a7fbdb654
 780dd2bf:jewelry-qms  863cfe4e48649155f4b4294004fa976a7fbdb654
 ff2689b3:jewelry-qms  863cfe4e48649155f4b4294004fa976a7fbdb654
 3f4a0658:jewelry-qms  863cfe4e48649155f4b4294004fa976a7fbdb654
+3265a2e6:jewelry-qms  863cfe4e48649155f4b4294004fa976a7fbdb654
+5931cbf1:jewelry-qms  863cfe4e48649155f4b4294004fa976a7fbdb654
 ```
 
 判断：上述提交的 `jewelry-qms/` Git 树完全一致。
@@ -54,9 +58,10 @@ uploads
 
 ## 后续文档提交范围
 
-`780dd2bf..HEAD` 之间的提交只修改了：
+`780dd2bf..5931cbf1` 之间的提交只修改了：
 
 ```text
+.team/交接箱/2026-07-16-G4-R11试运行放行硬伤治理/
 .team/交接箱/2026-07-16-G4-R12云端部署准备/
 ```
 
