@@ -57,76 +57,156 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/calendar/index">本月待办</a>
                 </li>
+                {if condition="qms_can('record_form_template') || qms_can('record_form_instance')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">记录填报</a>
                     <ul class="dropdown-menu">
+                        {if condition="qms_can('record_form_template')"}
                         <li><a class="dropdown-item" href="/record_form_template/index">记录模板</a></li>
+                        {/if}
+                        {if condition="qms_can('record_form_instance')"}
                         <li><a class="dropdown-item" href="/record_form_instance/index">填写记录</a></li>
                         <li><a class="dropdown-item" href="/record_form_instance/reviewDashboard?year=2025">2025 运行确认</a></li>
+                        {/if}
+                        {if condition="qms_can('record_form_template')"}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="/record_form_template/review">模板复核</a></li>
+                        {/if}
                     </ul>
                 </li>
+                {/if}
+                {if condition="qms_can('document') || qms_can('doc_template') || qms_can('doc_category')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">体系文件</a>
                     <ul class="dropdown-menu">
+                        {if condition="qms_can('document')"}
                         <li><a class="dropdown-item" href="/document/index">体系文件列表</a></li>
                         <li><a class="dropdown-item" href="/document/add">新建文件</a></li>
+                        {/if}
+                        {if condition="qms_can('doc_template') || qms_can('doc_category')"}
                         <li><hr class="dropdown-divider"></li>
+                        {/if}
+                        {if condition="qms_can('doc_template')"}
                         <li><a class="dropdown-item" href="/doc_template/index">文件模板管理</a></li>
+                        {/if}
+                        {if condition="qms_can('doc_category')"}
                         <li><a class="dropdown-item" href="/doc_category/index">文件分类</a></li>
+                        {/if}
                     </ul>
                 </li>
+                {/if}
                 {if condition="qms_can('compliance')"}
                 <li class="nav-item">
                     <a class="nav-link" href="/compliance/index">审核准备</a>
                 </li>
                 {/if}
+                {if condition="qms_can('audit_plan') || qms_can('audit_schedule') || qms_can('audit_checklist') || qms_can('audit_finding') || qms_can('management_review') || qms_can('review_action')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">审核与评审</a>
                     <ul class="dropdown-menu">
+                        {if condition="qms_can('audit_plan') || qms_can('audit_schedule') || qms_can('audit_checklist') || qms_can('audit_finding')"}
                         <li><h6 class="dropdown-header text-muted">内部审核</h6></li>
+                        {/if}
+                        {if condition="qms_can('audit_plan')"}
                         <li><a class="dropdown-item" href="/audit_plan/index">内审计划</a></li>
+                        {/if}
+                        {if condition="qms_can('audit_schedule')"}
                         <li><a class="dropdown-item" href="/audit_schedule/index">审核日程</a></li>
+                        {/if}
+                        {if condition="qms_can('audit_checklist')"}
                         <li><a class="dropdown-item" href="/audit_checklist/index">审核检查表</a></li>
+                        {/if}
+                        {if condition="qms_can('audit_finding')"}
                         <li><a class="dropdown-item" href="/audit_finding/index">审核发现</a></li>
+                        {/if}
+                        {if condition="(qms_can('audit_plan') || qms_can('audit_schedule') || qms_can('audit_checklist') || qms_can('audit_finding')) && (qms_can('management_review') || qms_can('review_action'))"}
                         <li><hr class="dropdown-divider"></li>
+                        {/if}
+                        {if condition="qms_can('management_review') || qms_can('review_action')"}
                         <li><h6 class="dropdown-header text-muted">管理评审</h6></li>
+                        {/if}
+                        {if condition="qms_can('management_review')"}
                         <li><a class="dropdown-item" href="/management_review/index">管理评审</a></li>
+                        {/if}
+                        {if condition="qms_can('review_action')"}
                         <li><a class="dropdown-item" href="/review_action/index">评审决议</a></li>
+                        {/if}
                     </ul>
                 </li>
+                {/if}
+                {if condition="qms_can('capa') || qms_can('nonconformity') || qms_can('complaint')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">质量改进</a>
                     <ul class="dropdown-menu">
+                        {if condition="qms_can('capa')"}
                         <li><a class="dropdown-item" href="/capa/index">CAPA</a></li>
+                        {/if}
+                        {if condition="qms_can('nonconformity')"}
                         <li><a class="dropdown-item" href="/nonconformity/index">不符合工作</a></li>
+                        {/if}
+                        {if condition="qms_can('complaint')"}
                         <li><a class="dropdown-item" href="/complaint/index">客户投诉</a></li>
+                        {/if}
                     </ul>
                 </li>
+                {/if}
+                {if condition="qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material') || qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate') || qms_can('supplier')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">资源管理</a>
                     <ul class="dropdown-menu">
+                        {if condition="qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material')"}
                         <li><h6 class="dropdown-header text-muted">设备与计量</h6></li>
+                        {/if}
+                        {if condition="qms_can('equipment')"}
                         <li><a class="dropdown-item" href="/equipment/index">设备台账</a></li>
+                        {/if}
+                        {if condition="qms_can('equipment_transfer')"}
                         <li><a class="dropdown-item" href="/equipment_transfer/index">设备调拨</a></li>
+                        {/if}
+                        {if condition="qms_can('equipment_maintenance')"}
                         <li><a class="dropdown-item" href="/equipment_maintenance/index">维护保养</a></li>
+                        {/if}
+                        {if condition="qms_can('equipment_authorization')"}
                         <li><a class="dropdown-item" href="/equipment_authorization/index">设备授权使用人</a></li>
+                        {/if}
+                        {if condition="qms_can('calibration')"}
                         <li><a class="dropdown-item" href="/calibration/index">校准记录</a></li>
+                        {/if}
+                        {if condition="qms_can('reference_material')"}
                         <li><a class="dropdown-item" href="/reference_material/index">标准物质台账</a></li>
+                        {/if}
+                        {if condition="(qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material')) && (qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate'))"}
                         <li><hr class="dropdown-divider"></li>
+                        {/if}
+                        {if condition="qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate')"}
                         <li><h6 class="dropdown-header text-muted">人员与培训</h6></li>
+                        {/if}
+                        {if condition="qms_can('training_plan')"}
                         <li><a class="dropdown-item" href="/training_plan/index">培训计划</a></li>
+                        {/if}
+                        {if condition="qms_can('training')"}
                         <li><a class="dropdown-item" href="/training/index">培训活动</a></li>
+                        {/if}
+                        {if condition="qms_can('training_record')"}
                         <li><a class="dropdown-item" href="/training_record/index">培训记录明细</a></li>
+                        {/if}
+                        {if condition="qms_can('competency_record')"}
                         <li><a class="dropdown-item" href="/competency_record/index">能力确认</a></li>
+                        {/if}
+                        {if condition="qms_can('employee_certificate')"}
                         <li><a class="dropdown-item" href="/employee_certificate/index">人员资质证书</a></li>
+                        {/if}
+                        {if condition="(qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material') || qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate')) && qms_can('supplier')"}
                         <li><hr class="dropdown-divider"></li>
+                        {/if}
+                        {if condition="qms_can('supplier')"}
                         <li><h6 class="dropdown-header text-muted">供应商</h6></li>
                         <li><a class="dropdown-item" href="/supplier/index">供应商管理</a></li>
                         <li><a class="dropdown-item" href="/supplier/qualified">合格供应商名录</a></li>
+                        {/if}
                     </ul>
                 </li>
+                {/if}
                 {if condition="qms_can('planningdashboard') || qms_can('planningresponsibility')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">体系策划</a>
@@ -151,6 +231,9 @@
                             </a>
                         </li>
                         <li><a class="dropdown-item" href="/planning/change-events">变更事件</a></li>
+                        {if condition="config('qms.regulatory_monitor.enabled') && qms_can('planningregulatorymonitor')"}
+                        <li><a class="dropdown-item" href="/planning/regulatory-monitor">法规监测运行</a></li>
+                        {/if}
                         {/if}
                         {if condition="qms_can('planningresponsibility')"}
                         <li><hr class="dropdown-divider"></li>
@@ -160,24 +243,40 @@
                     </ul>
                 </li>
                 {/if}
+                {if condition="qms_can('department') || qms_can('site') || qms_can('employee') || qms_can('user') || qms_can('import') || qms_can('ai_assistant') || qms_can('ai_settings') || qms_can('notification')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">系统设置</a>
                     <ul class="dropdown-menu">
+                        {if condition="qms_can('department')"}
                         <li><a class="dropdown-item" href="/department/index">部门</a></li>
+                        {/if}
+                        {if condition="qms_can('site')"}
                         <li><a class="dropdown-item" href="/site/index">场所管理</a></li>
+                        {/if}
+                        {if condition="qms_can('employee')"}
                         <li><a class="dropdown-item" href="/employee/index">员工</a></li>
+                        {/if}
+                        {if condition="qms_can('user')"}
                         <li><a class="dropdown-item" href="/user/index">用户</a></li>
+                        {/if}
+                        {if condition="(qms_can('department') || qms_can('site') || qms_can('employee') || qms_can('user')) && (qms_can('import') || qms_can('ai_assistant') || qms_can('ai_settings') || qms_can('notification'))"}
                         <li><hr class="dropdown-divider"></li>
+                        {/if}
+                        {if condition="qms_can('import')"}
                         <li><a class="dropdown-item" href="/import/index">批量导入</a></li>
+                        {/if}
                         {if condition="qms_can('ai_assistant')"}
                         <li><a class="dropdown-item" href="/ai_assistant/index">AI 文档助理</a></li>
                         {/if}
                         {if condition="qms_can('ai_settings')"}
                         <li><a class="dropdown-item" href="/ai_settings/index">AI 服务配置</a></li>
                         {/if}
+                        {if condition="qms_can('notification')"}
                         <li><a class="dropdown-item" href="/notification/index">通知中心</a></li>
+                        {/if}
                     </ul>
                 </li>
+                {/if}
             </ul>
         </div>
     </div>

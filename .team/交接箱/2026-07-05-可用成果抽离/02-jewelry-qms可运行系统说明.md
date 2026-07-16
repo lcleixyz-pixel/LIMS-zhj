@@ -379,4 +379,3 @@ git diff --check
 3. 改记录表格时，优先复用 `RecordForm*` 服务和已有 schema/打印模板。
 4. 改合规扫描时，优先复用 `ComplianceCheckService`。
 5. 改 AI 时，保持“AI 出草稿，人审确认，审批发布”的边界。
-

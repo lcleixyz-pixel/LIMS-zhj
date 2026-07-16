@@ -45,6 +45,7 @@ jewelry-qms/public/uploads/*
 *.tar
 *.tar.gz
 *.rar
+**/artifacts/
 
 # Node (if any)
 node_modules/

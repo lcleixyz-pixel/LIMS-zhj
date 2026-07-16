@@ -234,6 +234,13 @@ $draftRecord = new SmokeRecordFormInstance();
 $draftRecord->status = 'draft';
 assert_same(true, invoke_private($controller, 'canExportPdf', [$draftRecord]), 'Draft records can export PDF');
 
+$generatedRecord = new SmokeRecordFormInstance();
+$generatedRecord->status = 'generated';
+assert_same(false, invoke_private($controller, 'canEditRecord', [$generatedRecord]), 'Generated records cannot be directly edited after a formal PDF is formed');
+assert_same(false, invoke_private($controller, 'canEditRecord', [$lockedRecord]), 'Locked records cannot be directly edited');
+assert_same(false, invoke_private($controller, 'canEditRecord', [$voidedRecord]), 'Voided records cannot be directly edited');
+assert_same(true, invoke_private($controller, 'canEditRecord', [$draftRecord]), 'Draft records remain directly editable');
+
 $schema = [
     ['key' => 'accepted', 'label' => '确认', 'type' => 'checkbox'],
     ['key' => 'title', 'label' => '标题', 'type' => 'text'],
@@ -291,8 +298,10 @@ assert_contains('isTemplateFillable', $findTemplateSource, 'Template lookup gate
 assert_contains('只有已完成高保真复核', $findTemplateSource, 'Draft high-fidelity templates receive a clear creation block message');
 
 $editSource = method_source(RecordFormInstance::class, 'edit');
-assert_contains("'generated_pdf_path' => null", $editSource, 'Editing a generated record clears stale PDF path');
-assert_contains("'generated_pdf_name' => null", $editSource, 'Editing a generated record clears stale PDF name');
+assert_contains('canEditRecord($record)', $editSource, 'Record editing checks direct-edit lifecycle status before rendering or saving');
+assert_contains('不能直接编辑', $editSource, 'Generated/archived/voided records receive a clear direct-edit block message');
+assert_contains("'generated_pdf_path' => null", $editSource, 'Editing a draft record clears stale PDF path');
+assert_contains("'generated_pdf_name' => null", $editSource, 'Editing a draft record clears stale PDF name');
 assert_contains('assignRecordFormEditorContext', $editSource, 'Record editing exposes shared editor context');
 
 $controllerSource = file_get_contents(dirname(__DIR__) . '/app/controller/RecordFormInstance.php');
@@ -301,12 +310,17 @@ assert_contains('DepartmentModel::where', $controllerSource ?: '', 'Employee pic
 
 $createViewSource = file_get_contents(dirname(__DIR__) . '/app/view/record_form_instance/create.html');
 $editViewSource = file_get_contents(dirname(__DIR__) . '/app/view/record_form_instance/edit.html');
+$indexViewSource = file_get_contents(dirname(__DIR__) . '/app/view/record_form_instance/index.html');
+$detailViewSource = file_get_contents(dirname(__DIR__) . '/app/view/record_form_instance/view.html');
 foreach (['create' => $createViewSource ?: '', 'edit' => $editViewSource ?: ''] as $viewName => $viewSource) {
     assert_contains('data-repeatable-table', $viewSource, $viewName . ' view marks repeatable table editors for dynamic rows');
     assert_contains('data-add-repeatable-row', $viewSource, $viewName . ' view provides an add-row control');
     assert_contains('data-remove-repeatable-row', $viewSource, $viewName . ' view provides row removal controls');
     assert_contains('data-employee-picker', $viewSource, $viewName . ' view provides employee picker controls for attendee tables');
 }
+assert_contains('can_edit', $indexViewSource ?: '', 'Record list hides direct edit for generated/archived/voided records');
+assert_contains('$canEdit', $detailViewSource ?: '', 'Record detail hides direct edit for generated/archived/voided records');
+assert_contains('已形成 PDF 后不可直接编辑', ($indexViewSource ?: '') . ($detailViewSource ?: ''), 'Read-only generated records explain the change/void path');
 
 $routeSource = file_get_contents(dirname(__DIR__) . '/route/app.php');
 assert_contains("Route::post('record_form_instance/exportPdf'", $routeSource ?: '', 'PDF export route is POST-only');

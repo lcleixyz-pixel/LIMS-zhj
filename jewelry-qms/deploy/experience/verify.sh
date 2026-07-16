@@ -28,7 +28,14 @@ if [[ -z "$app_id" || -z "$db_id" ]]; then
 fi
 
 echo "== Application loopback HTTP =="
-http_code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${HOST_PORT}/login/index")"
+http_code=""
+for attempt in {1..30}; do
+    http_code="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:${HOST_PORT}/login/index" 2>/dev/null || true)"
+    if [[ "$http_code" == "200" ]]; then
+        break
+    fi
+    sleep 2
+done
 echo "HTTP $http_code http://127.0.0.1:${HOST_PORT}/login/index"
 if [[ "$http_code" != "200" ]]; then
     echo "FAIL: application loopback endpoint did not return HTTP 200" >&2
@@ -43,8 +50,22 @@ if [[ "$db_health" != "healthy" ]]; then
     exit 1
 fi
 
+regulatory_table_count="$("${compose[@]}" exec -T db sh -lc 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u"$MYSQL_USER" "$MYSQL_DATABASE" -Nse "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='\''$MYSQL_DATABASE'\'' AND table_name IN ('\''qms_external_change_events'\'','\''qms_external_change_candidates'\'','\''qms_regulatory_monitor_runs'\'')"' </dev/null)"
+echo "regulatory tables=$regulatory_table_count/3"
+if [[ "$regulatory_table_count" != "3" ]]; then
+    echo "FAIL: regulatory monitor database tables are incomplete" >&2
+    exit 1
+fi
+
+platform_table_count="$("${compose[@]}" exec -T db sh -lc 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u"$MYSQL_USER" "$MYSQL_DATABASE" -Nse "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='\''$MYSQL_DATABASE'\'' AND table_name IN ('\''system_settings'\'','\''ai_chat_sessions'\'','\''ai_chat_messages'\'')"' </dev/null)"
+echo "platform settings tables=$platform_table_count/3"
+if [[ "$platform_table_count" != "3" ]]; then
+    echo "FAIL: platform settings and AI chat database tables are incomplete" >&2
+    exit 1
+fi
+
 echo "== Container PHP =="
-"${compose[@]}" exec -T app php -v | sed -n '1,2p'
+"${compose[@]}" exec -T app php -v </dev/null | sed -n '1,2p'
 
 echo "== Published ports =="
 app_port="$(docker port "$app_id" 8000/tcp)"

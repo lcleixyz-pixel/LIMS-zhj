@@ -78,6 +78,20 @@ assert_true(
     str_contains($layoutView, '填写记录'),
     'Record navigation labels should be business-facing'
 );
+$mainNavigationGuards = [
+    "qms_can('record_form_template') || qms_can('record_form_instance')" => 'record form navigation',
+    "qms_can('document') || qms_can('doc_template') || qms_can('doc_category')" => 'document navigation',
+    "qms_can('audit_plan') || qms_can('audit_schedule') || qms_can('audit_checklist') || qms_can('audit_finding') || qms_can('management_review') || qms_can('review_action')" => 'audit and management-review navigation',
+    "qms_can('capa') || qms_can('nonconformity') || qms_can('complaint')" => 'quality improvement navigation',
+    "qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material') || qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate') || qms_can('supplier')" => 'resource management navigation',
+    "qms_can('department') || qms_can('site') || qms_can('employee') || qms_can('user') || qms_can('import') || qms_can('ai_assistant') || qms_can('ai_settings') || qms_can('notification')" => 'system settings navigation',
+];
+foreach ($mainNavigationGuards as $guard => $label) {
+    assert_true(
+        str_contains($layoutView, $guard),
+        'Main navigation should guard ' . $label . ' with qms_can'
+    );
+}
 assert_true(is_file($responsibilityCssPath), 'Responsibility workflow stylesheet should exist');
 $responsibilityCss = (string)file_get_contents($responsibilityCssPath);
 assert_true(

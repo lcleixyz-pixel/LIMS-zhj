@@ -14,7 +14,11 @@
             {if $record.generated_pdf_path}
             <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-primary">下载PDF</a>
             {/if}
+            {if $canEdit}
             <a href="/record_form_instance/edit?id={$record.id}" class="btn btn-sm btn-outline-secondary">编辑</a>
+            {else}
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已形成 PDF 后不可直接编辑；如需更正，请先走作废/换版/更正流程。">编辑</button>
+            {/if}
             <a href="/record_form_instance/index" class="btn btn-sm btn-outline-secondary">返回</a>
         </div>
     </div>

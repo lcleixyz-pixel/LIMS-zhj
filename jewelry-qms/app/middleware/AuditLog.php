@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\middleware;
 
 use app\model\History;
+use think\facade\Log;
 use think\facade\Session;
 
 class AuditLog
@@ -22,6 +23,15 @@ class AuditLog
         if (Session::has('user.id') && $request->isPost()) {
             $controller = $request->controller();
             $action = $request->action();
+            $isRegulatoryAction = strtolower((string)$controller) === 'planningregulatorymonitor';
+            $regulatoryAudit = $isRegulatoryAction
+                ? (array)$request->middleware('qms_regulatory_audit', [])
+                : [];
+            // The controller marks this only after its transaction succeeds.
+            // A rejected/rolled-back review must never become a generic success log.
+            if ($isRegulatoryAction && $regulatoryAudit === []) {
+                return $response;
+            }
             if (
                 strtolower((string)$controller) === 'planningresponsibility'
                 && strtolower((string)$action) === 'saveassignment'
@@ -63,15 +73,29 @@ class AuditLog
                 'submitversion',
                 'registergeneralmanager',
                 'requestlabdirector',
+                'review',
+                'run',
             ];
             if (in_array(strtolower($action), $logActions, true)) {
                 try {
-                    $outcome = in_array((string)($responsibilityAudit['outcome'] ?? ''), ['success', 'failed'], true)
-                        ? (string)$responsibilityAudit['outcome']
-                        : ($isResponsibilityAction ? 'failed' : 'success');
-                    $subjectType = trim((string)($responsibilityAudit['subject_type'] ?? 'route_record'));
-                    $subjectKey = trim((string)($responsibilityAudit['subject_key'] ?? ''));
-                    $recordId = $this->resolveRecordId($request, $response, $responsibilityAudit, $isResponsibilityAction);
+                    $activeAudit = $isRegulatoryAction ? $regulatoryAudit : $responsibilityAudit;
+                    $outcome = in_array((string)($activeAudit['outcome'] ?? ''), ['success', 'failed'], true)
+                        ? (string)$activeAudit['outcome']
+                        : (($isResponsibilityAction || $isRegulatoryAction) ? 'failed' : 'success');
+                    $subjectType = trim((string)($activeAudit['subject_type'] ?? 'route_record'));
+                    $subjectKey = trim((string)($activeAudit['subject_key'] ?? ''));
+                    $auditMeta = $isRegulatoryAction ? $regulatoryAudit : $responsibilityAudit;
+                    $regulatoryRunStatus = in_array(
+                        (string)($regulatoryAudit['run_status'] ?? ''),
+                        ['completed', 'partial_failed', 'failed'],
+                        true
+                    ) ? (string)$regulatoryAudit['run_status'] : '';
+                    $recordId = $this->resolveRecordId(
+                        $request,
+                        $response,
+                        $auditMeta,
+                        $isResponsibilityAction || $isRegulatoryAction
+                    );
                     $details = $isResponsibilityAction
                         ? implode(' ', array_filter([
                             'outcome=' . $outcome,
@@ -83,7 +107,16 @@ class AuditLog
                             $method,
                             $controller . '/' . $action,
                         ]))
-                        : $method . ' ' . $controller . '/' . $action;
+                        : ($isRegulatoryAction
+                            ? implode(' ', array_filter([
+                                'outcome=' . $outcome,
+                                $regulatoryRunStatus !== ''
+                                    ? 'run_status=' . $this->detailValue($regulatoryRunStatus)
+                                    : '',
+                                $method,
+                                $controller . '/' . $action,
+                            ]))
+                            : $method . ' ' . $controller . '/' . $action);
                     History::create([
                         'id' => qms_uuid(),
                         'model_name' => $controller,
@@ -95,6 +128,13 @@ class AuditLog
                         'created' => date('Y-m-d H:i:s'),
                     ]);
                 } catch (\Throwable $e) {
+                    $safeController = substr(preg_replace('/[^A-Za-z0-9_\\-]/', '_', (string)$controller) ?: 'unknown', 0, 80);
+                    $safeAction = substr(preg_replace('/[^A-Za-z0-9_-]/', '_', (string)$action) ?: 'unknown', 0, 80);
+                    Log::error(
+                        '[AuditLog] write failure exception=' . $e::class
+                        . ' controller=' . $safeController
+                        . ' action=' . $safeAction
+                    );
                 }
             }
         }
