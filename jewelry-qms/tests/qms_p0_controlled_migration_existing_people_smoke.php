@@ -52,6 +52,7 @@ try {
         true
     );
     $sql = (string)file_get_contents($output . '/sql/20-organization-migration.sql');
+    $rollbackSql = (string)file_get_contents($output . '/sql/90-row-rollback.sql');
 
     b7_case(($summary['local_apply_authorized'] ?? false) === true, 'B701', '仅授权本机试运行迁移');
     b7_case(($summary['cloud_apply_authorized'] ?? true) === false, 'B702', '不授权云端迁移');
@@ -75,6 +76,21 @@ try {
         && str_contains($sql, '如则托合提·阿卜杜加帕尔'),
         'B706',
         '迁移证据保留人员全名'
+    );
+    b7_case(
+        (int)($diff['allowed']['qms_positions_renamed'] ?? -1) === 2
+        && str_contains($sql, "'document_controller'")
+        && str_contains($sql, "'文件管理员'"),
+        'B708',
+        '迁移把两个旧岗位名称收敛到现行称谓'
+    );
+    b7_case(
+        str_contains($rollbackSql, "'document_controller'")
+        && str_contains($rollbackSql, "'资料管理员'")
+        && str_contains($rollbackSql, "'company_general_manager'")
+        && str_contains($rollbackSql, "'公司总经理'"),
+        'B709',
+        '行级回退恢复迁移前岗位名称'
     );
 } catch (Throwable $exception) {
     $failures[] = 'B701-B706 build failed: ' . $exception->getMessage();
@@ -103,4 +119,4 @@ if ($failures !== []) {
     ));
     exit(1);
 }
-fwrite(STDOUT, "qms_p0_controlled_migration_existing_people_smoke passed: B701-B707\n");
+fwrite(STDOUT, "qms_p0_controlled_migration_existing_people_smoke passed: B701-B709\n");

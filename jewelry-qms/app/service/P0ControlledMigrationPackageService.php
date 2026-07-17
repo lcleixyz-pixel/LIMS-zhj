@@ -285,6 +285,13 @@ final class P0ControlledMigrationPackageService
             ],
             static fn (array $row): bool => $row['new'] === true
         );
+        $currentPositionNames = array_column($state['positions'], 'name', 'code');
+        $positionsRenamed = count(array_filter(
+            array_keys(self::POSITION_NAMES),
+            static fn (string $code): bool =>
+                isset($currentPositionNames[$code])
+                && (string)$currentPositionNames[$code] !== self::POSITION_NAMES[$code]
+        ));
         self::writeJson($outputDir . '/evidence/migration-diff.expected.json', [
             'allowed' => [
                 'employees' => count($newPeople),
@@ -292,6 +299,7 @@ final class P0ControlledMigrationPackageService
                     array_keys(self::POSITION_NAMES),
                     static fn (string $code): bool => !in_array($code, array_column($state['positions'], 'code'), true)
                 )),
+                'qms_positions_renamed' => $positionsRenamed,
                 'employee_appointments' => 25,
                 'users_updated' => 1,
                 'unique_indexes' => 4,
@@ -507,6 +515,13 @@ SQL;
                 self::sql($name),
                 self::sql($code)
             );
+            $statements[] = sprintf(
+                "    UPDATE qms_positions SET name = %s, modified = NOW()\n"
+                . "    WHERE code = %s AND publish = 1 AND soft_delete = 0 AND name <> %s;",
+                self::sql($name),
+                self::sql($code),
+                self::sql($name)
+            );
         }
         foreach ($appointments as $row) {
             $siteExpression = $row['site_code'] === null
@@ -636,6 +651,20 @@ SQL;
         $positionClause = $newPositionCodes === []
             ? "'__none__'"
             : implode(',', array_map([self::class, 'sql'], $newPositionCodes));
+        $positionNameRestores = [];
+        foreach ($state['positions'] as $position) {
+            $code = (string)$position['code'];
+            if (!array_key_exists($code, self::POSITION_NAMES)) {
+                continue;
+            }
+            $positionNameRestores[] = sprintf(
+                "    UPDATE qms_positions SET name = %s, modified = NOW()\n"
+                . "    WHERE code = %s AND publish = 1 AND soft_delete = 0;",
+                self::sql((string)$position['name']),
+                self::sql($code)
+            );
+        }
+        $positionNameRestoreSql = implode("\n", $positionNameRestores);
 
         return <<<SQL
 -- G-R13-B6 行级回退；只按本包固定键和 before-state 回退。
@@ -654,6 +683,7 @@ BEGIN
     WHERE id IN ({$newEmployeeClause})
       AND NOT EXISTS (SELECT 1 FROM users u WHERE u.employee_id = employees.id)
       AND NOT EXISTS (SELECT 1 FROM employee_appointments ea WHERE ea.employee_id = employees.id);
+{$positionNameRestoreSql}
     DELETE FROM qms_positions
     WHERE code IN ({$positionClause})
       AND NOT EXISTS (SELECT 1 FROM employee_appointments ea WHERE ea.position_id = qms_positions.id);
