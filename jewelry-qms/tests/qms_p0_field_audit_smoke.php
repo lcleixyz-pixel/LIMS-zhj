@@ -369,10 +369,25 @@ try {
         ->setAction('edit')
         ->withPost(['id' => $ids['equipment'], 'status' => 'decommissioned']);
     $callbackInvoked = false;
-    (new Rbac())->handle($request, static function () use (&$callbackInvoked) {
-        $callbackInvoked = true;
-        return response('unexpected');
-    });
+    $deniedStatus = 200;
+    $deniedBody = '';
+    $returnedResponse = false;
+    try {
+        $deniedResponse = (new Rbac())->handle($request, static function () use (&$callbackInvoked) {
+            $callbackInvoked = true;
+            return response('unexpected');
+        });
+        if ($deniedResponse instanceof \think\Response) {
+            $returnedResponse = true;
+            $deniedStatus = $deniedResponse->getCode();
+            $deniedBody = (string)$deniedResponse->getContent();
+        }
+    } catch (Throwable $exception) {
+        $deniedStatus = method_exists($exception, 'getStatusCode')
+            ? (int)$exception->getStatusCode()
+            : (int)$exception->getCode();
+        $deniedBody = $exception->getMessage();
+    }
     $securityRows = Db::name('histories')
         ->where('user_id', $ids['user'])
         ->where('action', 'access_denied')
@@ -380,6 +395,10 @@ try {
         ->toArray();
     audit_case(
         $callbackInvoked === false
+        && $returnedResponse
+        && $deniedStatus === 403
+        && str_contains($deniedBody, '无此动作权限')
+        && !str_contains($deniedBody, '系统发生错误')
         && count($securityRows) === 1
         && count(audit_logs('Equipment', $ids['equipment'])) === 0
         && str_contains((string)($securityRows[0]['details'] ?? ''), 'outcome=failed'),

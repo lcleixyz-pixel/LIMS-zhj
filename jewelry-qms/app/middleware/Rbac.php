@@ -4,8 +4,11 @@ declare(strict_types=1);
 namespace app\middleware;
 
 use app\service\RbacService;
+use app\service\ActionAuthorizationService;
 use app\service\SecurityAuditService;
+use think\Response;
 use think\facade\Session;
+use think\facade\View;
 
 class Rbac
 {
@@ -25,6 +28,19 @@ class Rbac
         $route = $controller . '/' . $action;
 
         if (in_array($route, $this->except, true)) {
+            return $next($request);
+        }
+
+        $actionDecision = ActionAuthorizationService::requestDecision($controller, $action, $request);
+        if ($actionDecision === false) {
+            SecurityAuditService::recordAccessDenied($request, 'action_access');
+            if ($request->isAjax()) {
+                return json(['code' => 403, 'msg' => '无此动作权限，请联系质量负责人确认岗位任命'], 403);
+            }
+
+            return Response::create(View::fetch('error/403'), 'html', 403);
+        }
+        if ($actionDecision === true) {
             return $next($request);
         }
 

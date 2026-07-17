@@ -7,6 +7,7 @@ use app\model\Capa;
 use app\model\CustomerComplaint;
 use app\service\WorkflowService;
 use app\service\FieldAuditService;
+use app\service\ActionAuthorizationService;
 use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
@@ -59,6 +60,43 @@ class Complaint extends BusinessBase
     {
         $this->assignUsers();
         $this->assignStatusLabels('complaint');
+    }
+
+    public function index()
+    {
+        $query = CustomerComplaint::where('soft_delete', 0);
+        $scope = ActionAuthorizationService::complaintVisibilityScope();
+        if (!$scope['all']) {
+            $visibleCreatorIds = [];
+            if ($scope['site_ids'] !== []) {
+                $visibleCreatorIds = array_map(
+                    'strval',
+                    Db::name('users')->alias('u')
+                        ->join('employees e', 'e.id = u.employee_id')
+                        ->whereIn('e.primary_site_id', $scope['site_ids'])
+                        ->where('u.publish', 1)
+                        ->where('u.soft_delete', 0)
+                        ->where('e.publish', 1)
+                        ->where('e.soft_delete', 0)
+                        ->column('u.id')
+                );
+            }
+            $query->where(function ($query) use ($scope, $visibleCreatorIds) {
+                $query->where('created_by', $scope['user_id'])
+                    ->whereOr('assigned_to', $scope['user_id']);
+                if ($visibleCreatorIds !== []) {
+                    $query->whereOr('created_by', 'in', $visibleCreatorIds);
+                }
+            });
+        }
+
+        $items = $query->order('created', 'desc')->paginate(20);
+        View::assign('items', $items);
+        View::assign('pages', $items->render());
+        View::assign('pageTitle', $this->pageTitle);
+        $this->assignIndexContext();
+
+        return View::fetch($this->viewPrefix . '/index');
     }
 
     public function add()

@@ -10,6 +10,7 @@ use app\model\EquipmentTransfer;
 use app\model\Site;
 use app\service\EquipmentEvidenceService;
 use app\service\FieldAuditService;
+use app\service\ActionAuthorizationService;
 use think\facade\View;
 
 class Equipment extends BusinessBase
@@ -43,6 +44,14 @@ class Equipment extends BusinessBase
     public function index()
     {
         $query = EquipmentModel::where('soft_delete', 0);
+        $visibleSiteIds = ActionAuthorizationService::equipmentVisibleSiteIds();
+        if ($visibleSiteIds !== null) {
+            if ($visibleSiteIds === []) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereIn('site_id', $visibleSiteIds);
+            }
+        }
         if ($this->request->get('status')) {
             $query->where('status', $this->request->get('status'));
         }
@@ -61,7 +70,11 @@ class Equipment extends BusinessBase
         View::assign('items', $items);
         View::assign('pages', $items->render());
         View::assign('pageTitle', $this->pageTitle);
-        View::assign('sites', Site::where('soft_delete', 0)->where('status', 'active')->order('sort_order', 'asc')->select());
+        $sitesQuery = Site::where('soft_delete', 0)->where('status', 'active');
+        if ($visibleSiteIds !== null) {
+            $sitesQuery->whereIn('id', $visibleSiteIds);
+        }
+        View::assign('sites', $sitesQuery->order('sort_order', 'asc')->select());
         View::assign('siteMap', Site::where('soft_delete', 0)->column('name', 'id'));
         View::assign('filter', ['site_id' => $siteFilter]);
 

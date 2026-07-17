@@ -3,9 +3,17 @@
         <h5 class="mb-0">CAPA {$record.capa_number}</h5>
         <div>
             {if $record.status != 'closed'}
-            <a href="/capa/advance?id={$record.id}" class="btn btn-sm btn-success">推进状态</a>
+                {if $record.status == 'verifying'}
+                    {if qms_can_action('capa', 'close', $record)}
+                    <a href="/capa/advance?id={$record.id}" class="btn btn-sm btn-success">推进状态</a>
+                    {/if}
+                {else /}
+                    {if qms_can_action('capa', 'advance', $record)}
+                    <a href="/capa/advance?id={$record.id}" class="btn btn-sm btn-success">推进状态</a>
+                    {/if}
+                {/if}
             {/if}
-            <a href="/capa/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            {if qms_can_action('capa', 'edit_measures', $record)}<a href="/capa/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>{/if}
             <a href="/capa/index" class="btn btn-sm btn-outline-secondary">返回</a>
         </div>
     </div>
@@ -35,7 +43,7 @@
             <tr><th>有效性复查日期</th><td>{$record.effectiveness_review_date|default='-'}</td></tr>
             <tr><th>有效性复查结果</th><td>{$record.effectiveness_result|default='-'}</td></tr>
         </table>
-        {if $record.status == 'closed' && !$record.effectiveness_result}
+        {if $record.status == 'closed' && !$record.effectiveness_result && qms_can_action('capa', 'verify', $record)}
         <form method="post" action="/capa/reviewEffectiveness" class="border rounded p-3 bg-light">
             <input type="hidden" name="id" value="{$record.id}">
             <div class="row g-3 align-items-end">

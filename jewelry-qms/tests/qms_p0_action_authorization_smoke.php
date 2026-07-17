@@ -34,6 +34,7 @@ function action_uuid(string $suffix): string
 function action_cleanup(): void
 {
     Db::name('histories')->whereLike('record_id', 'b4000000-%')->delete();
+    Db::name('capas')->where('id', action_uuid('505'))->delete();
     Db::name('employee_appointments')->whereLike('appointment_key', 'p0-r13b4-%')->delete();
     Db::name('users')->whereLike('username', 'p0_r13b4_%')->delete();
     Db::name('employees')->whereLike('employee_number', 'P0-R13B4-%')->delete();
@@ -263,6 +264,19 @@ try {
         'assigned_to' => $assignee['id'],
         'status' => 'implementing',
     ];
+    Db::name('capas')->insert([
+        'id' => $assignedCapa->id,
+        'company_id' => (string)Config::get('qms.company_id'),
+        'capa_number' => 'P0R13B4-CAPA-ASSIGNED',
+        'description' => '岗位动作授权测试 CAPA',
+        'assigned_to' => $assignedCapa->assigned_to,
+        'status' => $assignedCapa->status,
+        'publish' => 1,
+        'soft_delete' => 0,
+        'record_status' => 0,
+        'created' => '2026-07-17 00:00:00',
+        'modified' => '2026-07-17 00:00:00',
+    ]);
     $mainEmployee = (object)[
         'id' => $staff['employee_id'],
         'primary_site_id' => $siteMain,
@@ -353,10 +367,22 @@ try {
     );
 
     action_login($assignee);
+    $assigneeViewCalled = false;
+    $assigneeViewResult = (new Rbac())->handle(
+        new ActionFakeRequest('Capa', 'view', ['id' => $assignedCapa->id]),
+        function () use (&$assigneeViewCalled): string {
+            $assigneeViewCalled = true;
+
+            return 'allowed';
+        }
+    );
     action_case(
-        action_allows('capa', 'edit_measures', $assignedCapa),
+        action_allows('capa', 'view', $assignedCapa)
+        && action_allows('capa', 'edit_measures', $assignedCapa)
+        && $assigneeViewCalled
+        && $assigneeViewResult === 'allowed',
         'A12',
-        'CAPA 被指派责任人可编辑措施'
+        'CAPA 被指派责任人可查看所分派记录并编辑措施'
     );
     action_case(
         !action_allows('capa', 'close', $assignedCapa),
@@ -375,8 +401,10 @@ try {
     action_login($staff);
     $nextCalled = false;
     $status = 200;
+    $deniedBody = '';
+    $returnedResponse = false;
     try {
-        (new Rbac())->handle(
+        $deniedResponse = (new Rbac())->handle(
             new ActionFakeRequest('Complaint', 'advance', ['id' => $mainComplaint->id]),
             function () use (&$nextCalled): string {
                 $nextCalled = true;
@@ -384,15 +412,27 @@ try {
                 return 'unexpected';
             }
         );
+        if ($deniedResponse instanceof \think\Response) {
+            $returnedResponse = true;
+            $status = $deniedResponse->getCode();
+            $deniedBody = (string)$deniedResponse->getContent();
+        }
     } catch (Throwable $exception) {
         $status = method_exists($exception, 'getStatusCode')
             ? (int)$exception->getStatusCode()
             : (int)$exception->getCode();
+        $deniedBody = $exception->getMessage();
     }
     action_case(
-        $status === 403 && !$nextCalled,
+        $status === 403
+        && $returnedResponse
+        && !$nextCalled
+        && str_contains($deniedBody, '无此动作权限')
+        && str_contains($deniedBody, '岗位')
+        && !str_contains($deniedBody, '系统发生错误')
+        && !str_contains($deniedBody, 'PDOException'),
         'A15',
-        '越权直接 POST 返回 HTTP 403 且不进入业务动作'
+        '越权直接 POST 返回友好 HTTP 403 且不进入业务动作'
     );
 
     action_login($expiredCoordinator);

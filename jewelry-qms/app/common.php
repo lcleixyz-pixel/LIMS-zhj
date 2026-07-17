@@ -39,6 +39,13 @@ if (!function_exists('qms_status_label')) {
     }
 }
 
+if (!function_exists('qms_can_action')) {
+    function qms_can_action(string $module, string $action, ?object $record = null): bool
+    {
+        return \app\service\ActionAuthorizationService::allows($module, $action, $record);
+    }
+}
+
 if (!function_exists('qms_next_number')) {
     function qms_next_number(string $prefix, string $modelClass, string $field = 'capa_number'): string
     {

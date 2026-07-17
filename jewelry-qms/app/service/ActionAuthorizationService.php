@@ -1,0 +1,512 @@
+<?php
+declare(strict_types=1);
+
+namespace app\service;
+
+use think\facade\Config;
+use think\facade\Db;
+use think\facade\Session;
+
+final class ActionAuthorizationService
+{
+    public static function allows(string $module, string $action, ?object $record = null): bool
+    {
+        $identity = self::currentIdentity();
+        if ($identity === null) {
+            return false;
+        }
+
+        $module = self::normalize($module);
+        $action = self::normalize($action);
+        $employeeId = $identity['employee_id'];
+        $userId = $identity['id'];
+
+        return match ($module . '.' . $action) {
+            'complaint.register', 'complaint.list' => true,
+            'complaint.view' => self::isOwnRecord($record, $userId)
+                || self::canManageComplaint($employeeId, $record),
+            'complaint.advance', 'complaint.manage', 'complaint.createcapa', 'complaint.close'
+                => self::canManageComplaint($employeeId, $record),
+
+            'nonconformity.register' => self::hasPositionAtSite(
+                $employeeId,
+                ['quality_manager', 'site_quality_coordinator', 'technical_manager', 'testing_room_manager'],
+                self::recordSiteId($record) ?? self::employeeSiteId($employeeId)
+            ),
+            'nonconformity.dispose' => self::hasPositionAtSite(
+                $employeeId,
+                ['quality_manager', 'site_quality_coordinator', 'technical_manager'],
+                self::recordSiteId($record)
+            ),
+            'nonconformity.close' => self::hasGlobalPosition($employeeId, ['quality_manager']),
+
+            'equipment.view' => self::canViewEquipment($employeeId, $userId, $record),
+            'equipment.edit' => self::canManageEquipment($employeeId, $record),
+            'equipmentmaintenance.write' => self::canManageEquipment($employeeId, $record),
+
+            'recordformtemplate.reviewlist' => self::hasAnyPosition(
+                $employeeId,
+                ['quality_manager', 'document_controller', 'internal_auditor']
+            ),
+            'recordformtemplate.draft' => self::hasAnyPosition(
+                $employeeId,
+                ['quality_manager', 'document_controller']
+            ),
+            'recordformtemplate.publish' => self::hasGlobalPosition(
+                $employeeId,
+                ['quality_manager', 'template_approver']
+            ),
+
+            'capa.view' => self::hasGlobalPosition($employeeId, ['quality_manager', 'capa_verifier'])
+                || self::recordValue($record, 'assigned_to') === $userId,
+            'capa.editmeasures', 'capa.advance' => self::hasGlobalPosition($employeeId, ['quality_manager'])
+                || self::recordValue($record, 'assigned_to') === $userId,
+            'capa.verify', 'capa.close' => self::hasGlobalPosition(
+                $employeeId,
+                ['quality_manager', 'capa_verifier']
+            ),
+
+            'competencyrecord.write' => self::hasPositionAtSite(
+                $employeeId,
+                ['quality_manager', 'technical_manager'],
+                self::recordSiteId($record)
+            ),
+            default => false,
+        };
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function activePositionCodes(string $employeeId, ?string $siteId = null): array
+    {
+        $employeeId = trim($employeeId);
+        if ($employeeId === '') {
+            return [];
+        }
+
+        $query = Db::name('employee_appointments')->alias('ea')
+            ->join('qms_positions p', 'p.id = ea.position_id')
+            ->where('ea.company_id', (string)Config::get('qms.company_id'))
+            ->where('p.company_id', (string)Config::get('qms.company_id'))
+            ->where('ea.employee_id', $employeeId)
+            ->where('ea.status', 'active')
+            ->where('ea.publish', 1)
+            ->where('ea.soft_delete', 0)
+            ->where('p.review_status', 'published')
+            ->where('p.publish', 1)
+            ->where('p.soft_delete', 0)
+            ->where(function ($query) {
+                $query->whereNull('ea.appointed_at')->whereOr('ea.appointed_at', '<=', date('Y-m-d'));
+            })
+            ->where(function ($query) {
+                $query->whereNull('ea.valid_until')->whereOr('ea.valid_until', '>=', date('Y-m-d'));
+            });
+
+        if ($siteId !== null && trim($siteId) !== '') {
+            $siteId = trim($siteId);
+            $query->where(function ($query) use ($siteId) {
+                $query->whereNull('ea.site_id')->whereOr('ea.site_id', $siteId);
+            });
+        }
+
+        $codes = array_map('strval', $query->distinct(true)->column('p.code'));
+        sort($codes);
+
+        return array_values(array_unique($codes));
+    }
+
+    public static function requestDecision(string $controller, string $action, object $request): ?bool
+    {
+        $policy = self::requestPolicy($controller, $action, $request);
+        if ($policy === null) {
+            return null;
+        }
+
+        return self::allows($policy['module'], $policy['action'], $policy['record']);
+    }
+
+    /**
+     * @return array{all:bool,user_id:string,site_ids:list<string>}
+     */
+    public static function complaintVisibilityScope(): array
+    {
+        $identity = self::currentIdentity();
+        if ($identity === null) {
+            return ['all' => false, 'user_id' => '', 'site_ids' => []];
+        }
+        if (self::hasGlobalPosition($identity['employee_id'], ['quality_manager'])) {
+            return ['all' => true, 'user_id' => $identity['id'], 'site_ids' => []];
+        }
+
+        return [
+            'all' => false,
+            'user_id' => $identity['id'],
+            'site_ids' => self::appointedSiteIds($identity['employee_id'], ['site_quality_coordinator']),
+        ];
+    }
+
+    /**
+     * Null means institution-wide visibility; an empty array means no visible site.
+     *
+     * @return list<string>|null
+     */
+    public static function equipmentVisibleSiteIds(): ?array
+    {
+        $identity = self::currentIdentity();
+        if ($identity === null) {
+            return [];
+        }
+        if (self::hasGlobalPosition($identity['employee_id'], ['quality_manager'])) {
+            return null;
+        }
+
+        return self::appointedSiteIds(
+            $identity['employee_id'],
+            ['internal_auditor', 'equipment_manager', 'technical_manager']
+        );
+    }
+
+    private static function canManageComplaint(string $employeeId, ?object $record): bool
+    {
+        if (self::hasGlobalPosition($employeeId, ['quality_manager'])) {
+            return true;
+        }
+
+        return self::hasPositionAtSite(
+            $employeeId,
+            ['site_quality_coordinator'],
+            self::recordSiteId($record)
+        );
+    }
+
+    private static function canViewEquipment(string $employeeId, string $userId, ?object $record): bool
+    {
+        if (self::hasGlobalPosition($employeeId, ['quality_manager'])) {
+            return true;
+        }
+        $siteId = self::recordSiteId($record);
+        if ($record === null) {
+            return self::hasAnyPosition(
+                $employeeId,
+                ['internal_auditor', 'equipment_manager', 'technical_manager']
+            );
+        }
+        if (self::hasPositionAtSite($employeeId, ['equipment_manager', 'technical_manager'], $siteId)) {
+            return true;
+        }
+
+        return self::recordValue($record, 'created_by') !== $userId
+            && self::hasPositionAtSite($employeeId, ['internal_auditor'], $siteId);
+    }
+
+    private static function canManageEquipment(string $employeeId, ?object $record): bool
+    {
+        if (self::hasGlobalPosition($employeeId, ['quality_manager'])) {
+            return true;
+        }
+
+        return self::hasPositionAtSite(
+            $employeeId,
+            ['equipment_manager', 'technical_manager'],
+            self::recordSiteId($record)
+        );
+    }
+
+    private static function hasAnyPosition(string $employeeId, array $codes): bool
+    {
+        return array_intersect($codes, self::activePositionCodes($employeeId)) !== [];
+    }
+
+    private static function hasGlobalPosition(string $employeeId, array $codes): bool
+    {
+        return self::appointmentQuery($employeeId, $codes)->whereNull('ea.site_id')->count() > 0;
+    }
+
+    private static function hasPositionAtSite(string $employeeId, array $codes, ?string $siteId): bool
+    {
+        if ($siteId === null || trim($siteId) === '') {
+            return self::hasGlobalPosition($employeeId, $codes);
+        }
+
+        $siteId = trim($siteId);
+
+        return self::appointmentQuery($employeeId, $codes)
+            ->where(function ($query) use ($siteId) {
+                $query->whereNull('ea.site_id')->whereOr('ea.site_id', $siteId);
+            })
+            ->count() > 0;
+    }
+
+    private static function appointmentQuery(string $employeeId, array $codes)
+    {
+        return Db::name('employee_appointments')->alias('ea')
+            ->join('qms_positions p', 'p.id = ea.position_id')
+            ->where('ea.company_id', (string)Config::get('qms.company_id'))
+            ->where('p.company_id', (string)Config::get('qms.company_id'))
+            ->where('ea.employee_id', $employeeId)
+            ->whereIn('p.code', $codes)
+            ->where('ea.status', 'active')
+            ->where('ea.publish', 1)
+            ->where('ea.soft_delete', 0)
+            ->where('p.review_status', 'published')
+            ->where('p.publish', 1)
+            ->where('p.soft_delete', 0)
+            ->where(function ($query) {
+                $query->whereNull('ea.appointed_at')->whereOr('ea.appointed_at', '<=', date('Y-m-d'));
+            })
+            ->where(function ($query) {
+                $query->whereNull('ea.valid_until')->whereOr('ea.valid_until', '>=', date('Y-m-d'));
+            });
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function appointedSiteIds(string $employeeId, array $codes): array
+    {
+        $query = self::appointmentQuery($employeeId, $codes);
+        if ((clone $query)->whereNull('ea.site_id')->count() > 0) {
+            return array_map(
+                'strval',
+                Db::name('sites')
+                    ->where('company_id', (string)Config::get('qms.company_id'))
+                    ->where('status', 'active')
+                    ->where('publish', 1)
+                    ->where('soft_delete', 0)
+                    ->column('id')
+            );
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            'strval',
+            $query->whereNotNull('ea.site_id')->column('ea.site_id')
+        ))));
+    }
+
+    /**
+     * @return array{id:string,employee_id:string,role:string}|null
+     */
+    private static function currentIdentity(): ?array
+    {
+        $userId = trim((string)Session::get('user.id', ''));
+        $employeeId = trim((string)Session::get('user.employee_id', ''));
+        if ($userId === '' || $employeeId === '') {
+            return null;
+        }
+
+        $user = Db::name('users')
+            ->where('id', $userId)
+            ->where('employee_id', $employeeId)
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->find();
+        if (!$user) {
+            return null;
+        }
+
+        $employee = Db::name('employees')
+            ->where('id', $employeeId)
+            ->where('company_id', (string)Config::get('qms.company_id'))
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->find();
+        if (!$employee) {
+            return null;
+        }
+
+        return [
+            'id' => $userId,
+            'employee_id' => $employeeId,
+            'role' => (string)$user['role'],
+        ];
+    }
+
+    /**
+     * @return array{module:string,action:string,record:?object}|null
+     */
+    private static function requestPolicy(string $controller, string $action, object $request): ?array
+    {
+        $controller = self::normalize($controller);
+        $action = self::normalize($action);
+        $module = $controller;
+        $policyAction = null;
+        $record = null;
+
+        if ($controller === 'complaint') {
+            $policyAction = match ($action) {
+                'index' => 'list',
+                'add' => 'register',
+                'view' => 'view',
+                'edit', 'delete' => 'manage',
+                'advance' => 'advance',
+                'createcapa' => 'create_capa',
+                default => null,
+            };
+            if (in_array($action, ['view', 'edit', 'delete', 'advance', 'createcapa'], true)) {
+                $record = self::tableRecord('customer_complaints', self::requestId($request));
+            }
+        } elseif ($controller === 'equipment') {
+            $policyAction = in_array($action, ['index', 'view'], true)
+                ? 'view'
+                : (in_array($action, ['add', 'edit', 'delete'], true) ? 'edit' : null);
+            if (in_array($action, ['view', 'edit', 'delete'], true)) {
+                $record = self::tableRecord('equipments', self::requestId($request));
+            } elseif ($action === 'add') {
+                $siteId = trim((string)$request->post('site_id', ''));
+                $record = (object)[
+                    'site_id' => $siteId !== '' ? $siteId : self::employeeSiteId(
+                        (string)Session::get('user.employee_id', '')
+                    ),
+                ];
+            }
+        } elseif ($controller === 'equipmentmaintenance') {
+            if (in_array($action, ['add', 'edit', 'delete'], true)) {
+                $policyAction = 'write';
+                $equipmentId = trim((string)$request->post('equipment_id', ''));
+                if ($equipmentId === '') {
+                    $equipmentId = trim((string)$request->param('equipment_id', ''));
+                }
+                if ($equipmentId === '' && in_array($action, ['edit', 'delete'], true)) {
+                    $maintenance = self::tableRecord('equipment_maintenances', self::requestId($request));
+                    $equipmentId = self::recordValue($maintenance, 'equipment_id');
+                }
+                $record = self::tableRecord('equipments', $equipmentId);
+            }
+        } elseif ($controller === 'recordformtemplate') {
+            $policyAction = match ($action) {
+                'review' => 'review_list',
+                'add', 'edit', 'delete', 'reviewschemadraftfields' => 'draft',
+                'updatereview', 'obsolete' => 'publish',
+                default => null,
+            };
+        } elseif ($controller === 'capa') {
+            $policyAction = match ($action) {
+                'view' => 'view',
+                'edit' => 'edit_measures',
+                'advance' => self::normalize((string)$request->post('action', 'advance')) === 'close'
+                    ? 'close'
+                    : 'advance',
+                'revieweffectiveness' => 'verify',
+                default => null,
+            };
+            if ($policyAction !== null) {
+                $record = self::tableRecord('capas', self::requestId($request));
+            }
+        } elseif ($controller === 'competencyrecord') {
+            if (in_array($action, ['add', 'edit', 'delete'], true)) {
+                $policyAction = 'write';
+                $employeeId = trim((string)$request->post('employee_id', ''));
+                if ($employeeId === '' && in_array($action, ['edit', 'delete'], true)) {
+                    $competency = self::tableRecord('competency_records', self::requestId($request));
+                    $employeeId = self::recordValue($competency, 'employee_id');
+                }
+                $record = $employeeId !== ''
+                    ? self::tableRecord('employees', $employeeId)
+                    : (object)['primary_site_id' => self::employeeSiteId(
+                        (string)Session::get('user.employee_id', '')
+                    )];
+            }
+        } elseif ($controller === 'nonconformity') {
+            $policyAction = match ($action) {
+                'add' => 'register',
+                'edit' => 'dispose',
+                'delete' => 'close',
+                'createcapa' => 'dispose',
+                default => null,
+            };
+            if ($policyAction !== null && $action !== 'add') {
+                $record = self::tableRecord('nonconformities', self::requestId($request));
+            }
+        }
+
+        return $policyAction === null
+            ? null
+            : ['module' => $module, 'action' => $policyAction, 'record' => $record];
+    }
+
+    private static function requestId(object $request): string
+    {
+        $id = trim((string)$request->param('id', ''));
+
+        return $id !== '' ? $id : trim((string)$request->post('id', ''));
+    }
+
+    private static function tableRecord(string $table, string $id): ?object
+    {
+        if ($id === '') {
+            return null;
+        }
+        $row = Db::name($table)->where('id', $id)->where('soft_delete', 0)->find();
+
+        return $row ? (object)$row : null;
+    }
+
+    private static function recordSiteId(?object $record): ?string
+    {
+        if ($record === null) {
+            return null;
+        }
+        $siteId = self::recordValue($record, 'site_id');
+        if ($siteId !== '') {
+            return $siteId;
+        }
+        $primarySiteId = self::recordValue($record, 'primary_site_id');
+        if ($primarySiteId !== '') {
+            return $primarySiteId;
+        }
+        $employeeId = self::recordValue($record, 'employee_id');
+        if ($employeeId !== '') {
+            $siteId = (string)Db::name('employees')->where('id', $employeeId)->value('primary_site_id');
+            if ($siteId !== '') {
+                return $siteId;
+            }
+        }
+        $creatorId = self::recordValue($record, 'created_by');
+        if ($creatorId !== '') {
+            $siteId = (string)Db::name('users')->alias('u')
+                ->join('employees e', 'e.id = u.employee_id')
+                ->where('u.id', $creatorId)
+                ->value('e.primary_site_id');
+        }
+
+        return $siteId !== '' ? $siteId : null;
+    }
+
+    private static function employeeSiteId(string $employeeId): ?string
+    {
+        $siteId = trim((string)Db::name('employees')
+            ->where('id', trim($employeeId))
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->value('primary_site_id'));
+
+        return $siteId !== '' ? $siteId : null;
+    }
+
+    private static function isOwnRecord(?object $record, string $userId): bool
+    {
+        return $record !== null && in_array(
+            $userId,
+            [self::recordValue($record, 'created_by'), self::recordValue($record, 'assigned_to')],
+            true
+        );
+    }
+
+    private static function recordValue(?object $record, string $field): string
+    {
+        if ($record === null) {
+            return '';
+        }
+        if (method_exists($record, 'getAttr')) {
+            return trim((string)$record->getAttr($field));
+        }
+
+        return trim((string)($record->{$field} ?? ''));
+    }
+
+    private static function normalize(string $value): string
+    {
+        return strtolower(str_replace(['_', '-', '\\', '/'], '', trim($value)));
+    }
+}

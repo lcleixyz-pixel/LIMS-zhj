@@ -1,0 +1,54 @@
+{__NOLAYOUT__}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>无此动作权限</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: #f5f7fa;
+            color: #26364f;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+        }
+        main {
+            width: min(560px, calc(100% - 40px));
+            padding: 40px;
+            box-sizing: border-box;
+            border: 1px solid #dce3ed;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 12px 30px rgba(38, 54, 79, .08);
+        }
+        h1 { margin: 0 0 16px; font-size: 28px; }
+        p { margin: 10px 0; line-height: 1.75; color: #5a687d; }
+        .actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+        a, button {
+            padding: 10px 18px;
+            border: 1px solid #29446f;
+            border-radius: 6px;
+            background: #29446f;
+            color: #fff;
+            font: inherit;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        button { background: #fff; color: #29446f; }
+    </style>
+</head>
+<body>
+<main>
+    <h1>无此动作权限</h1>
+    <p>当前账号没有执行此操作的有效岗位任命或记录范围。</p>
+    <p>请返回上一页，或联系质量负责人核对岗位、场所和任命有效期。</p>
+    <div class="actions">
+        <button type="button" onclick="history.back()">返回上一页</button>
+        <a href="/dashboard/index">返回工作台</a>
+    </div>
+</main>
+</body>
+</html>

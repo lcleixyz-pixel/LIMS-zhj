@@ -1,7 +1,7 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between">
         <h5 class="mb-0">设备 {$record.equipment_number}</h5>
-        <a href="/calibration/add?equipment_id={$record.id}" class="btn btn-sm btn-primary">登记校准</a>
+        {if qms_can_action('equipment', 'edit', $record)}<a href="/calibration/add?equipment_id={$record.id}" class="btn btn-sm btn-primary">登记校准</a>{/if}
     </div>
     <div class="card-body">
         {if $daysUntil !== null && $daysUntil <= 30}
@@ -66,7 +66,7 @@
 
         <div class="d-flex justify-content-between align-items-center mb-2">
             <h6 class="mb-0">授权使用人</h6>
-            <a href="/equipment_authorization/add?equipment_id={$record.id}" class="btn btn-sm btn-outline-primary">新增授权</a>
+            {if qms_can_action('equipment', 'edit', $record)}<a href="/equipment_authorization/add?equipment_id={$record.id}" class="btn btn-sm btn-outline-primary">新增授权</a>{/if}
         </div>
         <table class="table table-sm mb-4">
             <thead><tr><th>人员</th><th>授权日期</th><th>有效期至</th><th>授权范围</th><th>状态</th></tr></thead>

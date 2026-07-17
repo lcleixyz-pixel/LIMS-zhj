@@ -213,6 +213,7 @@ class CurrentFilesSeedService
             'lab_director' => '实验室主任',
             'technical_manager' => '技术负责人',
             'quality_manager' => '质量负责人',
+            'site_quality_coordinator' => '场所质量协调人',
             'finance_manager' => '财务负责人',
             'internal_auditor' => '内审员',
             'supervisor' => '监督员',
