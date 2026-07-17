@@ -331,7 +331,7 @@ final class P0ControlledMigrationPackageService
 
         $manifest = [
             'package_version' => $isB7
-                ? 'g-r13-b7-local-controlled-migration-v0.2'
+                ? 'g-r13-b7-local-controlled-migration-v0.3'
                 : 'g-r13-b6-controlled-migration-v0.1',
             'generated_at' => date(DATE_ATOM),
             'git_commit' => self::sourceRevision(),
@@ -440,6 +440,7 @@ final class P0ControlledMigrationPackageService
         $adminEmployee = self::sql((string)($state['admin']['employee_id'] ?? ''));
         return <<<SQL
 -- G-R13-B6 只读预检；不修改数据。
+SET NAMES utf8mb4;
 DELIMITER //
 DROP PROCEDURE IF EXISTS qms_b6_preflight//
 CREATE PROCEDURE qms_b6_preflight()
@@ -466,7 +467,10 @@ SQL;
 
     private static function schemaSql(): string
     {
-        return (string)file_get_contents(dirname(__DIR__, 2) . '/database/migrations/20260717_p0_record_integrity.sql');
+        return "SET NAMES utf8mb4;\n"
+            . (string)file_get_contents(
+                dirname(__DIR__, 2) . '/database/migrations/20260717_p0_record_integrity.sql'
+            );
     }
 
     private static function migrationSql(
@@ -563,6 +567,7 @@ SQL;
 
         return <<<SQL
 -- G-R13-B6 组织数据迁移；只允许在清单指定数据库执行。
+SET NAMES utf8mb4;
 DELIMITER //
 DROP PROCEDURE IF EXISTS qms_b6_apply_organization//
 CREATE PROCEDURE qms_b6_apply_organization()
@@ -604,6 +609,7 @@ SQL;
         $document = self::sql((string)$confirmation['document_number']);
         return <<<SQL
 -- G-R13-B6 迁移后只读核对。
+SET NAMES utf8mb4;
 SELECT 'appointments' item, COUNT(*) count
 FROM employee_appointments
 WHERE source_document_number = {$document} AND status = 'active' AND soft_delete = 0
@@ -668,6 +674,7 @@ SQL;
 
         return <<<SQL
 -- G-R13-B6 行级回退；只按本包固定键和 before-state 回退。
+SET NAMES utf8mb4;
 DELIMITER //
 DROP PROCEDURE IF EXISTS qms_b6_rollback_organization//
 CREATE PROCEDURE qms_b6_rollback_organization()
@@ -699,6 +706,7 @@ SQL;
     {
         return <<<'SQL'
 -- EMERGENCY ONLY：需另行批准并重新快照后执行。
+SET NAMES utf8mb4;
 ALTER TABLE customer_complaints DROP INDEX uq_complaint_company_number;
 ALTER TABLE capas DROP INDEX uq_capa_company_number;
 ALTER TABLE nonconformities DROP INDEX uq_nc_company_number;

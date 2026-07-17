@@ -55,9 +55,9 @@ try {
     $rollbackSql = (string)file_get_contents($output . '/sql/90-row-rollback.sql');
 
     b7_case(
-        ($manifest['package_version'] ?? '') === 'g-r13-b7-local-controlled-migration-v0.2',
+        ($manifest['package_version'] ?? '') === 'g-r13-b7-local-controlled-migration-v0.3',
         'B700',
-        '岗位称谓修复后迁移包升为 v0.2'
+        '字符集自保护后迁移包升为 v0.3'
     );
     b7_case(($summary['local_apply_authorized'] ?? false) === true, 'B701', '仅授权本机试运行迁移');
     b7_case(($summary['cloud_apply_authorized'] ?? true) === false, 'B702', '不授权云端迁移');
@@ -97,6 +97,17 @@ try {
         'B709',
         '行级回退恢复迁移前岗位名称'
     );
+    $sqlFiles = glob($output . '/sql/*.sql') ?: [];
+    b7_case(
+        count($sqlFiles) === 6
+        && count(array_filter(
+            $sqlFiles,
+            static fn (string $file): bool =>
+                str_contains((string)file_get_contents($file), 'SET NAMES utf8mb4;')
+        )) === 6,
+        'B710',
+        '六个 SQL 均声明 UTF-8 客户端字符集'
+    );
 } catch (Throwable $exception) {
     $failures[] = 'B701-B706 build failed: ' . $exception->getMessage();
 }
@@ -124,4 +135,4 @@ if ($failures !== []) {
     ));
     exit(1);
 }
-fwrite(STDOUT, "qms_p0_controlled_migration_existing_people_smoke passed: B700-B709\n");
+fwrite(STDOUT, "qms_p0_controlled_migration_existing_people_smoke passed: B700-B710\n");
