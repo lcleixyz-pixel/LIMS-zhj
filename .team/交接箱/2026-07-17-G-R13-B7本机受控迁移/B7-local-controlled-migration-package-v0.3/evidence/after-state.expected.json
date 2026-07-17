@@ -1,0 +1,10 @@
+{
+    "appointments": 25,
+    "admin_employee_name": "张晓磊",
+    "admin_employee_soft_delete": 0,
+    "site_codes": [
+        "PLACE01",
+        "PLACE02"
+    ],
+    "liu_quality_manager": false
+}
