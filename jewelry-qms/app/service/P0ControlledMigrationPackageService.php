@@ -10,6 +10,8 @@ use think\facade\Db;
 final class P0ControlledMigrationPackageService
 {
     public const REHEARSAL_MARKER = 'B6_REHEARSAL_ONLY_NOT_REAL_APPROVAL';
+    private const B6_SCHEMA = 'g-r13-b6-confirmation-v0.1';
+    private const B7_SCHEMA = 'g-r13-b7-confirmation-v0.1';
 
     private const TARGETS = [
         ['俞炳星', 'company_general_manager', null, 'role', '总经理'],
@@ -63,10 +65,22 @@ final class P0ControlledMigrationPackageService
 
     private static function validateConfirmation(array $confirmation, bool $rehearsal): void
     {
-        if (($confirmation['schema_version'] ?? '') !== 'g-r13-b6-confirmation-v0.1') {
+        $schema = (string)($confirmation['schema_version'] ?? '');
+        if (!in_array($schema, [self::B6_SCHEMA, self::B7_SCHEMA], true)) {
             throw new DomainException('schema_version 不受支持');
         }
-        if (($confirmation['status'] ?? '') !== 'approved') {
+        $isB7 = $schema === self::B7_SCHEMA;
+        if ($isB7) {
+            if (($confirmation['status'] ?? '') !== 'approved_for_local_trial') {
+                throw new DomainException('B7 status 必须为 approved_for_local_trial');
+            }
+            if (($confirmation['approval_scope'] ?? '') !== 'local_qms_trial_only') {
+                throw new DomainException('B7 approval_scope 必须为 local_qms_trial_only');
+            }
+            if ($rehearsal) {
+                throw new DomainException('B7 本机确认不得标记为 B6 演练');
+            }
+        } elseif (($confirmation['status'] ?? '') !== 'approved') {
             throw new DomainException('status 必须为 approved');
         }
 
@@ -99,15 +113,26 @@ final class P0ControlledMigrationPackageService
             throw new DomainException('两名人员的 employee_number 不得相同');
         }
 
-        $reviewNames = [
-            'quality_manager' => '张晓磊',
-            'technical_manager' => '刘恒春',
-            'top_management' => '俞炳星',
-        ];
-        foreach ($reviewNames as $key => $expectedName) {
+        $reviewRequirements = $isB7
+            ? [
+                'quality_manager' => ['张晓磊', 'approved'],
+                'technical_manager' => ['刘恒春', 'not_individually_signed'],
+                'top_management' => ['俞炳星', 'not_individually_signed'],
+            ]
+            : [
+                'quality_manager' => ['张晓磊', 'approved'],
+                'technical_manager' => ['刘恒春', 'approved'],
+                'top_management' => ['俞炳星', 'approved'],
+            ];
+        foreach ($reviewRequirements as $key => [$expectedName, $expectedDecision]) {
             $review = (array)($confirmation['reviews'][$key] ?? []);
-            if (($review['name'] ?? '') !== $expectedName || ($review['decision'] ?? '') !== 'approved') {
-                throw new DomainException("reviews.{$key} 必须由 {$expectedName} 批准");
+            if (
+                ($review['name'] ?? '') !== $expectedName
+                || ($review['decision'] ?? '') !== $expectedDecision
+            ) {
+                throw new DomainException(
+                    "reviews.{$key} 必须记录 {$expectedName}/{$expectedDecision}"
+                );
             }
             if (!self::validDate((string)($review['date'] ?? ''))) {
                 throw new DomainException("reviews.{$key}.date 不是合法日期");
@@ -131,10 +156,9 @@ final class P0ControlledMigrationPackageService
             ->select()
             ->toArray();
         $employees = Db::name('employees')
-            ->whereIn('name', ['俞炳星', '张晓磊', '刘恒春', '曹红', '李成辉', '付丽', '王胜林'])
             ->where('publish', 1)
             ->where('soft_delete', 0)
-            ->order('name')
+            ->order('employee_number')
             ->select()
             ->toArray();
         $admin = Db::name('users')->where('username', 'admin')->where('soft_delete', 0)->find();
@@ -192,16 +216,30 @@ final class P0ControlledMigrationPackageService
             }
         }
 
-        $requestedNumbers = [
-            (string)$confirmation['people']['hetian_document_controller']['employee_number'],
-            (string)$confirmation['people']['hetian_equipment_manager']['employee_number'],
-        ];
-        $numberConflict = Db::name('employees')
-            ->whereIn('employee_number', $requestedNumbers)
-            ->where('soft_delete', 0)
-            ->count();
-        if ($numberConflict > 0) {
-            throw new DomainException('待补人员 employee_number 已被占用');
+        $place02Id = (string)array_column($state['sites'], 'id', 'code')['PLACE02'];
+        foreach (['hetian_document_controller', 'hetian_equipment_manager'] as $key) {
+            $requested = (array)$confirmation['people'][$key];
+            $number = (string)$requested['employee_number'];
+            $name = (string)$requested['formal_name'];
+            $sameNumber = array_values(array_filter(
+                $state['employees'],
+                static fn (array $row): bool => (string)$row['employee_number'] === $number
+            ));
+            $sameName = array_values(array_filter(
+                $state['employees'],
+                static fn (array $row): bool => (string)$row['name'] === $name
+            ));
+            if ($sameNumber === [] && $sameName === []) {
+                continue;
+            }
+            if (
+                count($sameNumber) !== 1
+                || count($sameName) !== 1
+                || (string)$sameNumber[0]['id'] !== (string)$sameName[0]['id']
+                || (string)$sameNumber[0]['primary_site_id'] !== $place02Id
+            ) {
+                throw new DomainException("people.{$key} 与现行人员姓名、编号或场所不一致");
+            }
         }
     }
 
@@ -218,6 +256,7 @@ final class P0ControlledMigrationPackageService
 
         $people = self::peopleMap($confirmation, $state);
         $appointments = self::appointments($confirmation, $people);
+        $isB7 = ($confirmation['schema_version'] ?? '') === self::B7_SCHEMA;
         $semantic = [
             'confirmation' => $confirmation,
             'database' => $state['database'],
@@ -239,9 +278,16 @@ final class P0ControlledMigrationPackageService
             'site_codes' => ['PLACE01', 'PLACE02'],
             'liu_quality_manager' => false,
         ]);
+        $newPeople = array_filter(
+            [
+                $people['__HETIAN_DOCUMENT_CONTROLLER__'],
+                $people['__HETIAN_EQUIPMENT_MANAGER__'],
+            ],
+            static fn (array $row): bool => $row['new'] === true
+        );
         self::writeJson($outputDir . '/evidence/migration-diff.expected.json', [
             'allowed' => [
-                'employees' => 2,
+                'employees' => count($newPeople),
                 'qms_positions' => count(array_filter(
                     array_keys(self::POSITION_NAMES),
                     static fn (string $code): bool => !in_array($code, array_column($state['positions'], 'code'), true)
@@ -273,10 +319,12 @@ final class P0ControlledMigrationPackageService
         );
         file_put_contents($outputDir . '/sql/91-schema-rollback-emergency-only.sql', self::schemaRollbackSql());
         file_put_contents($outputDir . '/snapshot/README-v0.1.md', self::snapshotReadme());
-        file_put_contents($outputDir . '/02-执行手册-v0.1.md', self::runbook($rehearsal));
+        file_put_contents($outputDir . '/02-执行手册-v0.1.md', self::runbook($rehearsal, $isB7));
 
         $manifest = [
-            'package_version' => 'g-r13-b6-controlled-migration-v0.1',
+            'package_version' => $isB7
+                ? 'g-r13-b7-local-controlled-migration-v0.1'
+                : 'g-r13-b6-controlled-migration-v0.1',
             'generated_at' => date(DATE_ATOM),
             'git_commit' => self::sourceRevision(),
             'target_database' => $state['database'],
@@ -289,7 +337,9 @@ final class P0ControlledMigrationPackageService
             'semantic_sha256' => $semanticSha,
             'appointment_keys' => array_column($appointments, 'appointment_key'),
             'production_apply_authorized' => false,
-            'requires_separate_b7_approval' => true,
+            'local_apply_authorized' => $isB7,
+            'cloud_apply_authorized' => false,
+            'requires_separate_b7_approval' => !$isB7,
             'rehearsal' => $rehearsal,
             'execution_order' => [
                 '00-preflight-readonly.sql',
@@ -306,7 +356,9 @@ final class P0ControlledMigrationPackageService
             'semantic_sha256' => $semanticSha,
             'appointment_keys' => array_column($appointments, 'appointment_key'),
             'production_apply_authorized' => false,
-            'requires_separate_b7_approval' => true,
+            'local_apply_authorized' => $isB7,
+            'cloud_apply_authorized' => false,
+            'requires_separate_b7_approval' => !$isB7,
         ];
     }
 
@@ -326,12 +378,25 @@ final class P0ControlledMigrationPackageService
             'hetian_equipment_manager' => '__HETIAN_EQUIPMENT_MANAGER__',
         ] as $key => $token) {
             $person = $confirmation['people'][$key];
-            $map[$token] = [
-                'id' => self::stableUuid('employee:' . $person['employee_number']),
-                'name' => (string)$person['formal_name'],
-                'employee_number' => (string)$person['employee_number'],
-                'new' => true,
-            ];
+            $existing = array_values(array_filter(
+                $state['employees'],
+                static fn (array $row): bool =>
+                    (string)$row['employee_number'] === (string)$person['employee_number']
+                    && (string)$row['name'] === (string)$person['formal_name']
+            ));
+            $map[$token] = $existing !== []
+                ? [
+                    'id' => (string)$existing[0]['id'],
+                    'name' => (string)$existing[0]['name'],
+                    'employee_number' => (string)$existing[0]['employee_number'],
+                    'new' => false,
+                ]
+                : [
+                    'id' => self::stableUuid('employee:' . $person['employee_number']),
+                    'name' => (string)$person['formal_name'],
+                    'employee_number' => (string)$person['employee_number'],
+                    'new' => true,
+                ];
         }
         return $map;
     }
@@ -551,10 +616,19 @@ SQL;
             $appointments
         ));
         $adminBefore = self::sql((string)($state['admin']['employee_id'] ?? ''));
-        $newEmployeeIds = implode(',', array_map(
-            static fn (string $token): string => self::sql($people[$token]['id']),
-            ['__HETIAN_DOCUMENT_CONTROLLER__', '__HETIAN_EQUIPMENT_MANAGER__']
+        $newEmployees = array_values(array_filter(
+            [
+                $people['__HETIAN_DOCUMENT_CONTROLLER__'],
+                $people['__HETIAN_EQUIPMENT_MANAGER__'],
+            ],
+            static fn (array $row): bool => $row['new'] === true
         ));
+        $newEmployeeClause = $newEmployees === []
+            ? "'__none__'"
+            : implode(',', array_map(
+                static fn (array $row): string => self::sql($row['id']),
+                $newEmployees
+            ));
         $newPositionCodes = array_values(array_filter(
             array_keys(self::POSITION_NAMES),
             static fn (string $code): bool => !in_array($code, array_column($state['positions'], 'code'), true)
@@ -577,7 +651,7 @@ BEGIN
     UPDATE users SET employee_id = {$adminBefore}, modified = NOW()
     WHERE username = 'admin' AND soft_delete = 0;
     DELETE FROM employees
-    WHERE id IN ({$newEmployeeIds})
+    WHERE id IN ({$newEmployeeClause})
       AND NOT EXISTS (SELECT 1 FROM users u WHERE u.employee_id = employees.id)
       AND NOT EXISTS (SELECT 1 FROM employee_appointments ea WHERE ea.employee_id = employees.id);
     DELETE FROM qms_positions
@@ -613,11 +687,14 @@ SQL;
 MD;
     }
 
-    private static function runbook(bool $rehearsal): string
+    private static function runbook(bool $rehearsal, bool $isB7): string
     {
-        $mode = $rehearsal ? '隔离演练' : '候选包生成';
+        $mode = $isB7 ? '本机受控试运行迁移' : ($rehearsal ? '隔离演练' : '候选包生成');
+        $boundary = $isB7
+            ? '本包仅授权目标数据库 `jewelry_qms` 的本机受控试运行迁移；不授权云端或正式生产迁移。'
+            : '本包 `production_apply_authorized=false`，不得据此执行现行库迁移；现行执行必须另行批准 B7。';
         return <<<MD
-# G-R13-B6 执行手册
+# G-R13-B6/B7 执行手册
 
 模式：{$mode}
 
@@ -629,7 +706,7 @@ MD;
 6. 运行 `30-postflight-readonly.sql`。
 7. 失败时先运行 `90-row-rollback.sql`；无法证明完整恢复时使用已验证快照。
 
-本包 `production_apply_authorized=false`，不得据此执行现行库迁移；现行执行必须另行批准 B7。
+{$boundary}
 MD;
     }
 
