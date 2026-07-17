@@ -56,6 +56,7 @@ final class ActionAuthorizationService
                 $employeeId,
                 ['quality_manager', 'template_approver']
             ),
+            'recordformtemplate.approvetrial' => self::canApproveTrialTemplate($employeeId, $record),
 
             'capa.view' => self::hasGlobalPosition($employeeId, ['quality_manager', 'capa_verifier'])
                 || self::recordValue($record, 'assigned_to') === $userId,
@@ -211,6 +212,16 @@ final class ActionAuthorizationService
             ['equipment_manager', 'technical_manager'],
             self::recordSiteId($record)
         );
+    }
+
+    private static function canApproveTrialTemplate(string $employeeId, ?object $record): bool
+    {
+        $responsiblePosition = self::recordValue($record, 'responsible_position_code');
+        if (in_array($responsiblePosition, ['technical_manager', 'equipment_manager'], true)) {
+            return self::hasGlobalPosition($employeeId, ['technical_manager']);
+        }
+
+        return self::hasGlobalPosition($employeeId, ['quality_manager']);
     }
 
     private static function hasAnyPosition(string $employeeId, array $codes): bool
@@ -378,8 +389,12 @@ final class ActionAuthorizationService
                 'review' => 'review_list',
                 'add', 'edit', 'delete', 'reviewschemadraftfields' => 'draft',
                 'updatereview', 'obsolete' => 'publish',
+                'approvetrial' => 'approve_trial',
                 default => null,
             };
+            if ($action === 'approvetrial') {
+                $record = self::tableRecord('record_form_templates', self::requestId($request));
+            }
         } elseif ($controller === 'capa') {
             $policyAction = match ($action) {
                 'view' => 'view',

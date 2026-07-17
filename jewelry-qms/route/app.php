@@ -63,6 +63,7 @@ Route::group(function () {
     Route::post('record_form_template/obsolete', 'RecordFormTemplate/obsolete');
     Route::get('record_form_template/review', 'RecordFormTemplate/review');
     Route::post('record_form_template/updateReview', 'RecordFormTemplate/updateReview');
+    Route::post('record_form_template/approveTrial', 'RecordFormTemplate/approveTrial');
     Route::get('record_form_template/source', 'RecordFormTemplate/source');
     Route::get('record_form_template/sourcePreview', 'RecordFormTemplate/sourcePreview');
     Route::get('record_form_template/preview', 'RecordFormTemplate/preview');
