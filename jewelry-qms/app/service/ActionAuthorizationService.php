@@ -64,6 +64,13 @@ final class ActionAuthorizationService
             'managementreview.organize', 'managementreview.complete'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
 
+            'document.register', 'document.distribute', 'document.recall', 'document.revise', 'document.submitreview'
+                => self::hasAnyPosition($employeeId, ['document_controller']),
+            'document.controlledprint'
+                => self::hasAnyPosition($employeeId, ['document_controller', 'quality_manager']),
+            'document.review'
+                => self::hasAnyPosition($employeeId, ['quality_manager', 'technical_manager']),
+
             'capa.view' => self::hasGlobalPosition($employeeId, ['quality_manager', 'capa_verifier'])
                 || self::recordValue($record, 'assigned_to') === $userId,
             'capa.editmeasures', 'capa.advance' => self::hasGlobalPosition($employeeId, ['quality_manager'])
@@ -419,6 +426,20 @@ final class ActionAuthorizationService
             };
             if (in_array($action, ['edit', 'delete', 'complete'], true)) {
                 $record = self::tableRecord('management_reviews', self::requestId($request));
+            }
+        } elseif ($controller === 'document') {
+            $policyAction = match ($action) {
+                'add', 'edit' => 'register',
+                'distribute' => 'distribute',
+                'obsolete' => 'recall',
+                'revise' => 'revise',
+                'submitreview' => 'submit_review',
+                'controlledprint' => 'controlled_print',
+                'review' => 'review',
+                default => null,
+            };
+            if ($policyAction !== null && $action !== 'add') {
+                $record = self::tableRecord('documents', self::requestId($request));
             }
         } elseif ($controller === 'capa') {
             $policyAction = match ($action) {

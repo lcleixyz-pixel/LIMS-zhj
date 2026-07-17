@@ -15,7 +15,7 @@ class DocumentControlService
     public static function distribute(string $documentId, array $userIds, ?string $siteId = null, string $remarks = ''): int
     {
         $document = Document::find($documentId);
-        if (!$document) {
+        if (!$document || (string)$document->status !== 'published' || (int)$document->publish !== 1) {
             return 0;
         }
 

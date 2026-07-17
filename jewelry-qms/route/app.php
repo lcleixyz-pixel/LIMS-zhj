@@ -49,9 +49,9 @@ Route::group(function () {
     Route::post('document/confirmReceipt', 'Document/confirmReceipt');
     Route::post('document/confirmRecall', 'Document/confirmRecall');
     Route::post('document/obsolete', 'Document/obsolete');
-    Route::rule('document/submitReview', 'Document/submitReview');
+    Route::post('document/submitReview', 'Document/submitReview');
     Route::get('document/onlyoffice', 'Document/onlyoffice');
-    Route::get('document/controlledPrint', 'Document/controlledPrint');
+    Route::post('document/controlledPrint', 'Document/controlledPrint');
     Route::get('document/download', 'Document/download');
 
     Route::rule('record_form_template/index', 'RecordFormTemplate/index');

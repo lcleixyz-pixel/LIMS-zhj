@@ -5,12 +5,16 @@ namespace app\service;
 
 use app\model\ControlledPrintLog;
 use app\model\Document;
+use RuntimeException;
 use think\facade\Session;
 
 class ControlledPrintService
 {
     public static function createLog(Document $document, int $copyCount = 1, string $purpose = '', ?string $ipAddress = null): ControlledPrintLog
     {
+        if ((string)$document->status !== 'published' || (int)$document->publish !== 1) {
+            throw new RuntimeException('当前正式发布版本才可生成正式受控打印');
+        }
         $copyCount = max(1, min(999, $copyCount));
         $printNumber = self::watermarkCode($document);
 

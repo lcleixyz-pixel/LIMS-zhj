@@ -346,7 +346,13 @@ class Document extends BaseController
             $purpose = '受控打印';
         }
 
-        $printLog = ControlledPrintService::createLog($doc, $copyCount, $purpose, $this->request->ip());
+        try {
+            $printLog = ControlledPrintService::createLog($doc, $copyCount, $purpose, $this->request->ip());
+        } catch (\RuntimeException $exception) {
+            Session::flash('error', $exception->getMessage());
+
+            return redirect('/document/view?id=' . $doc->id);
+        }
 
         View::assign('doc', $doc);
         View::assign('printLog', $printLog);
@@ -369,24 +375,40 @@ class Document extends BaseController
             $minorNum = ($rev - 1) % 10;
             $newVersion = $majorLetter . '/' . $minorNum;
 
-            $update = [
-                'version' => $newVersion,
-                'revision' => $rev,
-                'status' => 'draft',
-                'change_reason' => $this->request->post('change_reason', ''),
-                'publish' => 0,
-            ];
+            $newId = qms_uuid();
+            $newDocument = new DocumentModel();
+            $newDocument->id = $newId;
+            $newDocument->supersedes_document_id = (string)$doc->id;
+            $newDocument->revision_root_id = trim((string)$doc->revision_root_id) ?: (string)$doc->id;
+            $newDocument->category_id = $doc->category_id;
+            $newDocument->template_id = $doc->template_id;
+            $newDocument->level = $doc->level;
+            $newDocument->doc_number = $doc->doc_number;
+            $newDocument->title = $doc->title;
+            $newDocument->version = $newVersion;
+            $newDocument->revision = $rev;
+            $newDocument->department_id = $doc->department_id;
+            $newDocument->review_date = $doc->review_date;
+            $newDocument->status = 'draft';
+            $newDocument->file_path = $doc->file_path;
+            $newDocument->file_name = $doc->file_name;
+            $newDocument->file_type = $doc->file_type;
+            $newDocument->prepared_by = Session::get('user.employee_id');
+            $newDocument->reviewed_by = $doc->reviewed_by;
+            $newDocument->approved_by = $doc->approved_by;
+            $newDocument->change_reason = trim((string)$this->request->post('change_reason', ''));
+            $newDocument->publish = 0;
 
             if (!empty($_FILES['document_file']['name'])) {
-                $upload = FileService::upload($_FILES['document_file'], 'documents', $id);
+                $upload = FileService::upload($_FILES['document_file'], 'documents', $newId);
                 if ($upload) {
-                    $update['file_name'] = $upload['file_name'];
-                    $update['file_path'] = $upload['file_path'];
-                    $update['file_type'] = $upload['file_type'];
+                    $newDocument->file_name = $upload['file_name'];
+                    $newDocument->file_path = $upload['file_path'];
+                    $newDocument->file_type = $upload['file_type'];
                 }
             }
 
-            Db::transaction(function () use ($doc, $update, $id) {
+            Db::transaction(function () use ($doc, $newDocument, $newId, $id) {
                 DocumentRevision::create([
                     'id' => qms_uuid(),
                     'document_id' => $id,
@@ -398,12 +420,21 @@ class Document extends BaseController
                     'created_by' => Session::get('user.id'),
                     'created' => date('Y-m-d H:i:s'),
                 ]);
-                $doc->save($update);
+                $newDocument->save();
+                ApprovalService::createWorkflow(
+                    'document',
+                    'Document',
+                    $newId,
+                    (int)$newDocument->level,
+                    (string)Session::get('user.id'),
+                    $this->_employeeToUser((string)$newDocument->reviewed_by),
+                    $this->_employeeToUser((string)$newDocument->approved_by)
+                );
             });
             $message = '已生成修订版本 ' . $newVersion;
             try {
                 $structure = QmsDocumentStructureService::refreshControlledDocumentStructure(
-                    (string)$doc->id,
+                    $newId,
                     '文件控制修订同步：' . (string)$this->request->post('change_reason', '')
                 );
                 $message .= '，结构化文件已同步为草稿：' . (string)($structure['structured_document']['rendered_file_path'] ?? '');
@@ -412,7 +443,7 @@ class Document extends BaseController
             }
             Session::flash('success', $message);
 
-            return redirect('/document/view?id=' . $id);
+            return redirect('/document/view?id=' . $newId);
         }
 
         View::assign('doc', $doc);

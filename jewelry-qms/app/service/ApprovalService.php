@@ -9,6 +9,12 @@ use think\facade\Session;
 
 class ApprovalService
 {
+    private const NON_APPROVAL_POSITIONS = [
+        'document_controller',
+        'authorized_signatory',
+        'system_administrator',
+    ];
+
     public static function getApprovalLevels(int $level): int
     {
         $rules = Config::get('qms.approvalRules', []);
@@ -88,11 +94,35 @@ class ApprovalService
         if (!$approval) {
             return false;
         }
+        if ((string)$approval->model_name === 'Document') {
+            $employeeId = trim((string)Session::get('user.employee_id', ''));
+            $positions = ActionAuthorizationService::activePositionCodes($employeeId);
+            if (array_intersect($positions, self::authorizedApprovalPositions((int)$approval->approval_level)) === []) {
+                return false;
+            }
+        }
+        if (!in_array($status, ['approved', 'rejected'], true)) {
+            return false;
+        }
         $approval->status = $status;
         $approval->comments = $comments;
         $approval->approved_on = date('Y-m-d H:i:s');
         $approval->save();
         return true;
+    }
+
+    /**
+     * 文件管理员、授权签字人和系统管理员身份本身不在批准岗位中。
+     *
+     * @return list<string>
+     */
+    private static function authorizedApprovalPositions(int $approvalLevel): array
+    {
+        $allowed = $approvalLevel >= 3
+            ? ['quality_manager', 'top_management', 'company_general_manager']
+            : ['quality_manager', 'technical_manager'];
+
+        return array_values(array_diff($allowed, self::NON_APPROVAL_POSITIONS));
     }
 
     public static function isFullyApproved(string $modelName, string $recordId, int $level): bool
