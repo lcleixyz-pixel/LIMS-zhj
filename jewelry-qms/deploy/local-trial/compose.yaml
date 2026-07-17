@@ -1,0 +1,38 @@
+name: jewelry-qms
+
+services:
+  app:
+    image: ${QMS_IMAGE:?QMS_IMAGE must be an immutable local image tag}
+    restart: unless-stopped
+    environment:
+      APP_DEBUG: "false"
+      QMS_TRIAL_MODE: "true"
+      QMS_TRIAL_BATCH: ${QMS_TRIAL_BATCH:-GR14-20260717}
+      TZ: Asia/Shanghai
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: jewelry_qms
+      DB_USER: root
+      DB_PASS: ""
+      DB_CHARSET: utf8mb4
+      DEFAULT_LANG: zh-cn
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/chromium-browser
+    ports:
+      - "127.0.0.1:${QMS_HOST_PORT:-8010}:8000"
+    shm_size: "256mb"
+    volumes:
+      - "${QMS_ENV_FILE:?QMS_ENV_FILE must be an absolute path}:/app/.env:ro"
+      - "${QMS_UPLOADS_DIR:?QMS_UPLOADS_DIR must be an absolute path}:/app/public/uploads"
+      - "${QMS_RUNTIME_DIR:?QMS_RUNTIME_DIR must be an absolute path}:/app/runtime"
+      - "${QMS_DOCS_DIR:?QMS_DOCS_DIR must be an absolute path}:/docs:ro"
+      - "${QMS_KNOWLEDGE_DIR:?QMS_KNOWLEDGE_DIR must be an absolute path}:/knowledge"
+      - "${QMS_REFERENCE_DIR:?QMS_REFERENCE_DIR must be an absolute path}:/参考:ro"
+      - "${QMS_CURRENT_FILES_DIR:?QMS_CURRENT_FILES_DIR must be an absolute path}:/现用文件:ro"
+    networks:
+      - default
+
+networks:
+  default:
+    name: jewelry-qms_default
+    external: true
