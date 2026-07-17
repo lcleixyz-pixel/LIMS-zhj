@@ -14,12 +14,12 @@
             {elseif $record.source_file_path}
             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="数据库有附件记录，但物理文件不存在">原始附件缺失</button>
             {/if}
-            <a href="/record_form_template/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
-            {if $record.status == 'draft'}
+            {if qms_can_action('record_form_template', 'draft', $record)}<a href="/record_form_template/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>{/if}
+            {if $record.status == 'draft' && qms_can_action('record_form_template', 'draft', $record)}
             <form method="post" action="/record_form_template/delete?id={$record.id}" class="d-inline">
                 <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除草稿？')">删除草稿</button>
             </form>
-            {else}
+            {elseif $record.status != 'draft' && qms_can_action('record_form_template', 'publish', $record)}
             <form method="post" action="/record_form_template/obsolete?id={$record.id}" class="d-inline">
                 <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('确认作废该已发布模板？历史记录将保留。')">作废</button>
             </form>

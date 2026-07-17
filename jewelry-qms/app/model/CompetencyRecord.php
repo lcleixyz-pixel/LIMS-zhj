@@ -11,4 +11,9 @@ class CompetencyRecord extends BaseModel
     {
         return $this->belongsTo(Employee::class);
     }
+
+    public function assessor()
+    {
+        return $this->belongsTo(User::class, 'assessor_id');
+    }
 }

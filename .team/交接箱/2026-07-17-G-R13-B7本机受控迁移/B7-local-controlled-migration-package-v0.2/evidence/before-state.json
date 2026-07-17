@@ -1,0 +1,156 @@
+{
+    "database": "jewelry_qms",
+    "company": {
+        "id": "00000000-0000-0000-0000-000000000001",
+        "name": "珠宝检测实验室"
+    },
+    "sites": [
+        {
+            "id": "00000000-0000-0000-0000-000000000070",
+            "code": "PLACE01",
+            "name": "乌鲁木齐实验室"
+        },
+        {
+            "id": "c7264cf5-873e-4300-a9fc-866047c45879",
+            "code": "PLACE02",
+            "name": "和田实验室"
+        }
+    ],
+    "employees": [
+        {
+            "id": "9f4f9c77-0551-4c38-a7ac-a5b20d929a6d",
+            "employee_number": "E000",
+            "name": "俞炳星"
+        },
+        {
+            "id": "bf26c847-1181-4ed5-9881-563a6585475e",
+            "employee_number": "E002",
+            "name": "张晓磊"
+        },
+        {
+            "id": "76b4ebdc-cafd-4ca0-9637-d3194c0fc594",
+            "employee_number": "E003",
+            "name": "曹红"
+        },
+        {
+            "id": "d39db2de-8942-4e7c-99d8-86eabfa4a057",
+            "employee_number": "E004",
+            "name": "李成辉"
+        },
+        {
+            "id": "f589817c-f82c-4ed6-8b0b-66fb81f6210f",
+            "employee_number": "E005",
+            "name": "刘恒春"
+        },
+        {
+            "id": "40eea6cc-9d5b-48f8-8ace-873a21b35197",
+            "employee_number": "E006",
+            "name": "付丽"
+        },
+        {
+            "id": "72812ba5-b58c-4846-9566-abd4dc033c67",
+            "employee_number": "E007",
+            "name": "米尔布拉·阿卜杜麦麦提"
+        },
+        {
+            "id": "c402ff6e-357c-4485-99ea-718916721eba",
+            "employee_number": "E008",
+            "name": "如则托合提·阿卜杜加帕尔"
+        },
+        {
+            "id": "936bdb6a-89d7-49b3-8721-009c038553e2",
+            "employee_number": "E009",
+            "name": "毛天一"
+        },
+        {
+            "id": "9e82e78d-aa6e-40cc-81df-5e13cc915362",
+            "employee_number": "E010",
+            "name": "王胜林"
+        },
+        {
+            "id": "477281ff-4862-4dee-9496-eb52d830f209",
+            "employee_number": "E011",
+            "name": "史广"
+        }
+    ],
+    "admin": {
+        "id": "00000000-0000-0000-0000-000000000040",
+        "employee_id": "00000000-0000-0000-0000-000000000030"
+    },
+    "positions": [
+        {
+            "id": "624cefed-a354-468a-bace-9b999a3c5b6b",
+            "code": "technical_manager",
+            "name": "技术负责人"
+        },
+        {
+            "id": "85bd8c70-dbc6-4cdf-84f6-91ae25a35f62",
+            "code": "document_controller",
+            "name": "资料管理员"
+        },
+        {
+            "id": "87bb9536-13e2-423e-8d07-200a80e23fc0",
+            "code": "quality_manager",
+            "name": "质量负责人"
+        },
+        {
+            "id": "a089e63f-814c-438b-b284-ee16d4bad1a3",
+            "code": "company_general_manager",
+            "name": "公司总经理"
+        },
+        {
+            "id": "a9039113-56b9-4f12-ad62-2847833f7505",
+            "code": "equipment_manager",
+            "name": "设备管理员"
+        },
+        {
+            "id": "bdfc09c3-acff-465a-91f6-1608a5f30968",
+            "code": "internal_auditor",
+            "name": "内审员"
+        },
+        {
+            "id": "e19a20db-dc40-487a-b26b-4e5604254a1b",
+            "code": "authorized_signatory",
+            "name": "授权签字人"
+        },
+        {
+            "id": "ec5957c4-e408-425b-ac66-aa3282144136",
+            "code": "supervisor",
+            "name": "监督员"
+        }
+    ],
+    "counts": {
+        "active_employees": 11,
+        "active_sites": 2,
+        "active_positions": 13,
+        "active_appointments": 0
+    },
+    "preflight": {
+        "mode": "read_only",
+        "generated_at": "2026-07-17T15:00:09+08:00",
+        "blocked": false,
+        "counts": {
+            "duplicate_complaint_numbers": 0,
+            "duplicate_capa_numbers": 0,
+            "duplicate_nc_numbers": 0,
+            "malformed_business_numbers": 0,
+            "duplicate_capa_sources": 0,
+            "invalid_capa_ids": 0,
+            "invalid_source_capa_links": 0,
+            "orphan_source_capas": 0,
+            "reverse_link_mismatches": 0
+        },
+        "candidate_ids": {
+            "duplicate_complaint_numbers": [],
+            "duplicate_capa_numbers": [],
+            "duplicate_nc_numbers": [],
+            "malformed_business_numbers": [],
+            "duplicate_capa_sources": [],
+            "invalid_capa_ids": [],
+            "invalid_source_capa_links": [],
+            "orphan_source_capas": [],
+            "reverse_link_mismatches": []
+        },
+        "privacy": "仅输出记录标识和汇总数量，不输出客户、人员或联系方式"
+    }
+}

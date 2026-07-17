@@ -7,6 +7,7 @@ use app\BaseController;
 use app\model\QmsExternalChangeCandidate;
 use app\model\QmsExternalChangeEvent;
 use app\service\ExternalChangeEventService;
+use app\service\FieldAuditService;
 use think\exception\HttpException;
 use think\facade\Db;
 use think\facade\Session;
@@ -66,6 +67,10 @@ class PlanningRegulatoryCandidate extends BaseController
         View::assign('sourceTrustLabel', self::sourceTrustLabels()[$sourceTrust] ?? '来源状态未知');
         View::assign('sourceLabel', self::sourceLabel((string)$candidate->source_key));
         View::assign('effectiveStatus', self::effectiveStatus((string)$candidate->effective_date));
+        View::assign(
+            'fieldChangeLogs',
+            FieldAuditService::displayLogsFor('QmsExternalChangeCandidate', (string)$candidate->id)
+        );
         $this->assignCommonContext();
 
         return View::fetch('planning_regulatory_candidate/view');
@@ -93,12 +98,14 @@ class PlanningRegulatoryCandidate extends BaseController
             return redirect('/planning/regulatory-candidates/view?id=' . rawurlencode((string)$candidate->id));
         }
 
-        $candidate->save([
-            'review_status' => $status,
-            'reviewed_by' => (string)Session::get('user.id', ''),
-            'reviewed_at' => date('Y-m-d H:i:s'),
-            'review_comment' => trim((string)$this->request->post('review_comment', '')),
-        ]);
+        Db::transaction(function () use ($candidate, $status): void {
+            $candidate->save([
+                'review_status' => $status,
+                'reviewed_by' => (string)Session::get('user.id', ''),
+                'reviewed_at' => date('Y-m-d H:i:s'),
+                'review_comment' => trim((string)$this->request->post('review_comment', '')),
+            ]);
+        });
         Session::flash('success', '候选人工确认状态已更新。正式受控对象仍需按变更流程人工处理。');
 
         return redirect('/planning/regulatory-candidates/view?id=' . rawurlencode((string)$candidate->id));
@@ -119,33 +126,37 @@ class PlanningRegulatoryCandidate extends BaseController
             return redirect('/planning/change-events/view?id=' . rawurlencode((string)$candidate->promoted_event_id));
         }
 
-        $event = new QmsExternalChangeEvent();
-        $event->save([
-            'id' => qms_uuid(),
-            'company_id' => (string)$candidate->company_id,
-            'event_code' => ExternalChangeEventService::nextEventCode(),
-            'source_kind' => self::eventSourceKind((string)$candidate->source_key),
-            'source_name' => (string)$candidate->title,
-            'source_url' => (string)$candidate->source_url,
-            'announcement_number' => (string)$candidate->announcement_number,
-            'published_date' => $candidate->published_date ?: null,
-            'effective_date' => $candidate->effective_date ?: null,
-            'event_summary' => self::eventSummary($candidate),
-            'graph_snapshot_hash' => (string)($candidate->graph_snapshot_hash ?: ExternalChangeEventService::currentGraphSnapshotHash()),
-            'status' => ExternalChangeEventService::STATUS_REGISTERED,
-            'created_by' => (string)Session::get('user.id', ''),
-            'modified_by' => (string)Session::get('user.id', ''),
-        ]);
+        $event = Db::transaction(function () use ($candidate): QmsExternalChangeEvent {
+            $event = new QmsExternalChangeEvent();
+            $event->save([
+                'id' => qms_uuid(),
+                'company_id' => (string)$candidate->company_id,
+                'event_code' => ExternalChangeEventService::nextEventCode(),
+                'source_kind' => self::eventSourceKind((string)$candidate->source_key),
+                'source_name' => (string)$candidate->title,
+                'source_url' => (string)$candidate->source_url,
+                'announcement_number' => (string)$candidate->announcement_number,
+                'published_date' => $candidate->published_date ?: null,
+                'effective_date' => $candidate->effective_date ?: null,
+                'event_summary' => self::eventSummary($candidate),
+                'graph_snapshot_hash' => (string)($candidate->graph_snapshot_hash ?: ExternalChangeEventService::currentGraphSnapshotHash()),
+                'status' => ExternalChangeEventService::STATUS_REGISTERED,
+                'created_by' => (string)Session::get('user.id', ''),
+                'modified_by' => (string)Session::get('user.id', ''),
+            ]);
 
-        $candidate->save([
-            'review_status' => 'promoted',
-            'reviewed_by' => (string)Session::get('user.id', ''),
-            'reviewed_at' => date('Y-m-d H:i:s'),
-            'review_comment' => trim((string)$this->request->post('review_comment', '')),
-            'promoted_event_id' => (string)$event->id,
-            'promoted_at' => date('Y-m-d H:i:s'),
-            'promotion_error_summary' => null,
-        ]);
+            $candidate->save([
+                'review_status' => 'promoted',
+                'reviewed_by' => (string)Session::get('user.id', ''),
+                'reviewed_at' => date('Y-m-d H:i:s'),
+                'review_comment' => trim((string)$this->request->post('review_comment', '')),
+                'promoted_event_id' => (string)$event->id,
+                'promoted_at' => date('Y-m-d H:i:s'),
+                'promotion_error_summary' => null,
+            ]);
+
+            return $event;
+        });
         Session::flash('success', '已转入正式变更事件；体系文件、人员授权、模板和培训仍需人工评估后处理。');
 
         return redirect('/planning/change-events/view?id=' . rawurlencode((string)$event->id));

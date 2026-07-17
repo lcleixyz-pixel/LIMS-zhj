@@ -79,6 +79,7 @@ class RecordFormInstance extends BaseController
         foreach ($items as $item) {
             $status = (string)$item->status;
             $item->setAttr('pdf_token', $this->canExportPdf($item) ? $this->issuePdfActionToken((string)$item->id) : '');
+            $item->setAttr('can_edit', $this->canEditRecord($item));
             $item->setAttr('status_label', self::recordStatusLabels()[$status] ?? $status);
             $item->setAttr('filler_label', $userLabels[(string)$item->created_by] ?? ((string)$item->created_by !== '' ? (string)$item->created_by : '未记录'));
             $item->setAttr('reviewer_label', in_array($status, ['locked', 'voided'], true)
@@ -270,8 +271,8 @@ class RecordFormInstance extends BaseController
     public function edit()
     {
         $record = $this->findInstance();
-        if ($this->isTerminalStatus((string)$record->status)) {
-            Session::flash('warning', '已归档或已作废记录不能编辑');
+        if (!$this->canEditRecord($record)) {
+            Session::flash('warning', '已形成 PDF、已归档或已作废记录不能直接编辑；如需更正，请先走作废/换版/更正流程。');
 
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
@@ -319,6 +320,7 @@ class RecordFormInstance extends BaseController
         View::assign('schema', $this->decodeSchema($template));
         View::assign('values', $this->decodeValues($record->field_values));
         View::assign('canExportPdf', $this->canExportPdf($record));
+        View::assign('canEdit', $this->canEditRecord($record));
         View::assign('pdfToken', $this->canExportPdf($record) ? $this->issuePdfActionToken((string)$record->id) : '');
         View::assign('previewPdfFiles', $this->previewPdfFiles((string)$record->id));
 
@@ -569,6 +571,11 @@ class RecordFormInstance extends BaseController
     private function canExportPdf(InstanceModel $record): bool
     {
         return !$this->isTerminalStatus((string)$record->status);
+    }
+
+    private function canEditRecord(InstanceModel $record): bool
+    {
+        return (string)$record->status === 'draft';
     }
 
     private function previewPdfFiles(string $recordId): array

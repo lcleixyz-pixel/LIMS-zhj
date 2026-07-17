@@ -1,0 +1,18 @@
+{
+    "allowed": {
+        "employees": 0,
+        "qms_positions": 3,
+        "qms_positions_renamed": 2,
+        "employee_appointments": 25,
+        "users_updated": 1,
+        "unique_indexes": 4
+    },
+    "forbidden_business_tables": [
+        "customer_complaints",
+        "capas",
+        "nonconformities",
+        "equipments",
+        "competency_records",
+        "record_form_templates"
+    ]
+}

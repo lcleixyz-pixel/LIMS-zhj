@@ -39,20 +39,34 @@ if (!function_exists('qms_status_label')) {
     }
 }
 
+if (!function_exists('qms_can_action')) {
+    function qms_can_action(string $module, string $action, ?object $record = null): bool
+    {
+        return \app\service\ActionAuthorizationService::allows($module, $action, $record);
+    }
+}
+
 if (!function_exists('qms_next_number')) {
     function qms_next_number(string $prefix, string $modelClass, string $field = 'capa_number'): string
     {
         $year = date('Y');
         $pattern = $prefix . $year;
-        $last = $modelClass::where($field, 'like', $pattern . '%')
-            ->order($field, 'desc')
-            ->value($field);
-        $seq = 1;
-        if ($last && preg_match('/(\d+)$/', (string) $last, $m)) {
-            $seq = (int) $m[1] + 1;
+        $numbers = $modelClass::where($field, 'like', $pattern . '%')->column($field);
+        $maxSequence = 0;
+        // 现行编号为年度前缀加 3 至 6 位流水号；更长尾号通常来自旧算法重复拼接年份。
+        $exactPattern = '/^' . preg_quote($pattern, '/') . '(\d{3,6})$/';
+        foreach ($numbers as $number) {
+            if (preg_match($exactPattern, (string)$number, $matches) !== 1) {
+                \think\facade\Log::warning('忽略不符合现行编号规则的历史编号', [
+                    'field' => $field,
+                    'value' => (string)$number,
+                ]);
+                continue;
+            }
+            $maxSequence = max($maxSequence, (int)$matches[1]);
         }
 
-        return $pattern . str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
+        return $pattern . str_pad((string)($maxSequence + 1), 3, '0', STR_PAD_LEFT);
     }
 }
 

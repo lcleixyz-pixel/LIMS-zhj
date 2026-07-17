@@ -4,9 +4,11 @@ declare(strict_types=1);
 namespace app\controller;
 
 use app\BaseController;
+use app\service\FieldAuditService;
 use think\exception\HttpException;
 use think\exception\ValidateException;
 use think\facade\Db;
+use think\facade\Log;
 use think\facade\Session;
 use think\facade\View;
 
@@ -17,6 +19,8 @@ class CrudBase extends BaseController
     protected string $pageTitle = '';
     protected array $validateRules = [];
     protected array $validateMessages = [];
+    protected array $writableFields = [];
+    protected array $createWritableFields = [];
     protected array $viewFieldLabels = [];
     protected array $hiddenViewFields = [
         'id',
@@ -29,6 +33,10 @@ class CrudBase extends BaseController
 
     /** 表单页（add/edit GET）追加模板变量 */
     protected function assignFormContext(): void
+    {
+    }
+
+    protected function assignIndexContext(): void
     {
     }
 
@@ -64,6 +72,39 @@ class CrudBase extends BaseController
     protected function validationMessages(array $data, ?string $recordId = null): array
     {
         return $this->validateMessages;
+    }
+
+    protected function onlyWritable(array $data, ?string $recordId = null): array
+    {
+        $fields = $recordId === null && $this->createWritableFields !== []
+            ? $this->createWritableFields
+            : $this->writableFields;
+        if ($fields === []) {
+            return $data;
+        }
+
+        $filtered = array_intersect_key($data, array_flip($fields));
+        $ignoredFields = array_values(array_diff(array_keys($data), $fields, ['id', '__token__']));
+        if ($ignoredFields !== []) {
+            Log::warning('Ignored non-writable form fields', [
+                'controller' => static::class,
+                'fields' => $ignoredFields,
+                'record_id' => $recordId,
+            ]);
+        }
+
+        return $filtered;
+    }
+
+    protected function findActiveRecord(string $id): ?object
+    {
+        $class = $this->modelClass;
+        $model = $this->getModel();
+        if ($model->hasColumn('soft_delete')) {
+            return $class::where('id', $id)->where('soft_delete', 0)->find();
+        }
+
+        return $class::where('id', $id)->find();
     }
 
     protected function validateFormData(array $data, ?string $recordId = null): array
@@ -223,6 +264,7 @@ class CrudBase extends BaseController
         View::assign('items', $items);
         View::assign('pages', $items->render());
         View::assign('pageTitle', $this->pageTitle);
+        $this->assignIndexContext();
 
         return View::fetch($this->viewPrefix . '/index');
     }
@@ -230,7 +272,7 @@ class CrudBase extends BaseController
     public function add()
     {
         if ($this->request->isPost()) {
-            $data = $this->request->post();
+            $data = $this->onlyWritable($this->request->post());
             $errors = $this->validateFormData($data, null);
             if ($errors !== []) {
                 $this->flashValidationErrors($errors);
@@ -259,14 +301,13 @@ class CrudBase extends BaseController
     public function edit()
     {
         $id = $this->request->param('id');
-        $model = $this->getModel();
-        $record = $model->find($id);
+        $record = $this->findActiveRecord((string)$id);
         if (!$record) {
             throw new HttpException(404, '记录不存在');
         }
 
         if ($this->request->isPost()) {
-            $data = $this->request->post();
+            $data = $this->onlyWritable($this->request->post(), (string)$id);
             $errors = $this->validateFormData($data, (string)$id);
             if ($errors !== []) {
                 $this->flashValidationErrors($errors);
@@ -300,13 +341,18 @@ class CrudBase extends BaseController
     public function view()
     {
         $id = $this->request->param('id');
-        $model = $this->getModel();
-        $record = $model->find($id);
+        $record = $this->findActiveRecord((string)$id);
         if (!$record) {
             throw new HttpException(404, '记录不存在');
         }
         View::assign('record', $record);
         View::assign('fields', $this->buildViewFields($record));
+        if (FieldAuditService::shouldAuditModel($record)) {
+            View::assign(
+                'fieldChangeLogs',
+                FieldAuditService::displayLogsFor(FieldAuditService::modelDisplayName($record), (string)$id)
+            );
+        }
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
         $this->assignFormContext();
 
@@ -317,7 +363,7 @@ class CrudBase extends BaseController
     {
         $id = $this->request->param('id');
         $model = $this->getModel();
-        $record = $model->find($id);
+        $record = $this->findActiveRecord((string)$id);
         if (!$record) {
             throw new HttpException(404, '记录不存在');
         }

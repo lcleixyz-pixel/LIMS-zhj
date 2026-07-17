@@ -1,0 +1,43 @@
+{
+  "schema_version": "g-r13-b7-confirmation-v0.1",
+  "status": "approved_for_local_trial",
+  "approval_scope": "local_qms_trial_only",
+  "target_database": "jewelry_qms",
+  "company_id": "00000000-0000-0000-0000-000000000001",
+  "document_number": "LIMS-TRIAL-ORG-20260717-01",
+  "effective_date": "2026-07-17",
+  "source_excerpt": "依据质量负责人确认、原岗位任命截图和现行人员台账，将真实组织岗位关系写入本机 LIMS 受控试运行；本确认不替代正式任命书、CMA 备案或个人电子签名。",
+  "source_evidence": {
+    "appointment_image_sha256": "12a2e8c49b20c7415a44ea22d1a4a9584fce9933671d3388916632073b424b68",
+    "current_manual": "整合/现用/质量手册.md",
+    "person_register": "employees:E000-E011"
+  },
+  "people": {
+    "hetian_document_controller": {
+      "formal_name": "如则托合提·阿卜杜加帕尔",
+      "employee_number": "E008"
+    },
+    "hetian_equipment_manager": {
+      "formal_name": "米尔布拉·阿卜杜麦麦提",
+      "employee_number": "E007"
+    }
+  },
+  "reviews": {
+    "quality_manager": {
+      "name": "张晓磊",
+      "decision": "approved",
+      "date": "2026-07-17",
+      "basis": "用户在当前任务中明确自动批准推进至本机受控迁移"
+    },
+    "technical_manager": {
+      "name": "刘恒春",
+      "decision": "not_individually_signed",
+      "date": "2026-07-17"
+    },
+    "top_management": {
+      "name": "俞炳星",
+      "decision": "not_individually_signed",
+      "date": "2026-07-17"
+    }
+  }
+}

@@ -2,9 +2,9 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">记录模板</h5>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="/record_form_template/review" class="btn btn-sm btn-outline-primary">复核清单</a>
+            {if qms_can_action('record_form_template', 'review_list')}<a href="/record_form_template/review" class="btn btn-sm btn-outline-primary">复核清单</a>{/if}
             <a href="/record_form_instance/index" class="btn btn-sm btn-outline-success">填写实例</a>
-            <a href="/record_form_template/add" class="btn btn-sm btn-primary">新增模板</a>
+            {if qms_can_action('record_form_template', 'draft')}<a href="/record_form_template/add" class="btn btn-sm btn-primary">新增模板</a>{/if}
         </div>
     </div>
     <div class="card-body">
@@ -72,17 +72,17 @@
                         <td><span class="qms-technical-muted">{$item.print_template_key}</span></td>
                         <td>
                             <a href="/record_form_template/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
-                            <a href="/record_form_template/edit?id={$item.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+                            {if qms_can_action('record_form_template', 'draft', $item)}<a href="/record_form_template/edit?id={$item.id}" class="btn btn-sm btn-outline-primary">编辑</a>{/if}
                             {if $canCreateInstances && $item.fillable}
                             <a href="/record_form_instance/create?template_id={$item.id}" class="btn btn-sm btn-outline-success">填写</a>
                             {else}
                             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="待完成高保真复核后可填写记录">填写</button>
                             {/if}
-                            {if $item.status == 'draft'}
+                            {if $item.status == 'draft' && qms_can_action('record_form_template', 'draft', $item)}
                             <form method="post" action="/record_form_template/delete?id={$item.id}" class="d-inline">
                                 <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除草稿？')">删除草稿</button>
                             </form>
-                            {else}
+                            {elseif $item.status != 'draft' && qms_can_action('record_form_template', 'publish', $item)}
                             <form method="post" action="/record_form_template/obsolete?id={$item.id}" class="d-inline">
                                 <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('确认作废该已发布模板？历史记录将保留。')">作废</button>
                             </form>

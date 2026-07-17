@@ -567,7 +567,9 @@ CREATE TABLE `capas` (
   `created` datetime DEFAULT NULL,
   `modified` datetime DEFAULT NULL,
   `created_by` varchar(36) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_capa_company_number` (`company_id`,`capa_number`),
+  UNIQUE KEY `uq_capa_company_source_record` (`company_id`,`source_type`,`source_record_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== 设备与校准 ==========
@@ -853,7 +855,8 @@ CREATE TABLE `customer_complaints` (
   `created` datetime DEFAULT NULL,
   `modified` datetime DEFAULT NULL,
   `created_by` varchar(36) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_complaint_company_number` (`company_id`,`complaint_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== 不符合工作 ==========
@@ -879,7 +882,8 @@ CREATE TABLE `nonconformities` (
   `created` datetime DEFAULT NULL,
   `modified` datetime DEFAULT NULL,
   `created_by` varchar(36) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_nc_company_number` (`company_id`,`nc_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== 体系策划中心 ==========

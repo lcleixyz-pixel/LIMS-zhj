@@ -10,6 +10,7 @@
     <div class="card-body">
         <table class="table table-bordered">
             <tr><th width="150">状态</th><td>{:qms_status_label('nonconformity', $record.status)}</td></tr>
+            <tr><th>发现日期</th><td>{$record.identified_date|default='-'}</td></tr>
             <tr><th>严重程度</th><td>{$severityOptions[$record.severity]|default=$record.severity}</td></tr>
             <tr><th>来源</th><td>{$sourceOptions[$record.source]|default=$record.source}</td></tr>
             <tr><th>描述</th><td>{$record.description}</td></tr>
@@ -17,7 +18,29 @@
             <tr><th>即时措施</th><td>{$record.immediate_action|default='-'}</td></tr>
             <tr><th>处置决定</th><td>{$dispositionOptions[$record.disposition]|default='-'}</td></tr>
             <tr><th>报告编号</th><td>{$record.report_number|default='-'}</td></tr>
+            <tr><th>责任人</th><td>{$record.assignee.name|default='-'}</td></tr>
             <tr><th>关联CAPA</th><td>{if $capa}<a href="/capa/view?id={$capa.id}">{$capa.capa_number}</a>{else}-{/if}</td></tr>
+        </table>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0">变更历史</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>时间</th><th>字段</th><th>原值</th><th>新值</th><th>操作人/岗位</th></tr></thead>
+            <tbody>
+                {volist name="fieldChangeLogs" id="log"}
+                <tr>
+                    <td>{$log.changed_at|default='-'}</td>
+                    <td>{$log.field_label|default=$log.field_name|default='-'}</td>
+                    <td>{$log.old_value_display|default='-'}</td>
+                    <td>{$log.new_value_display|default='-'}</td>
+                    <td>{$log.changed_by_display|default='未知用户（岗位未登记）'}</td>
+                </tr>
+                {/volist}
+                {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}
+            </tbody>
         </table>
     </div>
 </div>
