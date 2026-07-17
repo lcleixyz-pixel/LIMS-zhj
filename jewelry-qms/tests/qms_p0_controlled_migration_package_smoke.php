@@ -71,6 +71,13 @@ function b6_confirmation(): array
 }
 
 $root = dirname(__DIR__);
+$consoleSource = (string)file_get_contents($root . '/config/console.php');
+b6_case(
+    class_exists('app\\command\\P0BuildControlledMigrationPackage')
+    && str_contains($consoleSource, 'P0BuildControlledMigrationPackage::class'),
+    'E13',
+    '控制台注册迁移包命令'
+);
 $template = json_decode(
     (string)file_get_contents($root . '/database/fixtures/g_r13_b6_confirmation.template.json'),
     true
@@ -213,4 +220,4 @@ if ($failures !== []) {
     exit(1);
 }
 
-fwrite(STDOUT, "qms_p0_controlled_migration_package_smoke passed: E01-E12\n");
+fwrite(STDOUT, "qms_p0_controlled_migration_package_smoke passed: E01-E13\n");

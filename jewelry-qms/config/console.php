@@ -6,6 +6,7 @@ use app\command\AiPurgeChat;
 use app\command\CheckReminders;
 use app\command\ComplianceAssess;
 use app\command\CurrentFilesSeed;
+use app\command\P0BuildControlledMigrationPackage;
 use app\command\P0Preflight;
 use app\command\QmsManualProcedureAlignmentCheck;
 use app\command\QmsPreimportPackage;
@@ -20,6 +21,7 @@ return [
         CheckReminders::class,
         ComplianceAssess::class,
         CurrentFilesSeed::class,
+        P0BuildControlledMigrationPackage::class,
         P0Preflight::class,
         QmsManualProcedureAlignmentCheck::class,
         QmsPreimportPackage::class,
