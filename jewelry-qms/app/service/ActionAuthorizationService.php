@@ -58,6 +58,9 @@ final class ActionAuthorizationService
             ),
             'recordformtemplate.approvetrial' => self::canApproveTrialTemplate($employeeId, $record),
 
+            'auditplan.organize', 'auditplan.approve', 'auditplan.complete'
+                => self::hasGlobalPosition($employeeId, ['quality_manager']),
+
             'capa.view' => self::hasGlobalPosition($employeeId, ['quality_manager', 'capa_verifier'])
                 || self::recordValue($record, 'assigned_to') === $userId,
             'capa.editmeasures', 'capa.advance' => self::hasGlobalPosition($employeeId, ['quality_manager'])
@@ -394,6 +397,16 @@ final class ActionAuthorizationService
             };
             if ($action === 'approvetrial') {
                 $record = self::tableRecord('record_form_templates', self::requestId($request));
+            }
+        } elseif ($controller === 'auditplan') {
+            $policyAction = match ($action) {
+                'add', 'edit', 'delete' => 'organize',
+                'approve' => 'approve',
+                'complete' => 'complete',
+                default => null,
+            };
+            if (in_array($action, ['edit', 'delete', 'approve', 'complete'], true)) {
+                $record = self::tableRecord('audit_plans', self::requestId($request));
             }
         } elseif ($controller === 'capa') {
             $policyAction = match ($action) {

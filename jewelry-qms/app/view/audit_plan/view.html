@@ -2,8 +2,19 @@
     <div class="card-header d-flex justify-content-between">
         <h5 class="mb-0">内审计划 {$record.title}</h5>
         <div>
-            {if $record.status == 'draft'}<a href="/audit_plan/approve?id={$record.id}" class="btn btn-sm btn-success" onclick="return confirm('批准计划？')">批准</a>{/if}
+            {if $record.status == 'draft' && qms_can_action('audit_plan', 'approve', $record)}
+            <form method="post" action="/audit_plan/approve?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('批准计划？')">批准</button>
+            </form>
+            {/if}
+            {if in_array($record.status, ['approved', 'in_progress']) && qms_can_action('audit_plan', 'complete', $record)}
+            <form method="post" action="/audit_plan/complete?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('确认所有日程、发现和 CAPA 均已关闭？')">完成计划</button>
+            </form>
+            {/if}
+            {if qms_can_action('audit_plan', 'organize', $record)}
             <a href="/audit_schedule/add?audit_plan_id={$record.id}" class="btn btn-sm btn-primary">添加日程</a>
+            {/if}
             <a href="/audit_plan/index" class="btn btn-sm btn-outline-secondary">返回</a>
         </div>
     </div>
@@ -16,18 +27,31 @@
         </table>
         <h6>审核日程</h6>
         <table class="table table-sm table-striped">
-            <thead><tr><th>日期</th><th>条款</th><th>状态</th><th>操作</th></tr></thead>
+            <thead><tr><th>日期</th><th>条款</th><th>状态</th><th>检查记录</th><th>审核发现</th><th>CAPA</th><th>操作</th></tr></thead>
             <tbody>
                 {volist name="schedules" id="s"}
                 <tr>
                     <td>{$s.audit_date}</td>
                     <td>{$s.clause|default='-'}</td>
                     <td>{:qms_status_label('audit_schedule', $s.status)}</td>
+                    <td>{$s.checklist_count}</td>
+                    <td>{$s.finding_count}</td>
+                    <td>{$s.capa_count}</td>
                     <td><a href="/audit_schedule/view?id={$s.id}">详情</a></td>
                 </tr>
                 {/volist}
-                {empty name="schedules"}<tr><td colspan="4" class="text-muted text-center">暂无日程</td></tr>{/empty}
+                {empty name="schedules"}<tr><td colspan="7" class="text-muted text-center">暂无日程</td></tr>{/empty}
             </tbody>
         </table>
+        {notempty name="closureBlockers"}
+        <div class="alert alert-warning py-2 mb-0">
+            <div class="fw-semibold">当前不能完成计划</div>
+            <ul class="mb-0">
+                {volist name="closureBlockers" id="reason"}<li>{$reason}</li>{/volist}
+            </ul>
+        </div>
+        {else}
+        <div class="alert alert-success py-2 mb-0">日程、检查记录、审核发现及关联 CAPA 已满足关闭条件。</div>
+        {/notempty}
     </div>
 </div>
