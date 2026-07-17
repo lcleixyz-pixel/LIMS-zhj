@@ -54,6 +54,11 @@ try {
     $sql = (string)file_get_contents($output . '/sql/20-organization-migration.sql');
     $rollbackSql = (string)file_get_contents($output . '/sql/90-row-rollback.sql');
 
+    b7_case(
+        ($manifest['package_version'] ?? '') === 'g-r13-b7-local-controlled-migration-v0.2',
+        'B700',
+        '岗位称谓修复后迁移包升为 v0.2'
+    );
     b7_case(($summary['local_apply_authorized'] ?? false) === true, 'B701', '仅授权本机试运行迁移');
     b7_case(($summary['cloud_apply_authorized'] ?? true) === false, 'B702', '不授权云端迁移');
     b7_case(
@@ -119,4 +124,4 @@ if ($failures !== []) {
     ));
     exit(1);
 }
-fwrite(STDOUT, "qms_p0_controlled_migration_existing_people_smoke passed: B701-B709\n");
+fwrite(STDOUT, "qms_p0_controlled_migration_existing_people_smoke passed: B700-B709\n");

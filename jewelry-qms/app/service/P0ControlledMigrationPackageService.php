@@ -331,7 +331,7 @@ final class P0ControlledMigrationPackageService
 
         $manifest = [
             'package_version' => $isB7
-                ? 'g-r13-b7-local-controlled-migration-v0.1'
+                ? 'g-r13-b7-local-controlled-migration-v0.2'
                 : 'g-r13-b6-controlled-migration-v0.1',
             'generated_at' => date(DATE_ATOM),
             'git_commit' => self::sourceRevision(),
