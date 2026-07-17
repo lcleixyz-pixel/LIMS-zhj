@@ -292,7 +292,15 @@ class WorkflowService
         }
 
         $calibrationTotal = Calibration::where('soft_delete', 0)->count();
-        $calibrationPass = Calibration::where('soft_delete', 0)->where('result', 'pass')->count();
+        $calibrationPass = Calibration::where('soft_delete', 0)->whereIn('result', [
+            'pass', 'qualified', 'conform', '合格', '通过',
+        ])->count();
+        $calibrationFail = Calibration::where('soft_delete', 0)->whereIn('result', [
+            'fail', 'failed', 'unqualified', 'nonconform', '不合格', '失败',
+        ])->count();
+        $calibrationLimited = Calibration::where('soft_delete', 0)->whereIn('result', [
+            'limited', 'restricted', '限用',
+        ])->count();
         $trainingTotal = Training::where('soft_delete', 0)->count();
         $trainingCompleted = Training::where('soft_delete', 0)->where('status', 'completed')->count();
 
@@ -313,9 +321,10 @@ class WorkflowService
             'open_nc' => Nonconformity::where('status', '<>', 'closed')->where('soft_delete', 0)->count(),
             'calibrations_total' => $calibrationTotal,
             'calibrations_pass' => $calibrationPass,
-            'calibrations_fail' => Calibration::where('soft_delete', 0)->where('result', 'fail')->count(),
-            'calibrations_limited' => Calibration::where('soft_delete', 0)->where('result', 'limited')->count(),
+            'calibrations_fail' => $calibrationFail,
+            'calibrations_limited' => $calibrationLimited,
             'calibration_pass_rate' => self::percentage($calibrationPass, $calibrationTotal),
+            'calibration_status_label' => $calibrationTotal > 0 ? '已形成' : '未形成/待补充',
             'trainings_total' => $trainingTotal,
             'trainings_completed' => $trainingCompleted,
             'training_completion_rate' => self::percentage($trainingCompleted, $trainingTotal),
@@ -344,12 +353,16 @@ class WorkflowService
                 . '；未关闭投诉 ' . (int)($metrics['complaints_open'] ?? ($metrics['open_complaints'] ?? 0))
                 . '；已关闭投诉 ' . (int)($metrics['complaints_closed'] ?? 0)
                 . '；未关闭不符合 ' . (int)($metrics['nonconformities_open'] ?? ($metrics['open_nc'] ?? 0)),
-            '校准合格率：' . self::formatPercent((float)($metrics['calibration_pass_rate'] ?? 0))
-                . '（合格 ' . (int)($metrics['calibrations_pass'] ?? 0)
-                . ' / 总数 ' . (int)($metrics['calibrations_total'] ?? 0) . '）',
-            '培训完成率：' . self::formatPercent((float)($metrics['training_completion_rate'] ?? 0))
-                . '（完成 ' . (int)($metrics['trainings_completed'] ?? 0)
-                . ' / 总数 ' . (int)($metrics['trainings_total'] ?? 0) . '）',
+            '校准结果：' . ((int)($metrics['calibrations_total'] ?? 0) > 0
+                ? self::formatPercent((float)($metrics['calibration_pass_rate'] ?? 0))
+                    . '（合格/通过 ' . (int)($metrics['calibrations_pass'] ?? 0)
+                    . ' / 总数 ' . (int)($metrics['calibrations_total'] ?? 0) . '）'
+                : '未形成/待补充'),
+            '培训完成情况：' . ((int)($metrics['trainings_total'] ?? 0) > 0
+                ? self::formatPercent((float)($metrics['training_completion_rate'] ?? 0))
+                    . '（完成 ' . (int)($metrics['trainings_completed'] ?? 0)
+                    . ' / 总数 ' . (int)($metrics['trainings_total'] ?? 0) . '）'
+                : '未形成/待补充'),
             '内审发现统计：总数 ' . (int)($metrics['audit_findings_total'] ?? 0)
                 . '；待整改 ' . (int)($metrics['audit_findings_open'] ?? 0)
                 . '；整改中 ' . (int)($metrics['audit_findings_correcting'] ?? 0)

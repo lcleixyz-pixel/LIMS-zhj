@@ -165,7 +165,7 @@ Route::group(function () {
     Route::get('complaint/createCapa', 'Complaint/createCapa');
     Route::rule('complaint/advance', 'Complaint/advance');
     Route::post('capa/reviewEffectiveness', 'Capa/reviewEffectiveness');
-    Route::get('management_review/complete', 'ManagementReview/complete');
+    Route::post('management_review/complete', 'ManagementReview/complete');
     Route::rule('review_action/verify', 'ReviewAction/verify');
     Route::get('review_action/createCapa', 'ReviewAction/createCapa');
     Route::get('training/complete', 'Training/complete');

@@ -1,15 +1,22 @@
 <div class="card">
     <div class="card-header"><h5 class="mb-0">新建管理评审</h5></div>
     <div class="card-body">
-        <div class="alert alert-info mb-3">
-            <strong>系统自动汇总</strong><br>
-            CAPA：未关闭 {$reviewInputs.open_capa}，待有效性复查 {$reviewInputs.capa_effectiveness_due|default=0}；
-            投诉：未关闭 {$reviewInputs.open_complaints}；
-            不符合：未关闭 {$reviewInputs.open_nc}；
-            校准合格率 {$reviewInputs.calibration_pass_rate|default=0}%；
-            培训完成率 {$reviewInputs.training_completion_rate|default=0}%；
-            内审发现未关闭 {$reviewInputs.open_findings}；
-            逾期决议 {$reviewInputs.overdue_actions}
+        <div class="alert alert-info mb-3">下表是本次创建时将冻结的输入快照。没有明细的类别显示“未形成/待补充”，不会用 0 冒充已完成。</div>
+        <div class="table-responsive mb-3">
+            <table class="table table-sm table-bordered align-middle">
+                <thead><tr><th>条款</th><th>输入分类</th><th>形成状态</th><th>摘要</th><th>明细</th></tr></thead>
+                <tbody>
+                    {volist name="inputCategories" id="category"}
+                    <tr>
+                        <td>{$category.clause}</td>
+                        <td>{$category.label}</td>
+                        <td>{$category.status_label|default='未形成/待补充'}</td>
+                        <td>{$category.summary|default='未形成/待补充'}</td>
+                        <td><a href="{$category.detail_url}" target="_blank">查看明细</a></td>
+                    </tr>
+                    {/volist}
+                </tbody>
+            </table>
         </div>
         <form method="post" action="/management_review/add">
             <div class="row">

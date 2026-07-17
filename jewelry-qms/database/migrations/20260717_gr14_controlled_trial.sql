@@ -29,6 +29,14 @@ BEGIN
 
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'management_reviews' AND COLUMN_NAME = 'input_snapshot'
+  ) THEN
+    ALTER TABLE `management_reviews`
+      ADD COLUMN `input_snapshot` longtext DEFAULT NULL AFTER `inputs`;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'record_form_templates' AND COLUMN_NAME = 'trial_approved_by'
   ) THEN
     ALTER TABLE `record_form_templates`
