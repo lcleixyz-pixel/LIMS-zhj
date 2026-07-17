@@ -176,6 +176,7 @@ $checksumLines = file($outputDir . '/SHA256SUMS.txt', FILE_IGNORE_NEW_LINES | FI
 b6_case(
     is_array($manifest)
     && ($manifest['requires_separate_b7_approval'] ?? false) === true
+    && trim((string)($manifest['git_commit'] ?? '')) !== ''
     && count($checksumLines) >= 10,
     'E10',
     'manifest 和 SHA256 清单完整'

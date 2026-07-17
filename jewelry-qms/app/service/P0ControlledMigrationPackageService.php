@@ -278,7 +278,7 @@ final class P0ControlledMigrationPackageService
         $manifest = [
             'package_version' => 'g-r13-b6-controlled-migration-v0.1',
             'generated_at' => date(DATE_ATOM),
-            'git_commit' => trim((string)shell_exec('git rev-parse HEAD 2>/dev/null')),
+            'git_commit' => self::sourceRevision(),
             'target_database' => $state['database'],
             'company_id' => (string)$state['company']['id'],
             'site_fingerprint' => array_column($state['sites'], 'id', 'code'),
@@ -728,6 +728,29 @@ MD;
             substr($hash, 17, 3),
             substr($hash, 20, 12)
         );
+    }
+
+    private static function sourceRevision(): string
+    {
+        $environment = trim((string)getenv('QMS_GIT_COMMIT'));
+        if ($environment !== '') {
+            return $environment;
+        }
+        $git = trim((string)shell_exec('git rev-parse HEAD 2>/dev/null'));
+        if ($git !== '') {
+            return $git;
+        }
+        $paths = [
+            __FILE__,
+            dirname(__DIR__) . '/command/P0BuildControlledMigrationPackage.php',
+            dirname(__DIR__, 2) . '/config/console.php',
+            dirname(__DIR__, 2) . '/database/migrations/20260717_p0_record_integrity.sql',
+        ];
+        $context = '';
+        foreach ($paths as $path) {
+            $context .= is_file($path) ? hash_file('sha256', $path) : 'missing';
+        }
+        return 'source-sha256:' . hash('sha256', $context);
     }
 
     private static function validDate(string $value): bool
