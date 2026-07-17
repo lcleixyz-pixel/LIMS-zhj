@@ -3,6 +3,11 @@
         <h5 class="mb-0">记录模板</h5>
         <div class="d-flex gap-2 flex-wrap">
             {if qms_can_action('record_form_template', 'review_list')}<a href="/record_form_template/review" class="btn btn-sm btn-outline-primary">复核清单</a>{/if}
+            {if qms_can_action('record_form_template', 'draft')}
+            <form method="post" action="/record_form_template/prepareCoreTrialTemplates" class="d-inline" onsubmit="return confirm('准备 15 个核心试运行模板草稿？不会修改现有正式模板。');">
+                <button type="submit" class="btn btn-sm btn-outline-warning">准备核心试运行模板</button>
+            </form>
+            {/if}
             <a href="/record_form_instance/index" class="btn btn-sm btn-outline-success">填写实例</a>
             {if qms_can_action('record_form_template', 'draft')}<a href="/record_form_template/add" class="btn btn-sm btn-primary">新增模板</a>{/if}
         </div>
