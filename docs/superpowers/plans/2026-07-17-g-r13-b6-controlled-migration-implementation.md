@@ -268,6 +268,12 @@ git commit -m "feat(p0): 增加受控迁移包生成命令"
 - 创建：`jewelry-qms/tests/qms_p0_controlled_migration_rehearsal_smoke.php`
 - 修改：`jewelry-qms/app/service/P0ControlledMigrationPackageService.php`（仅修复演练暴露的问题）
 
+- [ ] **步骤 0：建立明确命名的隔离环境**
+
+从现行数据库执行只读 `mysqldump --no-create-db`，导入新建的
+`jewelry_qms_p0_r13b6`；启动仅连接该库、仅绑定 B6 worktree 的
+`qms-r13b6-app`。导入后先核对 `SELECT DATABASE()`，任何名称不一致都停止。
+
 - [ ] **步骤 1：编写 F01～F10 演练测试**
 
 测试要求数据库名严格为 `jewelry_qms_p0_r13b6`，并接受生成包路径参数：
