@@ -60,12 +60,14 @@ final class ActionAuthorizationService
 
             'auditplan.organize', 'auditplan.approve', 'auditplan.complete'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
+            'auditschedule.complete'
+                => self::hasGlobalPosition($employeeId, ['quality_manager']),
 
             'managementreview.organize', 'managementreview.complete'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
 
             'document.register', 'document.distribute', 'document.recall', 'document.revise', 'document.submitreview'
-                => self::hasAnyPosition($employeeId, ['document_controller']),
+                => self::canManageDocument($employeeId, $record),
             'document.controlledprint'
                 => self::hasAnyPosition($employeeId, ['document_controller', 'quality_manager']),
             'document.review'
@@ -185,6 +187,24 @@ final class ActionAuthorizationService
         );
     }
 
+    /**
+     * Null means institution-wide management; an empty array means no managed site.
+     *
+     * @return list<string>|null
+     */
+    public static function documentManageableSiteIds(): ?array
+    {
+        $identity = self::currentIdentity();
+        if ($identity === null) {
+            return [];
+        }
+        if (self::hasGlobalPosition($identity['employee_id'], ['quality_manager'])) {
+            return null;
+        }
+
+        return self::appointedSiteIds($identity['employee_id'], ['document_controller']);
+    }
+
     private static function canManageComplaint(string $employeeId, ?object $record): bool
     {
         if (self::hasGlobalPosition($employeeId, ['quality_manager'])) {
@@ -223,10 +243,26 @@ final class ActionAuthorizationService
         if (self::hasGlobalPosition($employeeId, ['quality_manager'])) {
             return true;
         }
+        if ($record === null) {
+            return self::hasAnyPosition($employeeId, ['equipment_manager', 'technical_manager']);
+        }
 
         return self::hasPositionAtSite(
             $employeeId,
             ['equipment_manager', 'technical_manager'],
+            self::recordSiteId($record)
+        );
+    }
+
+    private static function canManageDocument(string $employeeId, ?object $record): bool
+    {
+        if ($record === null) {
+            return self::hasAnyPosition($employeeId, ['document_controller']);
+        }
+
+        return self::hasPositionAtSite(
+            $employeeId,
+            ['document_controller'],
             self::recordSiteId($record)
         );
     }
@@ -422,6 +458,11 @@ final class ActionAuthorizationService
             if (in_array($action, ['edit', 'delete', 'approve', 'complete'], true)) {
                 $record = self::tableRecord('audit_plans', self::requestId($request));
             }
+        } elseif ($controller === 'auditschedule') {
+            $policyAction = $action === 'complete' ? 'complete' : null;
+            if ($policyAction !== null) {
+                $record = self::tableRecord('audit_schedules', self::requestId($request));
+            }
         } elseif ($controller === 'managementreview') {
             $policyAction = match ($action) {
                 'add', 'edit', 'delete' => 'organize',
@@ -444,6 +485,8 @@ final class ActionAuthorizationService
             };
             if ($policyAction !== null && $action !== 'add') {
                 $record = self::tableRecord('documents', self::requestId($request));
+            } elseif ($action === 'add' && $request->isPost()) {
+                $record = (object)['site_id' => trim((string)$request->post('site_id', ''))];
             }
         } elseif ($controller === 'externalevidencereference') {
             $policyAction = $action === 'add' ? 'add' : null;

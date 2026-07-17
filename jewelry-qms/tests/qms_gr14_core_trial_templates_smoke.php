@@ -85,6 +85,15 @@ ct_check(
     '核心模板准备和逐项人工批准均有受控入口'
 );
 
+ct_check(
+    str_contains($controller, "View::assign('procedureDocument'")
+    && str_contains($view, '来源程序')
+    && str_contains($view, 'procedureDocument.doc_number')
+    && str_contains($view, 'procedureDocument.title'),
+    'CT06',
+    '模板详情直接展示来源程序，关系图尚未建立时仍可追溯'
+);
+
 foreach ($passes as $pass) {
     echo "[PASS] {$pass}\n";
 }

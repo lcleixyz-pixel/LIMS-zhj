@@ -38,7 +38,12 @@ class Equipment extends BusinessBase
     {
         $this->assignDepartments();
         $this->assignStatusLabels('equipment');
-        View::assign('sites', Site::where('soft_delete', 0)->where('status', 'active')->order('sort_order', 'asc')->select());
+        $sites = Site::where('soft_delete', 0)->where('status', 'active');
+        $visibleSiteIds = ActionAuthorizationService::equipmentVisibleSiteIds();
+        if ($visibleSiteIds !== null) {
+            $sites->whereIn('id', $visibleSiteIds);
+        }
+        View::assign('sites', $sites->order('sort_order', 'asc')->select());
     }
 
     public function index()

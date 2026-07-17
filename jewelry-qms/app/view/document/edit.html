@@ -35,6 +35,15 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label for="site_id" class="form-label required">适用场所</label>
+                        <select name="site_id" id="site_id" class="form-select" required>
+                            <option value="">请选择</option>
+                            {volist name="sites" id="site"}
+                            <option value="{$site.id}" {if $record.site_id == $site.id}selected{/if}>{$site.name}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="department_id" class="form-label">所属部门</label>
                         <select name="department_id" id="department_id" class="form-select">
                             <option value="">请选择</option>

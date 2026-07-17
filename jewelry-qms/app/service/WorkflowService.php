@@ -46,10 +46,19 @@ class WorkflowService
                     return [$existing, false];
                 }
 
+                $capaNumber = qms_next_number('CAPA', Capa::class, 'capa_number');
+                if (
+                    TrialModeService::isEnabled()
+                    && $sourceType === 'audit'
+                    && $source instanceof AuditFinding
+                    && str_starts_with(strtoupper((string)$source->finding_number), 'SIM-')
+                ) {
+                    $capaNumber = TrialModeService::simulationNumber($capaNumber);
+                }
                 $capa = Capa::create([
                     'id' => qms_uuid(),
                     'company_id' => Config::get('qms.company_id'),
-                    'capa_number' => qms_next_number('CAPA', Capa::class, 'capa_number'),
+                    'capa_number' => $capaNumber,
                     'source_id' => $sourceId,
                     'source_type' => $sourceType,
                     'source_record_id' => $sourceRecordId,
@@ -77,6 +86,12 @@ class WorkflowService
                 return $existing;
             });
             $created = false;
+        }
+
+        if ($sourceType === 'audit' && $created) {
+            AuditFinding::where('id', $sourceRecordId)
+                ->where('soft_delete', 0)
+                ->update(['status' => 'correcting']);
         }
 
         if ($created && $assignedTo) {
@@ -257,6 +272,11 @@ class WorkflowService
                 $capa->effectiveness_result = trim((string)$data['effectiveness_result']) ?: null;
             }
             $capa->save();
+            if ((string)$capa->source_type === 'audit') {
+                AuditFinding::where('id', (string)$capa->source_record_id)
+                    ->where('soft_delete', 0)
+                    ->update(['status' => 'closed']);
+            }
 
             return true;
         }
@@ -353,12 +373,12 @@ class WorkflowService
                 . '；未关闭投诉 ' . (int)($metrics['complaints_open'] ?? ($metrics['open_complaints'] ?? 0))
                 . '；已关闭投诉 ' . (int)($metrics['complaints_closed'] ?? 0)
                 . '；未关闭不符合 ' . (int)($metrics['nonconformities_open'] ?? ($metrics['open_nc'] ?? 0)),
-            '校准结果：' . ((int)($metrics['calibrations_total'] ?? 0) > 0
+            '校准合格率：' . ((int)($metrics['calibrations_total'] ?? 0) > 0
                 ? self::formatPercent((float)($metrics['calibration_pass_rate'] ?? 0))
                     . '（合格/通过 ' . (int)($metrics['calibrations_pass'] ?? 0)
                     . ' / 总数 ' . (int)($metrics['calibrations_total'] ?? 0) . '）'
                 : '未形成/待补充'),
-            '培训完成情况：' . ((int)($metrics['trainings_total'] ?? 0) > 0
+            '培训完成率：' . ((int)($metrics['trainings_total'] ?? 0) > 0
                 ? self::formatPercent((float)($metrics['training_completion_rate'] ?? 0))
                     . '（完成 ' . (int)($metrics['trainings_completed'] ?? 0)
                     . ' / 总数 ' . (int)($metrics['trainings_total'] ?? 0) . '）'

@@ -24,4 +24,9 @@ class AuditChecklist extends BusinessBase
             'na' => '不适用',
         ]);
     }
+
+    protected function assignIndexContext(): void
+    {
+        $this->assignFormContext();
+    }
 }

@@ -132,6 +132,14 @@ BEGIN
   END IF;
 
   IF NOT EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'documents' AND COLUMN_NAME = 'site_id'
+  ) THEN
+    ALTER TABLE `documents`
+      ADD COLUMN `site_id` varchar(36) DEFAULT NULL AFTER `department_id`;
+  END IF;
+
+  IF NOT EXISTS (
     SELECT 1 FROM information_schema.STATISTICS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'record_form_instances' AND INDEX_NAME = 'trial_batch'
   ) THEN
@@ -143,6 +151,13 @@ BEGIN
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'documents' AND INDEX_NAME = 'supersedes_document_id'
   ) THEN
     ALTER TABLE `documents` ADD KEY `supersedes_document_id` (`supersedes_document_id`);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'documents' AND INDEX_NAME = 'site_id'
+  ) THEN
+    ALTER TABLE `documents` ADD KEY `site_id` (`site_id`);
   END IF;
 END//
 

@@ -10,6 +10,45 @@ final class AuditClosureService
     /**
      * @return list<string>
      */
+    public static function scheduleBlockingReasons(string $scheduleId): array
+    {
+        $checklistCount = Db::name('audit_checklists')
+            ->where('audit_schedule_id', $scheduleId)
+            ->where('soft_delete', 0)
+            ->count();
+        $reasons = $checklistCount > 0 ? [] : ['尚未形成审核检查记录'];
+
+        $findings = Db::name('audit_findings')
+            ->where('audit_schedule_id', $scheduleId)
+            ->where('soft_delete', 0)
+            ->select()
+            ->toArray();
+        foreach ($findings as $finding) {
+            if ((string)$finding['status'] !== 'closed') {
+                $reasons[] = '仍有审核发现未关闭';
+                break;
+            }
+        }
+
+        $findingIds = array_map(static fn (array $row): string => (string)$row['id'], $findings);
+        if ($findingIds !== []) {
+            $openCapas = Db::name('capas')
+                ->where('source_type', 'audit')
+                ->whereIn('source_record_id', $findingIds)
+                ->where('soft_delete', 0)
+                ->where('status', '<>', 'closed')
+                ->count();
+            if ($openCapas > 0) {
+                $reasons[] = '仍有关联 CAPA 未关闭';
+            }
+        }
+
+        return array_values(array_unique($reasons));
+    }
+
+    /**
+     * @return list<string>
+     */
     public static function blockingReasons(string $planId): array
     {
         $schedules = Db::name('audit_schedules')

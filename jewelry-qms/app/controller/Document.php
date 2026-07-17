@@ -12,13 +12,16 @@ use app\model\DocumentDistribution;
 use app\model\DocumentRevision;
 use app\model\DocumentReview;
 use app\model\DocTemplate;
+use app\model\Site;
 use app\model\User;
 use app\service\ApprovalService;
+use app\service\ActionAuthorizationService;
 use app\service\ControlledPrintService;
 use app\service\DocumentControlService;
 use app\service\FieldAuditService;
 use app\service\FileService;
 use app\service\QmsDocumentStructureService;
+use app\service\TrialModeService;
 use think\exception\ValidateException;
 use think\exception\HttpException;
 use think\facade\Config;
@@ -31,6 +34,15 @@ class Document extends BaseController
     public function index()
     {
         $query = DocumentModel::where('soft_delete', 0);
+        $manageableSiteIds = ActionAuthorizationService::documentManageableSiteIds();
+        if ($manageableSiteIds !== null) {
+            $query->where(function ($query) use ($manageableSiteIds) {
+                $query->whereNull('site_id');
+                if ($manageableSiteIds !== []) {
+                    $query->whereOr('site_id', 'in', $manageableSiteIds);
+                }
+            });
+        }
 
         if ($level = $this->request->param('level')) {
             $query->where('level', $level);
@@ -56,6 +68,7 @@ class Document extends BaseController
             'status' => $this->request->param('status', ''),
             'keyword' => $this->request->param('keyword', ''),
         ]);
+        View::assign('siteMap', Site::where('soft_delete', 0)->column('name', 'id'));
 
         return View::fetch('document/index');
     }
@@ -64,6 +77,9 @@ class Document extends BaseController
     {
         if ($this->request->isPost()) {
             $data = $this->request->post();
+            if (TrialModeService::isEnabled()) {
+                $data['doc_number'] = TrialModeService::simulationNumber((string)($data['doc_number'] ?? ''));
+            }
             $errors = $this->validateDocumentInput($data);
             if ($errors !== []) {
                 $this->flashValidationErrors($errors);
@@ -221,10 +237,12 @@ class Document extends BaseController
         View::assign('doc', $doc);
         View::assign('categoryName', $categoryName);
         View::assign('departmentName', $departmentName);
+        View::assign('siteName', $doc->site_id ? (string)(Site::where('id', $doc->site_id)->value('name') ?? '-') : '-');
         View::assign('revisions', $revisions);
         View::assign('approvals', $approvals);
         View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('Document', (string)$id));
         View::assign('distributions', $distributions);
+        View::assign('distributionUserNames', User::where('soft_delete', 0)->column('name', 'id'));
         View::assign('reviews', $reviews);
         View::assign('distributionUsers', User::where('soft_delete', 0)->where('publish', 1)->order('name', 'asc')->select());
         View::assign('structureSummary', QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id));
@@ -340,6 +358,11 @@ class Document extends BaseController
     public function controlledPrint()
     {
         $doc = $this->loadDocument((string)$this->request->param('id', ''));
+        if (!$this->request->isPost()) {
+            Session::flash('error', '受控打印必须从文件详情页提交，直接打开链接不会产生打印记录。');
+
+            return redirect('/document/view?id=' . $doc->id);
+        }
         $copyCount = (int)$this->request->param('copy_count', 1);
         $purpose = trim((string)$this->request->param('purpose', '受控打印'));
         if ($purpose === '') {
@@ -374,6 +397,14 @@ class Document extends BaseController
             $majorLetter = chr(ord('A') + (int) (($rev - 1) / 10));
             $minorNum = ($rev - 1) % 10;
             $newVersion = $majorLetter . '/' . $minorNum;
+            if ($newVersion === (string)$doc->version) {
+                $minorNum++;
+                if ($minorNum > 9) {
+                    $majorLetter = chr(ord($majorLetter) + 1);
+                    $minorNum = 0;
+                }
+                $newVersion = $majorLetter . '/' . $minorNum;
+            }
 
             $newId = qms_uuid();
             $newDocument = new DocumentModel();
@@ -388,6 +419,7 @@ class Document extends BaseController
             $newDocument->version = $newVersion;
             $newDocument->revision = $rev;
             $newDocument->department_id = $doc->department_id;
+            $newDocument->site_id = $doc->site_id;
             $newDocument->review_date = $doc->review_date;
             $newDocument->status = 'draft';
             $newDocument->file_path = $doc->file_path;
@@ -508,10 +540,16 @@ class Document extends BaseController
         $templates = DocTemplate::where('soft_delete', 0)->select();
         $departments = \app\model\Department::where('soft_delete', 0)->select();
         $employees = \app\model\Employee::where('soft_delete', 0)->select();
+        $sites = Site::where('soft_delete', 0)->where('status', 'active');
+        $manageableSiteIds = ActionAuthorizationService::documentManageableSiteIds();
+        if ($manageableSiteIds !== null) {
+            $sites->whereIn('id', $manageableSiteIds);
+        }
 
         View::assign('categories', $categories);
         View::assign('templates', $templates);
         View::assign('departments', $departments);
+        View::assign('sites', $sites->order('sort_order', 'asc')->select());
         View::assign('employees', $employees);
         View::assign('reviewers', $employees);
         View::assign('approvers', $employees);
@@ -537,10 +575,12 @@ class Document extends BaseController
                 ],
                 'title' => 'require',
                 'level' => 'require',
+                'site_id' => 'require',
             ], [
                 'doc_number.require' => '文件编号不能为空',
                 'title.require' => '文件标题不能为空',
                 'level.require' => '请选择文件层级',
+                'site_id.require' => '请选择适用场所',
             ], true);
         } catch (ValidateException $exception) {
             $error = $exception->getError();

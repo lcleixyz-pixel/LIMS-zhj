@@ -7,7 +7,7 @@
             {/if}
             {if $doc.status == 'draft' && qms_can_action('document', 'submit_review', $doc)}
             <form method="post" action="/document/submitReview?id={$doc.id}" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('确认提交审核？');">提交审核</button>
+                <button type="submit" class="btn btn-sm btn-outline-success">提交审核</button>
             </form>
             {/if}
             {if $doc.status == 'published' && qms_can_action('document', 'revise', $doc)}
@@ -62,11 +62,12 @@
                 <td>{$doc.effective_date|default='-'}</td>
             </tr>
             <tr>
+                <th>适用场所</th>
+                <td>{$siteName|default='-'}</td>
                 <th>归口部门</th>
                 <td>{$departmentName|default='-'}</td>
-                <th>文件分类</th>
-                <td>{$categoryName|default='-'}</td>
             </tr>
+            <tr><th>文件分类</th><td colspan="3">{$categoryName|default='-'}</td></tr>
             <tr>
                 <th>复审日期</th>
                 <td>{$doc.review_date|default='-'}</td>
@@ -118,7 +119,7 @@
                 <tbody>
                     {volist name="distributions" id="dist"}
                     <tr>
-                        <td>{$dist.user.name|default=$dist.user_id}</td>
+                        <td>{$distributionUserNames[$dist.user_id]|default=$dist.user_id}</td>
                         <td>{$dist.distributed_at|default='-'}</td>
                         <td>{$dist.confirmed_at|default='未确认'}</td>
                         <td>{$dist.recalled_at|default='未回收'}</td>

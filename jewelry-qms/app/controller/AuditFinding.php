@@ -39,6 +39,11 @@ class AuditFinding extends BusinessBase
         View::assign('findingTypes', ['major' => '严重不符合', 'minor' => '一般不符合', 'observation' => '观察项']);
     }
 
+    protected function assignIndexContext(): void
+    {
+        $this->assignFormContext();
+    }
+
     public function add()
     {
         if ($this->request->isPost()) {
@@ -86,6 +91,11 @@ class AuditFinding extends BusinessBase
     public function createCapa()
     {
         $id = $this->request->param('id');
+        if (!$this->request->isPost()) {
+            Session::flash('error', '创建 CAPA 必须从审核发现详情页提交。');
+
+            return redirect('/audit_finding/view?id=' . $id);
+        }
         $record = AuditFindingModel::find($id);
         if (!$record || $record->capa_id) {
             Session::flash('error', '无法创建CAPA');

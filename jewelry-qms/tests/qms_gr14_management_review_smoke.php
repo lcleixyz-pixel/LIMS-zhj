@@ -39,6 +39,7 @@ $controller = mr_source('app/controller/ManagementReview.php');
 $add = mr_source('app/view/management_review/add.html');
 $edit = mr_source('app/view/management_review/edit.html');
 $view = mr_source('app/view/management_review/view.html');
+$index = mr_source('app/view/management_review/index.html');
 $migration = mr_source('database/migrations/20260717_gr14_controlled_trial.sql');
 
 mr_check(
@@ -91,6 +92,35 @@ mr_check(
     && !str_contains($edit, 'name="code"'),
     'MR05',
     '管理评审编辑页使用真实字段'
+);
+
+mr_check(
+    !str_contains(substr($controller, strpos($controller, 'public function add()'), strpos($controller, 'public function view()') - strpos($controller, 'public function add()')), 'ExternalEvidenceReferenceService::forSubject')
+    && str_contains(substr($controller, strpos($controller, 'public function view()')), "ExternalEvidenceReferenceService::forSubject('management_review', (string)\$id)"),
+    'MR06',
+    '外部证据只在已保存的管理评审详情页绑定，新增页不引用未定义对象'
+);
+
+mr_check(
+    str_contains($service, '$calibrationTotal > 0')
+    && str_contains($service, ": ''"),
+    'MR07',
+    '校准无明细时不显示零值统计冒充已形成'
+);
+
+mr_check(
+    str_contains($controller, 'TrialModeService::isEnabled()')
+    && str_contains($controller, "TrialModeService::simulationNumber((string)\$data['review_number'])"),
+    'MR08',
+    '试运行管理评审编号由服务端强制 SIM 标识'
+);
+
+mr_check(
+    mr_contains_all($index, ['item.review_number', 'item.review_date', 'item.title', "qms_status_label('management_review'"])
+    && !str_contains($index, '<th>ID</th>')
+    && !str_contains($index, '/management_review/delete'),
+    'MR09',
+    '管理评审列表展示业务编号和中文状态，不暴露内部 ID 或提供无审批删除入口'
 );
 
 foreach ($passes as $pass) {

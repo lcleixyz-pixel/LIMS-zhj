@@ -45,7 +45,9 @@ final class ManagementReviewInputService
                 '其他相关因素：设备校准',
                 $calibrationTotal,
                 '/calibration/index',
-                sprintf('合格/通过 %d；不合格/失败 %d；限用 %d；其他或待确认 %d', $calibrationPass, $calibrationFail, $calibrationLimited, max(0, $calibrationTotal - $calibrationPass - $calibrationFail - $calibrationLimited))
+                $calibrationTotal > 0
+                    ? sprintf('合格/通过 %d；不合格/失败 %d；限用 %d；其他或待确认 %d', $calibrationPass, $calibrationFail, $calibrationLimited, max(0, $calibrationTotal - $calibrationPass - $calibrationFail - $calibrationLimited))
+                    : ''
             ),
         ];
 

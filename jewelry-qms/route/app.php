@@ -161,7 +161,8 @@ Route::group(function () {
     Route::get('calibration/downloadCertificate', 'Calibration/downloadCertificate');
     Route::post('audit_plan/approve', 'AuditPlan/approve');
     Route::post('audit_plan/complete', 'AuditPlan/complete');
-    Route::get('audit_finding/createCapa', 'AuditFinding/createCapa');
+    Route::post('audit_finding/createCapa', 'AuditFinding/createCapa');
+    Route::post('audit_schedule/complete', 'AuditSchedule/complete');
     Route::post('audit_finding/uploadEvidence', 'AuditFinding/uploadEvidence');
     Route::get('audit_finding/downloadEvidence', 'AuditFinding/downloadEvidence');
     Route::get('nonconformity/createCapa', 'Nonconformity/createCapa');

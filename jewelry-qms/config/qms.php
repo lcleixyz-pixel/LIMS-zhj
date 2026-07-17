@@ -84,6 +84,12 @@ return [
             'verified' => '已验证',
             'closed' => '已关闭',
         ],
+        'audit_checklist' => [
+            'conform' => '符合',
+            'nonconform' => '不符合',
+            'observation' => '观察项',
+            'na' => '不适用',
+        ],
         'management_review' => [
             'planned' => '计划中',
             'completed' => '已完成',

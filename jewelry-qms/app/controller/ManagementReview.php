@@ -7,6 +7,7 @@ use app\model\ManagementReview as ManagementReviewModel;
 use app\model\ReviewAction;
 use app\service\ManagementReviewInputService;
 use app\service\ExternalEvidenceReferenceService;
+use app\service\TrialModeService;
 use think\facade\Session;
 use think\facade\View;
 
@@ -43,6 +44,9 @@ class ManagementReview extends BusinessBase
             if (empty($data['review_number'])) {
                 $data['review_number'] = qms_next_number('MR', ManagementReviewModel::class, 'review_number');
             }
+            if (TrialModeService::isEnabled()) {
+                $data['review_number'] = TrialModeService::simulationNumber((string)$data['review_number']);
+            }
             $errors = $this->validateFormData($data);
             if ($errors !== []) {
                 return $this->renderFormValidationFailure($data, $this->viewPrefix . '/add');
@@ -60,9 +64,6 @@ class ManagementReview extends BusinessBase
         View::assign('pageTitle', $this->pageTitle . ' - 新增');
         $snapshot = ManagementReviewInputService::snapshot();
         View::assign('inputCategories', $snapshot['categories']);
-        View::assign('evidenceReferences', ExternalEvidenceReferenceService::forSubject('management_review', (string)$id));
-        View::assign('evidenceSubjectType', 'management_review');
-        View::assign('evidenceSubjectId', (string)$id);
         $this->assignFormContext();
 
         return View::fetch($this->viewPrefix . '/add');
@@ -84,6 +85,9 @@ class ManagementReview extends BusinessBase
         View::assign('record', $record);
         View::assign('actions', $actions);
         View::assign('inputCategories', $snapshot['categories']);
+        View::assign('evidenceReferences', ExternalEvidenceReferenceService::forSubject('management_review', (string)$id));
+        View::assign('evidenceSubjectType', 'management_review');
+        View::assign('evidenceSubjectId', (string)$id);
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 
         return View::fetch($this->viewPrefix . '/view');

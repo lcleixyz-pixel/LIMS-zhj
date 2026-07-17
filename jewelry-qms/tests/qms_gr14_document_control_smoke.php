@@ -42,9 +42,13 @@ $print = dc_source('app/service/ControlledPrintService.php');
 $authorization = dc_source('app/service/ActionAuthorizationService.php');
 $view = dc_source('app/view/document/view.html');
 $routes = dc_source('route/app.php');
+$rbac = dc_source('app/middleware/Rbac.php');
+$migration = dc_source('database/migrations/20260717_gr14_controlled_trial.sql');
 
 dc_check(
     dc_all($print, ["status !== 'published'", '当前正式发布版本才可生成正式受控打印'])
+    && str_contains($document, '$this->request->isPost()')
+    && str_contains($document, '受控打印必须从文件详情页提交')
     && str_contains($routes, "Route::post('document/controlledPrint'"),
     'DC01',
     '正式受控打印仅允许当前 published 版本且使用 POST'
@@ -111,6 +115,66 @@ dc_check(
     && str_contains($view, "qms_can_action('document', 'controlled_print'"),
     'DC07',
     '页面按钮与后端岗位动作边界一致'
+);
+
+dc_check(
+    str_contains($document, 'TrialModeService::isEnabled()')
+    && str_contains($document, "TrialModeService::simulationNumber((string)(\$data['doc_number'] ?? ''))"),
+    'DC08',
+    '试运行环境新登记文件由服务端强制 SIM 编号'
+);
+
+dc_check(
+    str_contains($rbac, "\$controller === 'approval' && \$action === 'approve'")
+    && str_contains($rbac, '&& !$isAssignedApprovalAction')
+    && strpos($rbac, '$isAssignedApprovalAction') < strpos($rbac, 'RbacService::canAccess($controller)'),
+    'DC09',
+    '已指派审核人可进入统一审批入口，最终岗位和本人校验仍由审批服务执行'
+);
+
+dc_check(
+    str_contains($print, 'TrialModeService::isEnabled()')
+    && str_contains($print, "'试运行/非正式受控副本 '"),
+    'DC10',
+    '8011 中 SIM 文件打印强制试运行水印，不冒充正式受控副本'
+);
+
+dc_check(
+    str_contains($document, "\$newVersion === (string)\$doc->version")
+    && str_contains($document, '$minorNum++'),
+    'DC11',
+    '发起修订时新版本号不得与当前版本号重复'
+);
+
+dc_check(
+    str_contains($view, 'action="/document/submitReview?id={$doc.id}"')
+    && !str_contains($view, "confirm('确认提交审核"),
+    'DC12',
+    '提交审核使用可追溯 POST，页面不再由阻塞式脚本造成按钮卡死'
+);
+
+dc_check(
+    str_contains($rbac, '$isDocumentRecipientAction')
+    && str_contains($rbac, "in_array(\$action, ['confirmreceipt', 'confirmrecall'], true)")
+    && substr_count($rbac, '&& !$isDocumentRecipientAction') >= 2,
+    'DC13',
+    '文件接收人可进入本人确认入口，最终对象归属仍由文件控制服务校验'
+);
+
+dc_check(
+    str_contains($document, "View::assign('distributionUserNames'")
+    && str_contains($view, '$distributionUserNames[$dist.user_id]'),
+    'DC14',
+    '文件分发列表显示接收人姓名，不暴露内部用户 UUID'
+);
+
+dc_check(
+    str_contains($migration, "TABLE_NAME = 'documents' AND COLUMN_NAME = 'site_id'")
+    && str_contains($authorization, 'documentManageableSiteIds')
+    && str_contains($document, "View::assign('sites'")
+    && str_contains($view, '适用场所'),
+    'DC15',
+    '文件按适用场所绑定，文件管理员只能管理本人任命场所'
 );
 
 foreach ($passes as $pass) {

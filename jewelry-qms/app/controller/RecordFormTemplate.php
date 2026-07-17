@@ -390,6 +390,7 @@ class RecordFormTemplate extends BaseController
         $record->setAttr('source_file_available', $this->sourceFileAvailable($record));
         View::assign('record', $record);
         View::assign('schema', RecordFormSchemaService::decode($record->field_schema));
+        View::assign('procedureDocument', $record->procedureDocument);
         View::assign('requirementEvidence', QmsDocumentStructureService::recordFormRequirementEvidence((string)$record->id));
         View::assign('canCreateInstances', $this->canCreateInstances());
         View::assign('trialReadinessErrors', TrialModeService::readinessErrors($record));

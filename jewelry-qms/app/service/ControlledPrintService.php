@@ -17,13 +17,16 @@ class ControlledPrintService
         }
         $copyCount = max(1, min(999, $copyCount));
         $printNumber = self::watermarkCode($document);
+        $isTrialCopy = TrialModeService::isEnabled()
+            && str_starts_with(strtoupper(trim((string)$document->doc_number)), 'SIM-');
+        $watermarkPrefix = $isTrialCopy ? '试运行/非正式受控副本 ' : '受控打印 ';
 
         return ControlledPrintLog::create([
             'document_id' => (string)$document->id,
             'print_number' => $printNumber,
             'copy_count' => $copyCount,
             'purpose' => self::truncate(trim($purpose), 200),
-            'watermark_text' => self::truncate('受控打印 ' . $printNumber, 200),
+            'watermark_text' => self::truncate($watermarkPrefix . $printNumber, 200),
             'printed_by' => Session::get('user.id'),
             'printed_at' => date('Y-m-d H:i:s'),
             'ip_address' => $ipAddress,

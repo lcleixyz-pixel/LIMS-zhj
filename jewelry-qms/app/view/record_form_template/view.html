@@ -51,6 +51,16 @@
             </tr>
             <tr><th>原始附件</th><td colspan="3">{$record.source_file_name|default='-'}</td></tr>
             <tr><th>正式编号映射</th><td>{$record.canonical_doc_number|default='-'}</td><th>试运行批次</th><td>{$record.trial_batch|default='-'}</td></tr>
+            <tr>
+                <th>来源程序</th>
+                <td colspan="3">
+                    {if $procedureDocument}
+                    <a href="/document/view?id={$procedureDocument.id}">{$procedureDocument.doc_number} {$procedureDocument.title}</a>
+                    {else}
+                    <span class="text-danger">未关联来源程序</span>
+                    {/if}
+                </td>
+            </tr>
             <tr><th>适用场所</th><td>{$record.applicable_sites|default='-'}</td><th>责任岗位</th><td>{$record.responsible_position_code|default='-'}</td></tr>
             <tr><th>保存期限</th><td>{$record.retention_period|default='-'}</td><th>批准时间</th><td>{$record.trial_approved_at|default='待批准'}</td></tr>
         </table>

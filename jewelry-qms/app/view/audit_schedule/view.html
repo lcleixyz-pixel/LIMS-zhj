@@ -2,6 +2,11 @@
     <div class="card-header d-flex justify-content-between">
         <h5 class="mb-0">审核日程</h5>
         <div>
+            {if $record.status != 'completed' && qms_can_action('audit_schedule', 'complete', $record)}
+            <form method="post" action="/audit_schedule/complete?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('确认检查记录、审核发现和 CAPA 均已闭环？')">完成日程</button>
+            </form>
+            {/if}
             <a href="/audit_checklist/add?audit_schedule_id={$record.id}" class="btn btn-sm btn-primary">添加检查项</a>
             <a href="/audit_finding/add?audit_schedule_id={$record.id}" class="btn btn-sm btn-warning">登记发现</a>
             <a href="/audit_plan/view?id={$plan.id}" class="btn btn-sm btn-outline-secondary">返回计划</a>
@@ -12,7 +17,7 @@
         <h6>检查表</h6>
         <table class="table table-sm mb-4">
             <thead><tr><th>条款</th><th>检查项</th><th>结果</th></tr></thead>
-            <tbody>{volist name="checklists" id="c"}<tr><td>{$c.clause}</td><td>{$c.check_item}</td><td>{$c.result|default='-'}</td></tr>{/volist}</tbody>
+            <tbody>{volist name="checklists" id="c"}<tr><td>{$c.clause}</td><td>{$c.check_item}</td><td>{:qms_status_label('audit_checklist', $c.result)}</td></tr>{/volist}</tbody>
         </table>
         <h6>审核发现</h6>
         <table class="table table-sm">
@@ -21,7 +26,7 @@
                 {volist name="findings" id="f"}
                 <tr>
                     <td>{$f.finding_number}</td>
-                    <td>{$f.finding_type}</td>
+                    <td>{$findingTypes[$f.finding_type]|default=$f.finding_type}</td>
                     <td>{$f.description|mb_substr=0,30,'utf-8'}</td>
                     <td>{:qms_status_label('audit_finding', $f.status)}</td>
                     <td><a href="/audit_finding/view?id={$f.id}">查看</a></td>
@@ -29,5 +34,12 @@
                 {/volist}
             </tbody>
         </table>
+        {notempty name="closureBlockers"}
+        <div class="alert alert-warning py-2 mb-0">
+            <strong>当前不能完成日程：</strong>{:implode('；', $closureBlockers)}
+        </div>
+        {else}
+        <div class="alert alert-success py-2 mb-0">检查记录、审核发现及关联 CAPA 已满足关闭条件。</div>
+        {/notempty}
     </div>
 </div>

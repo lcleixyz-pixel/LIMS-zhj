@@ -2,7 +2,11 @@
     <div class="card-header d-flex justify-content-between">
         <h5 class="mb-0">审核发现 {$record.finding_number}</h5>
         <div>
-            {if !$record.capa_id}<a href="/audit_finding/createCapa?id={$record.id}" class="btn btn-sm btn-warning" onclick="return confirm('创建CAPA？')">创建CAPA</a>{/if}
+            {if !$record.capa_id}
+            <form method="post" action="/audit_finding/createCapa?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('创建CAPA？')">创建CAPA</button>
+            </form>
+            {/if}
             <a href="/audit_schedule/view?id={$record.audit_schedule_id}" class="btn btn-sm btn-outline-secondary">返回</a>
         </div>
     </div>
