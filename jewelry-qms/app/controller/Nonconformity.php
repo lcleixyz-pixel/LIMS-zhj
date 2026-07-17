@@ -7,6 +7,8 @@ use app\model\Capa;
 use app\model\Nonconformity as NonconformityModel;
 use app\service\WorkflowService;
 use app\service\FieldAuditService;
+use app\service\ExternalEvidenceReferenceService;
+use app\service\TrialModeService;
 use think\facade\Session;
 use think\facade\View;
 
@@ -91,6 +93,9 @@ class Nonconformity extends BusinessBase
             if (empty($data['nc_number'])) {
                 $data['nc_number'] = qms_next_number('NC', NonconformityModel::class, 'nc_number');
             }
+            if (TrialModeService::isEnabled()) {
+                $data['nc_number'] = TrialModeService::simulationNumber((string)$data['nc_number']);
+            }
             if (empty($data['identified_date'])) {
                 $data['identified_date'] = date('Y-m-d');
             }
@@ -132,6 +137,9 @@ class Nonconformity extends BusinessBase
         View::assign('record', $record);
         View::assign('capa', $record->capa_id ? Capa::find($record->capa_id) : null);
         View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('Nonconformity', (string)$id));
+        View::assign('evidenceReferences', ExternalEvidenceReferenceService::forSubject('quality_event', (string)$id));
+        View::assign('evidenceSubjectType', 'quality_event');
+        View::assign('evidenceSubjectId', (string)$id);
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 
         return View::fetch($this->viewPrefix . '/view');

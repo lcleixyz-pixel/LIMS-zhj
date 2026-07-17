@@ -13,6 +13,8 @@ use app\service\RecordFormFixtureService;
 use app\service\RecordFormPrintService;
 use app\service\RecordFormReconstructionReviewService;
 use app\service\RecordFormSchemaService;
+use app\service\TrialModeService;
+use app\service\CoreTrialTemplateService;
 use InvalidArgumentException;
 use RuntimeException;
 use think\exception\HttpException;
@@ -123,14 +125,79 @@ class RecordFormTemplate extends BaseController
                     . '（缺失项：' . implode('、', $publishGate['missing_layers']) . '）';
                 $updates['review_note'] = trim($updates['review_note'] . "\n" . $hint);
             }
-            $updates['status'] = 'published';
         }
 
         $record->save($updates);
-        $statusUpgraded = isset($updates['status']);
-        Session::flash('success', '模板复核状态已更新' . ($statusUpgraded ? '，已自动升级为 published' : ''));
+        Session::flash('success', '模板复核状态已更新；复核完成不等同于正式发布或试运行批准。');
 
         return redirect('/record_form_template/review');
+    }
+
+    public function approveTrial()
+    {
+        if (!$this->request->isPost()) {
+            Session::flash('warning', '请从模板详情页提交试运行批准。');
+
+            return redirect('/record_form_template/index');
+        }
+
+        $record = $this->findTemplate();
+        if (!TrialModeService::isEnabled()) {
+            Session::flash('warning', '当前环境未开启受控试运行模式。');
+
+            return redirect('/record_form_template/view?id=' . $record->id);
+        }
+        if ((string)$record->status !== 'draft') {
+            Session::flash('warning', '只有草稿模板可批准为试运行就绪。');
+
+            return redirect('/record_form_template/view?id=' . $record->id);
+        }
+
+        $errors = TrialModeService::readinessErrors($record);
+        if ($errors !== []) {
+            Session::flash('warning', '不能进入试运行：' . implode('；', $errors));
+
+            return redirect('/record_form_template/view?id=' . $record->id);
+        }
+
+        $record->save([
+            'status' => 'trial_ready',
+            'trial_batch' => TrialModeService::trialBatch(),
+            'trial_approved_by' => (string)Session::get('user.id', ''),
+            'trial_approved_at' => date('Y-m-d H:i:s'),
+            'trial_note' => trim((string)$this->request->post('trial_note', '')),
+        ]);
+        Session::flash('success', '模板已批准进入本批受控试运行，不等同于正式发布。');
+
+        return redirect('/record_form_template/view?id=' . $record->id);
+    }
+
+    public function prepareCoreTrialTemplates()
+    {
+        if (!$this->request->isPost()) {
+            Session::flash('warning', '请从模板列表提交核心模板准备动作。');
+
+            return redirect('/record_form_template/index');
+        }
+
+        try {
+            $summary = CoreTrialTemplateService::prepare();
+            $message = sprintf(
+                '核心试运行模板准备完成：共 %d，新增 %d，更新 %d，跳过 %d',
+                $summary['total'],
+                $summary['created'],
+                $summary['updated'],
+                $summary['skipped']
+            );
+            if ($summary['errors'] !== []) {
+                $message .= '；问题：' . implode('；', $summary['errors']);
+            }
+            Session::flash($summary['errors'] === [] ? 'success' : 'warning', $message);
+        } catch (RuntimeException $exception) {
+            Session::flash('warning', $exception->getMessage());
+        }
+
+        return redirect('/record_form_template/index?keyword=SIM-TPL');
     }
 
     public function add()
@@ -163,7 +230,7 @@ class RecordFormTemplate extends BaseController
             $record->print_template_key = trim((string)($data['print_template_key'] ?? ''));
             $record->field_schema = RecordFormSchemaService::encode($schema);
             $record->version = trim((string)($data['version'] ?? 'A/0'));
-            $record->status = $data['status'] ?? 'draft';
+            $record->status = 'draft';
 
             if ($this->hasUploadedSourceFile()) {
                 $upload = FileService::upload($_FILES['source_file'], 'record-form-sources', $id);
@@ -196,6 +263,11 @@ class RecordFormTemplate extends BaseController
     public function edit()
     {
         $record = $this->findTemplate();
+        if ((string)$record->status !== 'draft') {
+            Session::flash('warning', '试运行就绪、正式发布或已作废模板不能直接编辑，请建立新的草稿版本。');
+
+            return redirect('/record_form_template/view?id=' . $record->id);
+        }
         $schemaDraftBlockId = trim((string)$this->request->param('schema_draft_block_id', ''));
         $schemaSuggestionId = trim((string)$this->request->param('schema_suggestion_id', ''));
         View::assign('schemaDraftNotice', '');
@@ -230,7 +302,7 @@ class RecordFormTemplate extends BaseController
                 'print_template_key' => trim((string)($data['print_template_key'] ?? '')),
                 'field_schema' => RecordFormSchemaService::encode($schema),
                 'version' => trim((string)($data['version'] ?? 'A/0')),
-                'status' => $data['status'] ?? 'draft',
+                'status' => (string)$record->status,
             ];
 
             if ($this->hasUploadedSourceFile()) {
@@ -318,8 +390,11 @@ class RecordFormTemplate extends BaseController
         $record->setAttr('source_file_available', $this->sourceFileAvailable($record));
         View::assign('record', $record);
         View::assign('schema', RecordFormSchemaService::decode($record->field_schema));
+        View::assign('procedureDocument', $record->procedureDocument);
         View::assign('requirementEvidence', QmsDocumentStructureService::recordFormRequirementEvidence((string)$record->id));
         View::assign('canCreateInstances', $this->canCreateInstances());
+        View::assign('trialReadinessErrors', TrialModeService::readinessErrors($record));
+        View::assign('trialModeEnabled', TrialModeService::isEnabled());
 
         return View::fetch('record_form_template/view');
     }
@@ -342,7 +417,9 @@ class RecordFormTemplate extends BaseController
         }
 
         try {
-            return RecordFormPrintService::render($record->print_template_key, $record->toArray(), $values);
+            $html = RecordFormPrintService::render($record->print_template_key, $record->toArray(), $values);
+
+            return TrialModeService::watermarkHtml($html, TrialModeService::isSimulationTemplate($record));
         } catch (RuntimeException $exception) {
             throw new HttpException(404, '打印预览不可用：' . $exception->getMessage());
         }
@@ -402,8 +479,8 @@ class RecordFormTemplate extends BaseController
         }
 
         $record = $this->findTemplate();
-        if ((string)$record->status === 'draft') {
-            Session::flash('warning', '草稿模板可删除；已发布模板才走作废/换版流程。');
+        if (!in_array((string)$record->status, ['trial_ready', 'published'], true)) {
+            Session::flash('warning', '只有试运行就绪或正式发布模板可停止使用；草稿可删除，已作废模板保持历史状态。');
 
             return redirect('/record_form_template/index');
         }
@@ -588,7 +665,7 @@ class RecordFormTemplate extends BaseController
     {
         $printTemplateKey = trim((string)$template->print_template_key);
 
-        return $template->status === 'published'
+        return TrialModeService::isTemplateUsable($template)
             && $printTemplateKey !== ''
             && $printTemplateKey !== 'generic_record_form'
             && $this->printTemplateExists($printTemplateKey);

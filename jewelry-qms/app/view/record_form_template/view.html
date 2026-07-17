@@ -15,6 +15,12 @@
             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="数据库有附件记录，但物理文件不存在">原始附件缺失</button>
             {/if}
             {if qms_can_action('record_form_template', 'draft', $record)}<a href="/record_form_template/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>{/if}
+            {if $trialModeEnabled && $record.status == 'draft' && qms_can_action('record_form_template', 'approve_trial', $record)}
+            <form method="post" action="/record_form_template/approveTrial?id={$record.id}" class="d-inline">
+                <input type="hidden" name="trial_note" value="G-R14 第一批核心模板人工批准">
+                <button type="submit" class="btn btn-sm btn-warning" {if !empty($trialReadinessErrors)}disabled title="仍有试运行放行缺口"{/if}>批准试运行</button>
+            </form>
+            {/if}
             {if $record.status == 'draft' && qms_can_action('record_form_template', 'draft', $record)}
             <form method="post" action="/record_form_template/delete?id={$record.id}" class="d-inline">
                 <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除草稿？')">删除草稿</button>
@@ -36,6 +42,7 @@
                 <th>状态</th>
                 <td>
                     {if $record.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
+                    {elseif $record.status == 'trial_ready'}<span class="badge bg-warning text-dark">试运行就绪（非正式发布）</span>
                     {elseif $record.status == 'published'}<span class="badge badge-status-effective">已发布</span>
                     {elseif $record.status == 'obsolete'}<span class="badge badge-status-obsolete">已作废</span>
                     {else}<span class="badge bg-secondary">{$record.status}</span>{/if}
@@ -43,7 +50,25 @@
                 <th>打印模板</th><td>{$record.print_template_key}</td>
             </tr>
             <tr><th>原始附件</th><td colspan="3">{$record.source_file_name|default='-'}</td></tr>
+            <tr><th>正式编号映射</th><td>{$record.canonical_doc_number|default='-'}</td><th>试运行批次</th><td>{$record.trial_batch|default='-'}</td></tr>
+            <tr>
+                <th>来源程序</th>
+                <td colspan="3">
+                    {if $procedureDocument}
+                    <a href="/document/view?id={$procedureDocument.id}">{$procedureDocument.doc_number} {$procedureDocument.title}</a>
+                    {else}
+                    <span class="text-danger">未关联来源程序</span>
+                    {/if}
+                </td>
+            </tr>
+            <tr><th>适用场所</th><td>{$record.applicable_sites|default='-'}</td><th>责任岗位</th><td>{$record.responsible_position_code|default='-'}</td></tr>
+            <tr><th>保存期限</th><td>{$record.retention_period|default='-'}</td><th>批准时间</th><td>{$record.trial_approved_at|default='待批准'}</td></tr>
         </table>
+        {notempty name="trialReadinessErrors"}
+        <div class="alert alert-warning py-2 mb-0">
+            <strong>试运行放行缺口：</strong>{:implode('；', $trialReadinessErrors)}
+        </div>
+        {/notempty}
     </div>
 </div>
 

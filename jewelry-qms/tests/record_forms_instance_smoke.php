@@ -47,6 +47,7 @@ class SmokeRecordFormInstance extends InstanceModel
     public string $template_version = '';
     public string $template_print_template_key = '';
     public string $template_field_schema = '';
+    public int $is_simulation = 0;
 
     public function __construct()
     {

@@ -44,7 +44,16 @@ class Rbac
             return $next($request);
         }
 
-        if (!RbacService::canAccess($controller)) {
+        // 责任链和文件审批均先允许命中统一入口，再由业务服务校验本人及有效岗位；
+        // 不能让通用模块权限先于业务动作授权把已指派审核人挡在门外。
+        $isBusinessResponsibilityApproval = $controller === 'planningresponsibility' && $action === 'approve';
+        $isAssignedApprovalAction = $controller === 'approval' && $action === 'approve';
+        $isDocumentRecipientAction = $controller === 'document'
+            && in_array($action, ['confirmreceipt', 'confirmrecall'], true);
+        if (!$isBusinessResponsibilityApproval
+            && !$isAssignedApprovalAction
+            && !$isDocumentRecipientAction
+            && !RbacService::canAccess($controller)) {
             SecurityAuditService::recordAccessDenied($request, 'module_access');
             if ($request->isAjax()) {
                 return json(['code' => 403, 'msg' => '无访问权限']);
@@ -66,10 +75,11 @@ class Rbac
             'extract', 'confirm', 'reject',
             'save', 'test', 'send', 'create', 'purge',
         ];
-        // 责任链签批以实时员工任命为业务身份，不以 RBAC 页面角色代替。
-        // 这里只放行该控制器的 approve；无有效总经理/实验室主任任命仍会被 ApprovalService 拒绝。
-        $isBusinessResponsibilityApproval = $controller === 'planningresponsibility' && $action === 'approve';
-        if (in_array($action, $writeActions, true) && !$isBusinessResponsibilityApproval && !RbacService::canWrite($controller)) {
+        if (in_array($action, $writeActions, true)
+            && !$isBusinessResponsibilityApproval
+            && !$isAssignedApprovalAction
+            && !$isDocumentRecipientAction
+            && !RbacService::canWrite($controller)) {
             SecurityAuditService::recordAccessDenied($request, 'write_access');
             Session::flash('error', '您没有编辑权限');
 

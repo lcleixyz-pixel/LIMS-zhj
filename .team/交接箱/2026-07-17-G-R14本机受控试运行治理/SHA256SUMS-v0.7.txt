@@ -1,0 +1,8 @@
+fde213a93cb4e316bfad690e09e52be6632be1cef033798a6fc3c356fb206377  ./15-PR34独立复审整改与8011复验记录-v0.4.md
+e64018c3e7a8e2a96f3062e037c4c850aa545a359b4da4d2b09d486b48075319  ./G-R14进度卡-v0.7.md
+640309967b7e8a2d3c3046be6c6030779d3d953f70973e3743beed0f1036ee7c  ./版本台账-v0.7.md
+5dc40cfef07eb09cbab90caa7b8f9db3c8146a93e6d10dde30c0bc4689c506aa  ./compose.gr14-candidate.yaml
+8c8de6ebbb59ddfcd3933357d5ccc7014d6bd1b40c50f71dcce45a609942ec0d  ../../../jewelry-qms/database/migrations/20260717_gr14_controlled_trial.sql
+e0c2fa21f2483315b5ce646dac21c1ea736a85fee23b8beefb4618f47e518fd0  ../../../jewelry-qms/deploy/local-trial/compose.yaml
+4ec03454cec5d4cfba620907557215d3df5a713eb678c006067f370a3f85f06e  ../../../jewelry-qms/deploy/local-trial/verify-release.sh
+41336e5a57bba153ae6f176ad957ee4401d8d08d09e24f5acb4b622fbf769a75  ../../../jewelry-qms/deploy/local-trial/migrate.sh

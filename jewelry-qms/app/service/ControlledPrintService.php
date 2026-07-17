@@ -5,21 +5,33 @@ namespace app\service;
 
 use app\model\ControlledPrintLog;
 use app\model\Document;
+use RuntimeException;
 use think\facade\Session;
 
 class ControlledPrintService
 {
     public static function createLog(Document $document, int $copyCount = 1, string $purpose = '', ?string $ipAddress = null): ControlledPrintLog
     {
+        $isTrialCopy = TrialModeService::isSimulationNumber((string)$document->doc_number);
+        if ($isTrialCopy && !TrialModeService::isEnabled()) {
+            throw new RuntimeException('试运行文件只能在受控试运行环境打印');
+        }
+        if ($isTrialCopy && ((string)$document->status !== 'trial_ready' || (int)$document->publish !== 1)) {
+            throw new RuntimeException('试运行文件状态无效，不能生成打印件');
+        }
+        if (!$isTrialCopy && ((string)$document->status !== 'published' || (int)$document->publish !== 1)) {
+            throw new RuntimeException('当前正式发布版本才可生成正式受控打印');
+        }
         $copyCount = max(1, min(999, $copyCount));
         $printNumber = self::watermarkCode($document);
+        $watermarkPrefix = $isTrialCopy ? '试运行/非正式受控副本 ' : '受控打印 ';
 
         return ControlledPrintLog::create([
             'document_id' => (string)$document->id,
             'print_number' => $printNumber,
             'copy_count' => $copyCount,
             'purpose' => self::truncate(trim($purpose), 200),
-            'watermark_text' => self::truncate('受控打印 ' . $printNumber, 200),
+            'watermark_text' => self::truncate($watermarkPrefix . $printNumber, 200),
             'printed_by' => Session::get('user.id'),
             'printed_at' => date('Y-m-d H:i:s'),
             'ip_address' => $ipAddress,

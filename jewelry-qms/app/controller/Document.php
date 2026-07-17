@@ -12,13 +12,16 @@ use app\model\DocumentDistribution;
 use app\model\DocumentRevision;
 use app\model\DocumentReview;
 use app\model\DocTemplate;
+use app\model\Site;
 use app\model\User;
 use app\service\ApprovalService;
+use app\service\ActionAuthorizationService;
 use app\service\ControlledPrintService;
 use app\service\DocumentControlService;
 use app\service\FieldAuditService;
 use app\service\FileService;
 use app\service\QmsDocumentStructureService;
+use app\service\TrialModeService;
 use think\exception\ValidateException;
 use think\exception\HttpException;
 use think\facade\Config;
@@ -31,6 +34,15 @@ class Document extends BaseController
     public function index()
     {
         $query = DocumentModel::where('soft_delete', 0);
+        $manageableSiteIds = ActionAuthorizationService::documentManageableSiteIds();
+        if ($manageableSiteIds !== null) {
+            $query->where(function ($query) use ($manageableSiteIds) {
+                $query->whereNull('site_id');
+                if ($manageableSiteIds !== []) {
+                    $query->whereOr('site_id', 'in', $manageableSiteIds);
+                }
+            });
+        }
 
         if ($level = $this->request->param('level')) {
             $query->where('level', $level);
@@ -56,6 +68,7 @@ class Document extends BaseController
             'status' => $this->request->param('status', ''),
             'keyword' => $this->request->param('keyword', ''),
         ]);
+        View::assign('siteMap', Site::where('soft_delete', 0)->column('name', 'id'));
 
         return View::fetch('document/index');
     }
@@ -64,6 +77,9 @@ class Document extends BaseController
     {
         if ($this->request->isPost()) {
             $data = $this->request->post();
+            if (TrialModeService::isEnabled()) {
+                $data['doc_number'] = TrialModeService::simulationNumber((string)($data['doc_number'] ?? ''));
+            }
             $errors = $this->validateDocumentInput($data);
             if ($errors !== []) {
                 $this->flashValidationErrors($errors);
@@ -132,14 +148,16 @@ class Document extends BaseController
         if (!$document) {
             throw new HttpException(404, '文件不存在');
         }
-        if ($document->status === 'published') {
-            Session::flash('warning', '已发布的文件不能直接编辑，请使用修订流程');
+        if ((string)$document->status !== 'draft') {
+            Session::flash('warning', '只有草稿文件可直接编辑；审核中、已批准、试运行就绪、正式发布或已作废文件请使用受控流程');
 
             return redirect('/document/view?id=' . $id);
         }
 
         if ($this->request->isPost()) {
             $data = $this->request->post();
+            // 场所属于文件受控边界，不能借编辑动作跨场所转移。
+            $data['site_id'] = (string)$document->site_id;
             $errors = $this->validateDocumentInput($data, (string)$id);
             if ($errors !== []) {
                 $this->flashValidationErrors($errors);
@@ -221,10 +239,12 @@ class Document extends BaseController
         View::assign('doc', $doc);
         View::assign('categoryName', $categoryName);
         View::assign('departmentName', $departmentName);
+        View::assign('siteName', $doc->site_id ? (string)(Site::where('id', $doc->site_id)->value('name') ?? '-') : '-');
         View::assign('revisions', $revisions);
         View::assign('approvals', $approvals);
         View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('Document', (string)$id));
         View::assign('distributions', $distributions);
+        View::assign('distributionUserNames', User::where('soft_delete', 0)->column('name', 'id'));
         View::assign('reviews', $reviews);
         View::assign('distributionUsers', User::where('soft_delete', 0)->where('publish', 1)->order('name', 'asc')->select());
         View::assign('structureSummary', QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id));
@@ -340,13 +360,24 @@ class Document extends BaseController
     public function controlledPrint()
     {
         $doc = $this->loadDocument((string)$this->request->param('id', ''));
+        if (!$this->request->isPost()) {
+            Session::flash('error', '受控打印必须从文件详情页提交，直接打开链接不会产生打印记录。');
+
+            return redirect('/document/view?id=' . $doc->id);
+        }
         $copyCount = (int)$this->request->param('copy_count', 1);
         $purpose = trim((string)$this->request->param('purpose', '受控打印'));
         if ($purpose === '') {
             $purpose = '受控打印';
         }
 
-        $printLog = ControlledPrintService::createLog($doc, $copyCount, $purpose, $this->request->ip());
+        try {
+            $printLog = ControlledPrintService::createLog($doc, $copyCount, $purpose, $this->request->ip());
+        } catch (\RuntimeException $exception) {
+            Session::flash('error', $exception->getMessage());
+
+            return redirect('/document/view?id=' . $doc->id);
+        }
 
         View::assign('doc', $doc);
         View::assign('printLog', $printLog);
@@ -368,25 +399,52 @@ class Document extends BaseController
             $majorLetter = chr(ord('A') + (int) (($rev - 1) / 10));
             $minorNum = ($rev - 1) % 10;
             $newVersion = $majorLetter . '/' . $minorNum;
+            if ($newVersion === (string)$doc->version) {
+                $minorNum++;
+                if ($minorNum > 9) {
+                    $majorLetter = chr(ord($majorLetter) + 1);
+                    $minorNum = 0;
+                }
+                $newVersion = $majorLetter . '/' . $minorNum;
+            }
 
-            $update = [
-                'version' => $newVersion,
-                'revision' => $rev,
-                'status' => 'draft',
-                'change_reason' => $this->request->post('change_reason', ''),
-                'publish' => 0,
-            ];
+            $newId = qms_uuid();
+            $newDocument = new DocumentModel();
+            $newDocument->id = $newId;
+            $newDocument->supersedes_document_id = (string)$doc->id;
+            $newDocument->revision_root_id = trim((string)$doc->revision_root_id) ?: (string)$doc->id;
+            $newDocument->category_id = $doc->category_id;
+            $newDocument->template_id = $doc->template_id;
+            $newDocument->level = $doc->level;
+            $newDocument->doc_number = TrialModeService::isEnabled()
+                ? TrialModeService::simulationNumber((string)$doc->doc_number)
+                : $doc->doc_number;
+            $newDocument->title = $doc->title;
+            $newDocument->version = $newVersion;
+            $newDocument->revision = $rev;
+            $newDocument->department_id = $doc->department_id;
+            $newDocument->site_id = $doc->site_id;
+            $newDocument->review_date = $doc->review_date;
+            $newDocument->status = 'draft';
+            $newDocument->file_path = $doc->file_path;
+            $newDocument->file_name = $doc->file_name;
+            $newDocument->file_type = $doc->file_type;
+            $newDocument->prepared_by = Session::get('user.employee_id');
+            $newDocument->reviewed_by = $doc->reviewed_by;
+            $newDocument->approved_by = $doc->approved_by;
+            $newDocument->change_reason = trim((string)$this->request->post('change_reason', ''));
+            $newDocument->publish = 0;
 
             if (!empty($_FILES['document_file']['name'])) {
-                $upload = FileService::upload($_FILES['document_file'], 'documents', $id);
+                $upload = FileService::upload($_FILES['document_file'], 'documents', $newId);
                 if ($upload) {
-                    $update['file_name'] = $upload['file_name'];
-                    $update['file_path'] = $upload['file_path'];
-                    $update['file_type'] = $upload['file_type'];
+                    $newDocument->file_name = $upload['file_name'];
+                    $newDocument->file_path = $upload['file_path'];
+                    $newDocument->file_type = $upload['file_type'];
                 }
             }
 
-            Db::transaction(function () use ($doc, $update, $id) {
+            Db::transaction(function () use ($doc, $newDocument, $newId, $id) {
                 DocumentRevision::create([
                     'id' => qms_uuid(),
                     'document_id' => $id,
@@ -398,12 +456,21 @@ class Document extends BaseController
                     'created_by' => Session::get('user.id'),
                     'created' => date('Y-m-d H:i:s'),
                 ]);
-                $doc->save($update);
+                $newDocument->save();
+                ApprovalService::createWorkflow(
+                    'document',
+                    'Document',
+                    $newId,
+                    (int)$newDocument->level,
+                    (string)Session::get('user.id'),
+                    $this->_employeeToUser((string)$newDocument->reviewed_by),
+                    $this->_employeeToUser((string)$newDocument->approved_by)
+                );
             });
             $message = '已生成修订版本 ' . $newVersion;
             try {
                 $structure = QmsDocumentStructureService::refreshControlledDocumentStructure(
-                    (string)$doc->id,
+                    $newId,
                     '文件控制修订同步：' . (string)$this->request->post('change_reason', '')
                 );
                 $message .= '，结构化文件已同步为草稿：' . (string)($structure['structured_document']['rendered_file_path'] ?? '');
@@ -412,7 +479,7 @@ class Document extends BaseController
             }
             Session::flash('success', $message);
 
-            return redirect('/document/view?id=' . $id);
+            return redirect('/document/view?id=' . $newId);
         }
 
         View::assign('doc', $doc);
@@ -477,10 +544,16 @@ class Document extends BaseController
         $templates = DocTemplate::where('soft_delete', 0)->select();
         $departments = \app\model\Department::where('soft_delete', 0)->select();
         $employees = \app\model\Employee::where('soft_delete', 0)->select();
+        $sites = Site::where('soft_delete', 0)->where('status', 'active');
+        $manageableSiteIds = ActionAuthorizationService::documentManageableSiteIds();
+        if ($manageableSiteIds !== null) {
+            $sites->whereIn('id', $manageableSiteIds);
+        }
 
         View::assign('categories', $categories);
         View::assign('templates', $templates);
         View::assign('departments', $departments);
+        View::assign('sites', $sites->order('sort_order', 'asc')->select());
         View::assign('employees', $employees);
         View::assign('reviewers', $employees);
         View::assign('approvers', $employees);
@@ -506,10 +579,12 @@ class Document extends BaseController
                 ],
                 'title' => 'require',
                 'level' => 'require',
+                'site_id' => 'require',
             ], [
                 'doc_number.require' => '文件编号不能为空',
                 'title.require' => '文件标题不能为空',
                 'level.require' => '请选择文件层级',
+                'site_id.require' => '请选择适用场所',
             ], true);
         } catch (ValidateException $exception) {
             $error = $exception->getError();

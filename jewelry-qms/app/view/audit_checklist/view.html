@@ -1,0 +1,18 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">审核检查记录</h5>
+        <a href="/audit_checklist/index" class="btn btn-sm btn-outline-secondary">返回列表</a>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-sm mb-0">
+            <tbody>
+                <tr><th style="width:220px">审核日程</th><td>{$record.audit_schedule_id}</td></tr>
+                <tr><th>条款</th><td>{$record.clause|default='-'}</td></tr>
+                <tr><th>检查项</th><td>{$record.check_item}</td></tr>
+                <tr><th>检查结果</th><td>{:qms_status_label('audit_checklist', $record.result)}</td></tr>
+                <tr><th>客观证据</th><td>{$record.evidence|default='-'}</td></tr>
+                <tr><th>创建时间</th><td>{$record.created|default='-'}</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>

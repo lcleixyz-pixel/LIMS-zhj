@@ -2,8 +2,14 @@
     <div class="card-header d-flex justify-content-between">
         <h5 class="mb-0">管理评审 {$record.review_number}</h5>
         <div>
-            {if $record.status != 'completed'}<a href="/management_review/complete?id={$record.id}" class="btn btn-sm btn-success">标记完成</a>{/if}
+            {if $record.status != 'completed' && qms_can_action('management_review', 'complete', $record)}
+            <form method="post" action="/management_review/complete?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-success">标记完成</button>
+            </form>
+            {/if}
+            {if qms_can_action('management_review', 'organize', $record)}
             <a href="/review_action/add?management_review_id={$record.id}" class="btn btn-sm btn-primary">添加决议</a>
+            {/if}
         </div>
     </div>
     <div class="card-body">
@@ -14,6 +20,23 @@
             <tr><th>评审输入</th><td><pre class="mb-0">{$record.inputs|default='-'}</pre></td></tr>
             <tr><th>评审输出</th><td>{$record.outputs|default='-'}</td></tr>
         </table>
+        <h6>ISO/IEC 17025 8.9.2 输入分类快照</h6>
+        <div class="table-responsive mb-4">
+            <table class="table table-sm table-bordered align-middle">
+                <thead><tr><th>条款</th><th>输入分类</th><th>形成状态</th><th>摘要</th><th>明细</th></tr></thead>
+                <tbody>
+                    {volist name="inputCategories" id="category"}
+                    <tr>
+                        <td>{$category.clause}</td>
+                        <td>{$category.label}</td>
+                        <td>{$category.status_label|default='未形成/待补充'}</td>
+                        <td>{$category.summary|default='未形成/待补充'}</td>
+                        <td><a href="{$category.detail_url}">查看明细</a></td>
+                    </tr>
+                    {/volist}
+                </tbody>
+            </table>
+        </div>
         <h6>评审决议跟踪</h6>
         <table class="table table-sm">
             <thead><tr><th>决议</th><th>截止</th><th>状态</th><th>操作</th></tr></thead>
@@ -30,3 +53,4 @@
         </table>
     </div>
 </div>
+{include file="common/external_evidence_references" /}

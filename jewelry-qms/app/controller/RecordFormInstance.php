@@ -15,6 +15,7 @@ use app\service\RecordFormLayoutConfirmationService;
 use app\service\RecordFormInstanceTitleService;
 use app\service\RecordFormPrintService;
 use app\service\RecordFormSchemaService;
+use app\service\TrialModeService;
 use InvalidArgumentException;
 use RuntimeException;
 use think\exception\HttpException;
@@ -194,6 +195,10 @@ class RecordFormInstance extends BaseController
                 $recordTitle = (string)$currentSuggestion['record_title'];
             }
 
+            $isSimulation = TrialModeService::isSimulationTemplate($template);
+            if ($isSimulation) {
+                $recordTitle = TrialModeService::simulationNumber($recordTitle);
+            }
             $record = InstanceModel::create([
                 'id' => qms_uuid(),
                 'template_id' => $template->id,
@@ -202,10 +207,14 @@ class RecordFormInstance extends BaseController
                 'template_version' => $snapshot['version'],
                 'template_print_template_key' => $snapshot['print_template_key'],
                 'template_field_schema' => $snapshot['field_schema'],
-                'doc_number' => $template->doc_number,
+                'doc_number' => $isSimulation
+                    ? TrialModeService::simulationNumber((string)$template->doc_number)
+                    : $template->doc_number,
                 'record_title' => $recordTitle,
                 'field_values' => $this->encodeValues($values),
                 'status' => 'draft',
+                'is_simulation' => $isSimulation ? 1 : 0,
+                'trial_batch' => $isSimulation ? TrialModeService::trialBatch() : null,
             ]);
             Session::flash('success', '记录草稿已保存');
 
@@ -285,8 +294,12 @@ class RecordFormInstance extends BaseController
             $values = RecordFormSchemaService::enforceReadonly($schema, $values);
             $errors = RecordFormSchemaService::validateValues($schema, $values);
             if ($errors === []) {
+                $recordTitle = trim((string)$this->request->post('record_title', $record->record_title));
+                if ((bool)$record->is_simulation) {
+                    $recordTitle = TrialModeService::simulationNumber($recordTitle);
+                }
                 $record->save([
-                    'record_title' => trim((string)$this->request->post('record_title', $record->record_title)),
+                    'record_title' => $recordTitle,
                     'field_values' => $this->encodeValues($values),
                     'status' => 'draft',
                     'generated_html_path' => null,
@@ -454,7 +467,7 @@ class RecordFormInstance extends BaseController
     {
         $printTemplateKey = trim((string)$template->print_template_key);
 
-        return $template->status === 'published'
+        return TrialModeService::isTemplateUsable($template)
             && $printTemplateKey !== ''
             && $printTemplateKey !== 'generic_record_form'
             && $this->printTemplateExists($printTemplateKey);
@@ -498,7 +511,9 @@ class RecordFormInstance extends BaseController
         $values = $this->decodeValues($record->field_values);
 
         try {
-            return RecordFormPrintService::render((string)$template['print_template_key'], $template, $values);
+            $html = RecordFormPrintService::render((string)$template['print_template_key'], $template, $values);
+
+            return TrialModeService::watermarkHtml($html, (bool)$record->is_simulation);
         } catch (RuntimeException $exception) {
             throw new HttpException(404, '打印预览不可用：' . $exception->getMessage());
         }
@@ -575,7 +590,8 @@ class RecordFormInstance extends BaseController
 
     private function canEditRecord(InstanceModel $record): bool
     {
-        return (string)$record->status === 'draft';
+        return (string)$record->status === 'draft'
+            && (!(bool)$record->is_simulation || TrialModeService::isEnabled());
     }
 
     private function previewPdfFiles(string $recordId): array

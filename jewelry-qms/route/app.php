@@ -49,10 +49,12 @@ Route::group(function () {
     Route::post('document/confirmReceipt', 'Document/confirmReceipt');
     Route::post('document/confirmRecall', 'Document/confirmRecall');
     Route::post('document/obsolete', 'Document/obsolete');
-    Route::rule('document/submitReview', 'Document/submitReview');
+    Route::post('document/submitReview', 'Document/submitReview');
     Route::get('document/onlyoffice', 'Document/onlyoffice');
-    Route::get('document/controlledPrint', 'Document/controlledPrint');
+    Route::post('document/controlledPrint', 'Document/controlledPrint');
     Route::get('document/download', 'Document/download');
+    Route::get('external_evidence_reference/index', 'ExternalEvidenceReference/index');
+    Route::post('external_evidence_reference/add', 'ExternalEvidenceReference/add');
 
     Route::rule('record_form_template/index', 'RecordFormTemplate/index');
     Route::rule('record_form_template/add', 'RecordFormTemplate/add');
@@ -63,6 +65,8 @@ Route::group(function () {
     Route::post('record_form_template/obsolete', 'RecordFormTemplate/obsolete');
     Route::get('record_form_template/review', 'RecordFormTemplate/review');
     Route::post('record_form_template/updateReview', 'RecordFormTemplate/updateReview');
+    Route::post('record_form_template/approveTrial', 'RecordFormTemplate/approveTrial');
+    Route::post('record_form_template/prepareCoreTrialTemplates', 'RecordFormTemplate/prepareCoreTrialTemplates');
     Route::get('record_form_template/source', 'RecordFormTemplate/source');
     Route::get('record_form_template/sourcePreview', 'RecordFormTemplate/sourcePreview');
     Route::get('record_form_template/preview', 'RecordFormTemplate/preview');
@@ -155,15 +159,17 @@ Route::group(function () {
     Route::rule('capa/advance', 'Capa/advance');
     Route::post('calibration/uploadCertificate', 'Calibration/uploadCertificate');
     Route::get('calibration/downloadCertificate', 'Calibration/downloadCertificate');
-    Route::get('audit_plan/approve', 'AuditPlan/approve');
-    Route::get('audit_finding/createCapa', 'AuditFinding/createCapa');
+    Route::post('audit_plan/approve', 'AuditPlan/approve');
+    Route::post('audit_plan/complete', 'AuditPlan/complete');
+    Route::post('audit_finding/createCapa', 'AuditFinding/createCapa');
+    Route::post('audit_schedule/complete', 'AuditSchedule/complete');
     Route::post('audit_finding/uploadEvidence', 'AuditFinding/uploadEvidence');
     Route::get('audit_finding/downloadEvidence', 'AuditFinding/downloadEvidence');
     Route::get('nonconformity/createCapa', 'Nonconformity/createCapa');
     Route::get('complaint/createCapa', 'Complaint/createCapa');
     Route::rule('complaint/advance', 'Complaint/advance');
     Route::post('capa/reviewEffectiveness', 'Capa/reviewEffectiveness');
-    Route::get('management_review/complete', 'ManagementReview/complete');
+    Route::post('management_review/complete', 'ManagementReview/complete');
     Route::rule('review_action/verify', 'ReviewAction/verify');
     Route::get('review_action/createCapa', 'ReviewAction/createCapa');
     Route::get('training/complete', 'Training/complete');

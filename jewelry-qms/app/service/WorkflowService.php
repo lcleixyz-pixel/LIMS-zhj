@@ -46,10 +46,14 @@ class WorkflowService
                     return [$existing, false];
                 }
 
+                $capaNumber = qms_next_number('CAPA', Capa::class, 'capa_number');
+                if (TrialModeService::isEnabled()) {
+                    $capaNumber = TrialModeService::simulationNumber($capaNumber);
+                }
                 $capa = Capa::create([
                     'id' => qms_uuid(),
                     'company_id' => Config::get('qms.company_id'),
-                    'capa_number' => qms_next_number('CAPA', Capa::class, 'capa_number'),
+                    'capa_number' => $capaNumber,
                     'source_id' => $sourceId,
                     'source_type' => $sourceType,
                     'source_record_id' => $sourceRecordId,
@@ -77,6 +81,12 @@ class WorkflowService
                 return $existing;
             });
             $created = false;
+        }
+
+        if ($sourceType === 'audit' && $created) {
+            AuditFinding::where('id', $sourceRecordId)
+                ->where('soft_delete', 0)
+                ->update(['status' => 'correcting']);
         }
 
         if ($created && $assignedTo) {
@@ -257,14 +267,25 @@ class WorkflowService
                 $capa->effectiveness_result = trim((string)$data['effectiveness_result']) ?: null;
             }
             $capa->save();
+            if ((string)$capa->source_type === 'audit') {
+                AuditFinding::where('id', (string)$capa->source_record_id)
+                    ->where('soft_delete', 0)
+                    ->update(['status' => 'closed']);
+            }
 
             return true;
         }
 
         if ($action === 'advance' && isset($flow[$current])) {
-            foreach ($data as $key => $value) {
-                if ($capa->hasColumn($key)) {
-                    $capa->$key = $value;
+            $allowedAdvanceFields = match ($current) {
+                'open' => ['root_cause', 'assigned_to', 'due_date'],
+                'analyzing' => ['root_cause', 'corrective_action', 'preventive_action', 'assigned_to', 'due_date'],
+                'implementing' => ['corrective_action', 'preventive_action', 'verification', 'due_date'],
+                default => [],
+            };
+            foreach ($allowedAdvanceFields as $key) {
+                if (array_key_exists($key, $data) && $capa->hasColumn($key)) {
+                    $capa->$key = $data[$key];
                 }
             }
             $capa->status = $flow[$current];
@@ -292,7 +313,15 @@ class WorkflowService
         }
 
         $calibrationTotal = Calibration::where('soft_delete', 0)->count();
-        $calibrationPass = Calibration::where('soft_delete', 0)->where('result', 'pass')->count();
+        $calibrationPass = Calibration::where('soft_delete', 0)->whereIn('result', [
+            'pass', 'qualified', 'conform', '合格', '通过',
+        ])->count();
+        $calibrationFail = Calibration::where('soft_delete', 0)->whereIn('result', [
+            'fail', 'failed', 'unqualified', 'nonconform', '不合格', '失败',
+        ])->count();
+        $calibrationLimited = Calibration::where('soft_delete', 0)->whereIn('result', [
+            'limited', 'restricted', '限用',
+        ])->count();
         $trainingTotal = Training::where('soft_delete', 0)->count();
         $trainingCompleted = Training::where('soft_delete', 0)->where('status', 'completed')->count();
 
@@ -313,9 +342,10 @@ class WorkflowService
             'open_nc' => Nonconformity::where('status', '<>', 'closed')->where('soft_delete', 0)->count(),
             'calibrations_total' => $calibrationTotal,
             'calibrations_pass' => $calibrationPass,
-            'calibrations_fail' => Calibration::where('soft_delete', 0)->where('result', 'fail')->count(),
-            'calibrations_limited' => Calibration::where('soft_delete', 0)->where('result', 'limited')->count(),
+            'calibrations_fail' => $calibrationFail,
+            'calibrations_limited' => $calibrationLimited,
             'calibration_pass_rate' => self::percentage($calibrationPass, $calibrationTotal),
+            'calibration_status_label' => $calibrationTotal > 0 ? '已形成' : '未形成/待补充',
             'trainings_total' => $trainingTotal,
             'trainings_completed' => $trainingCompleted,
             'training_completion_rate' => self::percentage($trainingCompleted, $trainingTotal),
@@ -344,12 +374,16 @@ class WorkflowService
                 . '；未关闭投诉 ' . (int)($metrics['complaints_open'] ?? ($metrics['open_complaints'] ?? 0))
                 . '；已关闭投诉 ' . (int)($metrics['complaints_closed'] ?? 0)
                 . '；未关闭不符合 ' . (int)($metrics['nonconformities_open'] ?? ($metrics['open_nc'] ?? 0)),
-            '校准合格率：' . self::formatPercent((float)($metrics['calibration_pass_rate'] ?? 0))
-                . '（合格 ' . (int)($metrics['calibrations_pass'] ?? 0)
-                . ' / 总数 ' . (int)($metrics['calibrations_total'] ?? 0) . '）',
-            '培训完成率：' . self::formatPercent((float)($metrics['training_completion_rate'] ?? 0))
-                . '（完成 ' . (int)($metrics['trainings_completed'] ?? 0)
-                . ' / 总数 ' . (int)($metrics['trainings_total'] ?? 0) . '）',
+            '校准合格率：' . ((int)($metrics['calibrations_total'] ?? 0) > 0
+                ? self::formatPercent((float)($metrics['calibration_pass_rate'] ?? 0))
+                    . '（合格/通过 ' . (int)($metrics['calibrations_pass'] ?? 0)
+                    . ' / 总数 ' . (int)($metrics['calibrations_total'] ?? 0) . '）'
+                : '未形成/待补充'),
+            '培训完成率：' . ((int)($metrics['trainings_total'] ?? 0) > 0
+                ? self::formatPercent((float)($metrics['training_completion_rate'] ?? 0))
+                    . '（完成 ' . (int)($metrics['trainings_completed'] ?? 0)
+                    . ' / 总数 ' . (int)($metrics['trainings_total'] ?? 0) . '）'
+                : '未形成/待补充'),
             '内审发现统计：总数 ' . (int)($metrics['audit_findings_total'] ?? 0)
                 . '；待整改 ' . (int)($metrics['audit_findings_open'] ?? 0)
                 . '；整改中 ' . (int)($metrics['audit_findings_correcting'] ?? 0)

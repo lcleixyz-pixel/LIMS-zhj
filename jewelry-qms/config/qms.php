@@ -5,6 +5,10 @@ return [
     'company_id' => '00000000-0000-0000-0000-000000000001',
     'environment_label' => getenv('QMS_ENV_LABEL') ?: '',
     'environment_notice' => getenv('QMS_ENV_NOTICE') ?: '',
+    'trial_mode' => [
+        'enabled' => env('QMS_TRIAL_MODE', getenv('QMS_TRIAL_MODE') ?: false),
+        'batch' => env('QMS_TRIAL_BATCH', getenv('QMS_TRIAL_BATCH') ?: ''),
+    ],
 
     'docLevels' => [
         1 => '质量手册',
@@ -35,7 +39,7 @@ return [
             'compliance', 'ai_assistant', 'ai_chat',
             'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningregulatorycandidate', 'planningchangeevent', 'planningobjective', 'planningresponsibility',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
-            'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
+            'management_review', 'review_action', 'capa', 'nonconformity', 'complaint', 'external_evidence_reference',
             'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',
             'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate',
             'supplier', 'supplier_evaluation', 'import', 'notification',
@@ -43,11 +47,11 @@ return [
         ],
         'auditor' => [
             'dashboard', 'calendar', 'compliance', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
-            'capa', 'nonconformity', 'complaint', 'notification',
+            'capa', 'nonconformity', 'complaint', 'external_evidence_reference', 'notification',
         ],
         'department_head' => [
-            'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'capa', 'nonconformity', 'complaint',
-            'equipment', 'equipment_maintenance', 'equipment_transfer', 'equipment_authorization', 'calibration', 'reference_material',
+            'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'capa', 'nonconformity', 'complaint', 'external_evidence_reference',
+            'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',
             'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate', 'notification',
         ],
         'staff' => [
@@ -79,6 +83,12 @@ return [
             'correcting' => '整改中',
             'verified' => '已验证',
             'closed' => '已关闭',
+        ],
+        'audit_checklist' => [
+            'conform' => '符合',
+            'nonconform' => '不符合',
+            'observation' => '观察项',
+            'na' => '不适用',
         ],
         'management_review' => [
             'planned' => '计划中',

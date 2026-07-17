@@ -36,11 +36,7 @@
                 </div>
                 <div class="col-md-3 mb-3">
                     <label class="form-label">状态</label>
-                    <select name="status" class="form-select">
-                        <option value="draft" {if $record.status == 'draft'}selected{/if}>草稿</option>
-                        <option value="published" {if $record.status == 'published'}selected{/if}>已发布</option>
-                        <option value="obsolete" {if $record.status == 'obsolete'}selected{/if}>已作废</option>
-                    </select>
+                    <input type="text" class="form-control" value="草稿（状态不能在编辑页修改）" readonly>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label required">打印模板键</label>

@@ -10,9 +10,9 @@
                 {volist name="items" id="item"}
                 <tr>
                     <td>{$item.audit_date}</td>
-                    <td>{$item.department_id|default='-'}</td>
+                    <td>{$departmentNames[$item.department_id]|default='-'}</td>
                     <td>{$item.clause|default='-'}</td>
-                    <td>{$item.site_id|default='未指定'}</td>
+                    <td>{$siteNames[$item.site_id]|default='未指定'}</td>
                     <td>{:qms_status_label('audit_schedule', $item.status)}</td>
                     <td>
                         <a href="/audit_schedule/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>

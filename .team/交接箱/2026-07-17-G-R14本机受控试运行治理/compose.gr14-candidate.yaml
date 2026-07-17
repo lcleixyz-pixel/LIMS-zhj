@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: /Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.worktrees/g-r14-controlled-trial-governance/jewelry-qms
+      dockerfile: docker/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_DEBUG: "false"
+      TZ: Asia/Shanghai
+      DB_TYPE: mysql
+      DB_HOST: db
+      DB_NAME: jewelry_qms
+      DB_USER: root
+      DB_PASS: ""
+      DB_PORT: "3306"
+      DB_CHARSET: utf8mb4
+      DEFAULT_LANG: zh-cn
+      QMS_TRIAL_MODE: "1"
+      QMS_TRIAL_BATCH: "GR14-20260717"
+      QMS_ENV_LABEL: "8011 受控试运行候选"
+      QMS_ENV_NOTICE: "仅保存质量活动和外部证据引用；试运行记录必须带 SIM- 标识"
+    ports:
+      - "127.0.0.1:8011:8000"
+    shm_size: "256mb"
+    volumes:
+      - /Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.worktrees/g-r14-controlled-trial-governance/docs:/docs:ro
+      - /Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.worktrees/g-r14-controlled-trial-governance/knowledge:/knowledge:ro
+      - /Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.worktrees/g-r14-controlled-trial-governance/现用文件:/现用文件:ro
+      - /Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.worktrees/g-r14-controlled-trial-governance/jewelry-qms/docker/.env.docker:/app/.env:ro
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: jewelry_qms
+      MYSQL_ROOT_HOST: "%"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+volumes:
+  db_data:
