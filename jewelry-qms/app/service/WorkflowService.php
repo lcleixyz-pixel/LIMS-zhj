@@ -14,7 +14,10 @@ use app\model\Nonconformity;
 use app\model\ReviewAction;
 use app\model\Training;
 use app\model\User;
+use think\db\exception\DuplicateException;
 use think\facade\Config;
+use think\facade\Db;
+use think\facade\Log;
 use think\facade\Session;
 
 class WorkflowService
@@ -27,52 +30,192 @@ class WorkflowService
         ?string $assignedTo = null,
         ?string $dueDate = null
     ): Capa {
-        $capa = Capa::create([
-            'id' => qms_uuid(),
-            'company_id' => Config::get('qms.company_id'),
-            'capa_number' => qms_next_number('CAPA', Capa::class, 'capa_number'),
-            'source_id' => $sourceId,
-            'source_type' => $sourceType,
-            'source_record_id' => $sourceRecordId,
-            'description' => $description,
-            'assigned_to' => $assignedTo,
-            'due_date' => $dueDate,
-            'status' => 'open',
-            'publish' => 1,
-            'soft_delete' => 0,
-            'created_by' => Session::get('user.id'),
-        ]);
-
-        self::linkCapaToSource($sourceType, $sourceRecordId, $capa->id);
-
-        if ($assignedTo) {
-            NotificationService::notifyUsers(
-                '新CAPA任务',
-                "您被指派处理 CAPA {$capa->capa_number}",
-                'general',
-                [$assignedTo],
-                'capa',
-                'view',
-                $capa->id,
+        try {
+            [$capa, $created] = Db::transaction(function () use (
+                $sourceType,
+                $sourceRecordId,
+                $description,
+                $sourceId,
+                $assignedTo,
                 $dueDate
-            );
+            ): array {
+                $source = self::resolveCapaSourceRecord($sourceType, $sourceRecordId);
+                $existing = self::findCapaBySource($sourceType, $sourceRecordId, true);
+                if ($existing) {
+                    self::assertSourceLinkConsistent($source, (string)$existing->id);
+                    return [$existing, false];
+                }
+
+                $capa = Capa::create([
+                    'id' => qms_uuid(),
+                    'company_id' => Config::get('qms.company_id'),
+                    'capa_number' => qms_next_number('CAPA', Capa::class, 'capa_number'),
+                    'source_id' => $sourceId,
+                    'source_type' => $sourceType,
+                    'source_record_id' => $sourceRecordId,
+                    'description' => $description,
+                    'assigned_to' => $assignedTo,
+                    'due_date' => $dueDate,
+                    'status' => 'open',
+                    'publish' => 1,
+                    'soft_delete' => 0,
+                    'created_by' => Session::get('user.id'),
+                ]);
+
+                self::linkResolvedCapaSource($source, (string)$capa->id);
+                return [$capa, true];
+            });
+        } catch (DuplicateException $exception) {
+            // 并发点击可能同时通过“尚未创建”检查；唯一约束胜出后返回已落库的同一来源 CAPA。
+            $capa = Db::transaction(function () use ($sourceType, $sourceRecordId, $exception): Capa {
+                $source = self::resolveCapaSourceRecord($sourceType, $sourceRecordId);
+                $existing = self::findCapaBySource($sourceType, $sourceRecordId, true);
+                if (!$existing) {
+                    throw $exception;
+                }
+                self::assertSourceLinkConsistent($source, (string)$existing->id);
+                return $existing;
+            });
+            $created = false;
+        }
+
+        if ($created && $assignedTo) {
+            try {
+                NotificationService::notifyUsers(
+                    '新CAPA任务',
+                    "您被指派处理 CAPA {$capa->capa_number}",
+                    'general',
+                    [$assignedTo],
+                    'capa',
+                    'view',
+                    $capa->id,
+                    $dueDate
+                );
+            } catch (\Throwable $exception) {
+                Log::error('CAPA 已创建，但通知发送失败', [
+                    'capa_id' => (string)$capa->id,
+                    'exception' => $exception::class,
+                ]);
+            }
         }
 
         return $capa;
     }
 
+    private static function findCapaBySource(
+        string $sourceType,
+        string $sourceRecordId,
+        bool $lock = false
+    ): ?Capa {
+        $query = Capa::where('company_id', Config::get('qms.company_id'))
+            ->where('source_type', $sourceType)
+            ->where('source_record_id', $sourceRecordId)
+            ->where('soft_delete', 0);
+        if ($lock) {
+            $query->lock(true);
+        }
+
+        return $query->find();
+    }
+
     public static function linkCapaToSource(string $sourceType, string $sourceRecordId, string $capaId): void
     {
-        $source = match ($sourceType) {
-            'audit' => AuditFinding::find($sourceRecordId),
-            'complaint' => CustomerComplaint::find($sourceRecordId),
-            'nc' => Nonconformity::find($sourceRecordId),
-            default => null,
-        };
+        $source = self::resolveCapaSourceRecord($sourceType, $sourceRecordId);
+        self::linkResolvedCapaSource($source, $capaId);
+    }
 
+    private static function resolveCapaSourceRecord(string $sourceType, string $sourceRecordId): ?object
+    {
+        $modelClass = match ($sourceType) {
+            'audit' => AuditFinding::class,
+            'complaint' => CustomerComplaint::class,
+            'nc' => Nonconformity::class,
+            'review' => ReviewAction::class,
+            'internal' => null,
+            default => throw new \InvalidArgumentException('不支持的 CAPA 来源类型'),
+        };
+        if ($modelClass === null) {
+            if (trim($sourceRecordId) === '') {
+                throw new \InvalidArgumentException('CAPA 来源记录不能为空');
+            }
+            return null;
+        }
+        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $sourceRecordId) !== 1) {
+            throw new \InvalidArgumentException('CAPA 来源记录标识格式不正确');
+        }
+        $source = $modelClass::where('id', $sourceRecordId)->where('soft_delete', 0)->find();
+        if (!$source) {
+            throw new \RuntimeException('CAPA 来源记录不存在或已停用');
+        }
+
+        return $source;
+    }
+
+    private static function assertSourceLinkConsistent(?object $source, string $capaId): void
+    {
+        if (!$source || !$source->hasColumn('capa_id')) {
+            return;
+        }
+        $linkedId = trim((string)$source->getAttr('capa_id'));
+        if ($linkedId !== '' && $linkedId !== $capaId) {
+            throw new \RuntimeException('来源记录已关联其他 CAPA');
+        }
+        if ($linkedId === '') {
+            self::linkResolvedCapaSource($source, $capaId);
+        }
+    }
+
+    private static function linkResolvedCapaSource(?object $source, string $capaId): void
+    {
         if ($source && $source->hasColumn('capa_id')) {
             $source->save(['capa_id' => $capaId]);
         }
+    }
+
+    public static function capaSourceContext(Capa $capa): array
+    {
+        $sourceId = trim((string)$capa->source_record_id);
+        $type = (string)$capa->source_type;
+        $source = match ($type) {
+            'audit' => AuditFinding::find($sourceId),
+            'complaint' => CustomerComplaint::find($sourceId),
+            'nc' => Nonconformity::find($sourceId),
+            'review' => ReviewAction::find($sourceId),
+            default => null,
+        };
+
+        return match ($type) {
+            'audit' => [
+                'type_label' => '内部审核',
+                'record_label' => $source ? (string)$source->finding_number : '来源记录不可用',
+                'url' => $source ? '/audit_finding/view?id=' . $sourceId : null,
+            ],
+            'complaint' => [
+                'type_label' => '客户投诉',
+                'record_label' => $source ? (string)$source->complaint_number : '来源记录不可用',
+                'url' => $source ? '/complaint/view?id=' . $sourceId : null,
+            ],
+            'nc' => [
+                'type_label' => '不符合工作',
+                'record_label' => $source ? (string)$source->nc_number : '来源记录不可用',
+                'url' => $source ? '/nonconformity/view?id=' . $sourceId : null,
+            ],
+            'review' => [
+                'type_label' => '管理评审',
+                'record_label' => $source ? mb_strimwidth((string)$source->action_item, 0, 48, '…') : '来源记录不可用',
+                'url' => $source ? '/management_review/view?id=' . $source->management_review_id : null,
+            ],
+            'internal' => [
+                'type_label' => '日常监督',
+                'record_label' => $sourceId !== '' ? $sourceId : '-',
+                'url' => null,
+            ],
+            default => [
+                'type_label' => $type !== '' ? $type : '未标明',
+                'record_label' => '来源类型不可识别',
+                'url' => null,
+            ],
+        };
     }
 
     public static function resolveCapaSourceId(string $sourceType): ?string

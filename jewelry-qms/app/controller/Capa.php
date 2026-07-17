@@ -105,6 +105,7 @@ class Capa extends BusinessBase
         View::assign('record', $record);
         View::assign('assignee', $record->assigned_to ? User::find($record->assigned_to) : null);
         View::assign('verifier', $record->verified_by ? User::find($record->verified_by) : null);
+        View::assign('sourceContext', WorkflowService::capaSourceContext($record));
         View::assign('fieldChangeLogs', FieldAuditService::logsFor('Capa', (string)$id));
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 

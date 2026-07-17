@@ -12,7 +12,17 @@
     <div class="card-body">
         <table class="table table-bordered">
             <tr><th width="150">状态</th><td><span class="badge bg-primary">{$statusLabels[$record.status]|default=$record.status}</span></td></tr>
-            <tr><th>来源</th><td>{$record.source_type|default='-'} / {$record.source_record_id|default='-'}</td></tr>
+            <tr>
+                <th>来源</th>
+                <td>
+                    {$sourceContext.type_label|default='-'} /
+                    {if $sourceContext.url}
+                    <a href="{$sourceContext.url}">{$sourceContext.record_label}</a>
+                    {else /}
+                    {$sourceContext.record_label|default='-'}
+                    {/if}
+                </td>
+            </tr>
             <tr><th>问题描述</th><td>{$record.description}</td></tr>
             <tr><th>根本原因</th><td>{$record.root_cause|default='-'}</td></tr>
             <tr><th>纠正措施</th><td>{$record.corrective_action|default='-'}</td></tr>

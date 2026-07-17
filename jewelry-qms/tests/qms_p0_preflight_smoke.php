@@ -41,7 +41,7 @@ try {
     Db::name('customer_complaints')->insert([
         'id' => $sourceId,
         'company_id' => $companyId,
-        'complaint_number' => 'P0R13B2-PREFLIGHT-CP',
+        'complaint_number' => 'CP20262026002',
         'customer_name' => '预检测试客户',
         'received_date' => '2026-07-17',
         'description' => '预检测试',
@@ -72,6 +72,7 @@ try {
     $report = $serviceClass::scan();
     preflight_assert(($report['mode'] ?? '') === 'read_only', '报告明确标记只读');
     preflight_assert((int)($report['counts']['invalid_source_capa_links'] ?? 0) >= 1, '识别数字型 capa_id');
+    preflight_assert((int)($report['counts']['malformed_business_numbers'] ?? 0) >= 1, '识别异常旧编号');
     preflight_assert((int)($report['counts']['orphan_source_capas'] ?? 0) >= 1, '识别孤儿 CAPA 来源');
     preflight_assert((int)($report['counts']['reverse_link_mismatches'] ?? 0) >= 1, '识别反向不一致');
     preflight_assert(($report['blocked'] ?? false) === true, '存在问题时报告阻断');
