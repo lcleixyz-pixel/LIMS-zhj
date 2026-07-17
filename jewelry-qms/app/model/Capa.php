@@ -18,4 +18,9 @@ class Capa extends BaseModel
     {
         return $this->belongsTo(Employee::class, 'assigned_to');
     }
+
+    public function assignee()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
 }

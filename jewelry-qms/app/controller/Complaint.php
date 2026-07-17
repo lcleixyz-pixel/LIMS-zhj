@@ -14,12 +14,15 @@ class Complaint extends BusinessBase
     protected string $modelClass = CustomerComplaint::class;
     protected string $viewPrefix = 'complaint';
     protected string $pageTitle = '客户投诉';
-    protected array $validateRules = [
-        'complaint_number' => 'require',
-        'customer_name' => 'require',
-        'description' => 'require',
-        'received_date' => 'require|date',
-        'due_date' => 'date',
+    protected array $writableFields = [
+        'complaint_number',
+        'customer_name',
+        'contact',
+        'received_date',
+        'report_number',
+        'assigned_to',
+        'due_date',
+        'description',
     ];
     protected array $validateMessages = [
         'complaint_number.require' => '投诉编号不能为空',
@@ -30,6 +33,26 @@ class Complaint extends BusinessBase
         'due_date.date' => '处理期限格式不正确',
     ];
 
+    protected function validationRules(array $data, ?string $recordId = null): array
+    {
+        $rules = [];
+        foreach ([
+            'complaint_number' => 'require',
+            'customer_name' => 'require',
+            'description' => 'require',
+            'received_date' => 'require|date',
+        ] as $field => $rule) {
+            if ($recordId === null || array_key_exists($field, $data)) {
+                $rules[$field] = $rule;
+            }
+        }
+        if (array_key_exists('due_date', $data) && $data['due_date'] !== '') {
+            $rules['due_date'] = 'date';
+        }
+
+        return $rules;
+    }
+
     protected function assignFormContext(): void
     {
         $this->assignUsers();
@@ -39,7 +62,7 @@ class Complaint extends BusinessBase
     public function add()
     {
         if ($this->request->isPost()) {
-            $data = $this->request->post();
+            $data = $this->onlyWritable($this->request->post());
             if (empty($data['complaint_number'])) {
                 $data['complaint_number'] = qms_next_number('CP', CustomerComplaint::class, 'complaint_number');
             }
@@ -65,7 +88,7 @@ class Complaint extends BusinessBase
     public function view()
     {
         $id = $this->request->param('id');
-        $record = CustomerComplaint::find($id);
+        $record = $this->findActiveRecord((string)$id);
         if (!$record) {
             abort(404);
         }
@@ -80,7 +103,7 @@ class Complaint extends BusinessBase
     public function advance()
     {
         $id = $this->request->param('id');
-        $record = CustomerComplaint::find($id);
+        $record = $this->findActiveRecord((string)$id);
         if (!$record) {
             abort(404);
         }
@@ -112,7 +135,7 @@ class Complaint extends BusinessBase
     public function createCapa()
     {
         $id = $this->request->param('id');
-        $record = CustomerComplaint::find($id);
+        $record = $this->findActiveRecord((string)$id);
         if (!$record || $record->capa_id) {
             Session::flash('error', '无法创建CAPA');
 

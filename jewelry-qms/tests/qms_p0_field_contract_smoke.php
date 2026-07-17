@@ -164,7 +164,7 @@ check(
 check(
     str_contains($competencyTemplates, 'name="result"')
     && str_contains($competencyTemplates, 'name="valid_until"')
-    && str_contains($crud, 'onlyWritable($data, (string)$id)'),
+    && str_contains($crud, 'onlyWritable($this->request->post(), (string)$id)'),
     'C03',
     '能力确认编辑只保存提交的业务字段'
 );
@@ -188,7 +188,7 @@ check(
 check(
     str_contains($nonconformityTemplates, 'name="impact_assessment"')
     && template_has_no_names($nonconformityTemplates, ['status'])
-    && str_contains($crud, 'onlyWritable($data, (string)$id)'),
+    && str_contains($crud, 'onlyWritable($this->request->post(), (string)$id)'),
     'C06',
     '不符合通用编辑不会覆盖工作流状态和未提交字段'
 );
@@ -207,7 +207,7 @@ check(
     contains_all($capaController, [
         'validationRules(array $data, ?string $recordId = null)',
         '$recordId === null',
-        "'capa_number' => 'require",
+        "\$rules['capa_number'] = 'require",
     ])
     && template_has_names($capaTemplates, $capaEditFields),
     'C08',

@@ -17,16 +17,42 @@ class Capa extends BusinessBase
     protected string $modelClass = CapaModel::class;
     protected string $viewPrefix = 'capa';
     protected string $pageTitle = 'CAPA';
-    protected array $validateRules = [
-        'capa_number' => 'require',
-        'description' => 'require',
-        'due_date' => 'date',
+    protected array $writableFields = [
+        'assigned_to',
+        'due_date',
+        'description',
+        'root_cause',
+        'corrective_action',
+        'preventive_action',
+        'verification',
+    ];
+    protected array $createWritableFields = [
+        'capa_number',
+        'source_id',
+        'source_type',
+        'source_record_id',
+        'assigned_to',
+        'due_date',
+        'description',
     ];
     protected array $validateMessages = [
         'capa_number.require' => 'CAPA编号不能为空',
         'description.require' => '问题描述不能为空',
         'due_date.date' => '计划完成日期格式不正确',
     ];
+
+    protected function validationRules(array $data, ?string $recordId = null): array
+    {
+        $rules = [
+            'description' => 'require',
+            'due_date' => 'date',
+        ];
+        if ($recordId === null) {
+            $rules['capa_number'] = 'require';
+        }
+
+        return $rules;
+    }
 
     protected function assignFormContext(): void
     {
@@ -45,7 +71,7 @@ class Capa extends BusinessBase
     public function add()
     {
         if ($this->request->isPost()) {
-            $data = $this->request->post();
+            $data = $this->onlyWritable($this->request->post());
             if (empty($data['capa_number'])) {
                 $data['capa_number'] = qms_next_number('CAPA', CapaModel::class, 'capa_number');
             }
@@ -71,7 +97,7 @@ class Capa extends BusinessBase
     public function view()
     {
         $id = $this->request->param('id');
-        $record = CapaModel::find($id);
+        $record = $this->findActiveRecord((string)$id);
         if (!$record) {
             abort(404, '记录不存在');
         }
