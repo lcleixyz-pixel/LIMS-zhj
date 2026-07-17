@@ -44,6 +44,10 @@ function action_cleanup(): void
 
 function action_seed_position(string $id, string $code, string $name): void
 {
+    if (Db::name('qms_positions')->where('code', $code)->where('soft_delete', 0)->find()) {
+        return;
+    }
+
     Db::name('qms_positions')->insert([
         'id' => $id,
         'company_id' => (string)Config::get('qms.company_id'),
