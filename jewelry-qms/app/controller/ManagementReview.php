@@ -103,6 +103,17 @@ class ManagementReview extends BusinessBase
         }
         $record = ManagementReviewModel::find($id);
         if ($record) {
+            $snapshot = json_decode((string)$record->input_snapshot, true);
+            if (!is_array($snapshot) || !ManagementReviewInputService::verifySnapshot($snapshot)) {
+                Session::flash('error', '管理评审输入快照校验失败，不能完成；请重新生成受控评审记录。');
+
+                return redirect('/management_review/view?id=' . $id);
+            }
+            if (trim((string)$record->outputs) === '' || trim((string)$record->resolutions) === '') {
+                Session::flash('error', '完成前请填写管理评审输出和决议。');
+
+                return redirect('/management_review/view?id=' . $id);
+            }
             $record->status = 'completed';
             $record->save();
             Session::flash('success', '管理评审已标记完成');

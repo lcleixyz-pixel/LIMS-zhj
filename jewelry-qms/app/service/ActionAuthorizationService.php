@@ -20,6 +20,9 @@ final class ActionAuthorizationService
         $action = self::normalize($action);
         $employeeId = $identity['employee_id'];
         $userId = $identity['id'];
+        if (self::recordValue($record, '_authorization_denied') === '1') {
+            return false;
+        }
 
         return match ($module . '.' . $action) {
             'complaint.register', 'complaint.list' => true,
@@ -43,6 +46,8 @@ final class ActionAuthorizationService
             'equipment.view' => self::canViewEquipment($employeeId, $userId, $record),
             'equipment.edit' => self::canManageEquipment($employeeId, $record),
             'equipmentmaintenance.write' => self::canManageEquipment($employeeId, $record),
+            'equipmenttransfer.view' => self::canViewEquipmentTransfer($employeeId, $record),
+            'equipmenttransfer.write' => self::canTransferEquipment($employeeId, $record),
 
             'recordformtemplate.reviewlist' => self::hasAnyPosition(
                 $employeeId,
@@ -60,22 +65,34 @@ final class ActionAuthorizationService
 
             'auditplan.organize', 'auditplan.approve', 'auditplan.complete'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
+            'auditschedule.organize'
+                => self::hasGlobalPosition($employeeId, ['quality_manager']),
             'auditschedule.complete'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
+            'auditchecklist.write', 'auditfinding.write'
+                => self::canExecuteAudit($employeeId, $userId, $record),
+            'auditfinding.view'
+                => self::canViewAudit($employeeId, $userId, $record),
 
             'managementreview.organize', 'managementreview.complete'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
 
-            'document.register', 'document.distribute', 'document.recall', 'document.revise', 'document.submitreview'
-                => self::canManageDocument($employeeId, $record),
+            'document.register', 'document.distribute', 'document.recall', 'document.submitreview'
+                => self::trialDocumentMutationAllowed($action, $record)
+                    && self::canManageDocument($employeeId, $record),
+            'document.revise'
+                => self::trialDocumentMutationAllowed($action, $record)
+                    && self::canManageDocument($employeeId, $record),
             'document.controlledprint'
-                => self::hasAnyPosition($employeeId, ['document_controller', 'quality_manager']),
+                => self::hasGlobalPosition($employeeId, ['quality_manager'])
+                    || self::canManageDocument($employeeId, $record),
             'document.review'
-                => self::hasAnyPosition($employeeId, ['quality_manager', 'technical_manager']),
+                => self::trialDocumentMutationAllowed($action, $record)
+                    && self::hasAnyPosition($employeeId, ['quality_manager', 'technical_manager']),
+            'externalevidencereference.list'
+                => self::hasGlobalPosition($employeeId, ['quality_manager']),
             'externalevidencereference.add'
-                => self::hasAnyPosition($employeeId, [
-                    'quality_manager', 'technical_manager', 'internal_auditor', 'site_quality_coordinator',
-                ]),
+                => self::canAddExternalEvidence($employeeId, $userId, $record),
 
             'capa.view' => self::hasGlobalPosition($employeeId, ['quality_manager', 'capa_verifier'])
                 || self::recordValue($record, 'assigned_to') === $userId,
@@ -188,6 +205,19 @@ final class ActionAuthorizationService
     }
 
     /**
+     * @return list<string>
+     */
+    public static function equipmentTransferVisibleSiteIds(): array
+    {
+        $identity = self::currentIdentity();
+        if ($identity === null) {
+            return [];
+        }
+
+        return self::appointedSiteIds($identity['employee_id'], ['equipment_manager']);
+    }
+
+    /**
      * Null means institution-wide management; an empty array means no managed site.
      *
      * @return list<string>|null
@@ -240,22 +270,53 @@ final class ActionAuthorizationService
 
     private static function canManageEquipment(string $employeeId, ?object $record): bool
     {
-        if (self::hasGlobalPosition($employeeId, ['quality_manager'])) {
-            return true;
-        }
         if ($record === null) {
-            return self::hasAnyPosition($employeeId, ['equipment_manager', 'technical_manager']);
+            return self::hasAnyPosition($employeeId, ['equipment_manager']);
         }
 
         return self::hasPositionAtSite(
             $employeeId,
-            ['equipment_manager', 'technical_manager'],
+            ['equipment_manager'],
             self::recordSiteId($record)
         );
     }
 
+    private static function canTransferEquipment(string $employeeId, ?object $record): bool
+    {
+        if ($record === null) {
+            return self::hasAnyPosition($employeeId, ['equipment_manager']);
+        }
+
+        $fromSiteId = self::recordSiteId($record);
+        $toSiteId = trim(self::recordValue($record, '_to_site_id'));
+        if ($fromSiteId === null || $toSiteId === '') {
+            return false;
+        }
+
+        return self::hasPositionAtSite($employeeId, ['equipment_manager'], $fromSiteId)
+            && self::hasPositionAtSite($employeeId, ['equipment_manager'], $toSiteId);
+    }
+
+    private static function canViewEquipmentTransfer(string $employeeId, ?object $record): bool
+    {
+        if ($record === null) {
+            return self::hasAnyPosition($employeeId, ['equipment_manager']);
+        }
+
+        $visibleSiteIds = self::appointedSiteIds($employeeId, ['equipment_manager']);
+        $transferSiteIds = array_filter([
+            self::recordValue($record, 'from_site_id'),
+            self::recordValue($record, 'to_site_id'),
+        ]);
+
+        return array_intersect($visibleSiteIds, $transferSiteIds) !== [];
+    }
+
     private static function canManageDocument(string $employeeId, ?object $record): bool
     {
+        if (self::hasGlobalPosition($employeeId, ['quality_manager'])) {
+            return true;
+        }
         if ($record === null) {
             return self::hasAnyPosition($employeeId, ['document_controller']);
         }
@@ -264,6 +325,93 @@ final class ActionAuthorizationService
             $employeeId,
             ['document_controller'],
             self::recordSiteId($record)
+        );
+    }
+
+    private static function trialDocumentMutationAllowed(string $action, ?object $record): bool
+    {
+        if (!TrialModeService::isEnabled() || $record === null) {
+            return true;
+        }
+        $documentNumber = self::recordValue($record, 'doc_number');
+        if ($documentNumber === '' && $action === 'register') {
+            return true;
+        }
+        if (TrialModeService::isSimulationNumber($documentNumber)) {
+            return true;
+        }
+
+        return in_array($action, ['revise', 'controlledprint'], true);
+    }
+
+    private static function canExecuteAudit(string $employeeId, string $userId, ?object $schedule): bool
+    {
+        if (self::recordValue($schedule, '_authorization_denied') === '1') {
+            return false;
+        }
+        if ($schedule !== null && self::recordValue($schedule, 'status') === 'completed') {
+            return false;
+        }
+        if (self::hasGlobalPosition($employeeId, ['quality_manager'])) {
+            return true;
+        }
+        if ($schedule === null || self::recordValue($schedule, 'auditor_id') !== $userId) {
+            return false;
+        }
+
+        return self::hasPositionAtSite(
+            $employeeId,
+            ['internal_auditor'],
+            self::recordSiteId($schedule)
+        );
+    }
+
+    private static function canViewAudit(string $employeeId, string $userId, ?object $schedule): bool
+    {
+        if (self::recordValue($schedule, '_authorization_denied') === '1') {
+            return false;
+        }
+        if (self::hasGlobalPosition($employeeId, ['quality_manager'])) {
+            return true;
+        }
+        if ($schedule === null) {
+            return self::hasAnyPosition($employeeId, ['internal_auditor']);
+        }
+        if (self::recordValue($schedule, 'auditor_id') !== $userId) {
+            return false;
+        }
+
+        return self::hasPositionAtSite(
+            $employeeId,
+            ['internal_auditor'],
+            self::recordSiteId($schedule)
+        );
+    }
+
+    private static function canAddExternalEvidence(string $employeeId, string $userId, ?object $subject): bool
+    {
+        if (self::hasGlobalPosition($employeeId, ['quality_manager'])) {
+            return true;
+        }
+        if ($subject === null) {
+            return false;
+        }
+
+        $subjectType = self::recordValue($subject, '_subject_type');
+        if ($subjectType === 'audit') {
+            return self::canExecuteAudit($employeeId, $userId, $subject);
+        }
+        if ($subjectType === 'management_review') {
+            return false;
+        }
+        if ($subjectType === 'capa' && self::recordValue($subject, 'assigned_to') === $userId) {
+            return true;
+        }
+
+        return self::hasPositionAtSite(
+            $employeeId,
+            ['technical_manager', 'site_quality_coordinator'],
+            self::recordSiteId($subject)
         );
     }
 
@@ -437,6 +585,19 @@ final class ActionAuthorizationService
                 }
                 $record = self::tableRecord('equipments', $equipmentId);
             }
+        } elseif ($controller === 'equipmenttransfer') {
+            $policyAction = in_array($action, ['index', 'view'], true) ? 'view' : ($action === 'add' ? 'write' : null);
+            if ($action === 'add' && $request->isPost()) {
+                $record = self::tableRecord(
+                    'equipments',
+                    trim((string)$request->post('equipment_id', ''))
+                );
+                if ($record !== null) {
+                    $record->_to_site_id = trim((string)$request->post('to_site_id', ''));
+                }
+            } elseif ($action === 'view') {
+                $record = self::tableRecord('equipment_transfers', self::requestId($request));
+            }
         } elseif ($controller === 'recordformtemplate') {
             $policyAction = match ($action) {
                 'review' => 'review_list',
@@ -456,12 +617,60 @@ final class ActionAuthorizationService
                 default => null,
             };
             if (in_array($action, ['edit', 'delete', 'approve', 'complete'], true)) {
-                $record = self::tableRecord('audit_plans', self::requestId($request));
+                $record = self::tableRecord('audit_plans', self::requestId($request))
+                    ?? self::authorizationDeniedRecord();
             }
         } elseif ($controller === 'auditschedule') {
-            $policyAction = $action === 'complete' ? 'complete' : null;
+            $policyAction = match ($action) {
+                'add', 'edit', 'delete' => 'organize',
+                'complete' => 'complete',
+                default => null,
+            };
             if ($policyAction !== null) {
-                $record = self::tableRecord('audit_schedules', self::requestId($request));
+                $record = $action === 'add'
+                    ? (object)['site_id' => trim((string)$request->post('site_id', ''))]
+                    : (
+                        self::tableRecord('audit_schedules', self::requestId($request))
+                        ?? self::authorizationDeniedRecord()
+                    );
+            }
+        } elseif ($controller === 'auditchecklist') {
+            if (in_array($action, ['add', 'edit', 'delete'], true)) {
+                $policyAction = 'write';
+                $scheduleId = trim((string)$request->post('audit_schedule_id', ''));
+                if ($scheduleId === '' && in_array($action, ['edit', 'delete'], true)) {
+                    $checklist = self::tableRecord('audit_checklists', self::requestId($request));
+                    if ($checklist === null) {
+                        $record = self::authorizationDeniedRecord();
+                    } else {
+                        $scheduleId = self::recordValue($checklist, 'audit_schedule_id');
+                    }
+                }
+                if ($record === null && $scheduleId !== '') {
+                    $record = self::tableRecord('audit_schedules', $scheduleId)
+                        ?? self::authorizationDeniedRecord();
+                } elseif ($record === null && $action === 'add' && $request->isPost()) {
+                    $record = self::authorizationDeniedRecord();
+                }
+            }
+        } elseif ($controller === 'auditfinding') {
+            if (in_array($action, ['add', 'edit', 'delete', 'createcapa', 'uploadevidence', 'view', 'downloadevidence'], true)) {
+                $policyAction = in_array($action, ['view', 'downloadevidence'], true) ? 'view' : 'write';
+                $scheduleId = trim((string)$request->post('audit_schedule_id', ''));
+                if ($scheduleId === '') {
+                    $finding = self::tableRecord('audit_findings', self::requestId($request));
+                    if ($finding === null && $action !== 'add') {
+                        $record = self::authorizationDeniedRecord();
+                    } else {
+                        $scheduleId = self::recordValue($finding, 'audit_schedule_id');
+                    }
+                }
+                if ($record === null && $scheduleId !== '') {
+                    $record = self::tableRecord('audit_schedules', $scheduleId)
+                        ?? self::authorizationDeniedRecord();
+                } elseif ($record === null && $action === 'add' && $request->isPost()) {
+                    $record = self::authorizationDeniedRecord();
+                }
             }
         } elseif ($controller === 'managementreview') {
             $policyAction = match ($action) {
@@ -489,7 +698,17 @@ final class ActionAuthorizationService
                 $record = (object)['site_id' => trim((string)$request->post('site_id', ''))];
             }
         } elseif ($controller === 'externalevidencereference') {
-            $policyAction = $action === 'add' ? 'add' : null;
+            $policyAction = match ($action) {
+                'index' => 'list',
+                'add' => 'add',
+                default => null,
+            };
+            if ($action === 'add') {
+                $record = self::externalEvidenceSubjectRecord(
+                    trim((string)$request->post('subject_type', '')),
+                    trim((string)$request->post('subject_id', ''))
+                );
+            }
         } elseif ($controller === 'capa') {
             $policyAction = match ($action) {
                 'view' => 'view',
@@ -547,9 +766,86 @@ final class ActionAuthorizationService
         if ($id === '') {
             return null;
         }
-        $row = Db::name($table)->where('id', $id)->where('soft_delete', 0)->find();
+        if (in_array($table, ['audit_schedules', 'audit_checklists', 'audit_findings'], true)) {
+            $query = Db::name($table)->alias('t');
+            if ($table === 'audit_schedules') {
+                $query->join('audit_plans p', 'p.id = t.audit_plan_id');
+            } else {
+                $query->join('audit_schedules s', 's.id = t.audit_schedule_id')
+                    ->join('audit_plans p', 'p.id = s.audit_plan_id')
+                    ->where('s.soft_delete', 0);
+            }
+            $row = $query
+                ->where('t.id', $id)
+                ->where('t.soft_delete', 0)
+                ->where('p.company_id', (string)Config::get('qms.company_id'))
+                ->where('p.soft_delete', 0)
+                ->field('t.*')
+                ->find();
+
+            return $row ? (object)$row : null;
+        }
+
+        $query = Db::name($table)->where('id', $id)->where('soft_delete', 0);
+        $companyTables = [
+            'audit_plans',
+            'capas',
+            'customer_complaints',
+            'documents',
+            'employees',
+            'equipment_maintenances',
+            'equipment_transfers',
+            'equipments',
+            'management_reviews',
+            'nonconformities',
+            'record_form_templates',
+        ];
+        if (in_array($table, $companyTables, true)) {
+            $query->where('company_id', (string)Config::get('qms.company_id'));
+        }
+        $row = $query->find();
 
         return $row ? (object)$row : null;
+    }
+
+    private static function externalEvidenceSubjectRecord(string $subjectType, string $subjectId): ?object
+    {
+        $tables = [
+            'quality_event' => 'nonconformities',
+            'complaint' => 'customer_complaints',
+            'capa' => 'capas',
+            'management_review' => 'management_reviews',
+        ];
+        if ($subjectType === 'audit') {
+            $finding = self::tableRecord('audit_findings', $subjectId);
+            $schedule = $finding
+                ? self::tableRecord('audit_schedules', self::recordValue($finding, 'audit_schedule_id'))
+                : null;
+            $planId = self::recordValue($schedule, 'audit_plan_id');
+            if (
+                $schedule === null
+                || $planId === ''
+                || Db::name('audit_plans')
+                    ->where('id', $planId)
+                    ->where('company_id', (string)Config::get('qms.company_id'))
+                    ->where('soft_delete', 0)
+                    ->count() === 0
+            ) {
+                return null;
+            }
+            if ($schedule !== null) {
+                $schedule->_subject_type = 'audit';
+            }
+            return $schedule;
+        }
+
+        $table = $tables[$subjectType] ?? '';
+        $record = $table !== '' ? self::tableRecord($table, $subjectId) : null;
+        if ($record !== null) {
+            $record->_subject_type = $subjectType;
+        }
+
+        return $record;
     }
 
     private static function recordSiteId(?object $record): ?string
@@ -581,6 +877,11 @@ final class ActionAuthorizationService
         }
 
         return $siteId !== '' ? $siteId : null;
+    }
+
+    private static function authorizationDeniedRecord(): object
+    {
+        return (object)['_authorization_denied' => 1];
     }
 
     private static function employeeSiteId(string $employeeId): ?string

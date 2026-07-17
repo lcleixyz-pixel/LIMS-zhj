@@ -148,14 +148,16 @@ class Document extends BaseController
         if (!$document) {
             throw new HttpException(404, '文件不存在');
         }
-        if ($document->status === 'published') {
-            Session::flash('warning', '已发布的文件不能直接编辑，请使用修订流程');
+        if ((string)$document->status !== 'draft') {
+            Session::flash('warning', '只有草稿文件可直接编辑；审核中、已批准、试运行就绪、正式发布或已作废文件请使用受控流程');
 
             return redirect('/document/view?id=' . $id);
         }
 
         if ($this->request->isPost()) {
             $data = $this->request->post();
+            // 场所属于文件受控边界，不能借编辑动作跨场所转移。
+            $data['site_id'] = (string)$document->site_id;
             $errors = $this->validateDocumentInput($data, (string)$id);
             if ($errors !== []) {
                 $this->flashValidationErrors($errors);
@@ -414,7 +416,9 @@ class Document extends BaseController
             $newDocument->category_id = $doc->category_id;
             $newDocument->template_id = $doc->template_id;
             $newDocument->level = $doc->level;
-            $newDocument->doc_number = $doc->doc_number;
+            $newDocument->doc_number = TrialModeService::isEnabled()
+                ? TrialModeService::simulationNumber((string)$doc->doc_number)
+                : $doc->doc_number;
             $newDocument->title = $doc->title;
             $newDocument->version = $newVersion;
             $newDocument->revision = $rev;

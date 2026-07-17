@@ -2,7 +2,7 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">文件详情 - {$doc.doc_number|default=''}</h5>
         <div class="d-flex flex-wrap gap-1">
-            {if $doc.status != 'published' && qms_can_action('document', 'register', $doc)}
+            {if !in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'register', $doc)}
             <a href="/document/edit?id={$doc.id}" class="btn btn-sm btn-outline-primary">编辑</a>
             {/if}
             {if $doc.status == 'draft' && qms_can_action('document', 'submit_review', $doc)}
@@ -10,7 +10,7 @@
                 <button type="submit" class="btn btn-sm btn-outline-success">提交审核</button>
             </form>
             {/if}
-            {if $doc.status == 'published' && qms_can_action('document', 'revise', $doc)}
+            {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'revise', $doc)}
             <a href="/document/revise?id={$doc.id}" class="btn btn-sm btn-outline-warning">发起修订</a>
             {/if}
             {if qms_can_action('document', 'review', $doc)}
@@ -20,7 +20,7 @@
             <a href="/document/download?id={$doc.id}" class="btn btn-sm btn-outline-info">下载附件</a>
             <a href="/document/onlyoffice?id={$doc.id}" class="btn btn-sm btn-outline-primary">ONLYOFFICE</a>
             {/if}
-            {if $doc.status == 'published' && qms_can_action('document', 'controlled_print', $doc)}
+            {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'controlled_print', $doc)}
             <form method="post" action="/document/controlledPrint?id={$doc.id}" class="d-inline">
                 <input type="hidden" name="purpose" value="受控打印">
                 <button type="submit" class="btn btn-sm btn-outline-dark">受控打印</button>
@@ -54,6 +54,7 @@
                     {if $doc.status == 'draft'}<span class="badge bg-secondary">草稿</span>
                     {elseif $doc.status == 'reviewing'}<span class="badge bg-warning text-dark">审核中</span>
                     {elseif $doc.status == 'approved'}<span class="badge bg-info text-dark">已批准</span>
+                    {elseif $doc.status == 'trial_ready'}<span class="badge bg-warning text-dark">试运行就绪</span>
                     {elseif $doc.status == 'published'}<span class="badge bg-success">已发布</span>
                     {elseif $doc.status == 'obsolete'}<span class="badge bg-dark">已作废</span>
                     {else}<span class="badge bg-secondary">{$doc.status}</span>{/if}
@@ -93,7 +94,7 @@
 <div class="card mb-3">
     <div class="card-header"><h6 class="mb-0">分发记录</h6></div>
     <div class="card-body">
-        {if $doc.status == 'published' && qms_can_action('document', 'distribute', $doc)}
+        {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'distribute', $doc)}
         <form method="post" action="/document/distribute" class="row g-2 align-items-end mb-3">
             <input type="hidden" name="id" value="{$doc.id}">
             <div class="col-md-5">
@@ -221,7 +222,7 @@
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0">受控打印记录</h6>
-        {if $doc.status == 'published' && qms_can_action('document', 'controlled_print', $doc)}
+        {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'controlled_print', $doc)}
         <form method="post" action="/document/controlledPrint?id={$doc.id}" class="d-inline">
             <input type="hidden" name="purpose" value="受控打印">
             <button type="submit" class="btn btn-sm btn-outline-dark">生成打印页</button>

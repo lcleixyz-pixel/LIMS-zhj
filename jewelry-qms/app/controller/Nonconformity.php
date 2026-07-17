@@ -8,6 +8,7 @@ use app\model\Nonconformity as NonconformityModel;
 use app\service\WorkflowService;
 use app\service\FieldAuditService;
 use app\service\ExternalEvidenceReferenceService;
+use app\service\TrialModeService;
 use think\facade\Session;
 use think\facade\View;
 
@@ -91,6 +92,9 @@ class Nonconformity extends BusinessBase
             $data = $this->onlyWritable($requestData);
             if (empty($data['nc_number'])) {
                 $data['nc_number'] = qms_next_number('NC', NonconformityModel::class, 'nc_number');
+            }
+            if (TrialModeService::isEnabled()) {
+                $data['nc_number'] = TrialModeService::simulationNumber((string)$data['nc_number']);
             }
             if (empty($data['identified_date'])) {
                 $data['identified_date'] = date('Y-m-d');

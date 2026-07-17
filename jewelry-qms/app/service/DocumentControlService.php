@@ -15,7 +15,21 @@ class DocumentControlService
     public static function distribute(string $documentId, array $userIds, ?string $siteId = null, string $remarks = ''): int
     {
         $document = Document::find($documentId);
-        if (!$document || (string)$document->status !== 'published' || (int)$document->publish !== 1) {
+        if (!$document) {
+            return 0;
+        }
+        if (!self::trialDocumentWriteAllowed($document)) {
+            return 0;
+        }
+        $isTrialDocument = TrialModeService::isSimulationNumber((string)$document->doc_number);
+        if ($isTrialDocument && (
+            !TrialModeService::isEnabled()
+            || (string)$document->status !== 'trial_ready'
+            || (int)$document->publish !== 1
+        )) {
+            return 0;
+        }
+        if (!$isTrialDocument && ((string)$document->status !== 'published' || (int)$document->publish !== 1)) {
             return 0;
         }
 
@@ -91,6 +105,9 @@ class DocumentControlService
         if (!$document || !in_array($result, ['continue', 'revise', 'obsolete'], true)) {
             return null;
         }
+        if (!self::trialDocumentWriteAllowed($document)) {
+            return null;
+        }
         $note = trim($note) !== '' ? trim($note) : '未填写评审说明';
 
         return Db::transaction(function () use ($document, $result, $note, $nextReviewDate, $reviewedBy) {
@@ -161,5 +178,11 @@ class DocumentControlService
         }
 
         return $query->find();
+    }
+
+    private static function trialDocumentWriteAllowed(Document $document): bool
+    {
+        return !TrialModeService::isEnabled()
+            || TrialModeService::isSimulationNumber((string)$document->doc_number);
     }
 }

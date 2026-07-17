@@ -2,7 +2,7 @@ name: jewelry-qms
 
 services:
   app:
-    image: ${QMS_IMAGE:?QMS_IMAGE must be an immutable local image tag}
+    image: ${QMS_IMAGE_ID:?QMS_IMAGE_ID must be an immutable sha256 image ID}
     restart: unless-stopped
     environment:
       APP_DEBUG: "false"

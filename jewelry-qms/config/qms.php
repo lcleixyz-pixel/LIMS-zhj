@@ -51,7 +51,7 @@ return [
         ],
         'department_head' => [
             'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'capa', 'nonconformity', 'complaint', 'external_evidence_reference',
-            'equipment', 'equipment_maintenance', 'equipment_transfer', 'equipment_authorization', 'calibration', 'reference_material',
+            'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',
             'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate', 'notification',
         ],
         'staff' => [

@@ -8,6 +8,9 @@ DELIMITER //
 
 CREATE PROCEDURE qms_gr14_controlled_trial()
 BEGIN
+  DECLARE template_status_type text DEFAULT '';
+  DECLARE document_status_type text DEFAULT '';
+
   IF EXISTS (
     SELECT 1 FROM information_schema.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE()
@@ -15,8 +18,18 @@ BEGIN
       AND COLUMN_NAME = 'status'
       AND COLUMN_TYPE NOT LIKE '%trial_ready%'
   ) THEN
-    ALTER TABLE `record_form_templates`
-      MODIFY COLUMN `status` enum('draft','trial_ready','published','obsolete') DEFAULT 'draft';
+    SELECT COLUMN_TYPE INTO template_status_type
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'record_form_templates'
+      AND COLUMN_NAME = 'status';
+    IF template_status_type = 'enum(''draft'',''published'',''obsolete'')' THEN
+      ALTER TABLE `record_form_templates`
+        MODIFY COLUMN `status` enum('draft','trial_ready','published','obsolete') DEFAULT 'draft';
+    ELSE
+      SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'record_form_templates.status 枚举超出已验证基线，停止迁移以避免缩窄状态';
+    END IF;
   END IF;
 
   IF NOT EXISTS (
@@ -139,6 +152,27 @@ BEGIN
       ADD COLUMN `site_id` varchar(36) DEFAULT NULL AFTER `department_id`;
   END IF;
 
+  IF EXISTS (
+    SELECT 1 FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'documents'
+      AND COLUMN_NAME = 'status'
+      AND COLUMN_TYPE NOT LIKE '%trial_ready%'
+  ) THEN
+    SELECT COLUMN_TYPE INTO document_status_type
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'documents'
+      AND COLUMN_NAME = 'status';
+    IF document_status_type = 'enum(''draft'',''reviewing'',''approved'',''published'',''obsolete'')' THEN
+      ALTER TABLE `documents`
+        MODIFY COLUMN `status` enum('draft','reviewing','approved','trial_ready','published','obsolete') DEFAULT 'draft';
+    ELSE
+      SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'documents.status 枚举超出已验证基线，停止迁移以避免缩窄状态';
+    END IF;
+  END IF;
+
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.STATISTICS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'record_form_instances' AND INDEX_NAME = 'trial_batch'
@@ -166,6 +200,14 @@ DELIMITER ;
 CALL qms_gr14_controlled_trial();
 DROP PROCEDURE IF EXISTS qms_gr14_controlled_trial;
 
+-- 早期 G-R14 候选曾把 SIM 文件标记为 published。只纠正明确保留前缀的试运行文件，
+-- 不改动任何非 SIM 正式文件；重复执行无副作用。
+UPDATE `documents`
+SET `status` = 'trial_ready',
+    `effective_date` = NULL
+WHERE `doc_number` LIKE 'SIM-%'
+  AND `status` = 'published';
+
 CREATE TABLE IF NOT EXISTS `external_evidence_references` (
   `id` varchar(36) NOT NULL,
   `company_id` varchar(36) NOT NULL,
@@ -190,3 +232,52 @@ CREATE TABLE IF NOT EXISTS `external_evidence_references` (
   KEY `external_lookup` (`source_system`,`object_type`,`external_number`),
   KEY `cited_at` (`cited_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- CREATE TABLE IF NOT EXISTS 不会修复同名残缺表。这里对历史残留或人工建表执行
+-- fail-closed 校验，避免应用在字段缺失时以“迁移成功”的假象继续运行。
+DROP PROCEDURE IF EXISTS qms_gr14_validate_external_evidence_schema;
+DELIMITER //
+
+CREATE PROCEDURE qms_gr14_validate_external_evidence_schema()
+BEGIN
+  IF (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'external_evidence_references'
+      AND COLUMN_NAME IN (
+        'id', 'company_id', 'subject_type', 'subject_id', 'source_system',
+        'object_type', 'external_number', 'display_name', 'readonly_url',
+        'cited_at', 'checksum_summary', 'notes', 'publish', 'soft_delete',
+        'created', 'modified', 'created_by', 'modified_by'
+      )
+  ) <> 18 THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'external_evidence_references 表结构不完整，停止迁移';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'external_evidence_references'
+      AND INDEX_NAME = 'PRIMARY'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'external_evidence_references'
+      AND INDEX_NAME = 'subject_lookup'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'external_evidence_references'
+      AND INDEX_NAME = 'external_lookup'
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'external_evidence_references 索引结构不完整，停止迁移';
+  END IF;
+END//
+
+DELIMITER ;
+
+CALL qms_gr14_validate_external_evidence_schema();
+DROP PROCEDURE IF EXISTS qms_gr14_validate_external_evidence_schema;

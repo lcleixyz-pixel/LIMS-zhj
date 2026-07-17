@@ -7,6 +7,8 @@ use app\BaseController;
 use app\model\Approval as ApprovalModel;
 use app\model\Document as DocumentModel;
 use app\service\ApprovalService;
+use app\service\TrialModeService;
+use DomainException;
 use think\facade\Db;
 use think\facade\Session;
 
@@ -18,6 +20,19 @@ class Approval extends BaseController
             $id = $this->request->param('id');
             $status = $this->request->post('status');
             $comments = $this->request->post('comments', '');
+            $pendingApproval = ApprovalModel::find($id);
+            $pendingDocument = $pendingApproval && (string)$pendingApproval->model_name === 'Document'
+                ? DocumentModel::find($pendingApproval->record)
+                : null;
+            if ($status === 'approved' && $pendingDocument) {
+                try {
+                    TrialModeService::assertDocumentApprovalAllowed($pendingDocument);
+                } catch (DomainException $exception) {
+                    Session::flash('error', $exception->getMessage());
+
+                    return redirect((string)$this->request->header('referer', '/dashboard/index'));
+                }
+            }
 
             if (ApprovalService::processApproval($id, $status, $comments)) {
                 $approval = ApprovalModel::find($id);
@@ -25,19 +40,31 @@ class Approval extends BaseController
                     $doc = DocumentModel::find($approval->record);
                     if ($doc && ApprovalService::isFullyApproved('Document', $approval->record, (int) $doc->level)) {
                         Db::transaction(function () use ($doc) {
-                            $doc->save([
-                                'status' => 'published',
+                            $isTrialDocument = TrialModeService::isSimulationNumber((string)$doc->doc_number);
+                            $targetStatus = $isTrialDocument ? 'trial_ready' : 'published';
+                            $update = [
+                                'status' => $targetStatus,
                                 'publish' => 1,
-                                'effective_date' => $doc->effective_date ?: date('Y-m-d'),
-                            ]);
+                            ];
+                            if (!$isTrialDocument) {
+                                $update['effective_date'] = $doc->effective_date ?: date('Y-m-d');
+                            }
+                            $doc->save($update);
                             $supersededId = trim((string)$doc->supersedes_document_id);
                             if ($supersededId !== '') {
-                                DocumentModel::where('id', $supersededId)
-                                    ->where('status', 'published')
-                                    ->update([
+                                $superseded = DocumentModel::find($supersededId);
+                                $maySupersede = $superseded && (
+                                    (!$isTrialDocument && (string)$superseded->status === 'published')
+                                    || ($isTrialDocument
+                                        && TrialModeService::isSimulationNumber((string)$superseded->doc_number)
+                                        && (string)$superseded->status === 'trial_ready')
+                                );
+                                if ($maySupersede) {
+                                    $superseded->save([
                                         'status' => 'obsolete',
                                         'publish' => 0,
                                     ]);
+                                }
                             }
                         });
                     }

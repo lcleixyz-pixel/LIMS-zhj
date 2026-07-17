@@ -12,6 +12,14 @@ use think\facade\Config;
 use think\facade\Db;
 use think\facade\Session;
 
+if (
+    !str_contains((string)Config::get('qms.environment_label', ''), '8011')
+    && getenv('QMS_ALLOW_DESTRUCTIVE_SMOKE') !== '1'
+) {
+    fwrite(STDERR, "拒绝运行：本测试会创建临时账号，只能在 8011 候选环境执行。\n");
+    exit(2);
+}
+
 $passes = [];
 $failures = [];
 
@@ -42,7 +50,7 @@ function gr14_role_login(string $employeeNumber): void
         'company_id' => (string)Config::get('qms.company_id'),
         'employee_id' => (string)$employee['id'],
         'username' => 'gr14_role_' . strtolower($employeeNumber),
-        'password' => password_hash('temporary-only', PASSWORD_DEFAULT),
+        'password' => password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT),
         'name' => (string)$employee['name'],
         'role' => 'staff',
         'publish' => 1,
@@ -68,6 +76,7 @@ function gr14_role_cleanup(): void
     Db::name('users')->whereLike('id', 'gr14-role-%')->delete();
     Session::clear();
 }
+register_shutdown_function('gr14_role_cleanup');
 
 $qualityTemplate = (object)['responsible_position_code' => 'quality_manager'];
 $technicalTemplate = (object)['responsible_position_code' => 'technical_manager'];
@@ -87,6 +96,11 @@ try {
         '张晓磊可组织质量体系活动并批准质量类试运行模板'
     );
     gr14_role_case(
+        !gr14_role_allows('equipment', 'edit', (object)['site_id' => $urumqi]),
+        'R01A',
+        '质量负责人不替代设备管理员修改设备'
+    );
+    gr14_role_case(
         !gr14_role_allows('record_form_template', 'approve_trial', $technicalTemplate),
         'R02',
         '质量负责人不能替代总体技术负责人批准技术类试运行模板'
@@ -96,25 +110,32 @@ try {
     gr14_role_case(
         gr14_role_allows('record_form_template', 'approve_trial', $technicalTemplate)
         && gr14_role_allows('document', 'review')
-        && gr14_role_allows('external_evidence_reference', 'add'),
+        && gr14_role_allows(
+            'external_evidence_reference',
+            'add',
+            (object)['_subject_type' => 'quality_event', 'site_id' => $urumqi]
+        ),
         'R03',
-        '刘恒春可复核技术类模板、技术文件和外部证据'
+        '刘恒春可复核技术类模板、技术文件和有明确对象范围的外部证据'
     );
     gr14_role_case(
         !gr14_role_allows('record_form_template', 'approve_trial', $qualityTemplate)
-        && !gr14_role_allows('audit_plan', 'organize'),
+        && !gr14_role_allows('audit_plan', 'organize')
+        && !gr14_role_allows('equipment', 'edit', (object)['site_id' => $urumqi]),
         'R04',
-        '总体技术负责人不能替代质量负责人批准质量模板或组织内审'
+        '总体技术负责人不能替代质量负责人或设备管理员执行受控动作'
     );
 
     foreach (['E006' => [$urumqi, $hetian], 'E008' => [$hetian, $urumqi]] as $employeeNumber => [$ownSite, $otherSite]) {
         gr14_role_login($employeeNumber);
+        $ownTrialDocument = (object)['site_id' => $ownSite, 'doc_number' => 'SIM-QP-GR14-RUNTIME'];
+        $otherTrialDocument = (object)['site_id' => $otherSite, 'doc_number' => 'SIM-QP-GR14-RUNTIME'];
         gr14_role_case(
             gr14_role_allows('document', 'register', (object)['site_id' => $ownSite])
-            && gr14_role_allows('document', 'distribute', (object)['site_id' => $ownSite])
-            && gr14_role_allows('document', 'recall', (object)['site_id' => $ownSite])
-            && gr14_role_allows('document', 'revise', (object)['site_id' => $ownSite])
-            && !gr14_role_allows('document', 'revise', (object)['site_id' => $otherSite])
+            && gr14_role_allows('document', 'distribute', $ownTrialDocument)
+            && gr14_role_allows('document', 'recall', $ownTrialDocument)
+            && gr14_role_allows('document', 'revise', $ownTrialDocument)
+            && !gr14_role_allows('document', 'revise', $otherTrialDocument)
             && !gr14_role_allows('document', 'review')
             && !gr14_role_allows('record_form_template', 'approve_trial', $qualityTemplate),
             'R05-' . $employeeNumber,
@@ -124,20 +145,36 @@ try {
 
     gr14_role_login('E010');
     gr14_role_case(
-        gr14_role_allows('equipment', 'edit')
+        gr14_role_allows('equipment', 'edit', (object)['site_id' => $urumqi])
         && gr14_role_allows('equipment_maintenance', 'write', (object)['site_id' => $urumqi])
-        && !gr14_role_allows('equipment_maintenance', 'write', (object)['site_id' => $hetian]),
+        && !gr14_role_allows('equipment_maintenance', 'write', (object)['site_id' => $hetian])
+        && gr14_role_allows('equipment_transfer', 'write', (object)['site_id' => $urumqi, '_to_site_id' => $urumqi])
+        && !gr14_role_allows('equipment_transfer', 'write', (object)['site_id' => $urumqi, '_to_site_id' => $hetian]),
         'R06',
         '王胜林只能管理乌鲁木齐设备'
+    );
+    gr14_role_case(
+        gr14_role_allows('equipment_transfer', 'view', (object)['from_site_id' => $urumqi, 'to_site_id' => $urumqi])
+        && !gr14_role_allows('equipment_transfer', 'view', (object)['from_site_id' => $hetian, 'to_site_id' => $hetian]),
+        'R06A',
+        '王胜林不能通过直接 URL 查看纯和田设备调拨记录'
     );
 
     gr14_role_login('E007');
     gr14_role_case(
-        gr14_role_allows('equipment', 'edit')
+        gr14_role_allows('equipment', 'edit', (object)['site_id' => $hetian])
         && gr14_role_allows('equipment_maintenance', 'write', (object)['site_id' => $hetian])
-        && !gr14_role_allows('equipment_maintenance', 'write', (object)['site_id' => $urumqi]),
+        && !gr14_role_allows('equipment_maintenance', 'write', (object)['site_id' => $urumqi])
+        && gr14_role_allows('equipment_transfer', 'write', (object)['site_id' => $hetian, '_to_site_id' => $hetian])
+        && !gr14_role_allows('equipment_transfer', 'write', (object)['site_id' => $hetian, '_to_site_id' => $urumqi]),
         'R07',
         '米尔布拉只能管理和田设备'
+    );
+    gr14_role_case(
+        gr14_role_allows('equipment_transfer', 'view', (object)['from_site_id' => $hetian, 'to_site_id' => $hetian])
+        && !gr14_role_allows('equipment_transfer', 'view', (object)['from_site_id' => $urumqi, 'to_site_id' => $urumqi]),
+        'R07A',
+        '米尔布拉不能通过直接 URL 查看纯乌鲁木齐设备调拨记录'
     );
 
     gr14_role_login('E009');

@@ -294,8 +294,12 @@ class RecordFormInstance extends BaseController
             $values = RecordFormSchemaService::enforceReadonly($schema, $values);
             $errors = RecordFormSchemaService::validateValues($schema, $values);
             if ($errors === []) {
+                $recordTitle = trim((string)$this->request->post('record_title', $record->record_title));
+                if ((bool)$record->is_simulation) {
+                    $recordTitle = TrialModeService::simulationNumber($recordTitle);
+                }
                 $record->save([
-                    'record_title' => trim((string)$this->request->post('record_title', $record->record_title)),
+                    'record_title' => $recordTitle,
                     'field_values' => $this->encodeValues($values),
                     'status' => 'draft',
                     'generated_html_path' => null,
@@ -586,7 +590,8 @@ class RecordFormInstance extends BaseController
 
     private function canEditRecord(InstanceModel $record): bool
     {
-        return (string)$record->status === 'draft';
+        return (string)$record->status === 'draft'
+            && (!(bool)$record->is_simulation || TrialModeService::isEnabled());
     }
 
     private function previewPdfFiles(string $recordId): array

@@ -14,7 +14,8 @@ class ExternalEvidenceReference extends BaseController
 {
     public function index()
     {
-        $query = ExternalEvidenceReferenceModel::where('soft_delete', 0);
+        $query = ExternalEvidenceReferenceModel::where('soft_delete', 0)
+            ->where('company_id', (string)\think\facade\Config::get('qms.company_id'));
         $subjectType = trim((string)$this->request->get('subject_type', ''));
         if ($subjectType !== '') {
             $query->where('subject_type', $subjectType);

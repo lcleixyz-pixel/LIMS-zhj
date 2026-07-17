@@ -6,9 +6,12 @@ namespace app\controller;
 use app\model\AuditPlan as AuditPlanModel;
 use app\model\AuditSchedule;
 use app\service\AuditClosureService;
+use app\service\TrialModeService;
 use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
+use think\exception\HttpException;
+use think\facade\Config;
 
 class AuditPlan extends BusinessBase
 {
@@ -28,16 +31,48 @@ class AuditPlan extends BusinessBase
         'title.max' => '计划标题不能超过 200 字',
     ];
 
+    protected function onlyWritable(array $data, ?string $recordId = null): array
+    {
+        $data = parent::onlyWritable($data, $recordId);
+        if ($recordId === null && TrialModeService::isEnabled()) {
+            $data['title'] = TrialModeService::simulationNumber((string)($data['title'] ?? '内审计划'));
+        }
+
+        return $data;
+    }
+
     protected function assignFormContext(): void
     {
         $this->assignUsers();
         $this->assignStatusLabels('audit_plan');
     }
 
+    protected function findActiveRecord(string $id): ?object
+    {
+        return AuditPlanModel::where('id', $id)
+            ->where('company_id', (string)Config::get('qms.company_id'))
+            ->where('soft_delete', 0)
+            ->find();
+    }
+
+    public function index()
+    {
+        $items = AuditPlanModel::where('company_id', (string)Config::get('qms.company_id'))
+            ->where('soft_delete', 0)
+            ->order('plan_year', 'desc')
+            ->paginate(20);
+        View::assign('items', $items);
+        View::assign('pages', $items->render());
+        View::assign('pageTitle', $this->pageTitle);
+        $this->assignFormContext();
+
+        return View::fetch($this->viewPrefix . '/index');
+    }
+
     public function view()
     {
         $id = $this->request->param('id');
-        $record = AuditPlanModel::find($id);
+        $record = $this->findActiveRecord((string)$id);
         if (!$record) {
             abort(404);
         }
@@ -71,6 +106,39 @@ class AuditPlan extends BusinessBase
         return View::fetch($this->viewPrefix . '/view');
     }
 
+    public function edit()
+    {
+        $record = $this->findActiveRecord((string)$this->request->param('id', ''));
+        if (!$record) {
+            throw new HttpException(404, '内审计划不存在');
+        }
+        if ((string)$record->status !== 'draft') {
+            Session::flash('warning', '只有草稿内审计划可直接编辑；批准后请保留原记录并按变更流程处理。');
+
+            return redirect('/audit_plan/view?id=' . $record->id);
+        }
+
+        return parent::edit();
+    }
+
+    public function delete()
+    {
+        if (!$this->request->isPost()) {
+            throw new HttpException(405, '内审计划不得通过 GET 删除');
+        }
+        $record = $this->findActiveRecord((string)$this->request->param('id', ''));
+        if (!$record) {
+            throw new HttpException(404, '内审计划不存在');
+        }
+        if ((string)$record->status !== 'draft') {
+            Session::flash('warning', '已批准、执行中或已完成的内审计划不得删除。');
+
+            return redirect('/audit_plan/view?id=' . $record->id);
+        }
+
+        return parent::delete();
+    }
+
     public function approve()
     {
         $id = $this->request->param('id');
@@ -79,7 +147,7 @@ class AuditPlan extends BusinessBase
 
             return redirect('/audit_plan/view?id=' . $id);
         }
-        $record = AuditPlanModel::find($id);
+        $record = $this->findActiveRecord((string)$id);
         if ($record && $record->status === 'draft') {
             $record->status = 'approved';
             $record->approved_by = Session::get('user.id');
@@ -100,7 +168,7 @@ class AuditPlan extends BusinessBase
             return redirect('/audit_plan/view?id=' . $id);
         }
 
-        $record = AuditPlanModel::where('id', $id)->where('soft_delete', 0)->find();
+        $record = $this->findActiveRecord($id);
         if (!$record) {
             abort(404);
         }

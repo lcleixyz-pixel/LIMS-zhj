@@ -9,6 +9,7 @@ use app\service\WorkflowService;
 use app\service\FieldAuditService;
 use app\service\ActionAuthorizationService;
 use app\service\ExternalEvidenceReferenceService;
+use app\service\TrialModeService;
 use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
@@ -106,6 +107,9 @@ class Complaint extends BusinessBase
             $data = $this->onlyWritable($this->request->post());
             if (empty($data['complaint_number'])) {
                 $data['complaint_number'] = qms_next_number('CP', CustomerComplaint::class, 'complaint_number');
+            }
+            if (TrialModeService::isEnabled()) {
+                $data['complaint_number'] = TrialModeService::simulationNumber((string)$data['complaint_number']);
             }
             if (empty($data['received_date'])) {
                 $data['received_date'] = date('Y-m-d');

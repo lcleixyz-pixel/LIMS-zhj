@@ -10,16 +10,28 @@ use app\service\FieldAuditService;
 use app\service\FileAttachmentService;
 use app\service\FileService;
 use app\service\ExternalEvidenceReferenceService;
+use app\service\AuditClosureService;
+use app\service\TrialModeService;
 use app\service\WorkflowService;
+use think\exception\HttpException;
 use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
+use DomainException;
 
 class AuditFinding extends BusinessBase
 {
     protected string $modelClass = AuditFindingModel::class;
     protected string $viewPrefix = 'audit_finding';
     protected string $pageTitle = '审核发现';
+    protected array $writableFields = [
+        'finding_type', 'clause', 'description', 'department_id',
+        'responsible_id', 'due_date',
+    ];
+    protected array $createWritableFields = [
+        'audit_schedule_id', 'finding_type', 'clause', 'description',
+        'department_id', 'responsible_id', 'due_date',
+    ];
     protected array $validateRules = [
         'audit_schedule_id' => 'require',
         'description' => 'require',
@@ -31,11 +43,55 @@ class AuditFinding extends BusinessBase
         'due_date.date' => '截止日期格式不正确',
     ];
 
+    protected function findActiveRecord(string $id): ?object
+    {
+        return AuditFindingModel::alias('f')
+            ->join('audit_schedules s', 's.id = f.audit_schedule_id')
+            ->join('audit_plans p', 'p.id = s.audit_plan_id')
+            ->where('f.id', $id)
+            ->where('p.company_id', (string)\think\facade\Config::get('qms.company_id'))
+            ->where('f.soft_delete', 0)
+            ->where('s.soft_delete', 0)
+            ->where('p.soft_delete', 0)
+            ->field('f.*')
+            ->find();
+    }
+
+    public function index()
+    {
+        $items = AuditFindingModel::alias('f')
+            ->join('audit_schedules s', 's.id = f.audit_schedule_id')
+            ->join('audit_plans p', 'p.id = s.audit_plan_id')
+            ->where('p.company_id', (string)\think\facade\Config::get('qms.company_id'))
+            ->where('f.soft_delete', 0)
+            ->where('s.soft_delete', 0)
+            ->where('p.soft_delete', 0)
+            ->field('f.*')
+            ->order('f.created', 'desc')
+            ->paginate(20);
+        View::assign('items', $items);
+        View::assign('pages', $items->render());
+        View::assign('pageTitle', $this->pageTitle);
+        $this->assignIndexContext();
+
+        return View::fetch($this->viewPrefix . '/index');
+    }
+
     protected function assignFormContext(): void
     {
         $this->assignCommonForm();
         $this->assignStatusLabels('audit_finding');
-        View::assign('auditSchedules', AuditSchedule::where('soft_delete', 0)->select());
+        View::assign(
+            'auditSchedules',
+            AuditSchedule::alias('s')
+                ->join('audit_plans p', 'p.id = s.audit_plan_id')
+                ->where('p.company_id', (string)\think\facade\Config::get('qms.company_id'))
+                ->where('p.soft_delete', 0)
+                ->where('s.soft_delete', 0)
+                ->where('s.status', '<>', 'completed')
+                ->field('s.*')
+                ->select()
+        );
         View::assign('findingTypes', ['major' => '严重不符合', 'minor' => '一般不符合', 'observation' => '观察项']);
     }
 
@@ -47,10 +103,18 @@ class AuditFinding extends BusinessBase
     public function add()
     {
         if ($this->request->isPost()) {
-            $data = $this->request->post();
-            if (empty($data['finding_number'])) {
-                $data['finding_number'] = qms_next_number('AF', AuditFindingModel::class, 'finding_number');
+            $data = $this->onlyWritable($this->request->post());
+            try {
+                AuditClosureService::assertScheduleWritable((string)($data['audit_schedule_id'] ?? ''));
+            } catch (DomainException $exception) {
+                throw new HttpException(409, $exception->getMessage());
             }
+            $findingNumber = qms_next_number('AF', AuditFindingModel::class, 'finding_number');
+            if (TrialModeService::isEnabled()) {
+                $findingNumber = TrialModeService::simulationNumber($findingNumber);
+            }
+            $data['finding_number'] = $findingNumber;
+            $data['status'] = 'open';
             $errors = $this->validateFormData($data);
             if ($errors !== []) {
                 return $this->renderFormValidationFailure($data, $this->viewPrefix . '/add');
@@ -67,10 +131,15 @@ class AuditFinding extends BusinessBase
         return View::fetch($this->viewPrefix . '/add');
     }
 
+    public function delete()
+    {
+        throw new HttpException(405, '审核发现不得直接删除；请通过 CAPA 验证和关闭流程保留完整留痕');
+    }
+
     public function view()
     {
         $id = $this->request->param('id');
-        $record = AuditFindingModel::find($id);
+        $record = $this->findActiveRecord((string)$id);
         if (!$record) {
             abort(404);
         }
@@ -96,7 +165,7 @@ class AuditFinding extends BusinessBase
 
             return redirect('/audit_finding/view?id=' . $id);
         }
-        $record = AuditFindingModel::find($id);
+        $record = $this->findActiveRecord((string)$id);
         if (!$record || $record->capa_id) {
             Session::flash('error', '无法创建CAPA');
 
@@ -120,7 +189,7 @@ class AuditFinding extends BusinessBase
     public function uploadEvidence()
     {
         $id = (string)$this->request->post('id', '');
-        $record = AuditFindingModel::find($id);
+        $record = $this->findActiveRecord($id);
         if (!$record) {
             abort(404);
         }
@@ -142,6 +211,10 @@ class AuditFinding extends BusinessBase
     {
         $id = (string)$this->request->param('id', '');
         $fileId = (string)$this->request->param('file_id', '');
+        $record = $this->findActiveRecord($id);
+        if (!$record) {
+            abort(404, '审核发现不存在');
+        }
         $attachment = FileAttachmentService::findAttachment($fileId, 'AuditFinding', $id);
         if (!$attachment) {
             abort(404, '附件不存在');

@@ -45,6 +45,9 @@ $trialService = source('app/service/TrialModeService.php');
 $templateController = source('app/controller/RecordFormTemplate.php');
 $instanceController = source('app/controller/RecordFormInstance.php');
 $externalService = source('app/service/ExternalEvidenceReferenceService.php');
+$auditFindingController = source('app/controller/AuditFinding.php');
+$workflowService = source('app/service/WorkflowService.php');
+$auditPlanController = source('app/controller/AuditPlan.php');
 
 check(
     contains_all($migration, [
@@ -125,14 +128,54 @@ check(
         'cited_at',
         'checksum_summary',
         'notes',
-        'http://',
-        'https://',
+        "scheme !== 'https'",
+        'isLoopback',
     ])
     && !str_contains($externalService, 'customer_name')
     && !str_contains($externalService, 'report_body')
     && !str_contains($externalService, 'detection_data'),
     'TR06',
     '外部证据服务只接受约定元数据和只读链接，不承载业务正文'
+);
+
+check(
+    str_contains($instanceController, 'TrialModeService::simulationNumber($recordTitle)')
+    && str_contains($instanceController, 'TrialModeService::isEnabled()'),
+    'TR07',
+    '模拟记录编辑时不能移除 SIM 标识，关闭试运行模式后不能继续改写模拟草稿'
+);
+
+check(
+    contains_all($auditFindingController, [
+        'createWritableFields',
+        'writableFields',
+        'TrialModeService::simulationNumber',
+        "\$data['status'] = 'open'",
+    ])
+    && !str_contains($auditFindingController, '$data = $this->request->post();'),
+    'TR08',
+    '审核发现编号、状态和 CAPA 关联均由服务端控制'
+);
+
+check(
+    str_contains($workflowService, 'allowedAdvanceFields')
+    && !str_contains($workflowService, 'foreach ($data as $key => $value)'),
+    'TR09',
+    'CAPA 状态推进使用字段白名单，不能改写来源和关联元数据'
+);
+
+check(
+    str_contains($migration, "SIGNAL SQLSTATE '45000'")
+    && str_contains($migration, '停止迁移以避免缩窄状态'),
+    'TR10',
+    '未知状态枚举不会被迁移静默缩窄'
+);
+
+check(
+    str_contains($auditPlanController, 'TrialModeService::simulationNumber')
+    && str_contains($auditPlanController, '$recordId === null'),
+    'TR11',
+    '试运行新建内审计划由服务端强制 SIM 标识'
 );
 
 foreach ($passes as $pass) {

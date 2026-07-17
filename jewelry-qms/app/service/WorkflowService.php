@@ -47,12 +47,7 @@ class WorkflowService
                 }
 
                 $capaNumber = qms_next_number('CAPA', Capa::class, 'capa_number');
-                if (
-                    TrialModeService::isEnabled()
-                    && $sourceType === 'audit'
-                    && $source instanceof AuditFinding
-                    && str_starts_with(strtoupper((string)$source->finding_number), 'SIM-')
-                ) {
+                if (TrialModeService::isEnabled()) {
                     $capaNumber = TrialModeService::simulationNumber($capaNumber);
                 }
                 $capa = Capa::create([
@@ -282,9 +277,15 @@ class WorkflowService
         }
 
         if ($action === 'advance' && isset($flow[$current])) {
-            foreach ($data as $key => $value) {
-                if ($capa->hasColumn($key)) {
-                    $capa->$key = $value;
+            $allowedAdvanceFields = match ($current) {
+                'open' => ['root_cause', 'assigned_to', 'due_date'],
+                'analyzing' => ['root_cause', 'corrective_action', 'preventive_action', 'assigned_to', 'due_date'],
+                'implementing' => ['corrective_action', 'preventive_action', 'verification', 'due_date'],
+                default => [],
+            };
+            foreach ($allowedAdvanceFields as $key) {
+                if (array_key_exists($key, $data) && $capa->hasColumn($key)) {
+                    $capa->$key = $data[$key];
                 }
             }
             $capa->status = $flow[$current];

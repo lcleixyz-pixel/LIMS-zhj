@@ -479,8 +479,8 @@ class RecordFormTemplate extends BaseController
         }
 
         $record = $this->findTemplate();
-        if ((string)$record->status === 'draft') {
-            Session::flash('warning', '草稿模板可删除；已发布模板才走作废/换版流程。');
+        if (!in_array((string)$record->status, ['trial_ready', 'published'], true)) {
+            Session::flash('warning', '只有试运行就绪或正式发布模板可停止使用；草稿可删除，已作废模板保持历史状态。');
 
             return redirect('/record_form_template/index');
         }

@@ -37,6 +37,7 @@ function dc_all(string $source, array $needles): bool
 $document = dc_source('app/controller/Document.php');
 $approval = dc_source('app/controller/Approval.php');
 $approvalService = dc_source('app/service/ApprovalService.php');
+$trialMode = dc_source('app/service/TrialModeService.php');
 $control = dc_source('app/service/DocumentControlService.php');
 $print = dc_source('app/service/ControlledPrintService.php');
 $authorization = dc_source('app/service/ActionAuthorizationService.php');
@@ -175,6 +176,46 @@ dc_check(
     && str_contains($view, '适用场所'),
     'DC15',
     '文件按适用场所绑定，文件管理员只能管理本人任命场所'
+);
+
+dc_check(
+    str_contains($migration, "TABLE_NAME = 'documents'")
+    && str_contains($migration, "enum('draft','reviewing','approved','trial_ready','published','obsolete')")
+    && str_contains($approval, "TrialModeService::isSimulationNumber")
+    && str_contains($approval, "'trial_ready'"),
+    'DC16',
+    'SIM 文件完成审批后进入 trial_ready，不得写成正式 published'
+);
+
+dc_check(
+    str_contains($print, 'TrialModeService::isSimulationNumber')
+    && str_contains($print, "status !== 'trial_ready'")
+    && str_contains($print, '试运行文件只能在受控试运行环境打印')
+    && str_contains($print, '试运行文件状态无效，不能生成打印件'),
+    'DC17',
+    'SIM 文件即使关闭试运行开关或状态被误写也不能降级为正式受控打印'
+);
+
+dc_check(
+    str_contains($control, 'TrialModeService::isSimulationNumber')
+    && str_contains($control, "status !== 'trial_ready'")
+    && str_contains($control, '!TrialModeService::isEnabled()'),
+    'DC18',
+    '试运行文件只可在 trial_ready 且试运行开关开启时分发'
+);
+
+dc_check(
+    str_contains($approval, 'assertDocumentApprovalAllowed')
+    && str_contains($trialMode, '受控试运行环境禁止批准或发布非 SIM 正式文件'),
+    'DC19',
+    '8011 试运行环境从后端禁止批准或发布非 SIM 正式文件'
+);
+dc_check(
+    str_contains($control, 'trialDocumentWriteAllowed')
+    && str_contains($authorization, 'trialDocumentMutationAllowed')
+    && str_contains($control, 'TrialModeService::isEnabled()'),
+    'DC20',
+    '试运行环境禁止分发、评审或作废非 SIM 正式文件，仅允许只读查看和受控修订副本'
 );
 
 foreach ($passes as $pass) {

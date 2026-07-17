@@ -48,6 +48,7 @@ $findingController = read_source('app/controller/AuditFinding.php');
 $findingView = read_source('app/view/audit_finding/view.html');
 $findingIndex = read_source('app/view/audit_finding/index.html');
 $checklistIndex = read_source('app/view/audit_checklist/index.html');
+$checklistView = read_source('app/view/audit_checklist/view.html');
 $qmsConfig = read_source('config/qms.php');
 $workflow = read_source('app/service/WorkflowService.php');
 
@@ -152,6 +153,11 @@ audit_check(
 audit_check(
     str_contains($qmsConfig, "'audit_checklist' => [")
     && str_contains($checklistIndex, "qms_status_label('audit_checklist'")
+    && str_contains($checklistIndex, '客观证据')
+    && str_contains($checklistView, '审核日程')
+    && str_contains($checklistView, '检查结果')
+    && str_contains($checklistView, '客观证据')
+    && !str_contains($checklistView, 'name="fields"')
     && str_contains($scheduleView, "qms_status_label('audit_checklist'")
     && str_contains($scheduleView, 'findingTypes[$f.finding_type]')
     && str_contains($findingIndex, 'finding_number')

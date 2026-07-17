@@ -8,6 +8,7 @@ use app\model\CapaSource;
 use app\model\User;
 use app\service\FieldAuditService;
 use app\service\ExternalEvidenceReferenceService;
+use app\service\TrialModeService;
 use app\service\WorkflowService;
 use think\facade\Db;
 use think\facade\Session;
@@ -75,6 +76,9 @@ class Capa extends BusinessBase
             $data = $this->onlyWritable($this->request->post());
             if (empty($data['capa_number'])) {
                 $data['capa_number'] = qms_next_number('CAPA', CapaModel::class, 'capa_number');
+            }
+            if (TrialModeService::isEnabled()) {
+                $data['capa_number'] = TrialModeService::simulationNumber((string)$data['capa_number']);
             }
             if (empty($data['source_id']) && !empty($data['source_type'])) {
                 $data['source_id'] = WorkflowService::resolveCapaSourceId($data['source_type']);

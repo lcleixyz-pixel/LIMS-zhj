@@ -123,6 +123,59 @@ mr_check(
     '管理评审列表展示业务编号和中文状态，不暴露内部 ID 或提供无审批删除入口'
 );
 
+mr_check(
+    mr_contains_all($service, [
+        'snapshot_sha256',
+        'record_ids',
+        'generated_at',
+    ])
+    && !str_contains($service, 'catch (\\Throwable) {')
+    && str_contains($controller, 'verifySnapshot'),
+    'MR10',
+    '输入快照包含时间、明细 ID 和完整性摘要，查询异常不得静默伪装为零'
+);
+
+mr_check(
+    str_contains($controller, '完成前请填写管理评审输出和决议')
+    && str_contains($controller, '管理评审输入快照校验失败'),
+    'MR11',
+    '管理评审完成动作要求输出、决议和可验证输入快照'
+);
+
+mr_check(
+    str_contains($service, "'qms_external_change_events'")
+    && str_contains($service, "'qms_quality_objectives'")
+    && !str_contains($service, "count('planning_change_events')")
+    && !str_contains($service, "count('planning_objectives')"),
+    'MR12',
+    '管理评审读取实际变更事件和质量目标数据表，不再由错误表名生成伪零值'
+);
+
+mr_check(
+    str_contains($service, 'private static function recordSet')
+    && !str_contains($service, 'recordIdsForDetailUrl')
+    && str_contains($service, "'t.doc_number', 'like'")
+    && str_contains($service, "'t.object_type', 'like', '%评审%'"),
+    'MR13',
+    '管理评审每类计数与明细 ID 使用同一过滤查询'
+);
+mr_check(
+    str_contains($service, "where('t.company_id'")
+    && str_contains($service, "'资源充分性：设备'")
+    && str_contains($service, "'资源充分性：人员'")
+    && !str_contains($service, "'resource:equipment:'")
+    && !str_contains($service, "'resource:employee:'"),
+    'MR14',
+    '管理评审按机构隔离数据，并把设备和人员拆成各自可下钻的资源输入'
+);
+mr_check(
+    str_contains($service, 'private static function emptyRecordSet')
+    && str_contains($service, "'工作量、工作类型或活动范围变化', self::emptyRecordSet()")
+    && str_contains($service, "'风险识别结果', self::emptyRecordSet()"),
+    'MR15',
+    '无独立分类数据时工作量范围变化和风险识别保持未形成，不重复冒用法规变更'
+);
+
 foreach ($passes as $pass) {
     echo "[PASS] {$pass}\n";
 }

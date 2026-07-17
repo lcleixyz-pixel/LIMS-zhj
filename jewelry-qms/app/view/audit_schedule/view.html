@@ -7,8 +7,10 @@
                 <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('确认检查记录、审核发现和 CAPA 均已闭环？')">完成日程</button>
             </form>
             {/if}
+            {if $record.status != 'completed'}
             <a href="/audit_checklist/add?audit_schedule_id={$record.id}" class="btn btn-sm btn-primary">添加检查项</a>
             <a href="/audit_finding/add?audit_schedule_id={$record.id}" class="btn btn-sm btn-warning">登记发现</a>
+            {/if}
             <a href="/audit_plan/view?id={$plan.id}" class="btn btn-sm btn-outline-secondary">返回计划</a>
         </div>
     </div>
@@ -16,8 +18,8 @@
         <p>计划：{$plan.title|default='-'} | 日期：{$record.audit_date} | 条款：{$record.clause|default='-'}</p>
         <h6>检查表</h6>
         <table class="table table-sm mb-4">
-            <thead><tr><th>条款</th><th>检查项</th><th>结果</th></tr></thead>
-            <tbody>{volist name="checklists" id="c"}<tr><td>{$c.clause}</td><td>{$c.check_item}</td><td>{:qms_status_label('audit_checklist', $c.result)}</td></tr>{/volist}</tbody>
+            <thead><tr><th>条款</th><th>检查项</th><th>结果</th><th>客观证据</th></tr></thead>
+            <tbody>{volist name="checklists" id="c"}<tr><td>{$c.clause}</td><td>{$c.check_item}</td><td>{:qms_status_label('audit_checklist', $c.result)}</td><td>{$c.evidence|default='-'}</td></tr>{/volist}</tbody>
         </table>
         <h6>审核发现</h6>
         <table class="table table-sm">

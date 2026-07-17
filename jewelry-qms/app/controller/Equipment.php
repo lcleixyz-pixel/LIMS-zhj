@@ -18,6 +18,20 @@ class Equipment extends BusinessBase
     protected string $modelClass = EquipmentModel::class;
     protected string $viewPrefix = 'equipment';
     protected string $pageTitle = '设备台账';
+    protected array $writableFields = [
+        'equipment_number', 'name', 'model', 'manufacturer', 'serial_number',
+        'measurement_range', 'traceability_method', 'traceability_due_date',
+        'traceability_confirm_result', 'department_id', 'location', 'purchase_date',
+        'calibration_required', 'calibration_cycle_months', 'last_calibration_date',
+        'next_calibration_date', 'status',
+    ];
+    protected array $createWritableFields = [
+        'equipment_number', 'name', 'model', 'manufacturer', 'serial_number',
+        'measurement_range', 'traceability_method', 'traceability_due_date',
+        'traceability_confirm_result', 'department_id', 'site_id', 'location',
+        'purchase_date', 'calibration_required', 'calibration_cycle_months',
+        'last_calibration_date', 'next_calibration_date', 'status',
+    ];
     protected array $validateMessages = [
         'equipment_number.require' => '设备编号不能为空',
         'name.require' => '设备名称不能为空',
@@ -44,6 +58,7 @@ class Equipment extends BusinessBase
             $sites->whereIn('id', $visibleSiteIds);
         }
         View::assign('sites', $sites->order('sort_order', 'asc')->select());
+        View::assign('siteMap', Site::where('soft_delete', 0)->column('name', 'id'));
     }
 
     public function index()

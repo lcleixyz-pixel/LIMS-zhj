@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace app\service;
 
+use DomainException;
 use think\facade\Config;
 
 final class TrialModeService
@@ -31,7 +32,8 @@ final class TrialModeService
 
     public static function isSimulationTemplate(object|array $template): bool
     {
-        return self::value($template, 'status') === 'trial_ready';
+        return self::isEnabled()
+            && in_array(self::value($template, 'status'), ['published', 'trial_ready'], true);
     }
 
     public static function simulationNumber(string $value): string
@@ -42,6 +44,22 @@ final class TrialModeService
         }
 
         return 'SIM-' . ltrim($value, '-');
+    }
+
+    public static function isSimulationNumber(string $value): bool
+    {
+        return str_starts_with(strtoupper(trim($value)), 'SIM-');
+    }
+
+    public static function assertDocumentApprovalAllowed(object|array $document): void
+    {
+        $isSimulation = self::isSimulationNumber(self::value($document, 'doc_number'));
+        if (self::isEnabled() && !$isSimulation) {
+            throw new DomainException('受控试运行环境禁止批准或发布非 SIM 正式文件');
+        }
+        if (!self::isEnabled() && $isSimulation) {
+            throw new DomainException('试运行模式已关闭，SIM 文件不能完成审批');
+        }
     }
 
     public static function watermarkHtml(string $html, bool $isSimulation): string
