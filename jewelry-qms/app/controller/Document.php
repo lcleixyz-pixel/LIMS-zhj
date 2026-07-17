@@ -223,7 +223,7 @@ class Document extends BaseController
         View::assign('departmentName', $departmentName);
         View::assign('revisions', $revisions);
         View::assign('approvals', $approvals);
-        View::assign('fieldChangeLogs', FieldAuditService::logsFor('Document', (string)$id));
+        View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('Document', (string)$id));
         View::assign('distributions', $distributions);
         View::assign('reviews', $reviews);
         View::assign('distributionUsers', User::where('soft_delete', 0)->where('publish', 1)->order('name', 'asc')->select());

@@ -72,7 +72,7 @@ class AuditFinding extends BusinessBase
         View::assign('record', $record);
         View::assign('capa', $record->capa_id ? Capa::find($record->capa_id) : null);
         View::assign('schedule', AuditSchedule::find($record->audit_schedule_id));
-        View::assign('fieldChangeLogs', FieldAuditService::logsFor('AuditFinding', (string)$id));
+        View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('AuditFinding', (string)$id));
         View::assign('evidenceFiles', FileAttachmentService::attachmentsFor('AuditFinding', (string)$record->id));
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 

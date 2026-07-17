@@ -99,7 +99,7 @@ class Equipment extends BusinessBase
         View::assign('periodicCheckInstances', EquipmentEvidenceService::periodicCheckInstances((string)$record->id));
         View::assign('equipmentAuthorizations', EquipmentEvidenceService::equipmentAuthorizationRows((string)$record->id));
         View::assign('daysUntil', $daysUntil);
-        View::assign('fieldChangeLogs', FieldAuditService::logsFor('Equipment', (string)$id));
+        View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('Equipment', (string)$id));
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 
         return View::fetch($this->viewPrefix . '/view');

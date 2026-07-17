@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\middleware;
 
 use app\service\RbacService;
+use app\service\SecurityAuditService;
 use think\facade\Session;
 
 class Rbac
@@ -28,6 +29,7 @@ class Rbac
         }
 
         if (!RbacService::canAccess($controller)) {
+            SecurityAuditService::recordAccessDenied($request, 'module_access');
             if ($request->isAjax()) {
                 return json(['code' => 403, 'msg' => '无访问权限']);
             }
@@ -52,6 +54,7 @@ class Rbac
         // 这里只放行该控制器的 approve；无有效总经理/实验室主任任命仍会被 ApprovalService 拒绝。
         $isBusinessResponsibilityApproval = $controller === 'planningresponsibility' && $action === 'approve';
         if (in_array($action, $writeActions, true) && !$isBusinessResponsibilityApproval && !RbacService::canWrite($controller)) {
+            SecurityAuditService::recordAccessDenied($request, 'write_access');
             Session::flash('error', '您没有编辑权限');
 
             return redirect('/dashboard/index');

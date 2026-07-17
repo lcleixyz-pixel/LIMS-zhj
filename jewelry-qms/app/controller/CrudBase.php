@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\controller;
 
 use app\BaseController;
+use app\service\FieldAuditService;
 use think\exception\HttpException;
 use think\exception\ValidateException;
 use think\facade\Db;
@@ -346,6 +347,12 @@ class CrudBase extends BaseController
         }
         View::assign('record', $record);
         View::assign('fields', $this->buildViewFields($record));
+        if (FieldAuditService::shouldAuditModel($record)) {
+            View::assign(
+                'fieldChangeLogs',
+                FieldAuditService::displayLogsFor(FieldAuditService::modelDisplayName($record), (string)$id)
+            );
+        }
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
         $this->assignFormContext();
 

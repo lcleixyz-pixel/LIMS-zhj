@@ -6,6 +6,7 @@ namespace app\controller;
 use app\model\Capa;
 use app\model\Nonconformity as NonconformityModel;
 use app\service\WorkflowService;
+use app\service\FieldAuditService;
 use think\facade\Session;
 use think\facade\View;
 
@@ -130,6 +131,7 @@ class Nonconformity extends BusinessBase
         $this->assignFormContext();
         View::assign('record', $record);
         View::assign('capa', $record->capa_id ? Capa::find($record->capa_id) : null);
+        View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('Nonconformity', (string)$id));
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 
         return View::fetch($this->viewPrefix . '/view');

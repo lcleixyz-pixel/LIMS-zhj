@@ -113,7 +113,7 @@ class PlanningChangeEvent extends BaseController
         View::assign('oldSource', $event->old_source_id ? QmsSource::find($event->old_source_id) : null);
         View::assign('newSource', $event->new_source_id ? QmsSource::find($event->new_source_id) : null);
         View::assign('attachments', FileAttachmentService::attachmentsFor('QmsExternalChangeEvent', (string)$event->id));
-        View::assign('fieldChangeLogs', FieldAuditService::logsFor('QmsExternalChangeEvent', (string)$event->id));
+        View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('QmsExternalChangeEvent', (string)$event->id));
         $this->assignCommonContext();
 
         return View::fetch('planning_change_event/view');

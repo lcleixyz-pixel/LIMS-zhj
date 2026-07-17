@@ -6,6 +6,8 @@ namespace app\controller;
 use app\model\Capa;
 use app\model\CustomerComplaint;
 use app\service\WorkflowService;
+use app\service\FieldAuditService;
+use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
 
@@ -95,6 +97,7 @@ class Complaint extends BusinessBase
         $this->assignFormContext();
         View::assign('record', $record);
         View::assign('capa', $record->capa_id ? Capa::find($record->capa_id) : null);
+        View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('CustomerComplaint', (string)$id));
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 
         return View::fetch($this->viewPrefix . '/view');
@@ -110,18 +113,20 @@ class Complaint extends BusinessBase
         $flow = ['received' => 'investigating', 'investigating' => 'handling', 'handling' => 'responded', 'responded' => 'closed'];
         if ($this->request->isPost()) {
             $data = $this->request->post();
-            foreach (['investigation', 'handling', 'response'] as $field) {
-                if (!empty($data[$field])) {
-                    $record->$field = $data[$field];
+            Db::transaction(function () use ($record, $data, $flow): void {
+                foreach (['investigation', 'handling', 'response'] as $field) {
+                    if (!empty($data[$field])) {
+                        $record->$field = $data[$field];
+                    }
                 }
-            }
-            if (isset($flow[$record->status])) {
-                $record->status = $flow[$record->status];
-            }
-            if ($record->status === 'closed') {
-                $record->closed_date = date('Y-m-d');
-            }
-            $record->save();
+                if (isset($flow[$record->status])) {
+                    $record->status = $flow[$record->status];
+                }
+                if ($record->status === 'closed') {
+                    $record->closed_date = date('Y-m-d');
+                }
+                $record->save();
+            });
             Session::flash('success', '投诉状态已更新');
 
             return redirect('/complaint/view?id=' . $id);
