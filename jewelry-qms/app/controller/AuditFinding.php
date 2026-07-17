@@ -9,6 +9,7 @@ use app\model\Capa;
 use app\service\FieldAuditService;
 use app\service\FileAttachmentService;
 use app\service\FileService;
+use app\service\ExternalEvidenceReferenceService;
 use app\service\WorkflowService;
 use think\facade\Db;
 use think\facade\Session;
@@ -74,6 +75,9 @@ class AuditFinding extends BusinessBase
         View::assign('schedule', AuditSchedule::find($record->audit_schedule_id));
         View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('AuditFinding', (string)$id));
         View::assign('evidenceFiles', FileAttachmentService::attachmentsFor('AuditFinding', (string)$record->id));
+        View::assign('evidenceReferences', ExternalEvidenceReferenceService::forSubject('audit', (string)$id));
+        View::assign('evidenceSubjectType', 'audit');
+        View::assign('evidenceSubjectId', (string)$id);
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 
         return View::fetch($this->viewPrefix . '/view');

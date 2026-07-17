@@ -70,6 +70,10 @@ final class ActionAuthorizationService
                 => self::hasAnyPosition($employeeId, ['document_controller', 'quality_manager']),
             'document.review'
                 => self::hasAnyPosition($employeeId, ['quality_manager', 'technical_manager']),
+            'externalevidencereference.add'
+                => self::hasAnyPosition($employeeId, [
+                    'quality_manager', 'technical_manager', 'internal_auditor', 'site_quality_coordinator',
+                ]),
 
             'capa.view' => self::hasGlobalPosition($employeeId, ['quality_manager', 'capa_verifier'])
                 || self::recordValue($record, 'assigned_to') === $userId,
@@ -441,6 +445,8 @@ final class ActionAuthorizationService
             if ($policyAction !== null && $action !== 'add') {
                 $record = self::tableRecord('documents', self::requestId($request));
             }
+        } elseif ($controller === 'externalevidencereference') {
+            $policyAction = $action === 'add' ? 'add' : null;
         } elseif ($controller === 'capa') {
             $policyAction = match ($action) {
                 'view' => 'view',

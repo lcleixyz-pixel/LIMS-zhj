@@ -39,7 +39,7 @@ return [
             'compliance', 'ai_assistant', 'ai_chat',
             'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningregulatorycandidate', 'planningchangeevent', 'planningobjective', 'planningresponsibility',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
-            'management_review', 'review_action', 'capa', 'nonconformity', 'complaint',
+            'management_review', 'review_action', 'capa', 'nonconformity', 'complaint', 'external_evidence_reference',
             'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',
             'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate',
             'supplier', 'supplier_evaluation', 'import', 'notification',
@@ -47,10 +47,10 @@ return [
         ],
         'auditor' => [
             'dashboard', 'calendar', 'compliance', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
-            'capa', 'nonconformity', 'complaint', 'notification',
+            'capa', 'nonconformity', 'complaint', 'external_evidence_reference', 'notification',
         ],
         'department_head' => [
-            'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'capa', 'nonconformity', 'complaint',
+            'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'capa', 'nonconformity', 'complaint', 'external_evidence_reference',
             'equipment', 'equipment_maintenance', 'equipment_transfer', 'equipment_authorization', 'calibration', 'reference_material',
             'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate', 'notification',
         ],

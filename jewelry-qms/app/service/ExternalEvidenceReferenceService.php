@@ -8,6 +8,14 @@ use InvalidArgumentException;
 
 final class ExternalEvidenceReferenceService
 {
+    private const SUBJECT_TABLES = [
+        'quality_event' => 'nonconformities',
+        'audit' => 'audit_findings',
+        'complaint' => 'customer_complaints',
+        'capa' => 'capas',
+        'management_review' => 'management_reviews',
+    ];
+
     private const SUBJECT_TYPES = [
         'quality_event',
         'audit',
@@ -31,7 +39,7 @@ final class ExternalEvidenceReferenceService
     {
         $subjectType = trim($subjectType);
         $subjectId = trim($subjectId);
-        if (!in_array($subjectType, self::SUBJECT_TYPES, true) || $subjectId === '') {
+        if (!in_array($subjectType, self::SUBJECT_TYPES, true) || $subjectId === '' || !self::subjectExists($subjectType, $subjectId)) {
             throw new InvalidArgumentException('外部证据关联对象无效');
         }
 
@@ -47,7 +55,11 @@ final class ExternalEvidenceReferenceService
             throw new InvalidArgumentException('只读链接必须使用 http:// 或 https://');
         }
 
-        $data['cited_at'] = trim((string)($data['cited_at'] ?? '')) ?: date('Y-m-d H:i:s');
+        $citedAt = str_replace('T', ' ', trim((string)($data['cited_at'] ?? '')));
+        if ($citedAt !== '' && strtotime($citedAt) === false) {
+            throw new InvalidArgumentException('引用时间格式不正确');
+        }
+        $data['cited_at'] = $citedAt !== '' ? $citedAt : date('Y-m-d H:i:s');
         $data['checksum_summary'] = self::limit(trim((string)($data['checksum_summary'] ?? '')), 255);
         $data['notes'] = self::limit(trim((string)($data['notes'] ?? '')), 500);
         $data['subject_type'] = $subjectType;
@@ -65,6 +77,32 @@ final class ExternalEvidenceReferenceService
             ->where('soft_delete', 0)
             ->order('cited_at', 'desc')
             ->select();
+    }
+
+    public static function subjectUrl(string $subjectType, string $subjectId): string
+    {
+        $paths = [
+            'quality_event' => '/nonconformity/view',
+            'audit' => '/audit_finding/view',
+            'complaint' => '/complaint/view',
+            'capa' => '/capa/view',
+            'management_review' => '/management_review/view',
+        ];
+
+        return ($paths[$subjectType] ?? '/dashboard/index') . '?id=' . rawurlencode($subjectId);
+    }
+
+    private static function subjectExists(string $subjectType, string $subjectId): bool
+    {
+        $table = self::SUBJECT_TABLES[$subjectType] ?? '';
+        if ($table === '') {
+            return false;
+        }
+
+        return \think\facade\Db::name($table)
+            ->where('id', $subjectId)
+            ->where('soft_delete', 0)
+            ->count() > 0;
     }
 
     private static function limit(string $value, int $length): string

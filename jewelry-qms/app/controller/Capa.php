@@ -7,6 +7,7 @@ use app\model\Capa as CapaModel;
 use app\model\CapaSource;
 use app\model\User;
 use app\service\FieldAuditService;
+use app\service\ExternalEvidenceReferenceService;
 use app\service\WorkflowService;
 use think\facade\Db;
 use think\facade\Session;
@@ -107,6 +108,9 @@ class Capa extends BusinessBase
         View::assign('verifier', $record->verified_by ? User::find($record->verified_by) : null);
         View::assign('sourceContext', WorkflowService::capaSourceContext($record));
         View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('Capa', (string)$id));
+        View::assign('evidenceReferences', ExternalEvidenceReferenceService::forSubject('capa', (string)$id));
+        View::assign('evidenceSubjectType', 'capa');
+        View::assign('evidenceSubjectId', (string)$id);
         View::assign('pageTitle', $this->pageTitle . ' - 详情');
 
         return View::fetch($this->viewPrefix . '/view');

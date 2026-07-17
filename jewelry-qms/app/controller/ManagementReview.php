@@ -6,6 +6,7 @@ namespace app\controller;
 use app\model\ManagementReview as ManagementReviewModel;
 use app\model\ReviewAction;
 use app\service\ManagementReviewInputService;
+use app\service\ExternalEvidenceReferenceService;
 use think\facade\Session;
 use think\facade\View;
 
@@ -59,6 +60,9 @@ class ManagementReview extends BusinessBase
         View::assign('pageTitle', $this->pageTitle . ' - 新增');
         $snapshot = ManagementReviewInputService::snapshot();
         View::assign('inputCategories', $snapshot['categories']);
+        View::assign('evidenceReferences', ExternalEvidenceReferenceService::forSubject('management_review', (string)$id));
+        View::assign('evidenceSubjectType', 'management_review');
+        View::assign('evidenceSubjectId', (string)$id);
         $this->assignFormContext();
 
         return View::fetch($this->viewPrefix . '/add');

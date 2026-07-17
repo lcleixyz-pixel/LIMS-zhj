@@ -53,6 +53,8 @@ Route::group(function () {
     Route::get('document/onlyoffice', 'Document/onlyoffice');
     Route::post('document/controlledPrint', 'Document/controlledPrint');
     Route::get('document/download', 'Document/download');
+    Route::get('external_evidence_reference/index', 'ExternalEvidenceReference/index');
+    Route::post('external_evidence_reference/add', 'ExternalEvidenceReference/add');
 
     Route::rule('record_form_template/index', 'RecordFormTemplate/index');
     Route::rule('record_form_template/add', 'RecordFormTemplate/add');
