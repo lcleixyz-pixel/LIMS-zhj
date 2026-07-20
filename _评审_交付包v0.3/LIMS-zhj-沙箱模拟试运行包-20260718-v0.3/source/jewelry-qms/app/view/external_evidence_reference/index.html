@@ -1,0 +1,29 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">外部业务证据引用</h5>
+        <a href="/dashboard/index" class="btn btn-sm btn-outline-secondary">返回工作台</a>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info py-2">这里只保存来源、编号、只读链接和校验摘要，不保存客户资料、检测数据或报告正文。</div>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead><tr><th>关联类型</th><th>来源系统</th><th>对象类型</th><th>外部编号</th><th>显示名称</th><th>引用时间</th><th>操作</th></tr></thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td>{$item.subject_type}</td>
+                        <td>{$item.source_system}</td>
+                        <td>{$item.object_type}</td>
+                        <td>{$item.external_number}</td>
+                        <td>{$item.display_name}</td>
+                        <td>{$item.cited_at}</td>
+                        <td><a href="{$item.readonly_url}" target="_blank" rel="noopener noreferrer">打开只读链接</a></td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}<tr><td colspan="7" class="text-center text-muted">暂无引用</td></tr>{/empty}
+                </tbody>
+            </table>
+        </div>
+        {$pages|raw}
+    </div>
+</div>

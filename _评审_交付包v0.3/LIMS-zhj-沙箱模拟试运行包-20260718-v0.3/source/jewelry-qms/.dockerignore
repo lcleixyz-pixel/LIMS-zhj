@@ -1,0 +1,9 @@
+.git
+.DS_Store
+.env
+vendor
+node_modules
+runtime
+public/uploads/*
+npm-debug.log*
+composer.phar

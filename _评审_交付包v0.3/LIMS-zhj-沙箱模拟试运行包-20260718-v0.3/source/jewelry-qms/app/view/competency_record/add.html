@@ -1,0 +1,59 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">新增能力确认</h5></div>
+    <div class="card-body">
+        <form method="post" action="/competency_record/add">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">被评价人员</label>
+                    <select name="employee_id" class="form-select" required>
+                        <option value="">请选择</option>
+                        {volist name="employees" id="employee"}
+                        <option value="{$employee.id}" {if isset($form.employee_id) && $form.employee_id == $employee.id}selected{/if}>{$employee.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">检测项目</label>
+                    <input type="text" name="test_item" class="form-control" value="{$form.test_item|default=''}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">方法/标准</label>
+                    <input type="text" name="method_standard" class="form-control" value="{$form.method_standard|default=''}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">评价日期</label>
+                    <input type="date" name="assessment_date" class="form-control" value="{$form.assessment_date|default=date('Y-m-d')}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">评价人</label>
+                    <select name="assessor_id" class="form-select" required>
+                        <option value="">请选择</option>
+                        {volist name="users" id="user"}
+                        <option value="{$user.id}" {if isset($form.assessor_id) && $form.assessor_id == $user.id}selected{/if}>{$user.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">评价结果</label>
+                    <select name="result" class="form-select">
+                        {foreach $resultOptions as $value=>$label}
+                        <option value="{$value}" {if isset($form.result) && $form.result == $value}selected{/if}>{$label}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">授权范围</label>
+                    <textarea name="authorization_scope" class="form-control" rows="2">{$form.authorization_scope|default=''}</textarea>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">有效期至</label>
+                    <input type="date" name="valid_until" class="form-control" value="{$form.valid_until|default=''}">
+                </div>
+            </div>
+            <div class="text-end">
+                <a href="/competency_record/index" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>

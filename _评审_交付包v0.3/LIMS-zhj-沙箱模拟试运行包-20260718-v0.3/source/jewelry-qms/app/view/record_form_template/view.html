@@ -1,0 +1,152 @@
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">记录表格模板 - {$record.doc_number}</h5>
+        <div class="d-flex gap-1">
+            {if $canCreateInstances && $record.fillable}
+            <a href="/record_form_instance/create?template_id={$record.id}" class="btn btn-sm btn-outline-success">填写记录</a>
+            {else}
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="待完成高保真复核后可填写记录">填写记录</button>
+            {/if}
+            <a href="/record_form_template/preview?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-info">打印预览</a>
+            {if $record.source_file_available}
+            <a href="/record_form_template/sourcePreview?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-secondary">原始预览</a>
+            <a href="/record_form_template/source?id={$record.id}" class="btn btn-sm btn-outline-secondary">下载原始附件</a>
+            {elseif $record.source_file_path}
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="数据库有附件记录，但物理文件不存在">原始附件缺失</button>
+            {/if}
+            {if qms_can_action('record_form_template', 'draft', $record)}<a href="/record_form_template/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>{/if}
+            {if $trialModeEnabled && $record.status == 'draft' && qms_can_action('record_form_template', 'approve_trial', $record)}
+            <form method="post" action="/record_form_template/approveTrial?id={$record.id}" class="d-inline">
+                <input type="hidden" name="trial_note" value="G-R14 第一批核心模板人工批准">
+                <button type="submit" class="btn btn-sm btn-warning" {if !empty($trialReadinessErrors)}disabled title="仍有试运行放行缺口"{/if}>批准试运行</button>
+            </form>
+            {/if}
+            {if $record.status == 'draft' && qms_can_action('record_form_template', 'draft', $record)}
+            <form method="post" action="/record_form_template/delete?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除草稿？')">删除草稿</button>
+            </form>
+            {elseif $record.status != 'draft' && qms_can_action('record_form_template', 'publish', $record)}
+            <form method="post" action="/record_form_template/obsolete?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('确认作废该已发布模板？历史记录将保留。')">作废</button>
+            </form>
+            <span class="text-muted small">已发布模板请走作废/换版流程，不做物理删除。</span>
+            {/if}
+            <a href="/record_form_template/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="150">编号</th><td>{$record.doc_number}</td><th width="150">名称</th><td>{$record.name}</td></tr>
+            <tr><th>模块</th><td>{$record.module|default='-'}</td><th>版本</th><td>{$record.version|default='A/0'}</td></tr>
+            <tr>
+                <th>状态</th>
+                <td>
+                    {if $record.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
+                    {elseif $record.status == 'trial_ready'}<span class="badge bg-warning text-dark">试运行就绪（非正式发布）</span>
+                    {elseif $record.status == 'published'}<span class="badge badge-status-effective">已发布</span>
+                    {elseif $record.status == 'obsolete'}<span class="badge badge-status-obsolete">已作废</span>
+                    {else}<span class="badge bg-secondary">{$record.status}</span>{/if}
+                </td>
+                <th>打印模板</th><td>{$record.print_template_key}</td>
+            </tr>
+            <tr><th>原始附件</th><td colspan="3">{$record.source_file_name|default='-'}</td></tr>
+            <tr><th>正式编号映射</th><td>{$record.canonical_doc_number|default='-'}</td><th>试运行批次</th><td>{$record.trial_batch|default='-'}</td></tr>
+            <tr>
+                <th>来源程序</th>
+                <td colspan="3">
+                    {if $procedureDocument}
+                    <a href="/document/view?id={$procedureDocument.id}">{$procedureDocument.doc_number} {$procedureDocument.title}</a>
+                    {else}
+                    <span class="text-danger">未关联来源程序</span>
+                    {/if}
+                </td>
+            </tr>
+            <tr><th>适用场所</th><td>{$record.applicable_sites|default='-'}</td><th>责任岗位</th><td>{$record.responsible_position_code|default='-'}</td></tr>
+            <tr><th>保存期限</th><td>{$record.retention_period|default='-'}</td><th>批准时间</th><td>{$record.trial_approved_at|default='待批准'}</td></tr>
+        </table>
+        {notempty name="trialReadinessErrors"}
+        <div class="alert alert-warning py-2 mb-0">
+            <strong>试运行放行缺口：</strong>{:implode('；', $trialReadinessErrors)}
+        </div>
+        {/notempty}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0">程序要求追溯</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>程序文件</th>
+                    <th>内容块</th>
+                    <th>关系</th>
+                    <th>关联对象</th>
+                    <th>说明</th>
+                    <th class="text-end">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="requirementEvidence" id="evidence"}
+                <tr>
+                    <td>
+                        <a href="{$evidence.document_url}" class="fw-semibold">{$evidence.doc_number}</a>
+                        <div class="text-muted small">{$evidence.document_title}</div>
+                    </td>
+                    <td>
+                        {$evidence.block_title}
+                        <div class="text-muted small">{$evidence.block_section_number|default='-'} · {$evidence.block_type}</div>
+                    </td>
+                    <td>
+                        {$evidence.relation_type}
+                        <div class="text-muted small">{$evidence.confidence}</div>
+                    </td>
+                    <td>
+                        {if $evidence.element_name}<div>{$evidence.element_name}</div>{/if}
+                        {if $evidence.procedure_number}<div>{$evidence.procedure_number} {$evidence.procedure_title}</div>{/if}
+                        {if $evidence.module_name}<div>{$evidence.module_code} {$evidence.module_name}</div>{/if}
+                    </td>
+                    <td>
+                        {$evidence.note|default='-'}
+                        {if $evidence.schema_source_note != ''}
+                        <div class="mt-1 small text-primary">
+                            <span class="fw-semibold">字段schema来源</span>
+                            <div>{$evidence.schema_source_note}</div>
+                        </div>
+                        {/if}
+                    </td>
+                    <td class="text-end">
+                        <a href="{$evidence.review_url}" class="btn btn-sm btn-outline-primary">复核追溯</a>
+                    </td>
+                </tr>
+                {/volist}
+                {empty name="requirementEvidence"}
+                <tr><td colspan="6" class="text-center text-muted">暂无程序要求追溯。</td></tr>
+                {/empty}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h6 class="mb-0">字段配置</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped">
+            <thead><tr><th>字段键</th><th>标签</th><th>类型</th><th>必填</th><th>打印绑定</th></tr></thead>
+            <tbody>
+                {volist name="schema" id="field"}
+                <tr>
+                    <td>{$field.key}</td>
+                    <td>{$field.label}</td>
+                    <td>{$field.type}</td>
+                    <td>{if $field.required}是{else}否{/if}</td>
+                    <td>{$field.print_bind}</td>
+                </tr>
+                {/volist}
+                {empty name="schema"}
+                <tr><td colspan="5" class="text-center text-muted">暂无字段配置</td></tr>
+                {/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,645 @@
+{
+  "schema_version": "1.0",
+  "rehearsal_run_id": "SIM-GOV-R2-20260719",
+  "environment": "8013-main-read-only",
+  "database_container": "lims-zhj-rehearsal-r2-main-20260719-db-1",
+  "captured_at_mysql": "2026-07-19T22:16:17",
+  "write_performed": false,
+  "record_source_inventory": {
+    "root": "现用文件/记录表格/记录表格2017",
+    "file_count": 161,
+    "extension_counts": {
+      "doc": 113,
+      "docm": 1,
+      "docx": 47
+    }
+  },
+  "template_population": {
+    "all_non_deleted": 152,
+    "current_baseline_trial_batch_null": 145,
+    "second_round_sim_fixtures": 7,
+    "baseline_distinct_exact_schema": 94,
+    "baseline_repeated_schema_groups": 13,
+    "baseline_repeated_schema_members": 64
+  },
+  "instance_population": {
+    "all_instances": 103,
+    "instances_linked_to_current_baseline_templates": 0,
+    "instances_linked_to_second_round_sim_fixtures": 103,
+    "instances_linked_to_twelve_focus_current_templates": 0
+  },
+  "focus_template_rows": [
+    {
+      "doc_number": "XZTC/BG-02-01",
+      "source_file_name": "02-01《检测环境监控记录表》.doc",
+      "source_file_sha1": "a5d68e996e4264ac7080e8cfbdddbbb634f484e0",
+      "schema_hash_prefix": "e2cd4cd23615",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-03-01",
+      "source_file_name": "03-01仪器设备台帐.doc",
+      "source_file_sha1": "95eff9510ff94aa1d8a2a6a50d97185366b6a664",
+      "schema_hash_prefix": "1f11228d9a3d",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表.-折射仪-ZSY01doc.doc",
+      "source_file_sha1": "09d3b3df4e340b01855386d09bae3b18d18c92cc",
+      "schema_hash_prefix": "d5f8c7597402",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表金标片G05.doc",
+      "source_file_sha1": "1596b85990e544f730cae803c790c01f5edfc192",
+      "schema_hash_prefix": "aac61d277430",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表银标片G04.doc",
+      "source_file_sha1": "2866767813ede4ff824d6efd0b5e2fb333782104",
+      "schema_hash_prefix": "2f7678c92a45",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表-紫外.doc",
+      "source_file_sha1": "28bc3220320c32fcff725bb0f0b434ed260fab45",
+      "schema_hash_prefix": "ac563f3b6b4b",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表-电子天平-TP03.doc",
+      "source_file_sha1": "2f07a0c04fa54dd182917df672cdbee9bc17ab93",
+      "schema_hash_prefix": "f7ef463bcf97",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表-电子天平-TP02.doc",
+      "source_file_sha1": "3104e1d1f1dfa594bf0358f2f6f40cce4caec54d",
+      "schema_hash_prefix": "14a62940ec55",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表金标片G08.doc",
+      "source_file_sha1": "60587f773ac17c15af8fa29f8f6de261888828a9",
+      "schema_hash_prefix": "03ac8b90c9d4",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表.-折射仪-ZSY02doc.doc",
+      "source_file_sha1": "67a542c23a35958bc639f69dfc44c396e59ab733",
+      "schema_hash_prefix": "aea50d1df5fa",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表合成红宝石标样.doc",
+      "source_file_sha1": "6b015a473a83661710853d6a8d8a19bea2050ff0",
+      "schema_hash_prefix": "b6141578de51",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表尖晶石标样.doc",
+      "source_file_sha1": "7dd73b6df12ca16a0016489fe966fa986e21af4f",
+      "schema_hash_prefix": "5a6798e85b0e",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表金标片G09.doc",
+      "source_file_sha1": "862d741634ef42845caf97fc537f75130c7733b0",
+      "schema_hash_prefix": "4070fb0b170c",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表-测金仪.doc",
+      "source_file_sha1": "887c8ad5d07088a054e844493a509b4df113ab7c",
+      "schema_hash_prefix": "c9a1ed1be1c3",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表-电子天平-TP04.doc",
+      "source_file_sha1": "93853734e4c76b2dfd47926709a3670a2666d7cb",
+      "schema_hash_prefix": "cd708e01c769",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表.doc",
+      "source_file_sha1": "9f2acdd8d6108240478a8ba84dfde9d7a41e9308",
+      "schema_hash_prefix": "146758db0f21",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表-红外光谱仪.doc",
+      "source_file_sha1": "a587818981d75210300eecb28adeca1c3c9004cf",
+      "schema_hash_prefix": "6792437c0da7",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表锆石标样.doc",
+      "source_file_sha1": "bae78e81d8b744b8058744e80c0dcc47c7456c25",
+      "schema_hash_prefix": "ebfadcff9cd8",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表金标片G06.doc",
+      "source_file_sha1": "d478585a966d2721048b55b332374c64a44a83a7",
+      "schema_hash_prefix": "a511800704d2",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表银标片G18.doc",
+      "source_file_sha1": "db7c1ea2b69fb354ed20f7137d4374ddb722b3de",
+      "schema_hash_prefix": "0e6803b95616",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-04-03",
+      "source_file_name": "04-03仪器设备和标准物质期间核查记录表金标片G10.doc",
+      "source_file_sha1": "e3df14a3cb951063528f884f23e114b77a8f2305",
+      "schema_hash_prefix": "17d8ece91943",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-09-01",
+      "source_file_name": "09-01合同评审记录表.doc",
+      "source_file_sha1": "e4cb6474d2704381d44b1d6b8aa907f5f893f51b",
+      "schema_hash_prefix": "7c67eba1db7f",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-11-01",
+      "source_file_name": "11-01供应商评价表.doc",
+      "source_file_sha1": "4d8a2162d75aa2e10e0ef4a70e78b2b320681ce2",
+      "schema_hash_prefix": "15a27608bf58",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-19-01",
+      "source_file_name": "19-01记录归档登记表.docx",
+      "source_file_sha1": "7be548ed1ae58e04906a49fd4fa52646f0d47792",
+      "schema_hash_prefix": "15a27608bf58",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-22-02",
+      "source_file_name": "22-02标准方法确认记录.doc",
+      "source_file_sha1": "de78f8ae8a2ccfdd4264ae995a64f4cc6404c212",
+      "schema_hash_prefix": "265fad2a0fc9",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-26-01",
+      "source_file_name": "26-01计算机软件登记表.doc",
+      "source_file_sha1": "2829bc979a3bb123443990551e3e7b06ebbeb04f",
+      "schema_hash_prefix": "1dcb9d51f9ff",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-28-01",
+      "source_file_name": "28-01样品台帐.doc",
+      "source_file_sha1": "d6779f9f4217864c5998caf627de951d896e872e",
+      "schema_hash_prefix": "8bb86a443a8a",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-29-02",
+      "source_file_name": "29-02报告抽查情况记录表.doc",
+      "source_file_sha1": "10f7055ee45a2e43ccc8186f93c34ec9492590bc",
+      "schema_hash_prefix": "52bbc3627dc9",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-30-01",
+      "source_file_name": "30-01年度内部质量监控计划表.doc",
+      "source_file_sha1": "26ca22cbf2615c3dd76d61ef5cd8c709e85eafe4",
+      "schema_hash_prefix": "7ad5fabb2d04",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    },
+    {
+      "doc_number": "XZTC/BG-30-03",
+      "source_file_name": "30-03能力验证计划表.doc",
+      "source_file_sha1": "1c2da4af408e9bae42a3e1db52db39d2c2e83342",
+      "schema_hash_prefix": "7ad5fabb2d04",
+      "retention_period": "",
+      "status": "published",
+      "review_status": "completed"
+    }
+  ],
+  "duplicate_schema_groups": [
+    {
+      "schema_sha256": "02a29e49a5817e6767ad8d3f4cb0359cd165645b2201a00ab63c4dda1ebee681",
+      "member_count": 2,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-04-01",
+          "name": "仪器设备和标准物质期间核查计划"
+        },
+        {
+          "doc_number": "XZTC/BG-04-04",
+          "name": "仪器设备功能性核查计划"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "15a27608bf5873ccdfd5da7c0399d309a09d642e493916f796c5c71966236684",
+      "member_count": 15,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-06-01",
+          "name": "保护客户机密信息工作检查记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-07-01",
+          "name": "检验公正性检查记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-10-02",
+          "name": "合格分包方名册"
+        },
+        {
+          "doc_number": "XZTC/BG-11-01",
+          "name": "供应商评价表"
+        },
+        {
+          "doc_number": "XZTC/BG-11-02",
+          "name": "合格供应商名册"
+        },
+        {
+          "doc_number": "XZTC/BG-11-03",
+          "name": "采购计划验收表"
+        },
+        {
+          "doc_number": "XZTC/BG-12-01",
+          "name": "客户满意度调查表"
+        },
+        {
+          "doc_number": "XZTC/BG-19-01",
+          "name": "记录归档登记表"
+        },
+        {
+          "doc_number": "XZTC/BG-19-02",
+          "name": "记录借阅登记表"
+        },
+        {
+          "doc_number": "XZTC/BG-19-03",
+          "name": "质量记录清单及保存期限表"
+        },
+        {
+          "doc_number": "XZTC/BG-19-04",
+          "name": "技术记录清单及保存期限表"
+        },
+        {
+          "doc_number": "XZTC/BG-23-01",
+          "name": "允许方法偏离申报审批表"
+        },
+        {
+          "doc_number": "XZTC/BG-31-01",
+          "name": "年度日常监督计划表"
+        },
+        {
+          "doc_number": "XZTC/BG-31-02",
+          "name": "日常监督记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-32-01",
+          "name": "风险评估报告"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "3a6dc06361c6db945a2b4f461dfd8631b4fbef60b4d3100bb42a6f08caec3e14",
+      "member_count": 2,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-33-01",
+          "name": "安全检查记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-33-01",
+          "name": "安全检查记录表（安 全 检 查 记 录 表）"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "52bbc3627dc9dde4ee0509ab65a5d5a65225c4e1bc77ae61ec4244310127edc1",
+      "member_count": 9,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-20-01",
+          "name": "内部审核报告"
+        },
+        {
+          "doc_number": "XZTC/BG-20-02",
+          "name": "年度内审计划表"
+        },
+        {
+          "doc_number": "XZTC/BG-20-03",
+          "name": "内部审核(首次)会议签到记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-20-05",
+          "name": "内部审核(末次)会议签到记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-20-07",
+          "name": "现场检测能力审核记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-20-08",
+          "name": "内部审核日程计划表"
+        },
+        {
+          "doc_number": "XZTC/BG-29-01",
+          "name": "报告更改申请表"
+        },
+        {
+          "doc_number": "XZTC/BG-29-02",
+          "name": "报告抽查情况记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-29-03",
+          "name": "报告发放登记表"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "5ffd2b594752bf99997b966866c44d9ff85bb05f66fa34ade5c1fedf6c4da4c1",
+      "member_count": 2,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-03-02",
+          "name": "仪器设备使用记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-03-02",
+          "name": "仪器设备使用记录表（新疆中和鉴珠宝玉石质量检测研究?）"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "6f1a51c5ff516a0890e98ae140d2fa6dec0b3676b941f3032ac2af4ecb9a7f3e",
+      "member_count": 2,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-28-02",
+          "name": "样品标识卡"
+        },
+        {
+          "doc_number": "XZTC/BG-28-02",
+          "name": "样品标识卡（（六联））"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "7ad5fabb2d043fd41b72b26e0591626b7c11d64ef77566cc6e81de0cc2cede3e",
+      "member_count": 5,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-12-02",
+          "name": "外来人员进入检测区域登记表"
+        },
+        {
+          "doc_number": "XZTC/BG-30-01",
+          "name": "年度内部质量监控计划表"
+        },
+        {
+          "doc_number": "XZTC/BG-30-02",
+          "name": "质量监控异常情况记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-30-03",
+          "name": "能力验证计划表"
+        },
+        {
+          "doc_number": "XZTC/BG-30-04",
+          "name": "实验室间比对计划表"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "7c67eba1db7f8591254570e0497072c272c16724a1611051d582d3a9555fa22f",
+      "member_count": 7,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-09-01",
+          "name": "合同评审记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-09-02",
+          "name": "检测委托合同单"
+        },
+        {
+          "doc_number": "XZTC/BG-09-03",
+          "name": "合同、协议登记表"
+        },
+        {
+          "doc_number": "XZTC/BG-09-04",
+          "name": "长期检验委托合同"
+        },
+        {
+          "doc_number": "XZTC/BG-10-01",
+          "name": "检测分包方评审表"
+        },
+        {
+          "doc_number": "XZTC/BG-24-01",
+          "name": "开展新项目申请表"
+        },
+        {
+          "doc_number": "XZTC/BG-24-02",
+          "name": "开展新项目评审表"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "884e5d2c7fe8c92114afd0c626e30a686809064957f821cb4619962af433632d",
+      "member_count": 2,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-META-2017-01",
+          "name": "记录表格封面"
+        },
+        {
+          "doc_number": "XZTC/BG-META-2017-02",
+          "name": "记录表格目录"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "8bb86a443a8aef1fbd00bfd53697879fc306512a7131d8af4dccc42289d852d9",
+      "member_count": 2,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-28-01",
+          "name": "样品台账"
+        },
+        {
+          "doc_number": "XZTC/BG-28-03",
+          "name": "样品损坏、丢失报告表"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "93a11c7ddab2345ce24aa28293b48b712a7f5d1b32412a9107e2bc489bdd5829",
+      "member_count": 6,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-14-01",
+          "name": "客户投诉登记表"
+        },
+        {
+          "doc_number": "XZTC/BG-14-02",
+          "name": "客户投诉处理通知单"
+        },
+        {
+          "doc_number": "XZTC/BG-15-01",
+          "name": "不符合项处置通知表"
+        },
+        {
+          "doc_number": "XZTC/BG-16-01",
+          "name": "实施纠正措施记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-16-01",
+          "name": "实施纠正措施记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-17-01",
+          "name": "实施预防措施记录表"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "a03d69bca9f00fceb22bc0dcc6821e159df9bbe7daa0236fb1eb5f2b2ff38b6c",
+      "member_count": 2,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-30-05",
+          "name": "内部质量监控记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-30-06",
+          "name": "内部质量监控结果报告"
+        }
+      ]
+    },
+    {
+      "schema_sha256": "e2cd4cd23615d06375dda76323aec54185f25a28f5ee0b345a79eefaf5c0e3b1",
+      "member_count": 8,
+      "members": [
+        {
+          "doc_number": "XZTC/BG-02-01",
+          "name": "检测环境监控记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-05-01",
+          "name": "仪器设备周期检定计划表"
+        },
+        {
+          "doc_number": "XZTC/BG-05-02",
+          "name": "仪器设备计量溯源结果确认表"
+        },
+        {
+          "doc_number": "XZTC/BG-11-04",
+          "name": "仪器设备购置申报表"
+        },
+        {
+          "doc_number": "XZTC/BG-11-05",
+          "name": "购入仪器设备验收记录"
+        },
+        {
+          "doc_number": "XZTC/BG-35-01",
+          "name": "标准物质台帐"
+        },
+        {
+          "doc_number": "XZTC/BG-35-02",
+          "name": "标准物质使用记录表"
+        },
+        {
+          "doc_number": "XZTC/BG-35-03",
+          "name": "标准物质报废申请表"
+        }
+      ]
+    }
+  ],
+  "interpretation": [
+    "145项现用基线模板与7项第二轮专用SIM夹具分开计算",
+    "145项现用基线仍为94种精确schema、13个重复组、64个重复成员",
+    "8013中12项重点现用模板没有历史实例；因此孤儿键迁移只能形成零实例预览规则，不得伪造迁移结果",
+    "103项实例全部关联第二轮专用SIM夹具，不能替代现用145项模板逐字段保真验证"
+  ]
+}

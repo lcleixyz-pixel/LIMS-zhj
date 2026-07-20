@@ -1,0 +1,57 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">编辑要素</h4>
+        <div class="text-muted small">仅维护要素概念本身；条款编号和手册章节在各自层级维护。</div>
+    </div>
+    <a href="/planning/elements/view?id={$element.id}" class="btn btn-sm btn-outline-secondary">返回详情</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" action="/planning/elements/edit?id={$element.id}" class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label required">要素名称</label>
+                <input type="text" name="name" class="form-control" value="{$element.name}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">类型</label>
+                <select name="element_type" class="form-select">
+                    <option value="management" {if $element.element_type == 'management'}selected{/if}>管理</option>
+                    <option value="technical" {if $element.element_type == 'technical'}selected{/if}>技术</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">状态</label>
+                <select name="status" class="form-select">
+                    <option value="draft" {if $element.status == 'draft'}selected{/if}>草稿</option>
+                    <option value="effective" {if $element.status == 'effective'}selected{/if}>有效</option>
+                    <option value="under_review" {if $element.status == 'under_review'}selected{/if}>复核中</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">适用性</label>
+                <select name="applicability" class="form-select">
+                    <option value="applicable" {if $element.applicability == 'applicable'}selected{/if}>适用</option>
+                    <option value="conditional" {if $element.applicability == 'conditional'}selected{/if}>条件适用</option>
+                    <option value="not_applicable" {if $element.applicability == 'not_applicable'}selected{/if}>不适用</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">排序</label>
+                <input type="number" name="sort_order" class="form-control" value="{$element.sort_order|default=0}">
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">概要</label>
+                <textarea name="summary" rows="3" class="form-control">{$element.summary|default=''}</textarea>
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">适用性说明</label>
+                <textarea name="applicability_note" rows="2" class="form-control">{$element.applicability_note|default=''}</textarea>
+            </div>
+            <div class="col-12 text-end">
+                <a href="/planning/elements/view?id={$element.id}" class="btn btn-outline-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,772 @@
+===== [1/129] qms_agent_suggestion_review_smoke.php =====
+qms_agent_suggestion_review_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [2/129] qms_ai_chat_smoke.php =====
+Planning context includes affected BG record forms
+Missing: XZTC/BG-
+EXIT_CODE=1
+RESULT=FAIL
+===== [3/129] qms_audit_capa_enhancement_smoke.php =====
+qms_audit_capa_enhancement_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [4/129] qms_business_module_mapping_smoke.php =====
+qms_business_module_mapping_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [5/129] qms_change_control_mvp_smoke.php =====
+Impact preview lists affected record forms
+EXIT_CODE=1
+RESULT=FAIL
+===== [6/129] qms_clause_inferred_structured_evidence_smoke.php =====
+GB/T 27025 7.11 clause exists
+EXIT_CODE=1
+RESULT=FAIL
+===== [7/129] qms_clause_manual_mapping_smoke.php =====
+qms_clause_manual_mapping_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [8/129] qms_clause_structured_evidence_smoke.php =====
+GB/T 27025 7.11 clause exists
+EXIT_CODE=1
+RESULT=FAIL
+===== [9/129] qms_compliance_dashboard_smoke.php =====
+qms_compliance_dashboard_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [10/129] qms_controlled_document_structure_coverage_smoke.php =====
+qms_controlled_document_structure_coverage_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [11/129] qms_csrf_smoke.php =====
+qms_csrf_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [12/129] qms_current_files_enumeration_smoke.php =====
+Knowledge skeleton exists: knowledge/README.md
+EXIT_CODE=1
+RESULT=FAIL
+===== [13/129] qms_current_files_seed_smoke.php =====
+Urumqi equipment configuration workbook exists
+EXIT_CODE=1
+RESULT=FAIL
+===== [14/129] qms_dashboard_export_smoke.php =====
+qms_dashboard_export_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [15/129] qms_department_view_smoke.php =====
+qms_department_view_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [16/129] qms_document_control_smoke.php =====
+qms_document_control_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [17/129] qms_document_structure_bridge_smoke.php =====
+qms_document_structure_bridge_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [18/129] qms_element_structured_evidence_smoke.php =====
+Smoke record form exists
+EXIT_CODE=1
+RESULT=FAIL
+===== [19/129] qms_equipment_deepening_smoke.php =====
+qms_equipment_deepening_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [20/129] qms_experience_deploy_bootstrap_smoke.php =====
+qms experience deploy bootstrap smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [21/129] qms_experience_environment_smoke.php =====
+qms_experience_environment_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [22/129] qms_external_basis_structure_smoke.php =====
+External basis asset is archived
+EXIT_CODE=1
+RESULT=FAIL
+===== [23/129] qms_external_change_event_smoke.php =====
+qms_external_change_event_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [24/129] qms_external_source_freshness_smoke.php =====
+qms_external_source_freshness_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [25/129] qms_external_source_processing_smoke.php =====
+GB/T source archive file is available
+EXIT_CODE=1
+RESULT=FAIL
+===== [26/129] qms_external_source_upload_smoke.php =====
+
+
+                                                                                                                                                                                             
+  [think\exception\ErrorException]                                                                                                                                                           
+  copy(//参考/2025年最新版CMA和CNAS质量体系/07-CNAS-CL01-A015：2018 检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明.pdf): Failed to open stream: No such file or directory  
+                                                                                                                                                                                             
+EXIT_CODE=0
+RESULT=PASS
+===== [27/129] qms_field_audit_smoke.php =====
+qms_field_audit_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [28/129] qms_g4r7_trial_readiness_smoke.php =====
+qms_g4r7_trial_readiness_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [29/129] qms_g4r9_stale_link_guard_smoke.php =====
+qms_g4r9_stale_link_guard_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [30/129] qms_gr14_audit_authorization_contract_smoke.php =====
+[PASS] AA01
+[PASS] AA02
+[PASS] AA03
+[PASS] AA04
+[PASS] AA05
+[PASS] AA06
+EXIT_CODE=0
+RESULT=PASS
+===== [31/129] qms_gr14_audit_chain_smoke.php =====
+[PASS] AU01 内审计划新增和编辑页使用真实字段
+[PASS] AU02 内审计划页面不再提交不存在字段
+[PASS] AU03 服务端使用字段白名单并校验年度和标题
+[PASS] AU04 批准和完成动作只接受 POST
+[PASS] AU05 计划关闭前检查日程、发现和 CAPA 状态
+[PASS] AU06 计划详情展示日程到检查记录、发现、CAPA 的追溯与关闭入口
+[PASS] AU07 审核日程具备受阻断条件保护的 POST 完成入口
+[PASS] AU08 审核发现创建 CAPA 使用 POST，避免 GET 产生业务写入
+[PASS] AU09 审核发现随 CAPA 创建和关闭更新为整改中及已关闭
+[PASS] AU10 试运行审核发现创建的 CAPA 由服务端强制 SIM 编号
+[PASS] AU11 审核日程列表向岗位人员显示部门和场所名称而非内部 UUID
+[PASS] AU12 审核检查和发现页面显示岗位可读中文，不暴露内部枚举或空名称
+EXIT_CODE=0
+RESULT=PASS
+===== [32/129] qms_gr14_audit_closure_contract_smoke.php =====
+[PASS] AC01 非观察项必须经匹配 CAPA、验证和有效性评价后才能关闭审核链
+[PASS] AC02 审核发现关闭只能由完成验证和有效性评价的 CAPA 服务驱动
+[PASS] AC03 审核发现不得通过通用删除动作绕过关闭链
+[PASS] AC04 检查结果、客观证据及不符合项发现均完整后才能关闭日程
+[PASS] AC05 已完成日程从服务端锁定检查记录并从页面移除新增入口
+[PASS] AC06 审核日程、检查记录和发现按机构隔离，完成日程从新增表单移除
+G-R14 内审关闭契约通过。
+EXIT_CODE=0
+RESULT=PASS
+===== [33/129] qms_gr14_audit_record_lock_runtime_smoke.php =====
+拒绝运行：本测试会创建临时内审记录，只能在 8011 候选环境执行。
+EXIT_CODE=2
+RESULT=FAIL
+===== [34/129] qms_gr14_audit_scope_runtime_smoke.php =====
+拒绝运行：内审机构隔离回归仅允许在 8011 候选环境执行。
+EXIT_CODE=2
+RESULT=FAIL
+===== [35/129] qms_gr14_closed_record_ui_contract_smoke.php =====
+[PASS] CRU01
+[PASS] CRU02
+[PASS] CRU03
+EXIT_CODE=0
+RESULT=PASS
+===== [36/129] qms_gr14_core_trial_templates_smoke.php =====
+[PASS] CT-02-01 XZTC/BG-02-01 在核心模板矩阵中
+[PASS] CT-05-01 XZTC/BG-05-01 在核心模板矩阵中
+[PASS] CT-20-01 XZTC/BG-20-01 在核心模板矩阵中
+[PASS] CT-20-02 XZTC/BG-20-02 在核心模板矩阵中
+[PASS] CT-20-06 XZTC/BG-20-06 在核心模板矩阵中
+[PASS] CT-20-08 XZTC/BG-20-08 在核心模板矩阵中
+[PASS] CT-31-02 XZTC/BG-31-02 在核心模板矩阵中
+[PASS] CT-30-01 XZTC/BG-30-01 在核心模板矩阵中
+[PASS] CT-30-02 XZTC/BG-30-02 在核心模板矩阵中
+[PASS] CT-30-04 XZTC/BG-30-04 在核心模板矩阵中
+[PASS] CT-21-02 XZTC/BG-21-02 在核心模板矩阵中
+[PASS] CT-19-01 XZTC/BG-19-01 在核心模板矩阵中
+[PASS] CT-19-02 XZTC/BG-19-02 在核心模板矩阵中
+[PASS] CT-19-03 XZTC/BG-19-03 在核心模板矩阵中
+[PASS] CT-19-04 XZTC/BG-19-04 在核心模板矩阵中
+[PASS] CT01 试运行编号与正式编号显式映射且管理评审使用临时编号
+[PASS] CT02 准备动作只建立草稿，不绕过人工试运行批准
+[PASS] CT03 每个模板携带来源、场所、岗位、期限、字段契约和打印模板
+[PASS] CT04 缺失的 BG-20-06 使用独立字段契约和打印入口重建
+[PASS] CT05 核心模板准备和逐项人工批准均有受控入口
+[PASS] CT06 模板详情直接展示来源程序，关系图尚未建立时仍可追溯
+EXIT_CODE=0
+RESULT=PASS
+===== [37/129] qms_gr14_document_control_smoke.php =====
+[PASS] DC01 正式受控打印仅允许当前 published 版本且使用 POST
+[PASS] DC02 修订创建独立新文件和新审批流，不改写当前生效版本
+[PASS] DC03 新版本批准发布时原版本才作废
+[PASS] DC04 仅正式文件可分发且接收/回收只能由本人确认
+[PASS] DC05 文件管理员可登记分发召回和修订，但文件管理员身份不授予批准权
+[PASS] DC06 审批服务按业务岗位授权，签字人或系统管理员身份不自动获得文件审批权
+[PASS] DC07 页面按钮与后端岗位动作边界一致
+[PASS] DC08 试运行环境新登记文件由服务端强制 SIM 编号
+[PASS] DC09 已指派审核人可进入统一审批入口，最终岗位和本人校验仍由审批服务执行
+[PASS] DC10 8011 中 SIM 文件打印强制试运行水印，不冒充正式受控副本
+[PASS] DC11 发起修订时新版本号不得与当前版本号重复
+[PASS] DC12 提交审核使用可追溯 POST，页面不再由阻塞式脚本造成按钮卡死
+[PASS] DC13 文件接收人可进入本人确认入口，最终对象归属仍由文件控制服务校验
+[PASS] DC14 文件分发列表显示接收人姓名，不暴露内部用户 UUID
+[PASS] DC15 文件按适用场所绑定，文件管理员只能管理本人任命场所
+[PASS] DC16 SIM 文件完成审批后进入 trial_ready，不得写成正式 published
+[PASS] DC17 SIM 文件即使关闭试运行开关或状态被误写也不能降级为正式受控打印
+[PASS] DC18 试运行文件只可在 trial_ready 且试运行开关开启时分发
+[PASS] DC19 8011 试运行环境从后端禁止批准或发布非 SIM 正式文件
+[PASS] DC20 试运行环境禁止分发、评审或作废非 SIM 正式文件，仅允许只读查看和受控修订副本
+EXIT_CODE=0
+RESULT=PASS
+===== [38/129] qms_gr14_document_evidence_scope_contract_smoke.php =====
+[PASS] DES01
+[PASS] DES02
+[PASS] DES03
+[PASS] DES04
+[PASS] DES05
+[PASS] DES06
+[PASS] DES07
+[PASS] DES08
+EXIT_CODE=0
+RESULT=PASS
+===== [39/129] qms_gr14_equipment_site_contract_smoke.php =====
+[PASS] ESC01
+[PASS] ESC02
+[PASS] ESC03
+[PASS] ESC04
+EXIT_CODE=0
+RESULT=PASS
+===== [40/129] qms_gr14_equipment_transfer_contract_smoke.php =====
+[PASS] ET01
+[PASS] ET02
+[PASS] ET03
+[PASS] ET04
+[PASS] ET05
+EXIT_CODE=0
+RESULT=PASS
+===== [41/129] qms_gr14_external_evidence_security_runtime_smoke.php =====
+拒绝运行：外部证据安全回归仅允许在 8011 候选环境执行。
+EXIT_CODE=2
+RESULT=FAIL
+===== [42/129] qms_gr14_external_evidence_ui_smoke.php =====
+[PASS] EE01 外部证据通过统一 POST 入口登记
+[PASS] EE02 服务端验证关联对象并仅接受白名单字段
+[PASS] EE03 统一组件展示约定元数据和只读链接
+[PASS] EE-AUD audit 详情绑定外部证据
+[PASS] EE-COM complaint 详情绑定外部证据
+[PASS] EE-CAP capa 详情绑定外部证据
+[PASS] EE-QUA quality_event 详情绑定外部证据
+[PASS] EE-MAN management_review 详情绑定外部证据
+[PASS] EE04 五类质量活动详情页均嵌入统一证据组件
+EXIT_CODE=0
+RESULT=PASS
+===== [43/129] qms_gr14_local_release_contract_smoke.php =====
+[PASS] LT01 存在本机不可变镜像发布 Compose
+[PASS] LT02 存在本机切换与回退说明
+[PASS] LT02A 存在镜像身份校验和显式迁移脚本
+[PASS] LT03 发布必须直接使用不可变候选镜像 ID
+[PASS] LT04 8010 切换时禁止临时构建镜像
+[PASS] LT05 发布 Compose 禁止把工作区源码覆盖到 /app
+[PASS] LT06 应用只绑定本机回环端口
+[PASS] LT07 复用现有数据库网络但不重建数据库
+[PASS] LT08 上传和运行目录必须使用显式持久化路径
+[PASS] LT09 服务端固定关闭调试并开启受控试运行模式
+[PASS] LT10 说明覆盖快照、current 切换、立即回退和云端边界
+[PASS] LT11 候选镜像 ID、迁移 SHA 和迁移文件均可执行校验
+qms_gr14_local_release_contract_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [44/129] qms_gr14_management_review_runtime_smoke.php =====
+拒绝运行：管理评审快照回归仅允许在 8011 候选环境执行。
+EXIT_CODE=2
+RESULT=FAIL
+===== [45/129] qms_gr14_management_review_smoke.php =====
+[PASS] MR01 校准结论兼容中英文值
+[PASS] MR02 管理评审输入覆盖条款分类并提供明细入口和缺数状态
+[PASS] MR03 创建管理评审时冻结输入快照
+[PASS] MR04 页面按分类展示形成状态并可下钻
+[PASS] MR05 管理评审编辑页使用真实字段
+[PASS] MR06 外部证据只在已保存的管理评审详情页绑定，新增页不引用未定义对象
+[PASS] MR07 校准无明细时不显示零值统计冒充已形成
+[PASS] MR08 试运行管理评审编号由服务端强制 SIM 标识
+[PASS] MR09 管理评审列表展示业务编号和中文状态，不暴露内部 ID 或提供无审批删除入口
+[PASS] MR10 输入快照包含时间、明细 ID 和完整性摘要，查询异常不得静默伪装为零
+[PASS] MR11 管理评审完成动作要求输出、决议和可验证输入快照
+[PASS] MR12 管理评审读取实际变更事件和质量目标数据表，不再由错误表名生成伪零值
+[PASS] MR13 管理评审每类计数与明细 ID 使用同一过滤查询
+[PASS] MR14 管理评审按机构隔离数据，并把设备和人员拆成各自可下钻的资源输入
+[PASS] MR15 无独立分类数据时工作量范围变化和风险识别保持未形成，不重复冒用法规变更
+EXIT_CODE=0
+RESULT=PASS
+===== [46/129] qms_gr14_role_action_runtime_smoke.php =====
+拒绝运行：本测试会创建临时账号，只能在 8011 候选环境执行。
+EXIT_CODE=2
+RESULT=FAIL
+===== [47/129] qms_gr14_trial_contract_smoke.php =====
+[PASS] TR01 可重复迁移声明试运行模板、模拟记录和外部证据引用字段
+[PASS] TR02 服务端配置显式声明试运行开关和批次
+[PASS] TR03 试运行服务集中实施模板可用性、SIM 编号、批次和水印
+[PASS] TR04 模板复核不会自动正式发布，试运行批准使用独立动作
+[PASS] TR05 记录创建与输出由服务端强制模拟标识、批次、SIM 编号和水印
+[PASS] TR06 外部证据服务只接受约定元数据和只读链接，不承载业务正文
+[PASS] TR07 模拟记录编辑时不能移除 SIM 标识，关闭试运行模式后不能继续改写模拟草稿
+[PASS] TR08 审核发现编号、状态和 CAPA 关联均由服务端控制
+[PASS] TR09 CAPA 状态推进使用字段白名单，不能改写来源和关联元数据
+[PASS] TR10 未知状态枚举不会被迁移静默缩窄
+[PASS] TR11 试运行新建内审计划由服务端强制 SIM 标识
+G-R14 试运行契约通过。
+EXIT_CODE=0
+RESULT=PASS
+===== [48/129] qms_gr14_trial_document_runtime_smoke.php =====
+拒绝运行：本测试会创建临时文件记录，只能在 8011 候选环境执行。
+EXIT_CODE=2
+RESULT=FAIL
+===== [49/129] qms_integration_print_smoke.php =====
+qms_integration_print_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [50/129] qms_knowledge_internal_export_smoke.php =====
+qms_knowledge_internal_export_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [51/129] qms_long_form_session_smoke.php =====
+qms_long_form_session_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [52/129] qms_manual_procedure_alignment_command_smoke.php =====
+qms_manual_procedure_alignment_command_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [53/129] qms_manual_procedure_alignment_current_export_smoke.php =====
+qms_manual_procedure_alignment_current_export_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [54/129] qms_manual_procedure_alignment_rules_smoke.php =====
+qms_manual_procedure_alignment_rules_smoke deterministic rules passed
+EXIT_CODE=0
+RESULT=PASS
+===== [55/129] qms_manual_procedure_traceability_smoke.php =====
+qms_manual_procedure_traceability_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [56/129] qms_p0_action_authorization_smoke.php =====
+PASS A01 一般人员允许登记投诉且只可查看本人经办记录
+PASS A02 一般人员不得推进投诉
+PASS A03 质量负责人允许推进投诉和创建 CAPA
+PASS A04 场所质量协调人只可处理任命场所投诉
+PASS A05 被派内审员允许只读任命范围设备证据
+PASS A06 内审员不得编辑设备或写维护记录
+PASS A07 乌鲁木齐设备管理员只可写本场所维护记录
+PASS A08 和田设备管理员只可写本场所维护记录
+PASS A09 资料管理员允许查看模板复核清单
+PASS A10 无批准任命的资料管理员不得发布模板
+PASS A11 质量负责人允许批准发布模板
+PASS A12 CAPA 被指派责任人可查看所分派记录并编辑措施
+PASS A13 未获验证权限的 CAPA 责任人不得关闭
+PASS A14 技术负责人只可维护任命场所人员能力确认
+PASS A15 越权直接 POST 返回友好 HTTP 403 且不进入业务动作
+PASS A16 任命过期后立即失去动作权限
+qms_p0_action_authorization_smoke passed: A01-A16
+EXIT_CODE=0
+RESULT=PASS
+===== [57/129] qms_p0_confirmed_organization_smoke.php =====
+B5 fixture guard rejected database: jewelry_qms
+EXIT_CODE=2
+RESULT=FAIL
+===== [58/129] qms_p0_controlled_migration_existing_people_smoke.php =====
+PASS B707 编号与姓名不一致必须阻断
+FAIL B701-B706 build failed: PLACE01/PLACE02 场所指纹不一致
+qms_p0_controlled_migration_existing_people_smoke failed: 1 passed, 1 failed
+EXIT_CODE=1
+RESULT=FAIL
+===== [59/129] qms_p0_controlled_migration_package_smoke.php =====
+
+
+                                          
+  [DomainException]                       
+  target_database 与当前连接数据库不一致  
+                                          
+EXIT_CODE=0
+RESULT=PASS
+===== [60/129] qms_p0_controlled_migration_rehearsal_smoke.php =====
+phase must be migrated, rolled_back, or remigrated
+EXIT_CODE=2
+RESULT=FAIL
+===== [61/129] qms_p0_field_audit_smoke.php =====
+PASS T01 无变化状态和等价日期保存不生成字段日志
+PASS T02 设备只改状态时恰好记录一条真实变化
+PASS T03 不符合修改两个字段时日志数量和前后值精确
+PASS T04 投诉推进同时记录状态和调查内容
+PASS T05 能力确认结果变更以中文字段和中文状态展示
+PASS T06 法规候选人工复核的状态、人员、时间和备注完整留痕
+PASS T07 详情历史显示操作人姓名和岗位而非裸 UUID
+PASS T08 同一日期的等价格式不生成假变更
+PASS T09 审计写入失败时关键业务写入不落库并返回中文错误
+PASS T10 越权失败只进入安全审计，不进入字段历史
+qms_p0_field_audit_smoke passed: T01-T10
+EXIT_CODE=0
+RESULT=PASS
+===== [62/129] qms_p0_field_contract_smoke.php =====
+PASS C01 能力确认四页面只使用业务字段
+PASS C02 能力确认新增字段受服务端白名单约束
+PASS C03 能力确认编辑只保存提交的业务字段
+PASS C04 能力确认缺员工或项目时由服务端中文校验拒绝
+PASS C05 不符合新增、列表、详情使用同一业务字段和中文状态
+PASS C06 不符合通用编辑不会覆盖工作流状态和未提交字段
+PASS C07 不符合未知字段和伪造状态不落库
+PASS C08 CAPA 编辑不要求重复提交编号且来源字段保持不变
+PASS C09 CAPA 空描述由服务端拒绝
+PASS C10 投诉新增、列表使用业务编号和中文状态
+PASS C11 投诉通用编辑不会覆盖调查、处理、反馈和状态
+PASS C12 软删除投诉的旧详情、编辑和删除入口统一按不存在处理
+qms_p0_field_contract_smoke passed: C01-C12
+EXIT_CODE=0
+RESULT=PASS
+===== [63/129] qms_p0_preflight_smoke.php =====
+PASS L10 只读预检输出重复、无效关联、孤儿和反向不一致，且不写库
+qms_p0_preflight_smoke passed: L10
+EXIT_CODE=0
+RESULT=PASS
+===== [64/129] qms_p0_workflow_link_smoke.php =====
+PASS L01 合法 001 后生成 002，不重复年份
+PASS L02 异常旧编号不参与当年序号计算
+PASS L03 投诉、CAPA、不符合编号和 CAPA 来源组合由数据库唯一约束保护
+PASS L04 投诉和新建 CAPA 保存同一 36 位 UUID
+PASS L05 同一来源重复创建返回既有 CAPA，总数仍为 1
+PASS L06 不符合与 CAPA 双向关联一致
+PASS L07 来源回写失败时 CAPA 创建整体回滚
+PASS L08 无效来源 UUID 返回领域错误且 0 写入
+PASS L09 创建成功跳转使用真实 CAPA UUID
+qms_p0_workflow_link_smoke passed: L01-L09
+EXIT_CODE=0
+RESULT=PASS
+===== [65/129] qms_planning_schema_smoke.php =====
+qms_planning_schema_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [66/129] qms_planning_service_smoke.php =====
+Official source file exists: CNAS-CL01:2018
+EXIT_CODE=1
+RESULT=FAIL
+===== [67/129] qms_planning_ui_smoke.php =====
+qms_planning_ui_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [68/129] qms_procedure_element_mapping_smoke.php =====
+qms_procedure_element_mapping_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [69/129] qms_procedure_record_requirement_coverage_smoke.php =====
+Coverage reports covered procedures such as XZTC/CX-26-2022
+EXIT_CODE=1
+RESULT=FAIL
+===== [70/129] qms_procedure_record_requirement_suggestion_smoke.php =====
+qms_procedure_record_requirement_suggestion_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [71/129] qms_record_form_requirement_evidence_smoke.php =====
+Computer software record form template exists
+EXIT_CODE=1
+RESULT=FAIL
+===== [72/129] qms_record_form_schema_requirement_source_smoke.php =====
+Computer software record form exists
+EXIT_CODE=1
+RESULT=FAIL
+===== [73/129] qms_record_form_traceability_smoke.php =====
+
+
+                                                                                  
+  [RuntimeException]                                                              
+  记录表格导入预览清单不存在：docs/import-preview/record-forms-import-preview.md  
+                                                                                  
+EXIT_CODE=0
+RESULT=PASS
+===== [74/129] qms_record_form_variant_structure_smoke.php =====
+The period-check record form has multiple source-file variants
+EXIT_CODE=1
+RESULT=FAIL
+===== [75/129] qms_record_requirement_schema_coverage_smoke.php =====
+qms_record_requirement_schema_coverage_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [76/129] qms_record_schema_gap_suggestion_smoke.php =====
+qms_record_schema_gap_suggestion_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [77/129] qms_reference_procedure_block_gap_smoke.php =====
+CX-32 reference procedure has a block-level comparison row
+EXIT_CODE=1
+RESULT=FAIL
+===== [78/129] qms_reference_procedure_manual_match_smoke.php =====
+CX-12 reference block exists
+EXIT_CODE=1
+RESULT=FAIL
+===== [79/129] qms_reference_procedure_structure_smoke.php =====
+Reference procedure asset is archived
+EXIT_CODE=1
+RESULT=FAIL
+===== [80/129] qms_reference_procedure_suggestion_smoke.php =====
+Reference procedure package is split into individual reference procedure blocks
+EXIT_CODE=1
+RESULT=FAIL
+===== [81/129] qms_reminder_command_smoke.php =====
+qms_reminder_command_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [82/129] qms_responsibility_alignment_smoke.php =====
+qms_responsibility_alignment_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [83/129] qms_responsibility_approval_smoke.php =====
+qms responsibility approval smoke: OK
+EXIT_CODE=0
+RESULT=PASS
+===== [84/129] qms_responsibility_catalog_smoke.php =====
+qms_responsibility_catalog_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [85/129] qms_responsibility_concurrency_smoke.php =====
+qms_responsibility_concurrency_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [86/129] qms_responsibility_draft_smoke.php =====
+
+
+                                                                                                                                           
+  [think\db\exception\DuplicateException]                                                                                                  
+  SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'DRAFT-acae489e' for key 'employees.uq_employees_employee_number'  
+                                                                                                                                           
+EXIT_CODE=0
+RESULT=PASS
+===== [87/129] qms_responsibility_end_to_end_smoke.php =====
+structure_empty_staffing=warning
+activation_without_governance=blocker
+activation_with_governance=pass
+effective_version=effective
+active_chain_appointments=4
+old_version_during_change=effective
+rbac_roles_unchanged=yes
+Y13-CX20=conflict
+Y13-CX21=conflict
+Y13-CX32=review_required
+qms responsibility end-to-end smoke: OK
+EXIT_CODE=0
+RESULT=PASS
+===== [88/129] qms_responsibility_presentation_smoke.php =====
+qms_responsibility_presentation_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [89/129] qms_responsibility_schema_smoke.php =====
+qms_responsibility_schema_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [90/129] qms_responsibility_ui_smoke.php =====
+qms_responsibility_ui_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [91/129] qms_responsibility_validation_smoke.php =====
+qms_responsibility_validation_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [92/129] qms_runtime_evidence_traceability_smoke.php =====
+Computer software record template exists with an element
+EXIT_CODE=1
+RESULT=FAIL
+===== [93/129] qms_sites_smoke.php =====
+qms_sites_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [94/129] qms_structure_package_smoke.php =====
+XZTC/CX-26-2022 has a block for package change impact navigation smoke
+EXIT_CODE=1
+RESULT=FAIL
+===== [95/129] qms_structured_block_edit_smoke.php =====
+qms_structured_block_edit_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [96/129] qms_structured_change_control_smoke.php =====
+qms_structured_change_control_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [97/129] qms_structured_document_archive_smoke.php =====
+qms_structured_document_archive_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [98/129] qms_structured_publish_smoke.php =====
+qms_structured_publish_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [99/129] qms_structured_source_refresh_smoke.php =====
+qms_structured_source_refresh_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [100/129] qms_structured_trace_review_smoke.php =====
+Trace review detail exposes record form options
+EXIT_CODE=1
+RESULT=FAIL
+===== [101/129] qms_structured_traceability_matrix_smoke.php =====
+Smoke record form exists
+EXIT_CODE=1
+RESULT=FAIL
+===== [102/129] qms_supplement_clause_mapping_smoke.php =====
+CNAS G001 clauses exist
+EXIT_CODE=1
+RESULT=FAIL
+===== [103/129] qms_training_deepening_smoke.php =====
+qms_training_deepening_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [104/129] qms_ui_navigation_template_smoke.php =====
+qms_ui_navigation_template_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [105/129] qms_unmatched_clause_suggestions_smoke.php =====
+Sample unmatched GB/T clause exists
+EXIT_CODE=1
+RESULT=FAIL
+===== [106/129] qms_validation_smoke.php =====
+qms_validation_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [107/129] qms_wave1_d4_webhook_smoke.php =====
+qms_wave1_d4_webhook_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [108/129] qms_wave1_e_sim_uuid_smoke.php =====
+PASS E01 config exposes simulation_uuid_prefix
+PASS E02 qms_uuid supports sim- prefix gate
+PASS E03 prefix off yields plain UUID
+PASS E04 prefix on yields sim- UUID
+PASS E05 QMS_SIM_UUID=1 enables sim- prefix
+qms_wave1_e_sim_uuid_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [109/129] qms_wave1_g3_status_guard_smoke.php =====
+qms_wave1_g3_status_guard_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [110/129] qms_wave1_r3_a_m_contract_smoke.php =====
+PASS M01 R-3 empty field_schema rejected in validateTemplateInput
+PASS M02 R-3 template view expands table/repeater columns
+PASS M03 F-4b-04 supervision create entry present
+PASS M04 F-3a-02 EquipmentPeriodCheck stub + routes
+PASS M05 Planning batchDecide route and method exist
+PASS M06 record_form_instance write buttons guarded by qms_can_action
+PASS M07 document metadata backfill script defaults to dry-run
+qms_wave1_r3_a_m_contract_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [111/129] qms_wave1_r4_record_form_audit_smoke.php =====
+PASS S01 FieldAuditService registers RecordFormInstance status/field_values/record_title
+PASS S02 valuesEquivalent keeps JSON canonical compare for jsonFields
+PASS T01 equivalent JSON string vs array treated as same
+PASS T02 different JSON values are not equivalent
+PASS T03 RecordFormInstance audited fields produce change logs
+PASS T04 equivalent JSON field_values does not create false audit row
+qms_wave1_r4_record_form_audit_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [112/129] qms_wave1_r5_uniqueness_smoke.php =====
+PASS R501 Employee add/edit uniqueness checks for employee_number and email
+PASS R502 Calibration requires org/certificate when result is pass/合格
+PASS R503 PlanningRegulatoryCandidate rejects unknown clause numbers
+PASS R504 Migration SQL adds uniqueness index and period-check stub table
+PASS R505 Employee validationRules exposes uniqueness closures
+PASS R506 Calibration validateFormData blocks pass without org/certificate
+PASS R507 duplicate employee_number rejected by unique rule
+PASS R508 duplicate email rejected by unique rule
+qms_wave1_r5_uniqueness_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [113/129] qms_wave1_s1_no_get_writes_smoke.php =====
+qms_wave1_s1_no_get_writes_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [114/129] qms_work_instruction_structure_smoke.php =====
+qms_work_instruction_structure_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [115/129] rbac_controller_normalization_smoke.php =====
+rbac_controller_normalization_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [116/129] record_form_fillability_readiness_smoke.php =====
+
+Fatal error: Uncaught RuntimeException: 记录表格导入预览清单不存在：docs/import-preview/record-forms-import-preview.md in /app/app/service/RecordFormBatchTemplateService.php:38
+Stack trace:
+#0 /app/tests/record_form_fillability_readiness_smoke.php(87): app\service\RecordFormBatchTemplateService::manifest()
+#1 {main}
+  thrown in /app/app/service/RecordFormBatchTemplateService.php on line 38
+EXIT_CODE=255
+RESULT=FAIL
+===== [117/129] record_form_forward_chain_smoke.php =====
+Packet not found: XZTC/BG-04-07 from 待定-04-02
+EXIT_CODE=1
+RESULT=FAIL
+===== [118/129] record_form_instance_title_suggestion_smoke.php =====
+Published training record template exists
+EXIT_CODE=1
+RESULT=FAIL
+===== [119/129] record_form_reconstruction_review_smoke.php =====
+BG-22-01 packet exists under composite identity
+EXIT_CODE=1
+RESULT=FAIL
+===== [120/129] record_form_source_instance_draft_smoke.php =====
+Template exists: XZTC/BG-01-02
+EXIT_CODE=1
+RESULT=FAIL
+===== [121/129] record_forms_batch_smoke.php =====
+
+Fatal error: Uncaught RuntimeException: 记录表格导入预览清单不存在：docs/import-preview/record-forms-import-preview.md in /app/app/service/RecordFormBatchTemplateService.php:38
+Stack trace:
+#0 /app/tests/record_forms_batch_smoke.php(87): app\service\RecordFormBatchTemplateService::manifest()
+#1 {main}
+  thrown in /app/app/service/RecordFormBatchTemplateService.php on line 38
+EXIT_CODE=255
+RESULT=FAIL
+===== [122/129] record_forms_equipment_fidelity_smoke.php =====
+
+Fatal error: Uncaught RuntimeException: 记录表格导入预览清单不存在：docs/import-preview/record-forms-import-preview.md in /app/app/service/RecordFormBatchTemplateService.php:38
+Stack trace:
+#0 /app/tests/record_forms_equipment_fidelity_smoke.php(91): app\service\RecordFormBatchTemplateService::manifest()
+#1 {main}
+  thrown in /app/app/service/RecordFormBatchTemplateService.php on line 38
+EXIT_CODE=255
+RESULT=FAIL
+===== [123/129] record_forms_file_control_fidelity_smoke.php =====
+
+Fatal error: Uncaught RuntimeException: 记录表格导入预览清单不存在：docs/import-preview/record-forms-import-preview.md in /app/app/service/RecordFormBatchTemplateService.php:38
+Stack trace:
+#0 /app/tests/record_forms_file_control_fidelity_smoke.php(79): app\service\RecordFormBatchTemplateService::manifest()
+#1 {main}
+  thrown in /app/app/service/RecordFormBatchTemplateService.php on line 38
+EXIT_CODE=255
+RESULT=FAIL
+===== [124/129] record_forms_fixture_smoke.php =====
+record_forms_fixture_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [125/129] record_forms_instance_smoke.php =====
+record_forms_instance_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [126/129] record_forms_personnel_fidelity_smoke.php =====
+
+Fatal error: Uncaught RuntimeException: 记录表格导入预览清单不存在：docs/import-preview/record-forms-import-preview.md in /app/app/service/RecordFormBatchTemplateService.php:38
+Stack trace:
+#0 /app/tests/record_forms_personnel_fidelity_smoke.php(265): app\service\RecordFormBatchTemplateService::manifest()
+#1 {main}
+  thrown in /app/app/service/RecordFormBatchTemplateService.php on line 38
+EXIT_CODE=255
+RESULT=FAIL
+===== [127/129] record_forms_print_smoke.php =====
+record_forms_print_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [128/129] record_forms_schema_smoke.php =====
+record_forms_schema_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [129/129] record_forms_template_review_smoke.php =====
+
+Warning: file_get_contents(/app/runtime/qms_structured/record_form/XZTC_BG-22-03-A_0.md): Failed to open stream: No such file or directory in /app/tests/record_forms_template_review_smoke.php on line 101
+Draft standard-list source records that canonicalization happened
+EXIT_CODE=1
+RESULT=FAIL

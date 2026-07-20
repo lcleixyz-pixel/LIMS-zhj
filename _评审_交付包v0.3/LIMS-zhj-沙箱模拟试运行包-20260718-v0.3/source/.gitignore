@@ -1,0 +1,73 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# PHP / CakePHP legacy runtime
+**/tmp/cache/**
+**/tmp/logs/**
+**/tmp/sessions/**
+**/tmp/tests/**
+!**/tmp/**/.gitkeep
+
+# CakePHP legacy uploads (keep directory structure only)
+**/webroot/files/**/*
+!**/webroot/files/**/.gitkeep
+**/webroot/schema/*.bak
+
+# ThinkPHP jewelry-qms runtime and uploads
+jewelry-qms/vendor/
+jewelry-qms/runtime/*
+!jewelry-qms/runtime/.gitignore
+jewelry-qms/public/uploads/*
+!jewelry-qms/public/uploads/.gitkeep
+
+# Local config overrides (never commit secrets)
+**/Config/database.local.php
+.env
+.env.*
+!jewelry-qms/deploy/experience/.env.example
+
+# Logs and debug
+**/error_log
+**/debug.log
+**/*.log
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Node (if any)
+node_modules/
+
+# Local Git worktrees
+.worktrees/
+
+# LIMS-zhj 版权红线与工作副本排除（2026-07-09）
+# 外部文件依据：CNAS/GBT/RBT 标准原文，版权所有，永不入仓（见《项目总体规划》第七条）
+整合/外部文件依据/
+# __work_lims：本地解压的工作副本（含 composer.phar 等二进制）
+整合/__work_lims/
+# 归档：MinerU 转换中间产物与 docx 备份大文件，非源文件
+整合/归档/
+
+# 仓库拆分：参考系统已移至 LIMS-zhj-reference 归档仓（2026-07-09）
+# 防止这些目录被误重新加入主仓
+flinkiso/
+flinkiso-lite-master/
+jewelry-qms-legacy/
+
+# 参考资料版权拆分（2026-07-11）：标准原文/体系原件移至本地 LIMS-zhj-参考-private/，永不入仓（规划第七条红线）
+参考/
+
+# 演练备份dump含真实机构数据，不入仓（2026-07-11）
+**/backup-*.sql

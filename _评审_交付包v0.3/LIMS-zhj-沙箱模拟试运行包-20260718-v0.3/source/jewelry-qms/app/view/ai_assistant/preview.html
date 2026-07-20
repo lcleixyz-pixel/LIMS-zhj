@@ -1,0 +1,44 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">AI 提取预览</h4>
+        <div class="text-muted small">确认 AI 提取结果后写入正式数据库。</div>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/ai_assistant/index" class="btn btn-outline-secondary btn-sm">返回助理</a>
+        <a href="/ai_assistant/history" class="btn btn-outline-secondary btn-sm">提取历史</a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <table class="table table-bordered mb-0">
+            <tr><th width="140">记录类型</th><td>{$targetTypes[$log.target_type]|default=$log.target_type}</td></tr>
+            <tr><th>来源文件</th><td>{:basename($log.source_file)}</td></tr>
+            <tr><th>提取时间</th><td>{$log.created|default='-'}</td></tr>
+            <tr><th>状态</th><td>{$log.status|default='-'}</td></tr>
+        </table>
+    </div>
+</div>
+
+{if $log.status == 'pending'}
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">结构化结果</h5></div>
+    <div class="card-body">
+        <form method="post" action="/ai_assistant/confirm">
+            <input type="hidden" name="log_id" value="{$log.id}">
+            <textarea name="payload_json" class="form-control font-monospace small mb-3" rows="18">{$payloadJson|raw}</textarea>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">确认入库</button>
+                <button formaction="/ai_assistant/reject" formmethod="post" class="btn btn-outline-danger">拒绝</button>
+            </div>
+        </form>
+    </div>
+</div>
+{else}
+<div class="card">
+    <div class="card-body">
+        <pre class="bg-light p-3 rounded small mb-0" style="white-space:pre-wrap;">{$payloadJson|raw}</pre>
+        <div class="text-muted small mt-2">已写入 {$log.records_created|default=0} 条记录</div>
+    </div>
+</div>
+{/if}

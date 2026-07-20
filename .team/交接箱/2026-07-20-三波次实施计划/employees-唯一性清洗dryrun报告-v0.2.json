@@ -1,0 +1,126 @@
+{
+    "version": "v0.2",
+    "generated_at": "2026-07-20T22:39:01+08:00",
+    "mode": "dry-run",
+    "database_write_performed": 0,
+    "scan_scope": "all_rows_including_soft_deleted",
+    "index_scheme": "active_only_generated_column",
+    "total_employees": 12,
+    "active_employees": 11,
+    "soft_deleted_employees": 1,
+    "blank_employee_number_active": 0,
+    "blank_email_active": 10,
+    "blank_employee_number_all": 0,
+    "blank_email_all": 10,
+    "duplicate_employee_number_groups_active": 0,
+    "duplicate_email_groups_active": 0,
+    "duplicate_employee_number_groups_all": 0,
+    "duplicate_email_groups_all": 1,
+    "duplicate_employee_numbers_active": [],
+    "duplicate_emails_active": [],
+    "duplicate_employee_numbers_all": [],
+    "duplicate_emails_all": [
+        {
+            "email": "1521422642@qq.com",
+            "count": 2,
+            "rows": [
+                {
+                    "id": "bf26c847-1181-4ed5-9881-563a6585475e",
+                    "name": "张晓磊",
+                    "employee_number": "E002",
+                    "email": "1521422642@qq.com",
+                    "soft_delete": 0,
+                    "publish": 1
+                },
+                {
+                    "id": "00000000-0000-0000-0000-000000000030",
+                    "name": "张晓磊",
+                    "employee_number": "E001",
+                    "email": "1521422642@qq.com",
+                    "soft_delete": 1,
+                    "publish": 1
+                }
+            ]
+        }
+    ],
+    "blank_emails_active": [
+        {
+            "id": "9f4f9c77-0551-4c38-a7ac-a5b20d929a6d",
+            "name": "俞炳星",
+            "employee_number": "E000",
+            "soft_delete": 0
+        },
+        {
+            "id": "76b4ebdc-cafd-4ca0-9637-d3194c0fc594",
+            "name": "曹红",
+            "employee_number": "E003",
+            "soft_delete": 0
+        },
+        {
+            "id": "d39db2de-8942-4e7c-99d8-86eabfa4a057",
+            "name": "李成辉",
+            "employee_number": "E004",
+            "soft_delete": 0
+        },
+        {
+            "id": "f589817c-f82c-4ed6-8b0b-66fb81f6210f",
+            "name": "刘恒春",
+            "employee_number": "E005",
+            "soft_delete": 0
+        },
+        {
+            "id": "40eea6cc-9d5b-48f8-8ace-873a21b35197",
+            "name": "付丽",
+            "employee_number": "E006",
+            "soft_delete": 0
+        },
+        {
+            "id": "72812ba5-b58c-4846-9566-abd4dc033c67",
+            "name": "米尔布拉·阿卜杜麦麦提",
+            "employee_number": "E007",
+            "soft_delete": 0
+        },
+        {
+            "id": "c402ff6e-357c-4485-99ea-718916721eba",
+            "name": "如则托合提·阿卜杜加帕尔",
+            "employee_number": "E008",
+            "soft_delete": 0
+        },
+        {
+            "id": "936bdb6a-89d7-49b3-8721-009c038553e2",
+            "name": "毛天一",
+            "employee_number": "E009",
+            "soft_delete": 0
+        },
+        {
+            "id": "9e82e78d-aa6e-40cc-81df-5e13cc915362",
+            "name": "王胜林",
+            "employee_number": "E010",
+            "soft_delete": 0
+        },
+        {
+            "id": "477281ff-4862-4dee-9496-eb52d830f209",
+            "name": "史广",
+            "employee_number": "E011",
+            "soft_delete": 0
+        }
+    ],
+    "proposed_actions": [
+        {
+            "kind": "normalize_blank_to_null",
+            "fields": [
+                "employee_number",
+                "email"
+            ],
+            "scope": "preferably_active_rows_with_empty_string",
+            "note": "空串归一 NULL 步骤保留；上 active-only UNIQUE 前必须执行"
+        },
+        {
+            "kind": "blank_email_active",
+            "count": 10,
+            "action": "normalize_empty_string_to_null"
+        }
+    ],
+    "ready_for_unique_index": "no",
+    "blocking_items": 1
+}

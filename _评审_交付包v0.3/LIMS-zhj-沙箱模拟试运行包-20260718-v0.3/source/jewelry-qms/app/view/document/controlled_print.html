@@ -1,0 +1,114 @@
+<style>
+.controlled-print-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.controlled-print-page {
+    position: relative;
+    min-height: 760px;
+    border: 1px solid #dee2e6;
+    background: #fff;
+    overflow: hidden;
+}
+.controlled-print-page::before {
+    content: "{$printLog.watermark_text|default='受控打印'}";
+    position: absolute;
+    top: 42%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-28deg);
+    font-size: 54px;
+    line-height: 1.1;
+    color: rgba(33, 37, 41, 0.08);
+    white-space: nowrap;
+    pointer-events: none;
+}
+.controlled-print-content {
+    position: relative;
+    z-index: 1;
+}
+@media print {
+    .navbar,
+    .sidebar,
+    .controlled-print-toolbar,
+    .btn,
+    .breadcrumb {
+        display: none !important;
+    }
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .card,
+    .controlled-print-page {
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+
+<div class="card controlled-print-toolbar mb-3">
+    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <h5 class="mb-1">受控打印 - {$doc.doc_number|default=''}</h5>
+            <div class="text-muted small">打印编号：{$printLog.print_number|default=''} · 份数：{$printLog.copy_count|default='1'}</div>
+        </div>
+        <div class="d-flex gap-1">
+            <button type="button" class="btn btn-sm btn-primary" onclick="window.print()">打印</button>
+            {if $doc.file_path}
+            <a href="{$downloadUrl}" class="btn btn-sm btn-outline-info">下载原附件</a>
+            {/if}
+            <a href="/document/view?id={$doc.id}" class="btn btn-sm btn-outline-secondary">返回文件</a>
+        </div>
+    </div>
+</div>
+
+<div class="controlled-print-page p-4">
+    <div class="controlled-print-content">
+        <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-4">
+            <div>
+                <div class="text-muted small">Jewelry QMS 受控文件</div>
+                <h3 class="mb-1">{$doc.title|default=''}</h3>
+                <div class="text-muted">{$doc.doc_number|default=''} / {$doc.version|default='A/0'}</div>
+            </div>
+            <div class="text-end small">
+                <div><strong>{$printLog.watermark_text|default=''}</strong></div>
+                <div>打印时间：{$printLog.printed_at|default=''}</div>
+                <div>打印用途：{$printLog.purpose|default='-'}</div>
+            </div>
+        </div>
+
+        <table class="table table-bordered">
+            <tr>
+                <th width="160">文件编号</th>
+                <td>{$doc.doc_number|default=''}</td>
+                <th width="160">版本</th>
+                <td>{$doc.version|default='A/0'}</td>
+            </tr>
+            <tr>
+                <th>文件标题</th>
+                <td colspan="3">{$doc.title|default=''}</td>
+            </tr>
+            <tr>
+                <th>文件状态</th>
+                <td>{$doc.status|default=''}</td>
+                <th>生效日期</th>
+                <td>{$doc.effective_date|default='-'}</td>
+            </tr>
+            <tr>
+                <th>打印编号</th>
+                <td>{$printLog.print_number|default=''}</td>
+                <th>打印份数</th>
+                <td>{$printLog.copy_count|default='1'}</td>
+            </tr>
+            <tr>
+                <th>水印</th>
+                <td colspan="3">{$printLog.watermark_text|default=''}</td>
+            </tr>
+        </table>
+
+        <div class="alert alert-secondary mb-0">
+            此页用于受控打印留痕。正式文件内容以受控附件为准；如需打印附件正文，请先下载原附件，并在打印件上保留本页水印编号。
+        </div>
+    </div>
+</div>

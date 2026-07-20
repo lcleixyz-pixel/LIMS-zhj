@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-07-20T00:35:27",
+  "rows": [
+    {
+      "env": "8010",
+      "db_container": "jewelry-qms-db-1",
+      "table_count": "83",
+      "employees_total_sim_nonsim": "",
+      "documents": "38",
+      "templates_active": "",
+      "fingerprint_input": "8010|83||38|",
+      "fingerprint_sha256": "354529f53af1325ce7d615f010bc6f74d47277245e8adc6ae1da040af4f301f1",
+      "query_ok": true,
+      "error": ""
+    },
+    {
+      "env": "8011",
+      "db_container": "lims-zhj-sandbox-governance-20260719-db-1",
+      "table_count": "83",
+      "employees_total_sim_nonsim": "",
+      "documents": "65",
+      "templates_active": "",
+      "fingerprint_input": "8011|83||65|",
+      "fingerprint_sha256": "d67592a2602f706d1e9606ad75a392bbc7b23c931deaa9dd3374934c85767608",
+      "query_ok": true,
+      "error": ""
+    },
+    {
+      "env": "8012",
+      "db_container": "lims-zhj-blind-qms-eval-20260719-db-1",
+      "table_count": "83",
+      "employees_total_sim_nonsim": "",
+      "documents": "68",
+      "templates_active": "",
+      "fingerprint_input": "8012|83||68|",
+      "fingerprint_sha256": "e9c908fe61ac5f4cef5bb520743346e03c0856ba8a976d7d04b34319da4e127e",
+      "query_ok": true,
+      "error": ""
+    },
+    {
+      "env": "8013",
+      "db_container": "lims-zhj-rehearsal-r2-main-20260719-db-1",
+      "table_count": "83",
+      "employees_total_sim_nonsim": "",
+      "documents": "65",
+      "templates_active": "",
+      "fingerprint_input": "8013|83||65|",
+      "fingerprint_sha256": "01f1ebc440d9e3be0ecf5370b9c587742744a509fcdc4c0f3a8135007270d318",
+      "query_ok": true,
+      "error": ""
+    },
+    {
+      "env": "8014",
+      "db_container": "lims-zhj-rehearsal-r2-blind-20260719-db-1",
+      "table_count": "83",
+      "employees_total_sim_nonsim": "",
+      "documents": "65",
+      "templates_active": "",
+      "fingerprint_input": "8014|83||65|",
+      "fingerprint_sha256": "392145b918756ca7deefca9bc3a03030ee12c5e1093c69c8060072a1f965c056",
+      "query_ok": true,
+      "error": ""
+    }
+  ]
+}

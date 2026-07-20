@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>珠宝检测实验室质量管理系统 - 系统管理员</title>
+    <meta name="csrf-token" content="ea3f12666fd3ddf7de7e3835a26e1ab5">    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/qms.css" rel="stylesheet">
+    <link href="/static/css/qms-copilot.css" rel="stylesheet">
+    <link href="/static/css/qms-responsibility.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+</head>
+<body
+    data-qms-controller="planningclause"
+    data-qms-action="index"
+    data-qms-record-id=""
+    data-qms-route="planning_clause/index"
+    data-qms-module="planning_clause"
+    data-qms-title="planningclause/index"
+    data-qms-copilot-enabled="1"
+    data-qms-ai-configured="0"
+>
+<div class="container-fluid qms-header">
+    <div class="row align-items-center py-2">
+        <div class="col-md-3">
+            <h5 class="mb-0"><a href="/dashboard/index" class="text-decoration-none text-dark">珠宝检测实验室质量管理系统</a></h5>
+            <small class="text-muted">珠宝检测实验室 QMS</small>
+        </div>
+        <div class="col-md-6 text-center">
+            <span class="badge bg-secondary">CMA/CNAS 质量管理体系</span>
+        </div>
+        <div class="col-md-3 text-end">
+            <strong>系统管理员</strong>
+                        <a href="/notification/index" class="badge bg-secondary ms-1 text-decoration-none" title="暂无未读通知">0</a>
+                        <br>
+            <a href="/login/changePassword" class="btn btn-sm btn-outline-secondary">修改密码</a>
+            <a href="/login/logout" class="btn btn-sm btn-primary">退出</a>
+        </div>
+    </div>
+</div>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard/index">工作台</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/calendar/index">本月待办</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">记录填报</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/record_form_template/index">记录模板</a></li>
+                        <li><a class="dropdown-item" href="/record_form_instance/index">填写记录</a></li>
+                        <li><a class="dropdown-item" href="/record_form_instance/reviewDashboard?year=2025">2025 运行确认</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/record_form_template/review">模板复核</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">体系文件</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/document/index">体系文件列表</a></li>
+                        <li><a class="dropdown-item" href="/document/add">新建文件</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/doc_template/index">文件模板管理</a></li>
+                        <li><a class="dropdown-item" href="/doc_category/index">文件分类</a></li>
+                    </ul>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="/compliance/index">审核准备</a>
+                </li>
+                                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">审核与评审</a>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header text-muted">内部审核</h6></li>
+                        <li><a class="dropdown-item" href="/audit_plan/index">内审计划</a></li>
+                        <li><a class="dropdown-item" href="/audit_schedule/index">审核日程</a></li>
+                        <li><a class="dropdown-item" href="/audit_checklist/index">审核检查表</a></li>
+                        <li><a class="dropdown-item" href="/audit_finding/index">审核发现</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">管理评审</h6></li>
+                        <li><a class="dropdown-item" href="/management_review/index">管理评审</a></li>
+                        <li><a class="dropdown-item" href="/review_action/index">评审决议</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">质量改进</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/capa/index">CAPA</a></li>
+                        <li><a class="dropdown-item" href="/nonconformity/index">不符合工作</a></li>
+                        <li><a class="dropdown-item" href="/complaint/index">客户投诉</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">资源管理</a>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header text-muted">设备与计量</h6></li>
+                        <li><a class="dropdown-item" href="/equipment/index">设备台账</a></li>
+                        <li><a class="dropdown-item" href="/equipment_transfer/index">设备调拨</a></li>
+                        <li><a class="dropdown-item" href="/equipment_maintenance/index">维护保养</a></li>
+                        <li><a class="dropdown-item" href="/equipment_authorization/index">设备授权使用人</a></li>
+                        <li><a class="dropdown-item" href="/calibration/index">校准记录</a></li>
+                        <li><a class="dropdown-item" href="/reference_material/index">标准物质台账</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">人员与培训</h6></li>
+                        <li><a class="dropdown-item" href="/training_plan/index">培训计划</a></li>
+                        <li><a class="dropdown-item" href="/training/index">培训活动</a></li>
+                        <li><a class="dropdown-item" href="/training_record/index">培训记录明细</a></li>
+                        <li><a class="dropdown-item" href="/competency_record/index">能力确认</a></li>
+                        <li><a class="dropdown-item" href="/employee_certificate/index">人员资质证书</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">供应商</h6></li>
+                        <li><a class="dropdown-item" href="/supplier/index">供应商管理</a></li>
+                        <li><a class="dropdown-item" href="/supplier/qualified">合格供应商名录</a></li>
+                    </ul>
+                </li>
+                                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">体系策划</a>
+                    <ul class="dropdown-menu">
+                                                <li><h6 class="dropdown-header text-muted">策划与要素</h6></li>
+                        <li><a class="dropdown-item" href="/planning/index">策划中心</a></li>
+                        <li><a class="dropdown-item" href="/planning/elements">要素管理</a></li>
+                        <li><a class="dropdown-item" href="/planning/objectives">质量方针目标</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">文件与追溯</h6></li>
+                        <li><a class="dropdown-item" href="/planning/sources">外部依据</a></li>
+                        <li><a class="dropdown-item" href="/planning/clauses">条款库</a></li>
+                        <li><a class="dropdown-item" href="/planning/structures">文件结构化</a></li>
+                        <li><a class="dropdown-item" href="/planning/traceability">追溯矩阵</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">外部变化管理</h6></li>
+                        <li>
+                            <a class="dropdown-item d-flex justify-content-between align-items-center" href="/planning/regulatory-candidates">
+                                <span>法规候选池</span>
+                                                            </a>
+                        </li>
+                        <li><a class="dropdown-item" href="/planning/change-events">变更事件</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">岗位责任</h6></li>
+                        <li><a class="dropdown-item" href="/planning/responsibilities">责任链</a></li>
+                                            </ul>
+                </li>
+                                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">系统设置</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/department/index">部门</a></li>
+                        <li><a class="dropdown-item" href="/site/index">场所管理</a></li>
+                        <li><a class="dropdown-item" href="/employee/index">员工</a></li>
+                        <li><a class="dropdown-item" href="/user/index">用户</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/import/index">批量导入</a></li>
+                                                <li><a class="dropdown-item" href="/ai_assistant/index">AI 文档助理</a></li>
+                                                <li><a class="dropdown-item" href="/ai_settings/index">AI 服务配置</a></li>
+                                                <li><a class="dropdown-item" href="/notification/index">通知中心</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container mt-3">
+        <div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">条款库</h4>
+        <div class="text-muted small">条款编号只属于外部依据条款；要素页面通过映射引用这些编号。</div>
+    </div>
+    <a href="/planning/sources" class="btn btn-sm btn-outline-primary">维护外部依据</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" action="/planning/clauses" class="row g-2 qms-filter-form">
+            <div class="col-md-4">
+                <label class="form-label" for="source_id">正式依据</label>
+                <select id="source_id" name="source_id" class="form-select form-select-sm">
+                    <option value="">全部依据</option>
+                                        <option value="ca12db97-35d8-4a18-aa50-d27a7ae13d1c" >CNAS-CL01-A015:2018 检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明</option>
+                                        <option value="49adf27e-0435-4ec8-b648-1920f668abc8" >CNAS-CL01-G001:2024 检测和校准实验室能力认可准则的应用要求</option>
+                                        <option value="125a69e1-ca0d-408e-ac65-a89282b826a3" >CNAS-CL01:2018 检测和校准实验室能力认可准则</option>
+                                        <option value="a9288fd9-af50-41ea-98c8-890b5fa2ef61" >GB/T 27025-2019 检测和校准实验室能力的通用要求</option>
+                                        <option value="83bb279f-7d4e-4e43-84c4-9110ba73e366" >市场监管总局公告2023年第21号 检验检测机构资质认定评审准则</option>
+                                    </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="keyword">条款检索</label>
+                <input id="keyword" type="text" name="keyword" class="form-control form-control-sm" placeholder="搜索条款编号/标题/原文" value="">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-sm btn-outline-primary">筛选</button>
+                <a href="/planning/clauses" class="btn btn-sm btn-outline-secondary">重置</a>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>来源</th>
+                        <th>条款编号</th>
+                        <th>标题</th>
+                        <th>层级</th>
+                        <th>适用性</th>
+                        <th>状态</th>
+                        <th class="qms-action-cell">入口</th>
+                    </tr>
+                </thead>
+                <tbody>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>4.1.4</td>
+                        <td>实验室应在任何可能发生影响公正性的事件时持续不断的识别风险。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=a37cf771-bae8-4ea2-bc4f-df9f9b8ce445" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>5.1</td>
+                        <td>实验室或其母体机构应是法定机构登记注册的可独立承担法律责任的实 体。</td>
+                        <td>2</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=2e948fe4-b18b-4d35-af39-0b986fb6056e" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>5.2</td>
+                        <td>实验室的管理层中对实验室活动全面负责的人员可以是一个人，也可以是 由负责不同技术领域的多名技术人员组成的团队。</td>
+                        <td>2</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=564fe0ab-d6a4-489a-a21d-f29e288b592e" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>5.5a)</td>
+                        <td>当实验室所在的母体机构还从事实验室活动以外的活动时，实验室应说 明母体机构所从事的其他活动与实验室活动之间的关系。</td>
+                        <td>2</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=f0f35071-def2-453b-b205-066004128bc7" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>5.5c)</td>
+                        <td>实验室所设定的文件层级、类型、数量及详略程度应确保实验室活动实 施的一致性和结果的有效性。</td>
+                        <td>2</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=ca6341d0-ea88-4ef7-96fa-4ac0d8f6e53d" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.2.2</td>
+                        <td>除非法律法规或CNAS 对特定领域的应用要求有其他规定，实验室人员 应满足以下要求：</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=f505d93d-c4f9-4805-ba84-c61e278456ed" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.2.5</td>
+                        <td>实验室应：</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=bbb43e06-cead-46a1-a743-97cbcdce4e1a" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.3.1</td>
+                        <td>实验室的设施应为实验室自有或租借的设施，实验室应拥有其全部使用 权和支配权。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=a7dec63e-b457-4c2c-9b1b-9452e39a6724" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.4.10</td>
+                        <td>实验室应根据设备的稳定性和使用情况来确定是否需要进行期间核查。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=3b11e03a-03ab-4131-94e5-6ea8f0759564" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.4.1a)</td>
+                        <td>实验室配置的设备应在其申报认可的场所内（现场检测/校准及移动设 施情况除外），并对其有完全的支配权和使用权。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=0b8555de-a056-42ed-b02d-d4c35ecc7a2d" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.4.3</td>
+                        <td>实验室应指定人员负责设备的管理，包括校准、维护和期间核查等。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=9954a6c3-e6e9-45e0-81b8-02e56ed37fbe" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.4.6</td>
+                        <td>应注意到并非实验室的每台设备都需要校准，实验室应评估该设备对结 果有效性和计量溯源性的影响，合理地确定是否需要校准。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=af5de99c-dfe7-41ae-b90e-f41e91a3bfc4" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.4.7</td>
+                        <td>对需要校准的设备，实验室应建立校准方案，方案中应包括该设备校准 的参数、预期测量范围、测量准确度和（或）测量不确定度、校准周期等， 以便送校时向校准服务供应商提出明确的、有针对性的要求。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=8d937bb9-6efa-4372-a52e-578641f27b8a" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.6.1a)</td>
+                        <td>实验室应根据自身需求，对需要控制的产品和服务进行识别，并采取 有效的控制措施。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=8dcabb34-b479-41cf-8919-83dcd58298f4" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.6.1c)</td>
+                        <td>可能影响实验室活动的用于支持实验室运作的服务主要包括能力验证、 审核或评审服务。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=4ccef38a-ace6-45b5-a058-4db6173a8de5" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.6.2a)</td>
+                        <td>实验室应基于检测或校准方法的需要以及实验室自身的要求确定外部 提供的产品和服务的要求。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=3d0a1520-e291-4b4d-8d2b-6b51ae68ca3e" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>6.6.2b)</td>
+                        <td>当实验室需从外部机构获得实验室活动服务时，应尽可能选择相关项 目已获认可的实验室（经 CNAS 认可或其他签署 ILAC 互认协议的认可机构 认可）。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=2965820c-ddb6-4ef8-9b79-8469788baca5" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.1.7</td>
+                        <td>必要时，实验室应给客户提供说明，以便客户在申请检测或校准项目时 能更加适合自身的需求与用途。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=50cba9a4-71f5-4484-ba5c-3a9ef31937cb" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.10.1</td>
+                        <td>实验室常见的不符合工作包括但不限于，实验室环境条件不满足要求、 试验样品的处置时间不满足要求、试样未在规定的时间内检测、结果监控的 数据超过规定的限值、能力验证或实验室间比对结果不满意等。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=fadae3c2-2ec7-4013-ae3e-d407f52e904d" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.10.3</td>
+                        <td>实验室应对发生的不符合工作的原因进行分析，对于不是偶发的、个案 的问题，不应仅仅纠正所发生的问题，还应结合风险分析的情况启动纠正措 施。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=9a604e5b-c2e8-4d0e-8681-210df7c30ece" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.11.2</td>
+                        <td>实验室使用信息管理系统（LIMS）时，应确保该系统满足所有相关要 求，包括审核路径、数据安全和完整性等。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=07dc0661-75e0-4a37-9987-4e904a16838c" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.2.1.5</td>
+                        <td>在引入检测或校准方法之前，实验室应对其能否正确运用这些方法进 行验证。</td>
+                        <td>4</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=fc3468fe-01c8-437d-84b4-7c9e4e0b9338" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.3.1a)</td>
+                        <td>如果实验室仅进行抽样，而不从事后续的检测或校准活动，CNAS 将 不认可该抽样活动。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=6eba61b4-03fe-4cb7-ba95-2b1b609fce57" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.4.1</td>
+                        <td>已检测或校准过的样品处理程序应保障客户的信息安全，确保客户的所 有权和专利权。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=bf919bf3-74a3-44a4-9d67-e9c8b15aa031" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.4.2</td>
+                        <td>通常情况下，样品标识不应粘贴在容易与盛装样品容器分离或易从样品 脱落的部件上（如容器盖），以免导致样品的混淆。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=26648714-5c80-4bdc-a24e-2341488f3f2e" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.5.1</td>
+                        <td>a) 实验室应确保能方便获得所有的技术记录，无论是电子记录还是纸质 记录。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=5d3f8f28-8db8-46e6-809b-d919c2f35195" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.5.2</td>
+                        <td>对自动采集或直接录入信息管理系统中的数据的任何更改，同样应符合 CNAS-CL01 的 7.5.2 的要求。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=d258dd3e-1487-4ee0-9676-d362b185d6ff" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.7.1</td>
+                        <td>实验室对结果的监控应覆盖到认可范围内的所有检测或校准（包括内部 校准）项目/参数，以确保结果的准确性和稳定性。</td>
+                        <td>3</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=88db8cd6-f86d-454c-b26f-1721f7da0f98" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.8.1.1</td>
+                        <td>除检测方法、法律法规另有要求外，实验室应在同一份报告上出具特 定样品不同检测项目的结果，如果检测项目覆盖了不同的专业技术领域，也 可分专业领域出具检测报告。</td>
+                        <td>4</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=6253e22a-e7eb-4ff4-bb10-3c96275a054f" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>7.8.1.2</td>
+                        <td>实验室应将检测报告或校准证书的副本作为技术记录予以保存。</td>
+                        <td>4</td>
+                        <td>
+                            适用
+                                                    </td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell"><a href="/planning/clauses/view?id=0c3ad947-5629-447d-8c27-2b8d19224f3c" class="btn btn-sm btn-outline-primary">查看详情</a></td>
+                    </tr>
+                                    </tbody>
+            </table>
+        </div>
+        <nav><ul class="pagination pagination-sm justify-content-center"><ul class="pagination"><li class="disabled"><span>&laquo;</span></li> <li class="active"><span>1</span></li><li><a href="/planning/clauses?page=2">2</a></li><li><a href="/planning/clauses?page=3">3</a></li><li><a href="/planning/clauses?page=4">4</a></li><li><a href="/planning/clauses?page=5">5</a></li><li><a href="/planning/clauses?page=6">6</a></li><li><a href="/planning/clauses?page=7">7</a></li><li><a href="/planning/clauses?page=8">8</a></li><li><a href="/planning/clauses?page=9">9</a></li> <li><a href="/planning/clauses?page=2">&raquo;</a></li></ul></ul></nav>
+    </div>
+</div>
+
+</div>
+<button type="button" id="qmsCopilotFab" data-bs-toggle="offcanvas" data-bs-target="#qmsCopilotDrawer" aria-label="QMS Copilot">💬</button>
+<div class="offcanvas offcanvas-end" tabindex="-1" id="qmsCopilotDrawer" aria-labelledby="qmsCopilotDrawerLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="qmsCopilotDrawerLabel">QMS Copilot</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="关闭"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column p-0">
+        <div class="qms-copilot-toolbar">
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <select id="qmsCopilotMode" class="form-select form-select-sm" style="width:auto;">
+                    <option value="general">通用</option>
+                    <option value="context" selected>上下文</option>
+                    <option value="expert">评审专家</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="qmsCopilotNewChat">新对话</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" id="qmsCopilotClearMine">清空我的会话</button>
+            </div>
+            <div id="qmsCopilotStatus" class="small text-muted pt-1"></div>
+        </div>
+        <div id="qmsCopilotMessages" class="qms-copilot-messages"></div>
+        <div class="qms-copilot-input-row">
+            <textarea id="qmsCopilotInput" class="form-control" rows="2" placeholder="输入问题，Enter 发送"></textarea>
+            <button type="button" class="btn btn-primary" id="qmsCopilotSendBtn">发送</button>
+        </div>
+    </div>
+</div>
+<div class="container mt-4">
+    <footer class="text-center text-muted py-3">
+        <small>&copy; 2026 珠宝检测实验室质量管理系统 v2.1.0</small>
+    </footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="/static/js/csrf.js?v=20260609"></script>
+<script src="/static/js/qms-copilot.js?v=20260609"></script>
+<style>
+    #think_page_trace {position:fixed; bottom:0; right:0; font-size:14px; width:100%; z-index:999999; color:#000; text-align:left; font-family:'微软雅黑';}
+    #think_page_trace_tab {display:none; background:white; margin:0; height: 250px;}
+    #think_page_trace_tab_tit {height:30px; padding: 6px 12px 0; border-bottom:1px solid #ececec; border-top:1px solid #ececec; font-size:16px;}
+    #think_page_trace_tab_tit>span {color:#000; padding-right:12px; height:30px; line-height:30px; display:inline-block; margin-right:3px; cursor:pointer; font-weight:700;}
+    #think_page_trace_tab_cont {overflow:auto; height:212px; padding:0; line-height:24px;}
+    #think_page_trace_tab_cont>div {display:none;}
+    #think_page_trace_tab_cont>div>ol {padding:0; margin:0;}
+    #think_page_trace_tab_cont>div>ol>li {border-bottom:1px solid #eee; font-size:14px; padding:0 12px;}
+    #think_page_trace_close {display:none; text-align:right; height:15px; position:absolute; top:10px; right:12px; cursor:pointer; z-index: 999999;}
+    #think_page_trace_close>img {vertical-align:top;}
+    #think_page_trace_open {height:30px; float:right; text-align:right; overflow:hidden; position:fixed; bottom:0; right:0; color:#000; line-height:30px; cursor:pointer; z-index:999999;}
+    #think_page_trace_open>div {background:#232323; color:#fff; padding:0 6px; float:right; line-height:30px; font-size:14px;}
+</style>
+
+<div id="think_page_trace">
+    <div id="think_page_trace_tab">
+        <div id="think_page_trace_tab_tit">
+                        <span>基本</span>
+                        <span>文件</span>
+                        <span>流程</span>
+                        <span>错误</span>
+                        <span>SQL</span>
+                        <span>调试</span>
+                    </div>
+        <div id="think_page_trace_tab_cont">
+                        <div>
+                <ol>
+                    <li>请求信息 : 2026-07-16 10:23:57 HTTP/1.1 GET : http://127.0.0.1:8010/planning/clauses</li><li>运行时间 : 0.009146s [ 吞吐率：109.34req/s ] 内存消耗：1,015.38kb 文件加载：168</li><li>缓存信息 : 0 reads,0 writes</li><li>会话信息 : SESSION_ID=da33d0dc3ef697e8ed0598a5a91bae16</li>                </ol>
+            </div>
+                        <div>
+                <ol>
+                    <li>/app/public/router.php ( 0.78 KB )</li><li>/app/public/index.php ( 0.79 KB )</li><li>/app/vendor/autoload.php ( 0.73 KB )</li><li>/app/vendor/composer/autoload_real.php ( 1.63 KB )</li><li>/app/vendor/composer/platform_check.php ( 0.90 KB )</li><li>/app/vendor/composer/ClassLoader.php ( 15.99 KB )</li><li>/app/vendor/composer/autoload_static.php ( 4.73 KB )</li><li>/app/vendor/topthink/think-helper/src/helper.php ( 8.34 KB )</li><li>/app/vendor/topthink/think-validate/src/helper.php ( 2.19 KB )</li><li>/app/vendor/topthink/think-orm/src/helper.php ( 1.47 KB )</li><li>/app/vendor/topthink/think-orm/stubs/load_stubs.php ( 0.16 KB )</li><li>/app/vendor/topthink/framework/src/think/Exception.php ( 1.69 KB )</li><li>/app/vendor/topthink/think-container/src/Facade.php ( 2.71 KB )</li><li>/app/vendor/symfony/deprecation-contracts/function.php ( 0.99 KB )</li><li>/app/vendor/symfony/polyfill-mbstring/bootstrap.php ( 0.35 KB )</li><li>/app/vendor/symfony/polyfill-mbstring/bootstrap80.php ( 9.81 KB )</li><li>/app/vendor/symfony/var-dumper/Resources/functions/dump.php ( 1.60 KB )</li><li>/app/vendor/topthink/think-dumper/src/helper.php ( 0.18 KB )</li><li>/app/vendor/symfony/var-dumper/VarDumper.php ( 4.23 KB )</li><li>/app/vendor/topthink/framework/src/think/App.php ( 15.30 KB )</li><li>/app/vendor/topthink/think-container/src/Container.php ( 15.76 KB )</li><li>/app/vendor/psr/container/src/ContainerInterface.php ( 1.02 KB )</li><li>/app/app/provider.php ( 0.19 KB )</li><li>/app/vendor/topthink/framework/src/think/Http.php ( 6.22 KB )</li><li>/app/vendor/topthink/think-helper/src/helper/Str.php ( 7.29 KB )</li><li>/app/vendor/topthink/framework/src/think/Env.php ( 4.68 KB )</li><li>/app/app/common.php ( 1.95 KB )</li><li>/app/vendor/topthink/framework/src/helper.php ( 18.77 KB )</li><li>/app/vendor/topthink/framework/src/think/Config.php ( 5.93 KB )</li><li>/app/config/app.php ( 0.95 KB )</li><li>/app/config/cache.php ( 0.78 KB )</li><li>/app/config/console.php ( 0.91 KB )</li><li>/app/config/cookie.php ( 0.56 KB )</li><li>/app/config/database.php ( 2.14 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/Env.php ( 1.67 KB )</li><li>/app/config/filesystem.php ( 0.61 KB )</li><li>/app/config/lang.php ( 0.91 KB )</li><li>/app/config/log.php ( 1.35 KB )</li><li>/app/config/middleware.php ( 0.19 KB )</li><li>/app/config/qms.php ( 6.72 KB )</li><li>/app/config/route.php ( 1.89 KB )</li><li>/app/config/session.php ( 0.68 KB )</li><li>/app/config/trace.php ( 0.34 KB )</li><li>/app/config/view.php ( 0.99 KB )</li><li>/app/app/event.php ( 0.25 KB )</li><li>/app/vendor/topthink/framework/src/think/Event.php ( 7.77 KB )</li><li>/app/app/service.php ( 0.13 KB )</li><li>/app/app/AppService.php ( 0.26 KB )</li><li>/app/vendor/topthink/framework/src/think/Service.php ( 1.64 KB )</li><li>/app/vendor/topthink/framework/src/think/Lang.php ( 7.35 KB )</li><li>/app/vendor/topthink/framework/src/lang/zh-cn.php ( 13.70 KB )</li><li>/app/vendor/topthink/framework/src/think/initializer/Error.php ( 3.31 KB )</li><li>/app/vendor/topthink/framework/src/think/initializer/RegisterService.php ( 1.33 KB )</li><li>/app/vendor/services.php ( 0.14 KB )</li><li>/app/vendor/topthink/framework/src/think/service/PaginatorService.php ( 1.52 KB )</li><li>/app/vendor/topthink/framework/src/think/service/ValidateService.php ( 0.99 KB )</li><li>/app/vendor/topthink/framework/src/think/service/ModelService.php ( 2.04 KB )</li><li>/app/vendor/topthink/think-trace/src/Service.php ( 0.77 KB )</li><li>/app/vendor/topthink/framework/src/think/Middleware.php ( 6.72 KB )</li><li>/app/vendor/topthink/framework/src/think/initializer/BootService.php ( 0.77 KB )</li><li>/app/vendor/topthink/think-orm/src/Paginator.php ( 11.86 KB )</li><li>/app/vendor/topthink/think-validate/src/Validate.php ( 63.20 KB )</li><li>/app/vendor/topthink/think-orm/src/Model.php ( 23.55 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/Attribute.php ( 21.05 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/AutoWriteData.php ( 4.20 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/Conversion.php ( 6.75 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/DbConnect.php ( 5.16 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/ModelEvent.php ( 2.33 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/RelationShip.php ( 28.30 KB )</li><li>/app/vendor/topthink/think-helper/src/contract/Arrayable.php ( 0.09 KB )</li><li>/app/vendor/topthink/think-helper/src/contract/Jsonable.php ( 0.13 KB )</li><li>/app/vendor/topthink/think-orm/src/model/contract/Modelable.php ( 0.09 KB )</li><li>/app/vendor/topthink/framework/src/think/Db.php ( 2.88 KB )</li><li>/app/vendor/topthink/think-orm/src/DbManager.php ( 8.52 KB )</li><li>/app/vendor/topthink/framework/src/think/Log.php ( 6.28 KB )</li><li>/app/vendor/topthink/framework/src/think/Manager.php ( 3.92 KB )</li><li>/app/vendor/psr/log/src/LoggerTrait.php ( 2.69 KB )</li><li>/app/vendor/psr/log/src/LoggerInterface.php ( 2.71 KB )</li><li>/app/vendor/topthink/framework/src/think/Cache.php ( 4.92 KB )</li><li>/app/vendor/psr/simple-cache/src/CacheInterface.php ( 4.71 KB )</li><li>/app/vendor/topthink/think-helper/src/helper/Arr.php ( 17.45 KB )</li><li>/app/vendor/topthink/framework/src/think/cache/driver/File.php ( 7.84 KB )</li><li>/app/vendor/topthink/framework/src/think/cache/Driver.php ( 9.02 KB )</li><li>/app/vendor/topthink/framework/src/think/contract/CacheHandlerInterface.php ( 1.99 KB )</li><li>/app/app/Request.php ( 0.09 KB )</li><li>/app/vendor/topthink/framework/src/think/Request.php ( 54.64 KB )</li><li>/app/vendor/topthink/framework/src/think/traits/UrlHandler.php ( 6.05 KB )</li><li>/app/vendor/topthink/framework/src/think/traits/DomainHandler.php ( 5.49 KB )</li><li>/app/vendor/topthink/framework/src/think/traits/HttpMethodHandler.php ( 4.74 KB )</li><li>/app/app/middleware.php ( 0.08 KB )</li><li>/app/vendor/topthink/framework/src/think/Pipeline.php ( 2.61 KB )</li><li>/app/vendor/topthink/think-trace/src/TraceDebug.php ( 3.40 KB )</li><li>/app/vendor/topthink/framework/src/think/middleware/SessionInit.php ( 1.94 KB )</li><li>/app/vendor/topthink/framework/src/think/Session.php ( 1.80 KB )</li><li>/app/vendor/topthink/framework/src/think/session/driver/File.php ( 6.27 KB )</li><li>/app/vendor/topthink/framework/src/think/contract/SessionHandlerInterface.php ( 0.87 KB )</li><li>/app/vendor/topthink/framework/src/think/session/Store.php ( 7.12 KB )</li><li>/app/vendor/topthink/framework/src/think/Route.php ( 23.73 KB )</li><li>/app/vendor/topthink/framework/src/think/route/RuleName.php ( 5.74 KB )</li><li>/app/vendor/topthink/framework/src/think/route/Domain.php ( 2.53 KB )</li><li>/app/vendor/topthink/framework/src/think/route/RuleGroup.php ( 22.41 KB )</li><li>/app/vendor/topthink/framework/src/think/route/Rule.php ( 27.49 KB )</li><li>/app/vendor/topthink/framework/src/think/route/RuleItem.php ( 9.78 KB )</li><li>/app/route/app.php ( 12.95 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/Route.php ( 4.70 KB )</li><li>/app/vendor/topthink/framework/src/think/route/dispatch/Controller.php ( 4.74 KB )</li><li>/app/vendor/topthink/framework/src/think/route/Dispatch.php ( 11.32 KB )</li><li>/app/app/middleware/Auth.php ( 1.98 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/Session.php ( 1.79 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/Config.php ( 1.37 KB )</li><li>/app/app/model/NotificationUser.php ( 0.24 KB )</li><li>/app/app/model/BaseModel.php ( 1.89 KB )</li><li>/app/vendor/topthink/think-orm/src/db/connector/Mysql.php ( 5.73 KB )</li><li>/app/vendor/topthink/think-orm/src/db/PDOConnection.php ( 53.74 KB )</li><li>/app/vendor/topthink/think-orm/src/db/Connection.php ( 8.39 KB )</li><li>/app/vendor/topthink/think-orm/src/db/ConnectionInterface.php ( 4.57 KB )</li><li>/app/vendor/topthink/think-orm/src/db/builder/Mysql.php ( 16.58 KB )</li><li>/app/vendor/topthink/think-orm/src/db/Builder.php ( 24.07 KB )</li><li>/app/vendor/topthink/think-orm/src/db/BaseBuilder.php ( 27.50 KB )</li><li>/app/vendor/topthink/think-orm/src/db/Query.php ( 15.97 KB )</li><li>/app/vendor/topthink/think-orm/src/db/BaseQuery.php ( 45.13 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/TimeFieldQuery.php ( 7.43 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/AggregateQuery.php ( 3.26 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/ModelRelationQuery.php ( 20.07 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/ParamsBind.php ( 3.66 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/ResultOperation.php ( 7.01 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/WhereQuery.php ( 19.37 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/JoinAndViewQuery.php ( 7.11 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/TableFieldInfo.php ( 2.63 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/Transaction.php ( 2.77 KB )</li><li>/app/vendor/topthink/framework/src/think/log/driver/File.php ( 6.10 KB )</li><li>/app/vendor/topthink/framework/src/think/contract/LogHandlerInterface.php ( 0.86 KB )</li><li>/app/vendor/topthink/framework/src/think/log/Channel.php ( 3.89 KB )</li><li>/app/vendor/topthink/framework/src/think/event/LogRecord.php ( 1.02 KB )</li><li>/app/app/model/QmsExternalChangeCandidate.php ( 0.16 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/View.php ( 1.70 KB )</li><li>/app/vendor/topthink/framework/src/think/View.php ( 4.39 KB )</li><li>/app/vendor/topthink/think-view/src/Think.php ( 8.38 KB )</li><li>/app/vendor/topthink/framework/src/think/contract/TemplateHandlerInterface.php ( 1.60 KB )</li><li>/app/vendor/topthink/think-template/src/Template.php ( 46.61 KB )</li><li>/app/vendor/topthink/think-template/src/template/driver/File.php ( 2.41 KB )</li><li>/app/vendor/topthink/think-template/src/template/contract/DriverInterface.php ( 0.86 KB )</li><li>/app/app/middleware/Rbac.php ( 2.30 KB )</li><li>/app/app/service/RbacService.php ( 1.86 KB )</li><li>/app/app/middleware/PageContext.php ( 1.43 KB )</li><li>/app/app/service/PageContextBuilder.php ( 21.24 KB )</li><li>/app/app/service/ComplianceCheckService.php ( 42.24 KB )</li><li>/app/vendor/topthink/think-orm/src/facade/Db.php ( 0.93 KB )</li><li>/app/vendor/topthink/think-helper/src/Collection.php ( 16.47 KB )</li><li>/app/app/service/AiSettingsService.php ( 9.33 KB )</li><li>/app/vendor/topthink/framework/src/think/middleware/FormTokenCheck.php ( 1.27 KB )</li><li>/app/app/middleware/AuditLog.php ( 6.72 KB )</li><li>/app/app/controller/PlanningClause.php ( 5.41 KB )</li><li>/app/app/BaseController.php ( 2.19 KB )</li><li>/app/app/model/QmsClause.php ( 0.27 KB )</li><li>/app/vendor/topthink/think-orm/src/model/type/DateTime.php ( 1.76 KB )</li><li>/app/vendor/topthink/think-orm/src/model/contract/Typeable.php ( 0.26 KB )</li><li>/app/vendor/topthink/think-orm/src/model/Collection.php ( 7.04 KB )</li><li>/app/vendor/topthink/think-orm/src/paginator/driver/Bootstrap.php ( 5.48 KB )</li><li>/app/app/model/QmsSource.php ( 0.16 KB )</li><li>/app/app/service/QmsPlanningImportService.php ( 99.79 KB )</li><li>/app/vendor/topthink/think-orm/src/model/type/Date.php ( 0.32 KB )</li><li>/app/runtime/temp/1b68e7d46f8280f0505455ffe9fdfcf5.php ( 22.07 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/Request.php ( 9.20 KB )</li><li>/app/vendor/topthink/framework/src/think/Response.php ( 9.07 KB )</li><li>/app/vendor/topthink/framework/src/think/response/Html.php ( 0.97 KB )</li><li>/app/vendor/topthink/framework/src/think/Cookie.php ( 6.06 KB )</li><li>/app/vendor/topthink/think-trace/src/Html.php ( 4.42 KB )</li>                </ol>
+            </div>
+                        <div>
+                <ol>
+                                    </ol>
+            </div>
+                        <div>
+                <ol>
+                                    </ol>
+            </div>
+                        <div>
+                <ol>
+                    <li>CONNECT:[ UseTime:0.000382s ] mysql:host=db;port=3306;dbname=jewelry_qms;charset=utf8mb4</li><li>SHOW FULL COLUMNS FROM `notification_users` [ RunTime:0.000419s ]</li><li>SELECT COUNT(*) AS think_count FROM `notification_users` WHERE  `user_id` = '00000000-0000-0000-0000-000000000040'  AND `status` = 0 [ RunTime:0.000102s ]</li><li>SHOW FULL COLUMNS FROM `qms_external_change_candidates` [ RunTime:0.000427s ]</li><li>SELECT COUNT(*) AS think_count FROM `qms_external_change_candidates` WHERE  `soft_delete` = 0  AND `review_status` = 'pending' [ RunTime:0.000095s ]</li><li>SHOW FULL COLUMNS FROM `compliance_snapshots` [ RunTime:0.000257s ]</li><li>SELECT `id` FROM `compliance_snapshots` WHERE  `company_id` = '00000000-0000-0000-0000-000000000001' ORDER BY `snapshot_time` DESC,`id` DESC LIMIT 1 [ RunTime:0.000098s ]</li><li>SHOW FULL COLUMNS FROM `compliance_check_results` [ RunTime:0.000282s ]</li><li>SELECT `r`.*,`c`.`check_name`,`c`.`clause_number`,`c`.`severity`,`c`.`suggestion_template`,`c`.`weight`,`c`.`element_key` FROM `compliance_check_results` `r` LEFT JOIN `compliance_checks` `c` ON `c`.`id`=`r`.`check_id` WHERE  `r`.`snapshot_id` = '2f8b3a14-9b92-434e-9abf-169dd19f3fec' ORDER BY `c`.`sort_order` ASC [ RunTime:0.000224s ]</li><li>SHOW FULL COLUMNS FROM `system_settings` [ RunTime:0.000260s ]</li><li>SELECT * FROM `system_settings` WHERE  `company_id` = '00000000-0000-0000-0000-000000000001'  AND `setting_key` = 'ai.deepseek.api_key'  AND `value_type` = 'secret' LIMIT 1 [ RunTime:0.000141s ]</li><li>SHOW FULL COLUMNS FROM `qms_clauses` [ RunTime:0.000473s ]</li><li>SELECT COUNT(*) AS think_count FROM `qms_clauses` WHERE  `soft_delete` = 0 [ RunTime:0.000197s ]</li><li>SELECT * FROM `qms_clauses` WHERE  `soft_delete` = 0 ORDER BY `source_id` ASC,`clause_number` ASC LIMIT 0,30 [ RunTime:0.000185s ]</li><li>SHOW FULL COLUMNS FROM `qms_sources` [ RunTime:0.000463s ]</li><li>SELECT `source_code`,`id` FROM `qms_sources` WHERE  `soft_delete` = 0 [ RunTime:0.000137s ]</li><li>SELECT * FROM `qms_sources` WHERE  `soft_delete` = 0 ORDER BY `source_code` ASC [ RunTime:0.000164s ]</li>                </ol>
+            </div>
+                        <div>
+                <ol>
+                                    </ol>
+            </div>
+                    </div>
+    </div>
+    <div id="think_page_trace_close">
+        <img src="data:image/gif;base64,R0lGODlhDwAPAJEAAAAAAAMDA////wAAACH/C1hNUCBEYXRhWE1QPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS4wLWMwNjAgNjEuMTM0Nzc3LCAyMDEwLzAyLzEyLTE3OjMyOjAwICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdFJlZj0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlUmVmIyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IFdpbmRvd3MiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6MUQxMjc1MUJCQUJDMTFFMTk0OUVGRjc3QzU4RURFNkEiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6MUQxMjc1MUNCQUJDMTFFMTk0OUVGRjc3QzU4RURFNkEiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDoxRDEyNzUxOUJBQkMxMUUxOTQ5RUZGNzdDNThFREU2QSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDoxRDEyNzUxQUJBQkMxMUUxOTQ5RUZGNzdDNThFREU2QSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PgH//v38+/r5+Pf29fTz8vHw7+7t7Ovq6ejn5uXk4+Lh4N/e3dzb2tnY19bV1NPS0dDPzs3My8rJyMfGxcTDwsHAv769vLu6ubi3trW0s7KxsK+urayrqqmop6alpKOioaCfnp2cm5qZmJeWlZSTkpGQj46NjIuKiYiHhoWEg4KBgH9+fXx7enl4d3Z1dHNycXBvbm1sa2ppaGdmZWRjYmFgX15dXFtaWVhXVlVUU1JRUE9OTUxLSklIR0ZFRENCQUA/Pj08Ozo5ODc2NTQzMjEwLy4tLCsqKSgnJiUkIyIhIB8eHRwbGhkYFxYVFBMSERAPDg0MCwoJCAcGBQQDAgEAACH5BAAAAAAALAAAAAAPAA8AAAIdjI6JZqotoJPR1fnsgRR3C2jZl3Ai9aWZZooV+RQAOw==" />
+    </div>
+</div>
+<div id="think_page_trace_open">
+    <div>0.009398s </div>
+    <img width="30" style="" title="ShowPageTrace" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyBpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBXaW5kb3dzIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjVERDVENkZGQjkyNDExRTE5REY3RDQ5RTQ2RTRDQUJCIiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjVERDVENzAwQjkyNDExRTE5REY3RDQ5RTQ2RTRDQUJCIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6NURENUQ2RkRCOTI0MTFFMTlERjdENDlFNDZFNENBQkIiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6NURENUQ2RkVCOTI0MTFFMTlERjdENDlFNDZFNENBQkIiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz5fx6IRAAAMCElEQVR42sxae3BU1Rk/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">
+</div>
+
+<script type="text/javascript">
+    (function(){
+        var tab_tit  = document.getElementById('think_page_trace_tab_tit').getElementsByTagName('span');
+        var tab_cont = document.getElementById('think_page_trace_tab_cont').getElementsByTagName('div');
+        var open     = document.getElementById('think_page_trace_open');
+        var close    = document.getElementById('think_page_trace_close').children[0];
+        var trace    = document.getElementById('think_page_trace_tab');
+        var cookie   = document.cookie.match(/thinkphp_show_page_trace=(\d\|\d)/);
+        var history  = (cookie && typeof cookie[1] != 'undefined' && cookie[1].split('|')) || [0,0];
+        open.onclick = function(){
+            trace.style.display = 'block';
+            this.style.display = 'none';
+            close.parentNode.style.display = 'block';
+            history[0] = 1;
+            document.cookie = 'thinkphp_show_page_trace='+history.join('|')
+        }
+        close.onclick = function(){
+            trace.style.display = 'none';
+            this.parentNode.style.display = 'none';
+            open.style.display = 'block';
+            history[0] = 0;
+            document.cookie = 'thinkphp_show_page_trace='+history.join('|')
+        }
+        for(var i = 0; i < tab_tit.length; i++){
+            tab_tit[i].onclick = (function(i){
+                return function(){
+                    for(var j = 0; j < tab_cont.length; j++){
+                        tab_cont[j].style.display = 'none';
+                        tab_tit[j].style.color = '#999';
+                    }
+                    tab_cont[i].style.display = 'block';
+                    tab_tit[i].style.color = '#000';
+                    history[1] = i;
+                    document.cookie = 'thinkphp_show_page_trace='+history.join('|')
+                }
+            })(i)
+        }
+        parseInt(history[0]) && open.click();
+        tab_tit[history[1]].click();
+    })();
+</script>
+</body>
+</html>

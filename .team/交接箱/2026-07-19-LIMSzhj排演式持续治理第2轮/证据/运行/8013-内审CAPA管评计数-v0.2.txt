@@ -1,0 +1,37 @@
+Field	Type	Null	Key	Default	Extra
+id	varchar(36)	NO	PRI	NULL	
+audit_plan_id	varchar(36)	NO		NULL	
+audit_date	date	NO		NULL	
+department_id	varchar(36)	YES		NULL	
+site_id	varchar(36)	YES		NULL	
+clause	varchar(100)	YES		NULL	
+auditor_id	varchar(36)	YES		NULL	
+auditee_id	varchar(36)	YES		NULL	
+status	enum('planned','in_progress','completed')	YES		planned	
+publish	tinyint(1)	YES		1	
+soft_delete	tinyint(1)	YES		0	
+created	datetime	YES		NULL	
+modified	datetime	YES		NULL	
+Field	Type	Null	Key	Default	Extra
+employee_number	varchar(50)	YES		NULL	
+Field	Type	Null	Key	Default	Extra
+trial_batch	varchar(80)	YES		NULL	
+audit_plans
+1
+audit_findings
+8
+capas
+10
+management_reviews
+1
+review_actions
+4
+audit_schedules
+2
+audit_checklists
+132
+emp
+18
+sim_emp	nonsim_emp
+18	0
+ERROR 1054 (42S22) at line 16: Unknown column 'deleted_at' in 'where clause'

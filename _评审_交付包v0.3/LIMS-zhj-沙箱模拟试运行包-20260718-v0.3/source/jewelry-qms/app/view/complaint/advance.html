@@ -1,0 +1,18 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">推进投诉处理 - {$record.complaint_number}</h5></div>
+    <div class="card-body">
+        <p>当前：{:qms_status_label('complaint', $record.status)}</p>
+        <form method="post" action="/complaint/advance?id={$record.id}">
+            {if $record.status == 'received' || $record.status == 'investigating'}
+            <div class="mb-3"><label>调查情况</label><textarea name="investigation" class="form-control" rows="3">{$record.investigation}</textarea></div>
+            {/if}
+            {if $record.status == 'investigating' || $record.status == 'handling'}
+            <div class="mb-3"><label>处理措施</label><textarea name="handling" class="form-control" rows="3">{$record.handling}</textarea></div>
+            {/if}
+            {if $record.status == 'handling' || $record.status == 'responded'}
+            <div class="mb-3"><label>客户反馈</label><textarea name="response" class="form-control" rows="3">{$record.response}</textarea></div>
+            {/if}
+            <button type="submit" class="btn btn-primary">保存并推进</button>
+        </form>
+    </div>
+</div>

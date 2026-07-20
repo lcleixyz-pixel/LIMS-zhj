@@ -1,0 +1,30 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">场所管理</h5>
+        <a href="/site/add" class="btn btn-primary btn-sm">新增场所</a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm">
+                <thead><tr><th>代码</th><th>名称</th><th>类型</th><th>联系人</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td>{$item.code}</td>
+                        <td>{$item.name}</td>
+                        <td>{if $item.site_type == 'main'}主场所{else}分场所{/if}</td>
+                        <td>{$item.contact_person|default='-'}</td>
+                        <td>{if $item.status == 'active'}<span class="badge bg-success">启用</span>{else}<span class="badge bg-secondary">停用</span>{/if}</td>
+                        <td>
+                            <a href="/site/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
+                            <a href="/site/edit?id={$item.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}<tr><td colspan="6" class="text-center text-muted">暂无场所</td></tr>{/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>

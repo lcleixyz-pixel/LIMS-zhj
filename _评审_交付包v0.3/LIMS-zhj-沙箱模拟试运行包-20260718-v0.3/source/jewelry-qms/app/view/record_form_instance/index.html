@@ -1,0 +1,86 @@
+<div class="qms-page-header">
+    <div>
+        <h4>填写记录</h4>
+        <small class="text-muted">已填写的记录实例 · 关注填写人、审核人和归档状态</small>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/record_form_instance/reviewDashboard?year=2025" class="btn btn-sm btn-outline-success">2025 年度记录运行确认</a>
+        <a href="/record_form_template/index" class="btn btn-sm btn-primary">选择模板填写</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" action="/record_form_instance/index" class="row g-2 mb-3 qms-filter-form">
+            <div class="col-md-6">
+                <input type="text" name="keyword" value="{$filter.keyword|default=''}" class="form-control form-control-sm" placeholder="搜索记录标题或编号">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-sm btn-outline-primary w-100" type="submit">筛选</button>
+            </div>
+            <div class="col-md-2">
+                <a href="/record_form_instance/index" class="btn btn-sm btn-outline-secondary w-100">重置</a>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>记录标题</th>
+                        <th>编号</th>
+                        <th>模板</th>
+                        <th>状态</th>
+                        <th>填写人</th>
+                        <th>审核人</th>
+                        <th>创建时间</th>
+                        <th width="300">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td><a href="/record_form_instance/view?id={$item.id}">{$item.record_title}</a></td>
+                        <td>{$item.doc_number}</td>
+                        <td>{if $item.template_name}{$item.template_name}{else}{$item.template.name|default=$item.template_id}{/if}</td>
+                        <td>
+                            {if $item.status == 'draft'}<span class="badge badge-status-draft">{$item.status_label}</span>
+                            {elseif $item.status == 'generated'}<span class="badge badge-status-generated">已形成PDF</span>
+                            {elseif $item.status == 'locked'}<span class="badge badge-status-archived">{$item.status_label}</span>
+                            {elseif $item.status == 'voided'}<span class="badge badge-status-obsolete">{$item.status_label}</span>
+                            {else}<span class="badge badge-status-draft">{$item.status}</span>{/if}
+                        </td>
+                        <td>{$item.filler_label|default='未记录'}</td>
+                        <td>{$item.reviewer_label|default='待审核'}</td>
+                        <td>{$item.created|default='-'}</td>
+                        <td>
+                            <a href="/record_form_instance/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
+                            {if $item.can_edit}
+                            <a href="/record_form_instance/edit?id={$item.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+                            {else}
+                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已形成 PDF 后不可直接编辑；如需更正，请先走作废/换版/更正流程。">编辑</button>
+                            {/if}
+                            <a href="/record_form_instance/print?id={$item.id}" target="_blank" class="btn btn-sm btn-outline-secondary">打印预览</a>
+                            {if $item.pdf_token}
+                            <form method="post" action="/record_form_instance/exportPdf?id={$item.id}" class="d-inline">
+                                <input type="hidden" name="pdf_token" value="{$item.pdf_token}">
+                                <button type="submit" class="btn btn-sm btn-outline-success">生成PDF</button>
+                            </form>
+                            {else}
+                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已归档或已作废记录不能重新生成 PDF">生成PDF</button>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}
+                    <tr><td colspan="8" class="text-center text-muted">暂无填写记录</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav>
+            <ul class="pagination pagination-sm justify-content-center">
+                {$pages|raw}
+            </ul>
+        </nav>
+    </div>
+</div>

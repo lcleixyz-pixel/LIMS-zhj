@@ -1,0 +1,39 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">AI 提取历史</h4>
+        <div class="text-muted small">查看文档解析、确认入库和拒绝记录。</div>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/ai_assistant/index" class="btn btn-outline-secondary btn-sm">返回助理</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>时间</th>
+                    <th>类型</th>
+                    <th>来源文件</th>
+                    <th>状态</th>
+                    <th>写入条数</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="logs" id="log"}
+                <tr>
+                    <td>{$log.created|default='-'}</td>
+                    <td>{$targetTypes[$log.target_type]|default=$log.target_type}</td>
+                    <td>{:basename($log.source_file)}</td>
+                    <td>{$log.status|default='-'}</td>
+                    <td>{$log.records_created|default=0}</td>
+                    <td><a href="/ai_assistant/preview?id={$log.id}" class="btn btn-sm btn-outline-info">查看</a></td>
+                </tr>
+                {/volist}
+                {empty name="logs"}<tr><td colspan="6" class="text-center text-muted">暂无历史记录</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,95 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">外部变更事件</h4>
+        <div class="text-muted small">登记 CNAS、CMA、标准公告等外部变化，先形成事件台账和状态闭环，再进入影响分析。</div>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/planning/change-events/add" class="btn btn-primary btn-sm">登记事件</a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" action="/planning/change-events" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small text-muted">状态</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">全部</option>
+                    {foreach $statusLabels as $key=>$label}
+                    <option value="{$key}" {if $filters.status == $key}selected{/if}>{$label}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted">来源类型</label>
+                <select name="source_kind" class="form-select form-select-sm">
+                    <option value="">全部</option>
+                    {foreach $sourceKindLabels as $key=>$label}
+                    <option value="{$key}" {if $filters.source_kind == $key}selected{/if}>{$label}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-muted">关键词</label>
+                <input type="search" name="keyword" class="form-control form-control-sm" value="{$filters.keyword}" placeholder="事件编号、公告号、名称、摘要">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary btn-sm w-100">筛选</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">事件台账</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle qms-table-wide">
+                <thead>
+                    <tr>
+                        <th>事件编号</th>
+                        <th>来源</th>
+                        <th>公告/依据</th>
+                        <th>公告号</th>
+                        <th>发布日期</th>
+                        <th>生效日期</th>
+                        <th>状态</th>
+                        <th class="qms-action-cell">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td><a href="/planning/change-events/view?id={$item.id}">{$item.event_code}</a></td>
+                        <td>{$sourceKindLabels[$item.source_kind]|default=$item.source_kind}</td>
+                        <td>
+                            <div>{$item.source_name}</div>
+                            <div class="text-muted small">{$item.event_summary|mb_substr=0,60,'utf-8'}</div>
+                        </td>
+                        <td>{$item.announcement_number|default='-'}</td>
+                        <td>{$item.published_date|default='-'}</td>
+                        <td>{$item.effective_date|default='-'}</td>
+                        <td><span class="badge bg-secondary">{$statusLabels[$item.status]|default=$item.status}</span></td>
+                        <td class="qms-action-cell">
+                            <a href="/planning/change-events/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
+                            <a href="/planning/change-events/edit?id={$item.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}
+                    <tr>
+                        <td colspan="8">
+                            <div class="qms-empty-state">
+                                <div class="fw-semibold mb-2">暂无外部变更事件</div>
+                                <div class="mb-2">候选经人工确认后，会在这里形成正式变更事件；也可以由质量负责人通过右上角“登记事件”手工登记。</div>
+                                <a href="/planning/regulatory-candidates" class="btn btn-sm btn-outline-primary">去候选池看看</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>

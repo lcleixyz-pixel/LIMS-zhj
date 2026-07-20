@@ -1,0 +1,146 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">审核准备驾驶舱</h4>
+        <div class="text-muted small">聚合条款追溯、资源状态、运行证据和管理体系记录，回答当前迎审缺口。</div>
+    </div>
+    <div class="qms-page-actions text-end">
+        {if $hasSnapshot}
+        <div class="text-muted small mb-1">最后评估：{$scorecard.snapshot_time}</div>
+        {/if}
+        <form method="post" action="/compliance/refresh" class="d-inline">
+            <button class="btn btn-primary btn-sm">重新评估</button>
+        </form>
+    </div>
+</div>
+
+{if !$hasSnapshot}
+<div class="alert alert-info">
+    <div class="fw-semibold mb-1">尚未执行合规评估</div>
+    <div class="mb-2">请先确保基础数据已录入，然后初始化判定规则并执行评估。</div>
+    <form method="post" action="/compliance/seed" class="d-inline">
+        <button class="btn btn-sm btn-outline-primary">初始化判定规则</button>
+    </form>
+</div>
+{else}
+{php}
+$totalScore = (float)($scorecard['total_score'] ?? 0);
+$scoreClass = $totalScore >= 90 ? 'success' : ($totalScore >= 70 ? 'warning' : 'danger');
+{/php}
+<div class="card mb-3 border-{$scoreClass}">
+    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <div class="text-muted small">总体合规就绪度</div>
+            <div class="display-6 fw-semibold text-{$scoreClass}">{$scorecard.total_score|default='0.0'}/100</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-success">通过 {$summary.pass|default=0}</span>
+            <span class="badge bg-warning text-dark">预警 {$summary.warning|default=0}</span>
+            <span class="badge bg-danger">不合规 {$summary.fail|default=0}</span>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">数据不足 {$summary.insufficient_data|default=0}</span>
+            <span class="badge bg-secondary">不适用 {$summary.not_applicable|default=0}</span>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    {foreach $dimensions as $dimKey=>$dimLabel}
+    {php}
+    $score = $dimensionScores[$dimKey] ?? null;
+    $checkCount = (int)($dimensionCheckCounts[$dimKey] ?? 0);
+    $cardClass = $score === null ? 'secondary' : ((float)$score >= 90 ? 'success' : ((float)$score >= 70 ? 'warning' : 'danger'));
+    {/php}
+    <div class="col-md-3 mb-3">
+        <a class="text-decoration-none" href="/compliance/dimension?dim={$dimKey}">
+            <div class="card h-100 border-{$cardClass}">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">{$dimLabel}</div>
+                    <div class="h4 mb-0 text-{$cardClass}">
+                        {if $score === null}—{else}{$score}{/if}
+                    </div>
+                    <div class="small text-muted mt-1">{if $checkCount === 0}暂无检查项{else}查看检查项{/if}</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    {/foreach}
+</div>
+
+<div class="row">
+    <div class="col-lg-7 mb-3">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">高风险缺口</h6>
+                <span class="text-muted small">默认展示不合规与数据不足</span>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-striped mb-0 align-middle">
+                    <thead>
+                    <tr>
+                        <th>严重度</th>
+                        <th>条款</th>
+                        <th>检查项</th>
+                        <th>维度</th>
+                        <th>数量</th>
+                        <th>首条原因</th>
+                        <th class="qms-action-cell">入口</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {foreach $gaps as $gap}
+                    {php}
+                    $isInsufficient = $gap['status'] === 'insufficient_data';
+                    $severityClass = $gap['severity'] === 'critical' ? 'danger' : ($gap['severity'] === 'major' ? 'warning text-dark' : 'secondary');
+                    $severityText = $gap['severity'] === 'critical' ? '关键' : ($gap['severity'] === 'major' ? '重要' : '一般');
+                    $first = $gap['fail_items'][0] ?? ['name' => '', 'code' => '', 'reason' => ''];
+                    {/php}
+                    <tr>
+                        <td>
+                            {if $isInsufficient}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">数据不足</span>
+                            {else}
+                            <span class="badge bg-{$severityClass}">{$severityText}</span>
+                            {/if}
+                        </td>
+                        <td>{$gap.clause_number|default='-'}</td>
+                        <td>{$gap.check_name}</td>
+                        <td>{$dimensions[$gap.dimension]|default=$gap.dimension}</td>
+                        <td>{$gap.fail_count}</td>
+                        <td>
+                            <div>{$first.reason|default=''}</div>
+                            {if !empty($first['name'])}<div class="text-muted small">{$first.code} {$first.name}</div>{/if}
+                        </td>
+                        <td class="qms-action-cell"><a class="btn btn-sm btn-outline-primary" href="{$gap.action_url}">查看详情</a></td>
+                    </tr>
+                    {/foreach}
+                    {empty name="gaps"}
+                    <tr><td colspan="7"><div class="qms-empty-state">暂无高风险缺口。</div></td></tr>
+                    {/empty}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5 mb-3">
+        <div class="card h-100">
+            <div class="card-header"><h6 class="mb-0">评分趋势</h6></div>
+            <div class="card-body"><div id="complianceTrendChart" class="qms-dashboard-chart"></div></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script>
+const complianceTrendData = {$trendJson|raw};
+const complianceTrendNode = document.getElementById('complianceTrendChart');
+if (complianceTrendNode && typeof echarts !== 'undefined') {
+    const chart = echarts.init(complianceTrendNode);
+    chart.setOption({
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: complianceTrendData.labels || [] },
+        yAxis: { type: 'value', min: 0, max: 100 },
+        series: [{ name: '总分', type: 'line', smooth: true, data: complianceTrendData.scores || [] }]
+    });
+    window.addEventListener('resize', function () { chart.resize(); });
+}
+</script>
+{/if}

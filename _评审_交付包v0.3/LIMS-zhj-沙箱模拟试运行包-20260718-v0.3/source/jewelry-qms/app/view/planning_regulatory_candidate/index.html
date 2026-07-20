@@ -1,0 +1,86 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">法规候选池</h4>
+        <div class="text-muted small">展示法规动态监测形成的候选事项。候选只供人工复核，不会自动修改体系文件、人员授权、模板、培训或正式变更事件。</div>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/planning/change-events" class="btn btn-outline-secondary btn-sm">查看正式变更事件</a>
+    </div>
+</div>
+
+<div class="alert alert-info small">
+    <strong>边界提示：</strong>来源信任、适用性和六类影响均为待人工确认信息；来源待核验表示尚未完成官方来源复核；<code>no_match</code> 仅表示现有规则未命中，不等于“不适用”。
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" action="/planning/regulatory-candidates" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small text-muted">确认状态</label>
+                <select name="review_status" class="form-select form-select-sm">
+                    <option value="">全部</option>
+                    {foreach $reviewStatusLabels as $key=>$label}
+                    <option value="{$key}" {if $filters.review_status == $key}selected{/if}>{$label}</option>
+                    {/foreach}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted">来源</label>
+                <input type="search" name="source_key" class="form-control form-control-sm" value="{$filters.source_key}" placeholder="如 市场监管总局 / CNAS / samr">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-muted">关键词</label>
+                <input type="search" name="keyword" class="form-control form-control-sm" value="{$filters.keyword}" placeholder="标题、公告号、证据摘要">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary btn-sm w-100">筛选</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">候选事项</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle qms-table-wide">
+                <thead>
+                    <tr>
+                        <th>标题</th>
+                        <th>来源/信任</th>
+                        <th>确认状态</th>
+                        <th class="qms-nowrap">初步适用性</th>
+                        <th>影响范围</th>
+                        <th>发现时间</th>
+                        <th class="qms-action-cell">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="items" id="item"}
+                    <tr>
+                        <td>
+                            <a href="/planning/regulatory-candidates/view?id={$item.id}">{$item.title}</a>
+                            <div class="text-muted small">{$item.announcement_number|default='-'} · 相关性：{$relevanceLabels[$item.relevance]|default=$item.relevance}</div>
+                        </td>
+                        <td>
+                            <div>{$item.source_label|default=$item.source_key}</div>
+                            <div class="text-muted small">{$item.source_trust_label|default='来源状态未知'}</div>
+                        </td>
+                        <td><span class="badge bg-secondary">{$reviewStatusLabels[$item.review_status]|default=$item.review_status}</span></td>
+                        <td>{$applicabilityLabels[$item.preliminary_applicability]|default=$item.preliminary_applicability}</td>
+                        <td>{$item.impact_badges_html|raw}</td>
+                        <td class="qms-nowrap">{$item.first_seen_date|default='-'}</td>
+                        <td class="qms-action-cell">
+                            <a href="/planning/regulatory-candidates/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="items"}
+                    <tr><td colspan="7"><div class="qms-empty-state">暂无法规候选。</div></td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>

@@ -1,0 +1,37 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">能力确认详情</h5>
+        <div>
+            {if qms_can_action('competency_record', 'write', $record.employee)}<a href="/competency_record/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>{/if}
+            <a href="/competency_record/index" class="btn btn-sm btn-outline-secondary">返回列表</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            {volist name="fields" id="field"}
+            <tr><th width="150">{$field.label}</th><td>{$field.value|default='-'}</td></tr>
+            {/volist}
+        </table>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0">变更历史</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>时间</th><th>字段</th><th>原值</th><th>新值</th><th>操作人/岗位</th></tr></thead>
+            <tbody>
+                {volist name="fieldChangeLogs" id="log"}
+                <tr>
+                    <td>{$log.changed_at|default='-'}</td>
+                    <td>{$log.field_label|default=$log.field_name|default='-'}</td>
+                    <td>{$log.old_value_display|default='-'}</td>
+                    <td>{$log.new_value_display|default='-'}</td>
+                    <td>{$log.changed_by_display|default='未知用户（岗位未登记）'}</td>
+                </tr>
+                {/volist}
+                {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,53 @@
+{
+    "mode": "content_only",
+    "documents": {
+        "manual": 1,
+        "procedures": 37,
+        "work_instructions": 27
+    },
+    "record_forms": {
+        "total": 145,
+        "created": 145,
+        "updated": 0,
+        "skipped": 0,
+        "retired_generic": 0,
+        "retired_superseded": 0,
+        "errors": []
+    },
+    "structured": {
+        "assets": 190,
+        "structured_documents": 190,
+        "blocks": 529,
+        "links": 2294,
+        "rendered": 190,
+        "work_instruction_overrides": 27
+    },
+    "external_basis": {
+        "registered_sources": 5,
+        "clauses": 0,
+        "missing_files": [
+            {
+                "source_code": "CNAS-CL01:2018",
+                "expected_path": "参考/2025年最新版CMA和CNAS质量体系/04-CNAS-CL01 检测和校准实验室能力认可准则 2018 年 09 月 01 日实施.pdf"
+            },
+            {
+                "source_code": "CNAS-CL01-G001:2024",
+                "expected_path": "参考/2025年最新版CMA和CNAS质量体系/03+-CNAS-CL01-G001：2024《检测和校准实验室能力认可准则的应用要求》.pdf"
+            },
+            {
+                "source_code": "CNAS-CL01-A015:2018",
+                "expected_path": "参考/2025年最新版CMA和CNAS质量体系/07-CNAS-CL01-A015：2018 检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明.pdf"
+            },
+            {
+                "source_code": "GB/T 27025-2019",
+                "expected_path": "参考/2025年最新版CMA和CNAS质量体系/05-GBT 27025-2019 检测和校准实验室能力的通用要求.pdf"
+            },
+            {
+                "source_code": "市场监管总局公告2023年第21号",
+                "expected_path": "参考/2025年最新版CMA和CNAS质量体系/06-新检验检测机构资质认定评审准则2023带附件.docx"
+            }
+        ]
+    },
+    "non_sim_employees_before": 0,
+    "non_sim_employees_after": 0
+}

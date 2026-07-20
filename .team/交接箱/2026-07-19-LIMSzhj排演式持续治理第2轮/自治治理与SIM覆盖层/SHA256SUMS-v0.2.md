@@ -1,0 +1,25 @@
+# 自治治理与 SIM 覆盖层 v0.2 哈希清单
+
+```text
+1a26dc5c8fda38d28caca844fe342c8925408306799f970ac8ad29a3628c5ffe  00-子包索引-v0.2.md
+5ff05ffd5643416577be313257245c9dcd60a02fea50055f1712f27ef82c2529  自治治理主台账-v0.2.md
+a63974ecf5c20d03a0e9d209d2bd082b3ae1cf075442114699ba274ab1a66801  自治治理主台账-v0.2.json
+80cfc3df2b253cec9d35260f31d643048f77df8b1faef71bfeb56be70f1ce55a  候选覆盖层/8013记录模板新鲜复算-v0.2.json
+371ee52fefbe8683e65868a0032a242ef999fda8d52cc7a53960ec02192b3783  候选覆盖层/SIM-记录模板语义覆盖候选-v0.2.md
+23a466896e8faa0917b907904f679b0009b4a65a83f95fc1db6693588645d7de  候选覆盖层/SIM-记录模板语义覆盖候选-v0.2.json
+6909f8ef4d3650421c8a7c6e0281869c9c7e46e97f7bdacea09e7dff3cb84a17  独立验证交接说明-v0.2.md
+38295db9e83633101d4ad810ef055572bed169b3715eb316b0d1bdb5e437455c  机器检查/build_record_template_candidate_v02.py
+4772f8dff00b9df01f2b97dcf602cce16bd81b659d976890a50580ea42ae0a7b  机器检查/validate_record_template_candidate_v02.py
+74c89139620b1f0d6b28cdc753c59a1b5bdfedb322a60f2a8b5bfa2f8ebb53dc  机器检查/test_validate_record_template_candidate_v02.py
+1f79e51a9c7333e513895a92b0841e4879276cd7cb219191a4b70bf72c4dff86  机器检查/build_governance_ledger_v02.py
+fa2defcddfe032abe8cb64b3955785f1503dc29eee8c3fd886c04b913d5df893  机器检查/validate_governance_package_v02.py
+2b0592b70ec117beace261a2dcbbd9f023bccbf839ea4e002105f839cab4530c  机器检查/test_validate_governance_package_v02.py
+7b983380bc03e98f231865c6eb5d36149bf66a14ad2e5e0b3ab32bfd23b866b7  机器检查/验证报告-v0.2.md
+```
+
+本清单不包含自身哈希。冻结独立验证报告位于上级目录，SHA256 为：
+
+```text
+bf07a2e2cba7910840ece56b411389cfce9a449e165daa4585852e1f279832ed  ../独立验证/独立验证-半年运行与自治候选-v0.1.md
+```
+

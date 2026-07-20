@@ -1,0 +1,52 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑 {$pageTitle|default='评审决议'}</h5></div>
+    <div class="card-body">
+        <form method="post" action="/review_action/edit">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="mb-3">
+                <label class="form-label">关联管理评审</label>
+                <select name="management_review_id" class="form-select" required>
+                    {volist name="reviews" id="r"}
+                    <option value="{$r.id}" {if $record.management_review_id == $r.id}selected{/if}>{$r.review_date} - {$r.title}</option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">决议/措施内容</label>
+                <textarea name="action_item" class="form-control" rows="4" required>{$record.action_item|default=''}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">责任人（员工 ID）</label>
+                <select name="responsible_id" class="form-select">
+                    <option value="">请选择</option>
+                    {volist name="employees" id="e"}
+                    <option value="{$e.id}" {if isset($record.responsible_id) && $record.responsible_id == $e.id}selected{/if}>{$e.name}</option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">截止日期</label>
+                <input type="date" name="due_date" class="form-control" value="{$record.due_date|default=''}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">完成日期</label>
+                <input type="date" name="completion_date" class="form-control" value="{$record.completion_date|default=''}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">验证说明</label>
+                <textarea name="verification" class="form-control" rows="2">{$record.verification|default=''}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">状态</label>
+                <select name="status" class="form-select">
+                    <option value="open" {if $record.status == 'open'}selected{/if}>open</option>
+                    <option value="in_progress" {if $record.status == 'in_progress'}selected{/if}>in_progress</option>
+                    <option value="completed" {if $record.status == 'completed'}selected{/if}>completed</option>
+                    <option value="overdue" {if $record.status == 'overdue'}selected{/if}>overdue</option>
+                </select>
+            </div>
+            <a href="/review_action/index" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>

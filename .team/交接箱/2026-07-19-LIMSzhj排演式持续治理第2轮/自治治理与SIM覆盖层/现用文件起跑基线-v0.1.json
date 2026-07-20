@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "rehearsal_run_id": "SIM-GOV-R2-20260719",
+  "frozen_at": "2026-07-19",
+  "baseline_effect": "read_only_exam",
+  "code_commit": "2503f15a34d3a0d079429353616d66c3a370eddc",
+  "inventories": [
+    {
+      "inventory_id": "BASE-MANUAL-WORD",
+      "path": "现用文件/质量手册（第四版）.docx",
+      "count": 1,
+      "sha256": "87529d887a3cd0cac84d2d4dadfc7d681518864c29e1aad84a55ab35f49efff4",
+      "authority": "current_source"
+    },
+    {
+      "inventory_id": "BASE-MANUAL-EXPORT",
+      "path": "knowledge/internal/manual/XZTC_SC-质量手册_第四版.md",
+      "count": 1,
+      "sha256": "28ecd667478a94d21070f11860f6c8181e7f72d60c80b5e7c5c7744e2729281a",
+      "authority": "generated_locator_only"
+    },
+    {
+      "inventory_id": "BASE-PROCEDURE-SOURCES",
+      "path": "现用文件/程序文件/程序文件2022",
+      "count": 42,
+      "tree_sha256": "31ed59351ef7a801f2e77867e051de4f930a7855b2f490b9aeb6258dca0d8e3a",
+      "composition": {
+        "numbered": 38,
+        "procedures": 37,
+        "numbered_attachment_or_form": 1,
+        "excluded_frontmatter": 4
+      },
+      "authority": "current_source"
+    },
+    {
+      "inventory_id": "BASE-PROCEDURE-EXPORTS",
+      "path": "knowledge/internal/procedures/XZTC_*.md",
+      "count": 37,
+      "tree_sha256": "7f8ef806475084ea9dd26ea7da7dc9ec6b342d72defd3888d60b8f592cd608ff",
+      "authority": "generated_locator_only"
+    },
+    {
+      "inventory_id": "BASE-RECORD-SOURCES",
+      "path": "现用文件/记录表格/记录表格2017",
+      "count": 161,
+      "tree_sha256": "1066015983d766ad9c93affb9425e12cd56894451d7d30d7e0cabfaf602c6db6",
+      "composition": {
+        "doc": 113,
+        "docx": 47,
+        "docm": 1
+      },
+      "authority": "current_source"
+    },
+    {
+      "inventory_id": "BASE-TEMPLATE-MANIFEST-CONTRACT",
+      "path": "jewelry-qms/tests/record_forms_batch_smoke.php",
+      "count_expected_by_test": 145,
+      "sha256": "974b7fdf64df5d54c69c2a163874cb77d25ba27bce1d3bb691eb0d0aa39919da",
+      "authority": "code_contract_only_not_field_fidelity"
+    }
+  ],
+  "source_materials_excluded_from_baseline": [
+    {
+      "path": ".team/交接箱/2026-07-07-第五版候选修订准备/10-质量手册第五版候选稿.md",
+      "sha256": "aa1d992eb7da1d8d99519cf6ef03ac5d0ac6fed1d6e7f3095ea3ec8db969caa0"
+    },
+    {
+      "path": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.team/交接箱/2026-07-19-LIMSzhj完整沙箱持续治理演练/候选整改/手册程序记录整改候选包-v0.2.md",
+      "sha256": "422010ed3c5ab0f593b754c544eea9c49fe69caf589620cfd3eee427cb5234dc"
+    },
+    {
+      "path": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.team/交接箱/2026-07-19-LIMSzhj完整沙箱持续治理演练/候选整改/记录模板逐字段治理候选-v0.2.md",
+      "sha256": "e33a1875d87f30f40f060d902ede97460224368b9d106a2d0052fcee54ea1c78"
+    }
+  ]
+}
+

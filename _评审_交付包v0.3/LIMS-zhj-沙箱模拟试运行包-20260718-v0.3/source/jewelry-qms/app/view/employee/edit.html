@@ -1,0 +1,23 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑员工</h5></div>
+    <div class="card-body">
+        <form method="post" action="/employee/edit">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="row">
+                <div class="col-md-6 mb-3"><label class="form-label">员工编号</label><input name="employee_number" value="{$record.employee_number|default=''}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label required">姓名</label><input name="name" value="{$record.name}" class="form-control" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">部门</label><select name="department_id" class="form-select"><option value="">请选择</option>{volist name="departments" id="dept"}<option value="{$dept.id}" {if $record.department_id == $dept.id}selected{/if}>{$dept.name}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label class="form-label">主归属场所</label><select name="primary_site_id" class="form-select"><option value="">未指定</option>{volist name="sites" id="site"}<option value="{$site.id}" {if $record.primary_site_id == $site.id}selected{/if}>{$site.name}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label class="form-label">职务</label><select name="designation_id" class="form-select"><option value="">请选择</option>{volist name="designations" id="des"}<option value="{$des.id}" {if $record.designation_id == $des.id}selected{/if}>{$des.name}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label class="form-label">学历/资历</label><input name="education" value="{$record.education|default=''}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">邮箱</label><input type="email" name="email" value="{$record.email|default=''}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">电话</label><input name="phone" value="{$record.phone|default=''}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">入职日期</label><input type="date" name="entry_date" value="{$record.entry_date|default=''}" class="form-control"></div>
+            </div>
+            <div class="text-end">
+                <a href="/employee/index" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">更新</button>
+            </div>
+        </form>
+    </div>
+</div>

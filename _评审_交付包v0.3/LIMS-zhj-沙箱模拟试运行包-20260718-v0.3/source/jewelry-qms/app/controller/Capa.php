@@ -1,0 +1,160 @@
+<?php
+declare(strict_types=1);
+
+namespace app\controller;
+
+use app\model\Capa as CapaModel;
+use app\model\CapaSource;
+use app\model\User;
+use app\service\FieldAuditService;
+use app\service\ExternalEvidenceReferenceService;
+use app\service\TrialModeService;
+use app\service\WorkflowService;
+use think\facade\Db;
+use think\facade\Session;
+use think\facade\View;
+
+class Capa extends BusinessBase
+{
+    protected string $modelClass = CapaModel::class;
+    protected string $viewPrefix = 'capa';
+    protected string $pageTitle = 'CAPA';
+    protected array $writableFields = [
+        'assigned_to',
+        'due_date',
+        'description',
+        'root_cause',
+        'corrective_action',
+        'preventive_action',
+        'verification',
+    ];
+    protected array $createWritableFields = [
+        'capa_number',
+        'source_id',
+        'source_type',
+        'source_record_id',
+        'assigned_to',
+        'due_date',
+        'description',
+    ];
+    protected array $validateMessages = [
+        'capa_number.require' => 'CAPA编号不能为空',
+        'description.require' => '问题描述不能为空',
+        'due_date.date' => '计划完成日期格式不正确',
+    ];
+
+    protected function validationRules(array $data, ?string $recordId = null): array
+    {
+        $rules = [
+            'description' => 'require',
+            'due_date' => 'date',
+        ];
+        if ($recordId === null) {
+            $rules['capa_number'] = 'require';
+        }
+
+        return $rules;
+    }
+
+    protected function assignFormContext(): void
+    {
+        $this->assignCommonForm();
+        $this->assignStatusLabels('capa');
+        View::assign('capaSources', CapaSource::where('soft_delete', 0)->select());
+        View::assign('sourceTypes', [
+            'audit' => '内部审核',
+            'complaint' => '客户投诉',
+            'nc' => '不符合工作',
+            'review' => '管理评审',
+            'internal' => '日常监督',
+        ]);
+    }
+
+    public function add()
+    {
+        if ($this->request->isPost()) {
+            $data = $this->onlyWritable($this->request->post());
+            if (empty($data['capa_number'])) {
+                $data['capa_number'] = qms_next_number('CAPA', CapaModel::class, 'capa_number');
+            }
+            if (TrialModeService::isEnabled()) {
+                $data['capa_number'] = TrialModeService::simulationNumber((string)$data['capa_number']);
+            }
+            if (empty($data['source_id']) && !empty($data['source_type'])) {
+                $data['source_id'] = WorkflowService::resolveCapaSourceId($data['source_type']);
+            }
+            $errors = $this->validateFormData($data);
+            if ($errors !== []) {
+                return $this->renderFormValidationFailure($data, $this->viewPrefix . '/add');
+            }
+            $model = $this->getModel();
+            $model->save($data);
+            Session::flash('success', 'CAPA已创建');
+
+            return redirect($this->listRedirectUrl());
+        }
+        View::assign('pageTitle', $this->pageTitle . ' - 新增');
+        $this->assignFormContext();
+
+        return View::fetch($this->viewPrefix . '/add');
+    }
+
+    public function view()
+    {
+        $id = $this->request->param('id');
+        $record = $this->findActiveRecord((string)$id);
+        if (!$record) {
+            abort(404, '记录不存在');
+        }
+        $this->assignFormContext();
+        View::assign('record', $record);
+        View::assign('assignee', $record->assigned_to ? User::find($record->assigned_to) : null);
+        View::assign('verifier', $record->verified_by ? User::find($record->verified_by) : null);
+        View::assign('sourceContext', WorkflowService::capaSourceContext($record));
+        View::assign('fieldChangeLogs', FieldAuditService::displayLogsFor('Capa', (string)$id));
+        View::assign('evidenceReferences', ExternalEvidenceReferenceService::forSubject('capa', (string)$id));
+        View::assign('evidenceSubjectType', 'capa');
+        View::assign('evidenceSubjectId', (string)$id);
+        View::assign('pageTitle', $this->pageTitle . ' - 详情');
+
+        return View::fetch($this->viewPrefix . '/view');
+    }
+
+    public function advance()
+    {
+        $id = $this->request->param('id');
+        $record = CapaModel::find($id);
+        if (!$record) {
+            abort(404);
+        }
+        if ($this->request->isPost()) {
+            $action = $this->request->post('action', 'advance');
+            $data = $this->request->post();
+            $advanced = Db::transaction(function () use ($record, $action, $data) {
+                return WorkflowService::advanceCapaStatus($record, $action, $data);
+            });
+            if ($advanced) {
+                Session::flash('success', '状态已更新');
+            } else {
+                Session::flash('error', '状态更新失败');
+            }
+
+            return redirect('/capa/view?id=' . $id);
+        }
+        $this->assignFormContext();
+        View::assign('record', $record);
+
+        return View::fetch($this->viewPrefix . '/advance');
+    }
+
+    public function reviewEffectiveness()
+    {
+        $id = (string)$this->request->post('id', '');
+        $result = trim((string)$this->request->post('effectiveness_result', ''));
+        $reviewDate = (string)$this->request->post('effectiveness_review_date', '');
+        $ok = $result !== '' && WorkflowService::recordCapaEffectiveness($id, $result, $reviewDate !== '' ? $reviewDate : null);
+        Session::flash($ok ? 'success' : 'error', $ok ? '有效性复查结果已保存' : '有效性复查结果保存失败');
+
+        return redirect('/capa/view?id=' . $id);
+    }
+}

@@ -1,0 +1,87 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">CAPA {$record.capa_number}</h5>
+        <div>
+            {if $record.status != 'closed'}
+                {if $record.status == 'verifying'}
+                    {if qms_can_action('capa', 'close', $record)}
+                    <a href="/capa/advance?id={$record.id}" class="btn btn-sm btn-success">推进状态</a>
+                    {/if}
+                {else /}
+                    {if qms_can_action('capa', 'advance', $record)}
+                    <a href="/capa/advance?id={$record.id}" class="btn btn-sm btn-success">推进状态</a>
+                    {/if}
+                {/if}
+            {/if}
+            {if qms_can_action('capa', 'edit_measures', $record)}<a href="/capa/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>{/if}
+            <a href="/capa/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="150">状态</th><td><span class="badge bg-primary">{$statusLabels[$record.status]|default=$record.status}</span></td></tr>
+            <tr>
+                <th>来源</th>
+                <td>
+                    {$sourceContext.type_label|default='-'} /
+                    {if $sourceContext.url}
+                    <a href="{$sourceContext.url}">{$sourceContext.record_label}</a>
+                    {else /}
+                    {$sourceContext.record_label|default='-'}
+                    {/if}
+                </td>
+            </tr>
+            <tr><th>问题描述</th><td>{$record.description}</td></tr>
+            <tr><th>根本原因</th><td>{$record.root_cause|default='-'}</td></tr>
+            <tr><th>纠正措施</th><td>{$record.corrective_action|default='-'}</td></tr>
+            <tr><th>预防措施</th><td>{$record.preventive_action|default='-'}</td></tr>
+            <tr><th>责任人</th><td>{$assignee.name|default=$record.assigned_to|default='-'}</td></tr>
+            <tr><th>截止日期</th><td>{$record.due_date|default='-'}</td></tr>
+            <tr><th>效果验证</th><td>{$record.verification|default='-'}</td></tr>
+            <tr><th>验证人</th><td>{$verifier.name|default='-'}</td></tr>
+            <tr><th>验证日期</th><td>{$record.verified_date|default='-'}</td></tr>
+            <tr><th>有效性复查日期</th><td>{$record.effectiveness_review_date|default='-'}</td></tr>
+            <tr><th>有效性复查结果</th><td>{$record.effectiveness_result|default='-'}</td></tr>
+        </table>
+        {if $record.status == 'closed' && !$record.effectiveness_result && qms_can_action('capa', 'verify', $record)}
+        <form method="post" action="/capa/reviewEffectiveness" class="border rounded p-3 bg-light">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">有效性复查日期</label>
+                    <input type="date" name="effectiveness_review_date" class="form-control" value="{:date('Y-m-d')}">
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label required">有效性复查结果</label>
+                    <textarea name="effectiveness_result" class="form-control" rows="2" required placeholder="说明措施是否有效、是否再发生同类问题"></textarea>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-primary w-100">保存复查</button>
+                </div>
+            </div>
+        </form>
+        {/if}
+    </div>
+</div>
+{include file="common/external_evidence_references" /}
+
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0">变更历史</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>时间</th><th>字段</th><th>原值</th><th>新值</th><th>操作人</th></tr></thead>
+            <tbody>
+                {volist name="fieldChangeLogs" id="log"}
+                <tr>
+                    <td>{$log.changed_at|default='-'}</td>
+                    <td>{$log.field_label|default=$log.field_name|default='-'}</td>
+                    <td>{$log.old_value_display|default='-'}</td>
+                    <td>{$log.new_value_display|default='-'}</td>
+                    <td>{$log.changed_by_display|default='未知用户（岗位未登记）'}</td>
+                </tr>
+                {/volist}
+                {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

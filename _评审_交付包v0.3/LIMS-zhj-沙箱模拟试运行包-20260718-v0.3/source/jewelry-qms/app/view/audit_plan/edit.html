@@ -1,0 +1,30 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑内审计划</h5></div>
+    <div class="card-body">
+        <form method="post" action="/audit_plan/edit?id={$record.id}">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="plan_year" class="form-label required">计划年度</label>
+                    <input type="number" min="2000" max="2100" class="form-control" id="plan_year" name="plan_year" value="{$record.plan_year}" required>
+                </div>
+                <div class="col-md-8 mb-3">
+                    <label for="title" class="form-label required">计划标题</label>
+                    <input type="text" class="form-control" id="title" name="title" value="{$record.title}" required maxlength="200">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="scope" class="form-label">审核范围</label>
+                <textarea class="form-control" id="scope" name="scope" rows="4">{$record.scope|default=''}</textarea>
+            </div>
+            <div class="mb-3">
+                <label for="criteria" class="form-label">审核依据</label>
+                <textarea class="form-control" id="criteria" name="criteria" rows="4">{$record.criteria|default=''}</textarea>
+            </div>
+            <div class="text-end">
+                <a href="/audit_plan/view?id={$record.id}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>

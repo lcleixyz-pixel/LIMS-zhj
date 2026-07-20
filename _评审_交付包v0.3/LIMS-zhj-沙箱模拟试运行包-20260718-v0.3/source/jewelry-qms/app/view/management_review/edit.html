@@ -1,0 +1,21 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑管理评审</h5></div>
+    <div class="card-body">
+        <form method="post" action="/management_review/edit?id={$record.id}">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="row">
+                <div class="col-md-6 mb-3"><label>评审编号</label><input name="review_number" value="{$record.review_number}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="required">评审日期</label><input type="date" name="review_date" value="{$record.review_date}" class="form-control" required></div>
+                <div class="col-12 mb-3"><label class="required">主题</label><input name="title" value="{$record.title}" class="form-control" required></div>
+                <div class="col-12 mb-3"><label>参会人员</label><textarea name="participants" class="form-control" rows="2">{$record.participants|default=''}</textarea></div>
+                <div class="col-12 mb-3"><label>评审输入（人工补充）</label><textarea name="inputs" class="form-control" rows="8">{$record.inputs|default=''}</textarea></div>
+                <div class="col-12 mb-3"><label>评审输出</label><textarea name="outputs" class="form-control" rows="4">{$record.outputs|default=''}</textarea></div>
+                <div class="col-12 mb-3"><label>决议事项</label><textarea name="resolutions" class="form-control" rows="4">{$record.resolutions|default=''}</textarea></div>
+            </div>
+            <div class="text-end">
+                <a href="/management_review/view?id={$record.id}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>

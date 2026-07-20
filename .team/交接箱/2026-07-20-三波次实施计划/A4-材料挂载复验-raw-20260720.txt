@@ -1,0 +1,20 @@
+===== [1] record_forms_batch_smoke.php =====
+record_forms_batch_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [2] record_forms_equipment_fidelity_smoke.php =====
+record_forms_equipment_fidelity_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [3] record_forms_file_control_fidelity_smoke.php =====
+record_forms_file_control_fidelity_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [4] record_forms_personnel_fidelity_smoke.php =====
+record_forms_personnel_fidelity_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [5] record_form_fillability_readiness_smoke.php =====
+record_form_fillability_readiness_smoke passed
+EXIT_CODE=0
+RESULT=PASS

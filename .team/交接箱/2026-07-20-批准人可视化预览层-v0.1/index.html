@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>批准人审阅 · 沙箱预览层（只读）</title>
+  <style>
+    :root {
+      --ink: #1c2430;
+      --muted: #5c6b7a;
+      --paper: #f3f0e8;
+      --card: #fffcf6;
+      --line: #d4cfc3;
+      --accent: #0f5c4c;
+      --accent-soft: #d7ebe5;
+      --warn: #8a4b00;
+      --warn-bg: #fff1d6;
+      --danger: #8b1e1e;
+      --danger-bg: #f8e4e4;
+      --ok: #1f5a2e;
+      --ok-bg: #e3f0e6;
+      --pending: #5a4a12;
+      --pending-bg: #f4ecd0;
+      --shadow: 0 10px 30px rgba(28, 36, 48, 0.08);
+      --font: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", sans-serif;
+      --display: "Source Han Serif SC", "Noto Serif SC", "Songti SC", serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--font);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #e7f2ee 0%, transparent 55%),
+        radial-gradient(900px 400px at 100% 0%, #efe6d4 0%, transparent 50%),
+        var(--paper);
+      line-height: 1.55;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+    .banner {
+      border: 1px solid #c9b27a;
+      background: linear-gradient(135deg, #fff8e8, #f7efd8);
+      color: var(--warn);
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      font-weight: 600;
+    }
+    .banner strong { color: var(--danger); }
+    header.hero {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 28px 28px 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 22px;
+    }
+    header.hero h1 {
+      font-family: var(--display);
+      font-size: clamp(1.55rem, 2.4vw, 2rem);
+      margin: 0 0 8px;
+      letter-spacing: 0.02em;
+    }
+    .meta { color: var(--muted); font-size: 0.95rem; }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .pill {
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.82rem;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .pill.ok { background: var(--ok-bg); color: var(--ok); border-color: #b7d4be; }
+    .pill.pending { background: var(--pending-bg); color: var(--pending); border-color: #e0d3a2; }
+    .pill.ro { background: var(--accent-soft); color: var(--accent); border-color: #9fc7bb; }
+    nav.toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin: 18px 0 8px;
+    }
+    nav.toc a {
+      text-decoration: none;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-weight: 600;
+    }
+    nav.toc a:hover { border-color: var(--accent); color: var(--accent); }
+    section.block {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 22px;
+      margin-top: 18px;
+      box-shadow: var(--shadow);
+    }
+    section.block h2 {
+      font-family: var(--display);
+      margin: 0 0 12px;
+      font-size: 1.35rem;
+    }
+    .audit-box {
+      background: var(--warn-bg);
+      border: 2px solid #e0b45a;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .audit-box .big {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--warn);
+      margin-bottom: 8px;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+    }
+    .panel h3 { margin: 0 0 8px; font-size: 1rem; }
+    .panel.before { border-top: 4px solid var(--danger); }
+    .panel.after { border-top: 4px solid var(--ok); }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+    .chip-list li {
+      font-size: 0.8rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #f0eeea;
+    }
+    .panel.before .chip-list li { background: var(--danger-bg); color: var(--danger); }
+    .panel.after .chip-list li { background: var(--ok-bg); color: var(--ok); }
+    .shot {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      margin-top: 10px;
+      background: #eee;
+    }
+    .item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 12px 0;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color .15s, transform .15s;
+    }
+    .item:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .item.open { border-color: var(--accent); }
+    .item-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .item-title { font-weight: 700; }
+    .status {
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+    .status.ready { background: var(--ok-bg); color: var(--ok); }
+    .status.pending { background: var(--pending-bg); color: var(--pending); }
+    .item-body { display: none; margin-top: 12px; color: var(--muted); }
+    .item.open .item-body { display: block; }
+    .item-body dl { margin: 0; }
+    .item-body dt { color: var(--ink); font-weight: 600; margin-top: 8px; }
+    .item-body dd { margin: 2px 0 0; }
+    .item-body a { color: var(--accent); }
+    .no-approve {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--danger-bg);
+      border: 1px dashed var(--danger);
+      color: var(--danger);
+      font-weight: 600;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .actions a, .actions span.btnish {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+    }
+    .actions a.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .actions span.disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+    footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .countbar {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 10px 0 0;
+      font-size: 0.92rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="banner" role="alert">
+      你正在看的是<strong>隔离沙箱样板房</strong>预览。
+      <strong>这里不能批准、不能发布、不能迁移到真实系统。</strong>
+      真批准请回到文控签批流程签字过户。
+    </div>
+
+    <header class="hero">
+      <h1>批准人审阅入口 · 可视化预览层</h1>
+      <p class="meta">
+        设计依据：持续治理闭环 v0.3.3 增补｜演练 <span id="runId">SIM-GOV-R2-20260719</span>｜
+        状态停在 <code>pending_human_approval</code>（只读）
+      </p>
+      <div class="pills">
+        <span class="pill ro">只读审阅</span>
+        <span class="pill ok">sim_applied ≠ approved</span>
+        <span class="pill pending">待定项不会伪装成已改好</span>
+      </div>
+      <div class="countbar" id="countBar"></div>
+      <nav class="toc" aria-label="章节">
+        <a href="#see">1. 所见即所得</a>
+        <a href="#diff">2. 改前 / 改后</a>
+        <a href="#audit">3. 模拟外审</a>
+        <a href="#why">4. 为什么改</a>
+        <a href="#next">5. 接下来怎么签</a>
+      </nav>
+    </header>
+
+    <section class="block" id="see">
+      <h2>1. 所见即所得（沙箱预览清单）</h2>
+      <p class="meta">点开每一项可下钻到改法与依据。绿色=8013 签批包已沙箱落地、待你真人批准；琥珀色=待核/暂缓，不能当作已改完。沙箱落地 ≠ 正式签批生效。</p>
+      <div id="itemList"></div>
+    </section>
+
+    <section class="block" id="diff">
+      <h2>2. 改前 vs 改后 · 合同评审表（关键样例）</h2>
+      <p class="meta">改前截图来自完整沙箱演练中“合同评审却填了管理评审字段”的锁定实例；改后为待签批字段骨架（尚未写入生产库）。</p>
+      <div class="grid2">
+        <div class="panel before">
+          <h3>改前（错误）</h3>
+          <p>页面叫「合同评审」，字段却是管理评审：</p>
+          <ul class="chip-list" id="wrongFields"></ul>
+          <img class="shot" id="beforeShot" alt="改前：合同评审错用管理评审字段" src="assets/screenshots/before-合同评审错schema.png" />
+        </div>
+        <div class="panel after">
+          <h3>改后（8013 已落地解释层）</h3>
+          <p>恢复合同评审语义，并补场所/标志分流：</p>
+          <ul class="chip-list" id="rightFields"></ul>
+          <p class="meta" style="margin-top:12px">
+            完整字段矩阵见记录模板升版预演稿 v0.2（BG-09-01）。8013 签批包落地覆盖已应用；145 张现用基线模板未覆盖写库。对照：
+            <a href="../2026-07-20-8013签批包落地与参考表复审/落地后对照-v0.1.md">落地后对照 v0.1</a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="audit">
+      <h2>3. 模拟外审结论（仅供参考）</h2>
+      <div class="audit-box">
+        <div class="big" id="auditDisclaimer">这是 AI 模拟评审，不是真 CNAS/CMA，也不代替你的独立判断。</div>
+        <div class="grid2" style="margin-top:10px">
+          <div class="panel">
+            <h3>第一轮</h3>
+            <p id="auditR1">加载中…</p>
+          </div>
+          <div class="panel">
+            <h3>第二轮</h3>
+            <p id="auditR2">加载中…</p>
+          </div>
+        </div>
+        <p class="meta" style="margin-top:12px;margin-bottom:0">
+          两轮通过只说明：沙箱治理机制与当前预览包在模拟规则下可收敛。
+          <strong>不等于</strong>机构已通过正式资质认定/认可，也不等于你可以跳过逐项审阅。
+        </p>
+      </div>
+    </section>
+
+    <section class="block" id="why">
+      <h2>4. 逐项「改了哪 · 为什么改」</h2>
+      <p class="meta">与第 1 节同一清单；展开后可看要求来源链与文档入口。</p>
+      <p><a href="#see">回到清单并逐项点开 ↓</a></p>
+    </section>
+
+    <section class="block" id="next">
+      <h2>5. 审阅之后怎么走（收房签字过户）</h2>
+      <ol>
+        <li>在本页确认：绿色项你看得懂、同意改法；琥珀色项保持「待核」，不要当已关闭。</li>
+        <li>打开正式签批包，按《文件控制程序》对 Word/现行文件做受控换版（或作废 BG-10）。</li>
+        <li><strong>不要</strong>把沙箱数据库倒回真实系统；将来 LIMS 正式 apply 仍走真人授权路径。</li>
+      </ol>
+      <div class="actions">
+        <a class="primary" href="../2026-07-19-LIMSzhj排演式持续治理第2轮/文件治理/00-文件治理签批包说明-v0.1.md">打开正式签批包说明</a>
+        <a href="../2026-07-20-两轮体系文件问题与修订候选汇总/体系文件问题与修订候选汇总-v0.2.md">打开问题与修订汇总 v0.2</a>
+        <a href="../2026-07-19-LIMSzhj排演式持续治理第2轮/LIMSzhj排演式持续治理第二轮总报告-v0.1.md">打开 R2 总报告</a>
+        <span class="btnish disabled" title="预览层禁止批准">批准（禁用）</span>
+        <span class="btnish disabled" title="预览层禁止发布">发布到生产（禁用）</span>
+      </div>
+      <div class="no-approve">
+        本页故意不提供「批准」按钮。若有人要求你在沙箱里点批准——拒签，改走真实文控签批。
+      </div>
+    </section>
+
+    <footer>
+      预览层 v0.1 · 对应设计 v0.3.3 增补 · 生成于交接箱，可同步到试运行静态目录
+      <code>/governance-preview/</code>（若 8013 已挂载）· 不写库、不代签
+    </footer>
+  </div>
+
+  <script src="data/embedded-items.js"></script>
+  <script>
+    const FALLBACK_AUDIT = {
+      round1: { result: "pass", observations: 2 },
+      round2: { result: "pass", observations: 0 },
+      disclaimer: "这是 AI 模拟评审，不是真 CNAS/CMA，也不代替你的独立判断。"
+    };
+
+    async function loadManifest() {
+      try {
+        const res = await fetch("data/preview-manifest.json", { cache: "no-store" });
+        if (!res.ok) throw new Error("fetch fail");
+        return await res.json();
+      } catch (e) {
+        return window.__EMBEDDED_MANIFEST__ || null;
+      }
+    }
+
+    function statusLabel(s) {
+      if (s === "sandbox_landed") return { cls: "ready", text: "沙箱已落地 · 待真人批准" };
+      if (s === "ready_for_human") return { cls: "ready", text: "沙箱预览已备 · 待真人批准" };
+      return { cls: "pending", text: "待核 / 暂缓 · 未改好" };
+    }
+
+    function renderItems(items) {
+      const root = document.getElementById("itemList");
+      root.innerHTML = "";
+      let ready = 0, pending = 0;
+      items.forEach((it) => {
+        if (it.preview_status === "ready_for_human") ready++; else pending++;
+        const st = statusLabel(it.preview_status);
+        const el = document.createElement("article");
+        el.className = "item";
+        el.innerHTML = `
+          <div class="item-head">
+            <div>
+              <span class="item-title">${it.id} · ${it.title}</span>
+              <span class="meta"> · ${it.uf || ""} · ${it.object || ""}</span>
+            </div>
+            <span class="status ${st.cls}">${st.text}</span>
+          </div>
+          <div class="item-body">
+            <dl>
+              <dt>改前</dt><dd>${it.before || "—"}</dd>
+              <dt>改后（预览）</dt><dd>${it.after || "—"}</dd>
+              <dt>为什么改</dt><dd>${it.why || "—"}</dd>
+              <dt>要求来源链</dt><dd>${it.source || "—"}</dd>
+              ${it.note ? `<dt>备注</dt><dd>${it.note}</dd>` : ""}
+              <dt>下钻文档</dt>
+              <dd>${(it.drill || []).map((p) => `<div><a href="${p}">${p.split("/").pop()}</a></div>`).join("") || "—"}</dd>
+            </dl>
+            ${it.before_image ? `<img class="shot" src="${it.before_image}" alt="改前截图 ${it.id}" />` : ""}
+          </div>`;
+        el.addEventListener("click", () => el.classList.toggle("open"));
+        root.appendChild(el);
+      });
+      document.getElementById("countBar").innerHTML =
+        `<span class="pill ok">可审阅预览 ${ready} 项</span>` +
+        `<span class="pill pending">待定/暂缓 ${pending} 项</span>`;
+    }
+
+    function renderCompare(item) {
+      const c = item && item.compare;
+      const wrong = (c && c.wrong_fields) || ["评审年度", "会议日期", "主持人", "参加人员", "输入/议题", "跟踪验证"];
+      const right = (c && c.right_fields) || ["委托单位", "项目名称", "合同编号", "参数/标准", "能力勾选", "场所", "CMA", "CNAS", "报告标志"];
+      document.getElementById("wrongFields").innerHTML = wrong.map((x) => `<li>${x}</li>`).join("");
+      document.getElementById("rightFields").innerHTML = right.map((x) => `<li>${x}</li>`).join("");
+    }
+
+    function renderAudit(audit) {
+      const a = audit || FALLBACK_AUDIT;
+      document.getElementById("auditDisclaimer").textContent = a.disclaimer;
+      document.getElementById("auditR1").innerHTML =
+        `结论：<strong>${a.round1.result}</strong>；观察项 ${a.round1.observations}（未当作已关闭主要项）`;
+      document.getElementById("auditR2").innerHTML =
+        `结论：<strong>${a.round2.result}</strong>；新增重大/次要发现 0；连续两轮通过（模拟）`;
+    }
+
+    (async function init() {
+      const data = (await loadManifest()) || window.__EMBEDDED_MANIFEST__;
+      const items = (data && data.items) || window.__EMBEDDED_ITEMS__;
+      if (!items) {
+        document.getElementById("itemList").innerHTML =
+          "<p class='meta'>无法加载清单。请确认 data/embedded-items.js 与 data/preview-manifest.json 存在。</p>";
+        renderCompare(null);
+        renderAudit(FALLBACK_AUDIT);
+        return;
+      }
+      document.getElementById("runId").textContent = (data && data.run_id) || "SIM-GOV-R2-20260719";
+      renderItems(items);
+      renderCompare(items.find((x) => x.id === "FIND-006"));
+      renderAudit((data && data.audit_sim) || FALLBACK_AUDIT);
+    })();
+  </script>
+</body>
+</html>

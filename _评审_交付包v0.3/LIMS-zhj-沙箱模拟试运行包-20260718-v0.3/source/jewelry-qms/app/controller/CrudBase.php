@@ -1,0 +1,419 @@
+<?php
+declare(strict_types=1);
+
+namespace app\controller;
+
+use app\BaseController;
+use app\service\FieldAuditService;
+use think\exception\HttpException;
+use think\exception\ValidateException;
+use think\facade\Db;
+use think\facade\Log;
+use think\facade\Session;
+use think\facade\View;
+
+class CrudBase extends BaseController
+{
+    protected string $modelClass = '';
+    protected string $viewPrefix = '';
+    protected string $pageTitle = '';
+    protected array $validateRules = [];
+    protected array $validateMessages = [];
+    protected array $writableFields = [];
+    protected array $createWritableFields = [];
+    protected array $viewFieldLabels = [];
+    protected array $hiddenViewFields = [
+        'id',
+        'company_id',
+        'password',
+        'soft_delete',
+        'created_by',
+        'modified_by',
+    ];
+
+    /** 表单页（add/edit GET）追加模板变量 */
+    protected function assignFormContext(): void
+    {
+    }
+
+    protected function assignIndexContext(): void
+    {
+    }
+
+    protected function assignDefaultFormContext(): void
+    {
+        View::assign('departments', \app\model\Department::where('soft_delete', 0)->where('publish', 1)->select());
+        View::assign('employees', \app\model\Employee::where('soft_delete', 0)->where('publish', 1)->select());
+        View::assign('users', \app\model\User::where('soft_delete', 0)->where('publish', 1)->select());
+    }
+
+    protected function getModel()
+    {
+        if ($this->modelClass === '') {
+            throw new \RuntimeException('modelClass not set in ' . static::class);
+        }
+
+        return new ($this->modelClass)();
+    }
+
+    protected function listRedirectUrl(): string
+    {
+        $name = $this->request->controller();
+        $path = qms_controller_url($name);
+
+        return '/' . $path . '/index';
+    }
+
+    protected function validationRules(array $data, ?string $recordId = null): array
+    {
+        return $this->validateRules;
+    }
+
+    protected function validationMessages(array $data, ?string $recordId = null): array
+    {
+        return $this->validateMessages;
+    }
+
+    protected function onlyWritable(array $data, ?string $recordId = null): array
+    {
+        $fields = $recordId === null && $this->createWritableFields !== []
+            ? $this->createWritableFields
+            : $this->writableFields;
+        if ($fields === []) {
+            return $data;
+        }
+
+        $filtered = array_intersect_key($data, array_flip($fields));
+        $ignoredFields = array_values(array_diff(array_keys($data), $fields, ['id', '__token__']));
+        if ($ignoredFields !== []) {
+            Log::warning('Ignored non-writable form fields', [
+                'controller' => static::class,
+                'fields' => $ignoredFields,
+                'record_id' => $recordId,
+            ]);
+        }
+
+        return $filtered;
+    }
+
+    protected function findActiveRecord(string $id): ?object
+    {
+        $class = $this->modelClass;
+        $model = $this->getModel();
+        if ($model->hasColumn('soft_delete')) {
+            return $class::where('id', $id)->where('soft_delete', 0)->find();
+        }
+
+        return $class::where('id', $id)->find();
+    }
+
+    protected function validateFormData(array $data, ?string $recordId = null): array
+    {
+        $rules = $this->validationRules($data, $recordId);
+        if ($rules === []) {
+            return [];
+        }
+
+        try {
+            $this->validate($data, $rules, $this->validationMessages($data, $recordId), true);
+        } catch (ValidateException $exception) {
+            $error = $exception->getError();
+            if (is_array($error)) {
+                return array_values($error);
+            }
+
+            return [(string)$error];
+        }
+
+        return [];
+    }
+
+    protected function uniqueModelFieldRule(string $modelClass, string $field, ?string $recordId, string $message): \Closure
+    {
+        return function ($value) use ($modelClass, $field, $recordId, $message) {
+            $value = trim((string)$value);
+            if ($value === '') {
+                return true;
+            }
+
+            $query = $modelClass::where($field, $value);
+            $prototype = new $modelClass();
+            if (method_exists($prototype, 'hasColumn') && $prototype->hasColumn('soft_delete')) {
+                $query->where('soft_delete', 0);
+            }
+            if ($recordId !== null && $recordId !== '') {
+                $query->where('id', '<>', $recordId);
+            }
+
+            return $query->count() === 0 ? true : $message;
+        };
+    }
+
+    protected function renderFormValidationFailure(array $data, string $template, ?object $record = null): string
+    {
+        $this->flashValidationErrors($this->validateFormData($data, $record ? (string)$record->id : null));
+        View::assign('form', $data);
+        if ($record !== null) {
+            if (method_exists($record, 'setAttrs')) {
+                $record->setAttrs($data);
+            }
+            View::assign('record', $record);
+        } else {
+            View::assign('record', (object)$data);
+        }
+        View::assign('pageTitle', str_contains($template, '/edit') ? $this->pageTitle . ' - 编辑' : $this->pageTitle . ' - 新增');
+        $this->assignDefaultFormContext();
+        $this->assignFormContext();
+
+        return View::fetch($template);
+    }
+
+    protected function buildViewFields(object $record): array
+    {
+        $model = $this->getModel();
+        try {
+            $fieldNames = array_keys($model->db()->getFields());
+        } catch (\Throwable $exception) {
+            $fieldNames = array_keys((array)$record);
+        }
+
+        $fields = [];
+        foreach ($fieldNames as $field) {
+            if (in_array($field, $this->hiddenViewFields, true)) {
+                continue;
+            }
+
+            $fields[] = [
+                'label' => $this->viewFieldLabel($field),
+                'value' => $this->formatViewFieldValue($field, $record->{$field} ?? null),
+            ];
+        }
+
+        return $fields;
+    }
+
+    protected function viewFieldLabel(string $field): string
+    {
+        $labels = array_merge([
+            'code' => '编号',
+            'name' => '名称',
+            'title' => '标题',
+            'status' => '状态',
+            'publish' => '启用',
+            'department_id' => '所属部门',
+            'employee_id' => '员工',
+            'equipment_id' => '设备',
+            'supplier_id' => '供应商',
+            'description' => '描述',
+            'remark' => '备注',
+            'remarks' => '备注',
+            'created' => '创建时间',
+            'modified' => '更新时间',
+        ], $this->viewFieldLabels);
+
+        if (isset($labels[$field])) {
+            return $labels[$field];
+        }
+
+        return ucwords(str_replace('_', ' ', $field));
+    }
+
+    protected function formatViewFieldValue(string $field, mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '-';
+        }
+        if (is_bool($value)) {
+            return $value ? '是' : '否';
+        }
+        if (in_array($field, ['publish'], true)) {
+            return (int)$value === 1 ? '是' : '否';
+        }
+        if ($field === 'status') {
+            return qms_status_label(qms_controller_url($this->request->controller()), (string)$value);
+        }
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d H:i:s');
+        }
+        if (is_array($value) || is_object($value)) {
+            return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '-';
+        }
+
+        return (string)$value;
+    }
+
+    protected function flashValidationErrors(array $errors): void
+    {
+        Session::flash('validation_errors', $errors);
+    }
+
+    public function index()
+    {
+        $class = $this->modelClass;
+        /** @var \think\Model $prototype */
+        $prototype = $this->getModel();
+        $orderField = $prototype->hasColumn('created') ? 'created' : 'id';
+
+        if ($prototype->hasColumn('soft_delete')) {
+            $query = $class::where('soft_delete', 0);
+        } else {
+            $query = $class::whereRaw('1=1');
+        }
+
+        $items = $query->order($orderField, 'desc')->paginate(20);
+        View::assign('items', $items);
+        View::assign('pages', $items->render());
+        View::assign('pageTitle', $this->pageTitle);
+        $this->assignIndexContext();
+
+        return View::fetch($this->viewPrefix . '/index');
+    }
+
+    public function add()
+    {
+        if ($this->request->isPost()) {
+            $data = $this->onlyWritable($this->request->post());
+            $errors = $this->validateFormData($data, null);
+            if ($errors !== []) {
+                $this->flashValidationErrors($errors);
+                View::assign('form', $data);
+                View::assign('record', (object)$data);
+                View::assign('pageTitle', $this->pageTitle . ' - 新增');
+                $this->assignDefaultFormContext();
+                $this->assignFormContext();
+
+                return View::fetch($this->viewPrefix . '/add');
+            }
+            $model = $this->getModel();
+            $model->save($data);
+            Session::flash('success', '保存成功');
+
+            return redirect($this->listRedirectUrl());
+        }
+        View::assign('pageTitle', $this->pageTitle . ' - 新增');
+        View::assign('form', []);
+        $this->assignDefaultFormContext();
+        $this->assignFormContext();
+
+        return View::fetch($this->viewPrefix . '/add');
+    }
+
+    public function edit()
+    {
+        $id = $this->request->param('id');
+        $record = $this->findActiveRecord((string)$id);
+        if (!$record) {
+            throw new HttpException(404, '记录不存在');
+        }
+
+        if ($this->request->isPost()) {
+            $data = $this->onlyWritable($this->request->post(), (string)$id);
+            $errors = $this->validateFormData($data, (string)$id);
+            if ($errors !== []) {
+                $this->flashValidationErrors($errors);
+                if (method_exists($record, 'setAttrs')) {
+                    $record->setAttrs($data);
+                }
+                View::assign('record', $record);
+                View::assign('form', $data);
+                View::assign('pageTitle', $this->pageTitle . ' - 编辑');
+                $this->assignDefaultFormContext();
+                $this->assignFormContext();
+
+                return View::fetch($this->viewPrefix . '/edit');
+            }
+            Db::transaction(function () use ($record, $data) {
+                $record->save($data);
+            });
+            Session::flash('success', '已更新');
+
+            return redirect($this->listRedirectUrl());
+        }
+
+        View::assign('record', $record);
+        View::assign('pageTitle', $this->pageTitle . ' - 编辑');
+        $this->assignDefaultFormContext();
+        $this->assignFormContext();
+
+        return View::fetch($this->viewPrefix . '/edit');
+    }
+
+    public function view()
+    {
+        $id = $this->request->param('id');
+        $record = $this->findActiveRecord((string)$id);
+        if (!$record) {
+            throw new HttpException(404, '记录不存在');
+        }
+        View::assign('record', $record);
+        View::assign('fields', $this->buildViewFields($record));
+        if (FieldAuditService::shouldAuditModel($record)) {
+            View::assign(
+                'fieldChangeLogs',
+                FieldAuditService::displayLogsFor(FieldAuditService::modelDisplayName($record), (string)$id)
+            );
+        }
+        View::assign('pageTitle', $this->pageTitle . ' - 详情');
+        $this->assignFormContext();
+
+        return View::fetch($this->viewPrefix . '/view');
+    }
+
+    public function delete()
+    {
+        $id = $this->request->param('id');
+        $model = $this->getModel();
+        $record = $this->findActiveRecord((string)$id);
+        if (!$record) {
+            throw new HttpException(404, '记录不存在');
+        }
+        if ($model->hasColumn('soft_delete')) {
+            $record->soft_delete = 1;
+            $record->save();
+        } else {
+            $record->delete();
+        }
+        Session::flash('success', '已删除');
+
+        return redirect($this->listRedirectUrl());
+    }
+
+    public function exportCsv(): void
+    {
+        $class = $this->modelClass;
+        $prototype = $this->getModel();
+        $fields = array_keys($prototype->db()->getFields());
+        $fields = array_values(array_filter($fields, static function (string $field): bool {
+            return !in_array($field, ['password', 'soft_delete'], true);
+        }));
+        $orderField = $prototype->hasColumn('created') ? 'created' : 'id';
+
+        if ($prototype->hasColumn('soft_delete')) {
+            $query = $class::where('soft_delete', 0);
+        } else {
+            $query = $class::whereRaw('1=1');
+        }
+
+        $rows = $query->order($orderField, 'desc')->select();
+        $filename = qms_controller_url($this->request->controller()) . '_' . date('Ymd_His') . '.csv';
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        $output = fopen('php://output', 'w');
+        fwrite($output, "\xEF\xBB\xBF");
+        fputcsv($output, $fields, ',', '"', '');
+        foreach ($rows as $row) {
+            $line = [];
+            foreach ($fields as $field) {
+                $value = $row->{$field} ?? '';
+                if (is_array($value) || is_object($value)) {
+                    $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+                }
+                $line[] = (string)$value;
+            }
+            fputcsv($output, $line, ',', '"', '');
+        }
+        fclose($output);
+        exit;
+    }
+}

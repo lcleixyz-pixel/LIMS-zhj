@@ -1,0 +1,59 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑能力确认</h5></div>
+    <div class="card-body">
+        <form method="post" action="/competency_record/edit?id={$record.id}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">被评价人员</label>
+                    <select name="employee_id" class="form-select" required>
+                        <option value="">请选择</option>
+                        {volist name="employees" id="employee"}
+                        <option value="{$employee.id}" {if $record.employee_id == $employee.id}selected{/if}>{$employee.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">检测项目</label>
+                    <input type="text" name="test_item" class="form-control" value="{$record.test_item}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">方法/标准</label>
+                    <input type="text" name="method_standard" class="form-control" value="{$record.method_standard|default=''}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">评价日期</label>
+                    <input type="date" name="assessment_date" class="form-control" value="{$record.assessment_date}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">评价人</label>
+                    <select name="assessor_id" class="form-select" required>
+                        <option value="">请选择</option>
+                        {volist name="users" id="user"}
+                        <option value="{$user.id}" {if $record.assessor_id == $user.id}selected{/if}>{$user.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">评价结果</label>
+                    <select name="result" class="form-select">
+                        {foreach $resultOptions as $value=>$label}
+                        <option value="{$value}" {if $record.result == $value}selected{/if}>{$label}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">授权范围</label>
+                    <textarea name="authorization_scope" class="form-control" rows="2">{$record.authorization_scope|default=''}</textarea>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">有效期至</label>
+                    <input type="date" name="valid_until" class="form-control" value="{$record.valid_until|default=''}">
+                </div>
+            </div>
+            <div class="text-end">
+                <a href="/competency_record/view?id={$record.id}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">更新</button>
+            </div>
+        </form>
+    </div>
+</div>

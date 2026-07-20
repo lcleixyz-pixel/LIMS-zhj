@@ -1,0 +1,58 @@
+[
+  {
+    "name": "01-登录页沙箱标识",
+    "url": "/login",
+    "status": 200,
+    "title": "登录 - 珠宝检测实验室 QMS",
+    "requiredText": "仅限 SIM 演练",
+    "screenshot": "01-登录页沙箱标识.png"
+  },
+  {
+    "name": "02-SIM质量负责人首页",
+    "url": "/",
+    "status": 200,
+    "title": "珠宝检测实验室质量管理系统 - SIM-质量负责人",
+    "requiredText": "SIM-质量负责人",
+    "screenshot": "02-SIM质量负责人首页.png"
+  },
+  {
+    "name": "03-SIM锁定记录列表",
+    "url": "/record_form_instance/index",
+    "status": 200,
+    "title": "珠宝检测实验室质量管理系统 - SIM-质量负责人",
+    "requiredText": "SIM-",
+    "screenshot": "03-SIM锁定记录列表.png"
+  },
+  {
+    "name": "04-SIM合同评审锁定记录",
+    "url": "/record_form_instance/view?id=sim-gov-run-rf-contract",
+    "status": 200,
+    "title": "珠宝检测实验室质量管理系统 - SIM-质量负责人",
+    "requiredText": "SIM-2026-01合同评审",
+    "screenshot": "04-SIM合同评审锁定记录.png"
+  },
+  {
+    "name": "05-SIM设备台账",
+    "url": "/equipment/index",
+    "status": 200,
+    "title": "珠宝检测实验室质量管理系统 - SIM-质量负责人",
+    "requiredText": "SIM-",
+    "screenshot": "05-SIM设备台账.png"
+  },
+  {
+    "name": "06-SIM内部审核计划",
+    "url": "/audit_plan/view?id=sim-gov-run-audit-plan",
+    "status": 200,
+    "title": "珠宝检测实验室质量管理系统 - SIM-质量负责人",
+    "requiredText": "SIM-2026完整内部审核",
+    "screenshot": "06-SIM内部审核计划.png"
+  },
+  {
+    "name": "07-SIM管理评审",
+    "url": "/management_review/view?id=sim-gov-run-management-review",
+    "status": 200,
+    "title": "珠宝检测实验室质量管理系统 - SIM-质量负责人",
+    "requiredText": "SIM-2026管理评审",
+    "screenshot": "07-SIM管理评审.png"
+  }
+]

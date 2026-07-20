@@ -1,0 +1,358 @@
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">文件详情 - {$doc.doc_number|default=''}</h5>
+        <div class="d-flex flex-wrap gap-1">
+            {if !in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'register', $doc)}
+            <a href="/document/edit?id={$doc.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            {/if}
+            {if $doc.status == 'draft' && qms_can_action('document', 'submit_review', $doc)}
+            <form method="post" action="/document/submitReview?id={$doc.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-success">提交审核</button>
+            </form>
+            {/if}
+            {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'revise', $doc)}
+            <a href="/document/revise?id={$doc.id}" class="btn btn-sm btn-outline-warning">发起修订</a>
+            {/if}
+            {if qms_can_action('document', 'review', $doc)}
+            <a href="/document/review?id={$doc.id}" class="btn btn-sm btn-outline-primary">定期评审</a>
+            {/if}
+            {if $doc.file_path}
+            <a href="/document/download?id={$doc.id}" class="btn btn-sm btn-outline-info">下载附件</a>
+            <a href="/document/onlyoffice?id={$doc.id}" class="btn btn-sm btn-outline-primary">ONLYOFFICE</a>
+            {/if}
+            {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'controlled_print', $doc)}
+            <form method="post" action="/document/controlledPrint?id={$doc.id}" class="d-inline">
+                <input type="hidden" name="purpose" value="受控打印">
+                <button type="submit" class="btn btn-sm btn-outline-dark">受控打印</button>
+            </form>
+            {/if}
+            <a href="/document/index" class="btn btn-sm btn-outline-secondary">返回列表</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr>
+                <th width="150">文件编号</th>
+                <td>{$doc.doc_number|default=''}</td>
+                <th width="150">文件标题</th>
+                <td>{$doc.title|default=''}</td>
+            </tr>
+            <tr>
+                <th>文件层级</th>
+                <td>
+                    {if $doc.level == 1}一级 - 质量手册
+                    {elseif $doc.level == 2}二级 - 程序文件
+                    {elseif $doc.level == 3}三级 - 作业指导书
+                    {else}四级 - 记录表单{/if}
+                </td>
+                <th>版本号</th>
+                <td>{$doc.version|default='A/0'}</td>
+            </tr>
+            <tr>
+                <th>文件状态</th>
+                <td>
+                    {if $doc.status == 'draft'}<span class="badge bg-secondary">草稿</span>
+                    {elseif $doc.status == 'reviewing'}<span class="badge bg-warning text-dark">审核中</span>
+                    {elseif $doc.status == 'approved'}<span class="badge bg-info text-dark">已批准</span>
+                    {elseif $doc.status == 'trial_ready'}<span class="badge bg-warning text-dark">试运行就绪</span>
+                    {elseif $doc.status == 'published'}<span class="badge bg-success">已发布</span>
+                    {elseif $doc.status == 'obsolete'}<span class="badge bg-dark">已作废</span>
+                    {else}<span class="badge bg-secondary">{$doc.status}</span>{/if}
+                </td>
+                <th>生效日期</th>
+                <td>{$doc.effective_date|default='-'}</td>
+            </tr>
+            <tr>
+                <th>适用场所</th>
+                <td>{$siteName|default='-'}</td>
+                <th>归口部门</th>
+                <td>{$departmentName|default='-'}</td>
+            </tr>
+            <tr><th>文件分类</th><td colspan="3">{$categoryName|default='-'}</td></tr>
+            <tr>
+                <th>复审日期</th>
+                <td>{$doc.review_date|default='-'}</td>
+                <th>创建/更新时间</th>
+                <td>{$doc.created|default='-'} / {$doc.modified|default='-'}</td>
+            </tr>
+            <tr>
+                <th>修订说明</th>
+                <td colspan="3">{$doc.change_reason|default='-'}</td>
+            </tr>
+            <tr>
+                <th>附件</th>
+                <td colspan="3">
+                    {if $doc.file_path}
+                    <a href="/document/download?id={$doc.id}">{$doc.file_name|default=$doc.file_path}</a>
+                    {else}无{/if}
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0">分发记录</h6></div>
+    <div class="card-body">
+        {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'distribute', $doc)}
+        <form method="post" action="/document/distribute" class="row g-2 align-items-end mb-3">
+            <input type="hidden" name="id" value="{$doc.id}">
+            <div class="col-md-5">
+                <label class="form-label">接收人</label>
+                <select name="user_ids[]" class="form-select" multiple required>
+                    {volist name="distributionUsers" id="u"}
+                    <option value="{$u.id}">{$u.name|default=$u.username}</option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">分发说明</label>
+                <input type="text" name="remarks" class="form-control" placeholder="受控副本、电子版、培训用等">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">分发</button>
+            </div>
+        </form>
+        {/if}
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead><tr><th>接收人</th><th>分发时间</th><th>接收确认</th><th>回收确认</th><th>说明</th><th>操作</th></tr></thead>
+                <tbody>
+                    {volist name="distributions" id="dist"}
+                    <tr>
+                        <td>{$distributionUserNames[$dist.user_id]|default=$dist.user_id}</td>
+                        <td>{$dist.distributed_at|default='-'}</td>
+                        <td>{$dist.confirmed_at|default='未确认'}</td>
+                        <td>{$dist.recalled_at|default='未回收'}</td>
+                        <td>{$dist.remarks|default='-'}</td>
+                        <td class="d-flex flex-wrap gap-1">
+                            {if !$dist.confirmed_at && isset($user.id) && $dist.user_id == $user.id}
+                            <form method="post" action="/document/confirmReceipt" class="d-inline">
+                                <input type="hidden" name="document_id" value="{$doc.id}">
+                                <input type="hidden" name="distribution_id" value="{$dist.id}">
+                                <button type="submit" class="btn btn-sm btn-outline-success">确认接收</button>
+                            </form>
+                            {/if}
+                            {if $doc.status == 'obsolete' && !$dist.recalled_at && isset($user.id) && $dist.user_id == $user.id}
+                            <form method="post" action="/document/confirmRecall" class="d-inline">
+                                <input type="hidden" name="document_id" value="{$doc.id}">
+                                <input type="hidden" name="distribution_id" value="{$dist.id}">
+                                <button type="submit" class="btn btn-sm btn-outline-warning">确认回收</button>
+                            </form>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="distributions"}
+                    <tr><td colspan="6" class="text-center text-muted">暂无分发记录</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">评审记录</h6>
+        {if qms_can_action('document', 'recall', $doc)}
+        <form method="post" action="/document/obsolete" class="d-flex gap-2" onsubmit="return confirm('确认作废该文件并发起回收确认？');">
+            <input type="hidden" name="id" value="{$doc.id}">
+            <input type="hidden" name="review_note" value="文件作废并发起回收确认">
+            {if $doc.status != 'obsolete'}<button type="submit" class="btn btn-sm btn-outline-danger">作废并回收</button>{/if}
+        </form>
+        {/if}
+    </div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>评审日期</th><th>结论</th><th>说明</th><th>下次评审</th><th>评审人</th></tr></thead>
+            <tbody>
+                {volist name="reviews" id="review"}
+                <tr>
+                    <td>{$review.review_date|default='-'}</td>
+                    <td>
+                        {if $review.result == 'continue'}继续使用
+                        {elseif $review.result == 'revise'}需要修订
+                        {elseif $review.result == 'obsolete'}作废并回收
+                        {else}{$review.result|default='-'}{/if}
+                    </td>
+                    <td>{$review.review_note|default='-'}</td>
+                    <td>{$review.next_review_date|default='-'}</td>
+                    <td>{$review.reviewer.name|default=$review.reviewed_by|default='-'}</td>
+                </tr>
+                {/volist}
+                {empty name="reviews"}
+                <tr><td colspan="5" class="text-center text-muted">暂无评审记录</td></tr>
+                {/empty}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0">结构化文件</h6></div>
+    <div class="card-body">
+        {notempty name="structureSummary"}
+        <div class="row g-3 align-items-center">
+            <div class="col-md-3">
+                <div class="text-muted small">结构状态</div>
+                <div>{$structureSummary.status} / {$structureSummary.render_status}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">内容块</div>
+                <div>{$structureSummary.block_count} 个</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">块级追溯</div>
+                <div>{$structureSummary.link_count} 条</div>
+            </div>
+            <div class="col-md-3 text-md-end">
+                <a href="/planning/structures/view?id={$structureSummary.structured_document_id}" class="btn btn-sm btn-outline-primary">查看结构化文件</a>
+            </div>
+            <div class="col-12">
+                <div class="text-muted small">同步结构化：文件修订保存后会从受控附件重新抽取 Markdown 内容块，生成草稿并等待复核发布。</div>
+            </div>
+        </div>
+        {else}
+        <div class="text-muted small">暂无结构化文件。可在“体系策划 / 文件结构化”中生成结构化骨架后再进行追溯复核。</div>
+        {/notempty}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">受控打印记录</h6>
+        {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'controlled_print', $doc)}
+        <form method="post" action="/document/controlledPrint?id={$doc.id}" class="d-inline">
+            <input type="hidden" name="purpose" value="受控打印">
+            <button type="submit" class="btn btn-sm btn-outline-dark">生成打印页</button>
+        </form>
+        {/if}
+    </div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>打印编号</th>
+                    <th>份数</th>
+                    <th>用途</th>
+                    <th>水印</th>
+                    <th>打印时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="printLogs" id="log"}
+                <tr>
+                    <td>{$log.print_number|default=''}</td>
+                    <td>{$log.copy_count|default='1'}</td>
+                    <td>{$log.purpose|default='-'}</td>
+                    <td>{$log.watermark_text|default=''}</td>
+                    <td>{$log.printed_at|default=''}</td>
+                </tr>
+                {/volist}
+                {empty name="printLogs"}
+                <tr><td colspan="5" class="text-center text-muted">暂无受控打印记录</td></tr>
+                {/empty}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0">审批流程</h6></div>
+    <div class="card-body">
+        {volist name="approvals" id="row"}
+        <div class="border rounded p-2 mb-2">
+            <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+                <span class="badge bg-primary">层级 {$row.approval_level|default=''}</span>
+                <span class="badge {if $row.status == 'approved'}bg-success{elseif $row.status == 'rejected'}bg-danger{else}bg-secondary{/if}">
+                    {if $row.status == 'approved'}已通过{elseif $row.status == 'rejected'}已驳回{else}待处理{/if}
+                </span>
+                <strong>{$row.user.name|default=$row.user_id}</strong>
+                <span class="text-muted ms-2">
+                    {if $row.approval_level == 1}编制
+                    {elseif $row.approval_level == 2}审核
+                    {elseif $row.approval_level == 3}批准
+                    {/if}
+                </span>
+                <span class="text-muted ms-auto">{$row.approved_on|default='-'}</span>
+            </div>
+            {if $row.comments}
+            <div class="text-muted small">{$row.comments}</div>
+            {/if}
+            {if $row.status == 'pending' && isset($user.id) && $row.user_id == $user.id}
+            <form method="post" action="/approval/approve" class="row g-2 mt-2">
+                <input type="hidden" name="id" value="{$row.id}">
+                <div class="col-md-4">
+                    <select name="status" class="form-select form-select-sm" required>
+                        <option value="approved">同意</option>
+                        <option value="rejected">驳回</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <input type="text" name="comments" class="form-control form-control-sm" placeholder="审批意见">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-sm btn-primary">提交</button>
+                </div>
+            </form>
+            {/if}
+        </div>
+        {/volist}
+        {empty name="approvals"}
+        <p class="text-muted mb-0">暂无审批记录</p>
+        {/empty}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0">变更历史</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>时间</th><th>字段</th><th>原值</th><th>新值</th><th>操作人</th></tr></thead>
+            <tbody>
+                {volist name="fieldChangeLogs" id="log"}
+                <tr>
+                    <td>{$log.changed_at|default='-'}</td>
+                    <td>{$log.field_label|default=$log.field_name|default='-'}</td>
+                    <td>{$log.old_value_display|default='-'}</td>
+                    <td>{$log.new_value_display|default='-'}</td>
+                    <td>{$log.changed_by_display|default='未知用户（岗位未登记）'}</td>
+                </tr>
+                {/volist}
+                {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h6 class="mb-0">修订历史</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th>版本</th>
+                    <th>修订次</th>
+                    <th>修订说明</th>
+                    <th>快照文件</th>
+                    <th>修订时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {volist name="revisions" id="rev"}
+                <tr>
+                    <td>{$rev.version|default=''}</td>
+                    <td>{$rev.revision|default=''}</td>
+                    <td>{$rev.change_reason|default=''}</td>
+                    <td>{$rev.file_name|default='-'}</td>
+                    <td>{$rev.created|default=''}</td>
+                </tr>
+                {/volist}
+                {empty name="revisions"}
+                <tr><td colspan="5" class="text-center text-muted">暂无修订记录</td></tr>
+                {/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

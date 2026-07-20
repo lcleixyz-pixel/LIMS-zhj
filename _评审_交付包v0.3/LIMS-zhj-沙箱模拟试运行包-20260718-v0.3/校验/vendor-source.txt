@@ -1,0 +1,3 @@
+vendor source: reused from /Users/lc.leixyz/Desktop/LIMS-zhj-沙箱模拟试运行包-20260717-v0.2/source/jewelry-qms/vendor
+reason: current main worktree has no vendor; reused offline Composer dependency snapshot for sandbox rehearsal only
+4.3M	/Users/lc.leixyz/Desktop/LIMS-zhj-沙箱模拟试运行包-20260718-v0.3/source/jewelry-qms/vendor

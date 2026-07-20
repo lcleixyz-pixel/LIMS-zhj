@@ -1,0 +1,163 @@
+##### ai_settings_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### audit_finding_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### audit_plan_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### calendar_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### calibration_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### capa_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### competency_record_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### complaint_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### compliance_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### dashboard_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### doc_template_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### document_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### employee_certificate_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### employee_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### equipment_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### import_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### management_review_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### nonconformity_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### notification_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### planning_change-events.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### planning_clauses.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### planning_elements.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### planning_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### planning_objectives.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### planning_regulatory-candidates.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### planning_responsibilities.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### planning_sources.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### planning_structures.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### planning_traceability.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### record_form_instance_create.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### record_form_instance_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### record_form_instance_reviewDashboard.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### record_form_template_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### reference_material_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### review_action_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### supplier_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### supplier_qualified.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### training_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### training_plan_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### training_record_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码
+
+##### user_index.html
+NAV: 
+BODY: 登录 - 珠宝检测实验室 QMS | QC | 珠宝检测实验室 QMS | CMA / CNAS 质量管理系统 | 用户名 | 密码 | 登 录 | 首次登录或忘记密码，请联系系统管理员 | 修改密码

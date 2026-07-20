@@ -1,0 +1,20 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">设备授权使用人</h5>
+        <div>
+            <a href="/equipment_authorization/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            <a href="/equipment_authorization/index" class="btn btn-sm btn-outline-secondary">返回列表</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="160">设备</th><td>{$record.equipment.name|default=$record.equipment_id}</td></tr>
+            <tr><th>人员</th><td>{$record.employee.name|default=$record.employee_id}</td></tr>
+            <tr><th>授权日期</th><td>{$record.authorized_date}</td></tr>
+            <tr><th>有效期至</th><td>{$record.valid_until|default='-'}</td></tr>
+            <tr><th>授权范围</th><td>{$record.authorization_scope|default='-'}</td></tr>
+            <tr><th>状态</th><td>{:qms_status_label('equipment_authorization', $record.status)}</td></tr>
+            <tr><th>备注</th><td>{$record.remarks|default='-'}</td></tr>
+        </table>
+    </div>
+</div>

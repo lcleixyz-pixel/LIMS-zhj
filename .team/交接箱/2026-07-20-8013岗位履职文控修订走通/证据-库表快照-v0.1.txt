@@ -1,0 +1,20 @@
+id	doc_number	version	status	publish	prepared_by	reviewed_by	approved_by
+sim-bg10-obsolete-20260720	SIM-XZTC/BG-10	A/0	obsolete	0	SIM-R2-E-DOC	SIM-R2-E-QM	SIM-R2-E-QM
+7becc889-741c-4d53-81ad-f169790efda3	SIM-XZTC/CX-09-2022	A/0	trial_ready	1	SIM-R2-E-DOC	SIM-R2-E-TM	SIM-R2-E-QM
+9a8ba0e6-f444-4d72-abd4-4e852c892891	SIM-XZTC/CX-11-2022	A/0	draft	0	SIM-R2-E-DOC	SIM-R2-E-TM	SIM-R2-E-QM
+id	document_id	version	revision	created_by
+sim-986d44edb7294776adb5fef3a3d0ac01	501f0852-246c-4cc4-ad8f-c2672acc599b	2022	0	SIM-R2-U-DOC
+sim-a570d3ffb5094cf5a16fbde835ee5d45	0458cd61-5faf-482f-9819-2e096559afa1	2022	0	SIM-R2-U-DOC
+id	record	user_id	approval_level	status	c
+sim-086e1d59691f4cdf90e0fd9a927a2cd9	7becc889-741c-4d53-81ad-f169790efda3	SIM-R2-U-DOC	1	approved	
+sim-a8171004da804671af4a5bf8ce403a3c	7becc889-741c-4d53-81ad-f169790efda3	SIM-R2-U-TM	2	approved	SIM-技术负责人审核通过：合同评审签批包语义修订可进入批准
+sim-13193be7c87c479c80de1f169c35b7ca	7becc889-741c-4d53-81ad-f169790efda3	SIM-R2-U-QM	3	approved	SIM-质量负责人批准：同意合同评审程序 SIM 修订进入 trial_ready
+sim-8b94c0c86ea443edb117e184c41572c7	9a8ba0e6-f444-4d72-abd4-4e852c892891	SIM-R2-U-DOC	1	approved	
+sim-f0ebf28b292a49f3af92ec176f0c0edc	9a8ba0e6-f444-4d72-abd4-4e852c892891	SIM-R2-U-TM	2	pending	
+sim-99f7ae14f5e541e8862685d2d5f7635d	9a8ba0e6-f444-4d72-abd4-4e852c892891	SIM-R2-U-QM	3	pending	
+id	document_id	user_id	distributed_at	confirmed_at
+sim-57b782788b584499b183fa584bf3c269	7becc889-741c-4d53-81ad-f169790efda3	SIM-R2-U-HEAD-U	2026-07-20 11:32:48	2026-07-20 11:33:10
+sim-8dda4d25a2fc4f61ae2ea945773dad43	7becc889-741c-4d53-81ad-f169790efda3	SIM-R2-U-TM	2026-07-20 11:32:48	2026-07-20 11:33:10
+sim-a390959ce04d47d0a6555efe3eff8481	7becc889-741c-4d53-81ad-f169790efda3	SIM-R2-U-QM	2026-07-20 11:32:48	2026-07-20 11:33:10
+id	document_id	result	reviewed_by	LEFT(review_note,50)
+sim-2648ae4ec0d046c9be0de5f8a81843a4	sim-bg10-obsolete-20260720	obsolete	SIM-R2-U-QM	机构决定不作分包；BG-10 表作废并回收 SIM 副本

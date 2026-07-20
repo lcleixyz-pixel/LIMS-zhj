@@ -1,0 +1,122 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">设备 {$record.equipment_number}</h5>
+        {if qms_can_action('equipment', 'edit', $record)}<a href="/calibration/add?equipment_id={$record.id}" class="btn btn-sm btn-primary">登记校准</a>{/if}
+    </div>
+    <div class="card-body">
+        {if $daysUntil !== null && $daysUntil <= 30}
+        <div class="alert alert-{if $daysUntil <= 0}danger{else}warning{/if}">
+            {if $daysUntil <= 0}校准已过期{else}距下次校准还有 {$daysUntil} 天{/if}（{$record.next_calibration_date}）
+        </div>
+        {/if}
+        <table class="table table-bordered mb-4">
+            <tr><th width="120">名称</th><td>{$record.name}</td></tr>
+            <tr><th>场所</th><td>{$site.name|default='未指定'}</td></tr>
+            <tr><th>位置</th><td>{$record.location|default='-'}</td></tr>
+            <tr><th>状态</th><td>{:qms_status_label('equipment', $record.status)}</td></tr>
+            <tr><th>型号</th><td>{$record.model|default='-'}</td></tr>
+            <tr><th>测量范围</th><td>{$record.measurement_range|default='-'}</td></tr>
+            <tr><th>溯源方式</th><td>{$record.traceability_method|default='-'}</td></tr>
+            <tr><th>溯源有效期</th><td>{$record.traceability_due_date|default='-'}</td></tr>
+            <tr><th>确认结果</th><td>{$record.traceability_confirm_result|default='-'}</td></tr>
+            <tr><th>上次校准</th><td>{$record.last_calibration_date|default='-'}</td></tr>
+            <tr><th>下次校准</th><td>{$record.next_calibration_date|default='-'}</td></tr>
+        </table>
+        <h6>校准记录</h6>
+        <table class="table table-sm mb-4">
+            <thead><tr><th>日期</th><th>机构</th><th>证书号</th><th>结果</th></tr></thead>
+            <tbody>
+                {volist name="calibrations" id="c"}
+                <tr><td><a href="/calibration/view?id={$c.id}">{$c.calibration_date}</a></td><td>{$c.calibration_org}</td><td>{$c.certificate_number}</td><td>{$c.result}</td></tr>
+                {/volist}
+                {empty name="calibrations"}<tr><td colspan="4" class="text-center text-muted">暂无校准记录</td></tr>{/empty}
+            </tbody>
+        </table>
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">期间核查记录表格</h6>
+            <a href="/record_form_instance/index?keyword={$record.equipment_number}" class="btn btn-sm btn-outline-secondary">查看记录填写</a>
+        </div>
+        <table class="table table-sm mb-4">
+            <thead><tr><th>记录标题</th><th>表格编号</th><th>模板</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+                {volist name="periodicCheckInstances" id="instance"}
+                <tr>
+                    <td>{$instance.record_title|default='-'}</td>
+                    <td>{$instance.doc_number|default='-'}</td>
+                    <td>{$instance.template_name|default='-'}</td>
+                    <td>{$instance.status|default='-'}</td>
+                    <td><a href="/record_form_instance/view?id={$instance.id}">查看</a></td>
+                </tr>
+                {/volist}
+                {empty name="periodicCheckInstances"}<tr><td colspan="5" class="text-center text-muted">暂无匹配的期间核查记录表格</td></tr>{/empty}
+            </tbody>
+        </table>
+
+        <h6>期间核查维护记录</h6>
+        <table class="table table-sm mb-4">
+            <thead><tr><th>日期</th><th>说明</th><th>执行人</th><th>下次到期</th></tr></thead>
+            <tbody>
+                {volist name="verificationMaintenances" id="m"}
+                <tr><td>{$m.maintenance_date}</td><td>{$m.description|default='-'}</td><td>{$m.performed_by|default='-'}</td><td>{$m.next_due_date|default='-'}</td></tr>
+                {/volist}
+                {empty name="verificationMaintenances"}<tr><td colspan="4" class="text-center text-muted">暂无期间核查维护记录</td></tr>{/empty}
+            </tbody>
+        </table>
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">授权使用人</h6>
+            {if qms_can_action('equipment', 'edit', $record)}<a href="/equipment_authorization/add?equipment_id={$record.id}" class="btn btn-sm btn-outline-primary">新增授权</a>{/if}
+        </div>
+        <table class="table table-sm mb-4">
+            <thead><tr><th>人员</th><th>授权日期</th><th>有效期至</th><th>授权范围</th><th>状态</th></tr></thead>
+            <tbody>
+                {volist name="equipmentAuthorizations" id="auth"}
+                <tr>
+                    <td>{$auth.employee_name|default=$auth.employee_id}</td>
+                    <td>{$auth.authorized_date|default='-'}</td>
+                    <td>{$auth.valid_until|default='-'}</td>
+                    <td>{$auth.authorization_scope|default='-'}</td>
+                    <td>{$auth.status|default='-'}</td>
+                </tr>
+                {/volist}
+                {empty name="equipmentAuthorizations"}<tr><td colspan="5" class="text-center text-muted">暂无授权使用人</td></tr>{/empty}
+            </tbody>
+        </table>
+
+        <h6>维护保养</h6>
+        <table class="table table-sm">
+            <thead><tr><th>日期</th><th>类型</th><th>说明</th></tr></thead>
+            <tbody>{volist name="maintenances" id="m"}<tr><td>{$m.maintenance_date}</td><td>{$m.maintenance_type}</td><td>{$m.description|default='-'}</td></tr>{/volist}</tbody>
+        </table>
+        <h6>调拨记录</h6>
+        <table class="table table-sm">
+            <thead><tr><th>日期</th><th>调出</th><th>调入</th><th>原因</th></tr></thead>
+            <tbody>
+                {volist name="transfers" id="t"}<tr><td>{$t.transfer_date}</td><td>{$siteMap[$t.from_site_id]|default='未指定'}</td><td>{$siteMap[$t.to_site_id]|default=$t.to_site_id}</td><td>{$t.reason|default='-'}</td></tr>{/volist}
+                {empty name="transfers"}<tr><td colspan="4" class="text-muted">暂无调拨记录</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0">变更历史</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>时间</th><th>字段</th><th>原值</th><th>新值</th><th>操作人</th></tr></thead>
+            <tbody>
+                {volist name="fieldChangeLogs" id="log"}
+                <tr>
+                    <td>{$log.changed_at|default='-'}</td>
+                    <td>{$log.field_label|default=$log.field_name|default='-'}</td>
+                    <td>{$log.old_value_display|default='-'}</td>
+                    <td>{$log.new_value_display|default='-'}</td>
+                    <td>{$log.changed_by_display|default='未知用户（岗位未登记）'}</td>
+                </tr>
+                {/volist}
+                {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

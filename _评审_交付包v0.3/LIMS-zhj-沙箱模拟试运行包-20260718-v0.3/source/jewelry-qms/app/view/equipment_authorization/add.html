@@ -1,0 +1,33 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">新增设备授权使用人</h5></div>
+    <div class="card-body">
+        <form method="post" action="/equipment_authorization/add">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">设备</label>
+                    <select name="equipment_id" class="form-select" required>
+                        <option value="">请选择</option>
+                        {volist name="equipments" id="eq"}
+                        <option value="{$eq.id}" {if $currentEquipmentId == $eq.id}selected{/if}>{$eq.equipment_number} {$eq.name}</option>
+                        {/volist}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">人员</label>
+                    <select name="employee_id" class="form-select" required>
+                        <option value="">请选择</option>
+                        {volist name="employees" id="employee"}<option value="{$employee.id}">{$employee.employee_number} {$employee.name}</option>{/volist}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3"><label class="form-label required">授权日期</label><input type="date" name="authorized_date" class="form-control" value="{$today}" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">有效期至</label><input type="date" name="valid_until" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">授权人</label><select name="authorized_by" class="form-select"><option value="">请选择</option>{volist name="users" id="u"}<option value="{$u.id}">{$u.name|default=$u.username}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label class="form-label">状态</label><select name="status" class="form-select">{volist name="statusOptions" id="option"}<option value="{$option.value}">{$option.label}</option>{/volist}</select></div>
+                <div class="col-12 mb-3"><label class="form-label">授权范围</label><textarea name="authorization_scope" class="form-control" rows="3"></textarea></div>
+                <div class="col-12 mb-3"><label class="form-label">备注</label><textarea name="remarks" class="form-control" rows="2"></textarea></div>
+            </div>
+            <a href="/equipment_authorization/index" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>

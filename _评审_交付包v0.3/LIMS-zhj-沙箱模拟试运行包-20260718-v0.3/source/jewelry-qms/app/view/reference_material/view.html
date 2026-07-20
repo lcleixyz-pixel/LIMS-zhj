@@ -1,0 +1,21 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">标准物质 {$record.code}</h5>
+        <div>
+            <a href="/reference_material/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            <a href="/reference_material/index" class="btn btn-sm btn-outline-secondary">返回列表</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="160">名称</th><td>{$record.name}</td></tr>
+            <tr><th>批号</th><td>{$record.lot_number|default='-'}</td></tr>
+            <tr><th>生产/供应单位</th><td>{$record.manufacturer|default='-'}</td></tr>
+            <tr><th>溯源证书编号</th><td>{$record.traceability_certificate_number|default='-'}</td></tr>
+            <tr><th>有效期至</th><td>{$record.valid_until|default='-'}</td></tr>
+            <tr><th>存放位置</th><td>{$record.storage_location|default='-'}</td></tr>
+            <tr><th>状态</th><td>{:qms_status_label('reference_material', $record.status)}</td></tr>
+            <tr><th>备注</th><td>{$record.remarks|default='-'}</td></tr>
+        </table>
+    </div>
+</div>

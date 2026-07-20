@@ -1,0 +1,25 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">设备调拨记录</h5>
+        <a href="/equipment_transfer/add" class="btn btn-primary btn-sm">新增调拨</a>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped table-hover table-sm">
+            <thead><tr><th>设备</th><th>调出场所</th><th>调入场所</th><th>日期</th><th>原因</th><th>操作</th></tr></thead>
+            <tbody>
+                {volist name="items" id="item"}
+                <tr>
+                    <td>{$equipmentMap[$item.equipment_id]|default=$item.equipment_id}</td>
+                    <td>{$siteMap[$item.from_site_id]|default='未指定'}</td>
+                    <td>{$siteMap[$item.to_site_id]|default=$item.to_site_id}</td>
+                    <td>{$item.transfer_date}</td>
+                    <td>{$item.reason|default='-'}</td>
+                    <td><a href="/equipment_transfer/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a></td>
+                </tr>
+                {/volist}
+                {empty name="items"}<tr><td colspan="6" class="text-center text-muted">暂无调拨记录</td></tr>{/empty}
+            </tbody>
+        </table>
+        <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>
+    </div>
+</div>

@@ -1,0 +1,204 @@
+{
+  "schema_version": "1.0",
+  "package_id": "SIM-R2-AUDIT-CAPA-MR-001",
+  "rehearsal_run_id": "SIM-GOV-R2-20260719",
+  "status": "ready_to_apply",
+  "database_write_performed": false,
+  "generated_at": "2026-07-19",
+  "effect_scope": "sim_only_noncontrolled_rehearsal",
+  "basis": [
+    "依据与画像/全要素排演考卷与适用性冻结-v0.1.md",
+    "角色权限矩阵-v0.1.md",
+    "半年SIM合成运行场景与覆盖证据台账-v0.2.md",
+    "自治治理与SIM覆盖层/自治治理主台账-v0.1.json",
+    "独立验证/独立验证-半年运行与自治候选-v0.1.md"
+  ],
+  "verification_evidence_refs": [
+    "SIM-R2-BASIS-OVERLAY-V02",
+    "SIM-R2-TECHNICAL-RECORD-V02",
+    "SIM-R2-REPORT-ELEMENTS-V02"
+  ],
+  "internal_audit": {
+    "audit_plan_id": "SIM-R2-AUDIT-PLAN-001",
+    "audit_date": "2026-06-28",
+    "auditor_user_id": "SIM-R2-U-AUDITOR",
+    "auditee_user_ids": [
+      "SIM-R2-U-QM",
+      "SIM-R2-U-TM",
+      "SIM-R2-U-HEAD-U",
+      "SIM-R2-U-HEAD-H",
+      "SIM-R2-U-DOC"
+    ],
+    "independence_statement": "SIM 内审员只读取证，不参与八项候选的编制、实施或批准。",
+    "coverage": {
+      "sites": [
+        "SIM-URUMQI",
+        "SIM-HOTAN"
+      ],
+      "exam_items": [
+        {"exam_id": "EX-4.1", "applicability": "applicable"},
+        {"exam_id": "EX-4.2", "applicability": "applicable"},
+        {"exam_id": "EX-5.1", "applicability": "applicable"},
+        {"exam_id": "EX-5.2", "applicability": "applicable"},
+        {"exam_id": "EX-5.3", "applicability": "applicable"},
+        {"exam_id": "EX-5.4", "applicability": "applicable"},
+        {"exam_id": "EX-5.5", "applicability": "applicable"},
+        {"exam_id": "EX-5.6", "applicability": "applicable"},
+        {"exam_id": "EX-5.7", "applicability": "applicable"},
+        {"exam_id": "EX-6.1", "applicability": "applicable"},
+        {"exam_id": "EX-6.2", "applicability": "applicable"},
+        {"exam_id": "EX-6.3", "applicability": "applicable"},
+        {"exam_id": "EX-6.4", "applicability": "applicable"},
+        {"exam_id": "EX-6.5", "applicability": "applicable"},
+        {"exam_id": "EX-6.6", "applicability": "applicable"},
+        {"exam_id": "EX-7.1", "applicability": "applicable"},
+        {"exam_id": "EX-7.2.1", "applicability": "applicable"},
+        {"exam_id": "EX-7.2.2", "applicability": "applicable"},
+        {"exam_id": "EX-7.3", "applicability": "negative_test_only"},
+        {"exam_id": "EX-7.4", "applicability": "applicable"},
+        {"exam_id": "EX-7.5", "applicability": "applicable"},
+        {"exam_id": "EX-7.6", "applicability": "applicable"},
+        {"exam_id": "EX-7.7", "applicability": "applicable"},
+        {"exam_id": "EX-7.7-NR", "applicability": "negative_test_only"},
+        {"exam_id": "EX-7.8.1", "applicability": "applicable"},
+        {"exam_id": "EX-7.8.2", "applicability": "applicable"},
+        {"exam_id": "EX-7.8.3", "applicability": "applicable"},
+        {"exam_id": "EX-7.8.4", "applicability": "negative_test_only"},
+        {"exam_id": "EX-7.8.5", "applicability": "negative_test_only"},
+        {"exam_id": "EX-7.8.6", "applicability": "applicable"},
+        {"exam_id": "EX-7.8.7", "applicability": "applicable"},
+        {"exam_id": "EX-7.8.8", "applicability": "applicable"},
+        {"exam_id": "EX-7.9", "applicability": "applicable"},
+        {"exam_id": "EX-7.10", "applicability": "applicable"},
+        {"exam_id": "EX-7.11", "applicability": "applicable"},
+        {"exam_id": "EX-8.1", "applicability": "applicable"},
+        {"exam_id": "EX-8.2", "applicability": "applicable"},
+        {"exam_id": "EX-8.3", "applicability": "applicable"},
+        {"exam_id": "EX-8.4", "applicability": "applicable"},
+        {"exam_id": "EX-8.5", "applicability": "applicable"},
+        {"exam_id": "EX-8.6", "applicability": "applicable"},
+        {"exam_id": "EX-8.7", "applicability": "applicable"},
+        {"exam_id": "EX-8.8", "applicability": "applicable"},
+        {"exam_id": "EX-8.9", "applicability": "applicable"},
+        {"exam_id": "CNAS-01", "applicability": "applicable"},
+        {"exam_id": "CNAS-02", "applicability": "applicable"},
+        {"exam_id": "CNAS-03", "applicability": "applicable"},
+        {"exam_id": "CNAS-04", "applicability": "applicable"},
+        {"exam_id": "CNAS-05", "applicability": "negative_test_only"},
+        {"exam_id": "CNAS-06", "applicability": "applicable"},
+        {"exam_id": "CMA-01", "applicability": "applicable"},
+        {"exam_id": "CMA-02", "applicability": "applicable"},
+        {"exam_id": "CMA-03", "applicability": "applicable"},
+        {"exam_id": "CMA-04", "applicability": "applicable"},
+        {"exam_id": "CMA-05", "applicability": "applicable"},
+        {"exam_id": "CMA-06", "applicability": "applicable"},
+        {"exam_id": "CMA-07", "applicability": "applicable"},
+        {"exam_id": "CMA-08", "applicability": "applicable"},
+        {"exam_id": "NEG-01", "applicability": "negative_test_only"},
+        {"exam_id": "NEG-02", "applicability": "negative_test_only"},
+        {"exam_id": "NEG-03", "applicability": "negative_test_only"},
+        {"exam_id": "NEG-04", "applicability": "negative_test_only"},
+        {"exam_id": "NEG-05", "applicability": "negative_test_only"},
+        {"exam_id": "NEG-06", "applicability": "negative_test_only"},
+        {"exam_id": "NEG-07", "applicability": "negative_test_only"},
+        {"exam_id": "NEG-08", "applicability": "negative_test_only"}
+      ],
+      "site_check_generation": {
+        "rule": "cartesian_product(exam_items,sites)",
+        "default_result": "conform",
+        "evidence_ref_template": "SIM-R2-AUDIT-EVIDENCE-{site_code}-{exam_id}",
+        "nonconform_overrides": [
+          {"site_code": "SIM-URUMQI", "exam_id": "EX-8.2", "finding_id": "SIM-R2-AF-001"},
+          {"site_code": "SIM-HOTAN", "exam_id": "EX-8.3", "finding_id": "SIM-R2-AF-002"},
+          {"site_code": "SIM-URUMQI", "exam_id": "EX-8.9", "finding_id": "SIM-R2-AF-003"},
+          {"site_code": "SIM-HOTAN", "exam_id": "EX-7.4", "finding_id": "SIM-R2-AF-004"},
+          {"site_code": "SIM-URUMQI", "exam_id": "EX-7.3", "finding_id": "SIM-R2-AF-005"},
+          {"site_code": "SIM-HOTAN", "exam_id": "CMA-06", "finding_id": "SIM-R2-AF-006"},
+          {"site_code": "SIM-URUMQI", "exam_id": "EX-7.5", "finding_id": "SIM-R2-AF-007"},
+          {"site_code": "SIM-HOTAN", "exam_id": "EX-7.8.2", "finding_id": "SIM-R2-AF-008"}
+        ]
+      },
+      "denominator": 132,
+      "covered": 132,
+      "coverage_percent": 100,
+      "reference_items_used": [
+        "CNAS-07",
+        "CNAS-08"
+      ]
+    },
+    "findings": [
+      {"finding_id": "SIM-R2-AF-001", "finding_number": "SIM-R2-AF-001", "governance_finding_id": "R2-FIND-001", "site_code": "SIM-URUMQI", "clause": "EX-8.2", "severity": "major", "description": "第四版手册程序引用仍指向历史版本。", "baseline_observation_frozen": true, "identified_date": "2026-06-28", "responsible_id": "SIM-R2-U-DOC", "capa_id": "SIM-R2-CAPA-AUD-001", "status": "closed", "closed_date": "2026-07-11"},
+      {"finding_id": "SIM-R2-AF-002", "finding_number": "SIM-R2-AF-002", "governance_finding_id": "R2-FIND-002", "site_code": "SIM-HOTAN", "clause": "EX-8.3", "severity": "minor", "description": "CX-05和CX-31仍存在历史程序引用。", "baseline_observation_frozen": true, "identified_date": "2026-06-28", "responsible_id": "SIM-R2-U-DOC", "capa_id": "SIM-R2-CAPA-AUD-002", "status": "closed", "closed_date": "2026-07-11"},
+      {"finding_id": "SIM-R2-AF-003", "finding_number": "SIM-R2-AF-003", "governance_finding_id": "R2-FIND-003", "site_code": "SIM-URUMQI", "clause": "EX-8.9", "severity": "major", "description": "CX-21管理评审批准职责冲突且记录清单错挂。", "baseline_observation_frozen": true, "identified_date": "2026-06-28", "responsible_id": "SIM-R2-U-QM", "capa_id": "SIM-R2-CAPA-AUD-003", "status": "closed", "closed_date": "2026-07-11"},
+      {"finding_id": "SIM-R2-AF-004", "finding_number": "SIM-R2-AF-004", "governance_finding_id": "R2-FIND-004", "site_code": "SIM-HOTAN", "clause": "EX-7.4", "severity": "major", "description": "CX-28正常路径与本轮不留样、不分包事实冲突。", "baseline_observation_frozen": true, "identified_date": "2026-06-28", "responsible_id": "SIM-R2-U-QM", "capa_id": "SIM-R2-CAPA-AUD-004", "status": "closed", "closed_date": "2026-07-11"},
+      {"finding_id": "SIM-R2-AF-005", "finding_number": "SIM-R2-AF-005", "governance_finding_id": "R2-FIND-005", "site_code": "SIM-URUMQI", "clause": "EX-7.3", "severity": "major", "description": "CX-35导出层污染且正式适用状态证据不足。", "baseline_observation_frozen": true, "identified_date": "2026-06-28", "responsible_id": "SIM-R2-U-DOC", "capa_id": "SIM-R2-CAPA-AUD-005", "status": "closed", "closed_date": "2026-07-11"},
+      {"finding_id": "SIM-R2-AF-006", "finding_number": "SIM-R2-AF-006", "governance_finding_id": "R2-FIND-006", "site_code": "SIM-HOTAN", "clause": "CMA-06", "severity": "major", "description": "方法、场所和报告标志缺少逐项目分流控制。", "baseline_observation_frozen": true, "identified_date": "2026-06-28", "responsible_id": "SIM-R2-U-TM", "capa_id": "SIM-R2-CAPA-AUD-006", "status": "closed", "closed_date": "2026-07-11"},
+      {"finding_id": "SIM-R2-AF-007", "finding_number": "SIM-R2-AF-007", "governance_finding_id": "R2-FIND-007", "site_code": "SIM-URUMQI", "clause": "EX-7.5", "severity": "major", "description": "现用模板字段语义不足，技术记录不能支持活动重现。", "baseline_observation_frozen": true, "identified_date": "2026-06-28", "responsible_id": "SIM-R2-U-DOC", "capa_id": "SIM-R2-CAPA-AUD-007", "status": "closed", "closed_date": "2026-07-11"},
+      {"finding_id": "SIM-R2-AF-008", "finding_number": "SIM-R2-AF-008", "governance_finding_id": "R2-FIND-008", "site_code": "SIM-HOTAN", "clause": "EX-7.8.2", "severity": "minor", "description": "设备变体、系统验证和报告要素记录承接方式不足。", "baseline_observation_frozen": true, "identified_date": "2026-06-28", "responsible_id": "SIM-R2-U-TM", "capa_id": "SIM-R2-CAPA-AUD-008", "status": "closed", "closed_date": "2026-07-11"}
+    ]
+  },
+  "capa_records": [
+    {"capa_id": "SIM-R2-CAPA-AUD-001", "source_finding_id": "SIM-R2-AF-001", "assigned_to": "SIM-R2-U-DOC", "implemented_date": "2026-07-03", "verification": "SIM 内审员逐行复算旧引用并验证候选回链。", "verified_by": "SIM-R2-U-AUDITOR", "verified_date": "2026-07-05", "effectiveness_review_date": "2026-07-10", "effectiveness_result": "受影响文件复演未再检出历史引用。", "status": "closed"},
+    {"capa_id": "SIM-R2-CAPA-AUD-002", "source_finding_id": "SIM-R2-AF-002", "assigned_to": "SIM-R2-U-DOC", "implemented_date": "2026-07-03", "verification": "SIM 内审员复核CX-05和CX-31引用一致性。", "verified_by": "SIM-R2-U-AUDITOR", "verified_date": "2026-07-05", "effectiveness_review_date": "2026-07-10", "effectiveness_result": "程序引用复演保持2022版一致。", "status": "closed"},
+    {"capa_id": "SIM-R2-CAPA-AUD-003", "source_finding_id": "SIM-R2-AF-003", "assigned_to": "SIM-R2-U-QM", "implemented_date": "2026-07-03", "verification": "SIM 内审员确认最终批准角色固定为实验室主任且错挂记录已移除。", "verified_by": "SIM-R2-U-AUDITOR", "verified_date": "2026-07-05", "effectiveness_review_date": "2026-07-10", "effectiveness_result": "管评职责和记录清单复演无冲突。", "status": "closed"},
+    {"capa_id": "SIM-R2-CAPA-AUD-004", "source_finding_id": "SIM-R2-AF-004", "assigned_to": "SIM-R2-U-QM", "implemented_date": "2026-07-03", "verification": "SIM 内审员验证不留样和不分包写前阻断。", "verified_by": "SIM-R2-U-AUDITOR", "verified_date": "2026-07-05", "effectiveness_review_date": "2026-07-10", "effectiveness_result": "两场所负向复演均未生成留样或分包记录。", "status": "closed"},
+    {"capa_id": "SIM-R2-CAPA-AUD-005", "source_finding_id": "SIM-R2-AF-005", "assigned_to": "SIM-R2-U-DOC", "implemented_date": "2026-07-03", "verification": "SIM 内审员验证抽样仅为负向测试且无记录误写。", "verified_by": "SIM-R2-U-AUDITOR", "verified_date": "2026-07-05", "effectiveness_review_date": "2026-07-10", "effectiveness_result": "两场所抽样误触发复演均在写前拒绝。", "status": "closed"},
+    {"capa_id": "SIM-R2-CAPA-AUD-006", "source_finding_id": "SIM-R2-AF-006", "assigned_to": "SIM-R2-U-TM", "implemented_date": "2026-07-03", "verification": "SIM 内审员核对16条链的场所、方法和标志分流。", "verified_by": "SIM-R2-U-AUDITOR", "verified_date": "2026-07-05", "effectiveness_review_date": "2026-07-10", "effectiveness_result": "五项国标与三项DB65复演保持正确分流。", "status": "closed"},
+    {"capa_id": "SIM-R2-CAPA-AUD-007", "source_finding_id": "SIM-R2-AF-007", "assigned_to": "SIM-R2-U-DOC", "implemented_date": "2026-07-03", "verification": "SIM 内审员用v0.2技术记录schema验证样品、方法、设备、人员、时间、原始证据和更正回链。", "verified_by": "SIM-R2-U-AUDITOR", "verified_date": "2026-07-05", "effectiveness_review_date": "2026-07-10", "effectiveness_result": "16条链的技术记录结构复演可回溯且不编造技术值。", "status": "closed"},
+    {"capa_id": "SIM-R2-CAPA-AUD-008", "source_finding_id": "SIM-R2-AF-008", "assigned_to": "SIM-R2-U-TM", "implemented_date": "2026-07-03", "verification": "SIM 内审员用v0.2外部依据覆盖层和报告要素验证记录承接。", "verified_by": "SIM-R2-U-AUDITOR", "verified_date": "2026-07-05", "effectiveness_review_date": "2026-07-10", "effectiveness_result": "依据身份、设备变体与报告编审签发要素复演可回链。", "status": "closed"}
+  ],
+  "management_review": {
+    "review_id": "SIM-R2-MR-001",
+    "review_date": "2026-07-12",
+    "start_gate": "all_internal_audit_findings_closed_and_capa_effectiveness_completed",
+    "chairperson_user_id": "SIM-R2-U-DIRECTOR",
+    "inputs": [
+      {"clause": "8.9.2.a", "status": "formed", "conclusion": "内外部议题变化已评估：一单一库、CNAS初次申请筹备和两场所治理均已进入SIM影响分析。", "reason": ""},
+      {"clause": "8.9.2.b", "status": "formed", "conclusion": "质量目标按半年SIM计划评价，覆盖率、负向门禁和整改关闭目标均有证据。", "reason": ""},
+      {"clause": "8.9.2.c", "status": "formed", "conclusion": "方针和程序适用性已按八项内审发现及候选覆盖层复核。", "reason": ""},
+      {"clause": "8.9.2.d", "status": "no_activity", "conclusion": "首次管理评审，无上次评审遗留行动。", "reason": "本轮为CNAS初次申请筹备阶段的首次SIM管理评审。"},
+      {"clause": "8.9.2.e", "status": "formed", "conclusion": "全要素内审132/132，八项发现均已关闭。", "reason": ""},
+      {"clause": "8.9.2.f", "status": "formed", "conclusion": "八项内审CAPA均完成独立验证和有效性评价。", "reason": ""},
+      {"clause": "8.9.2.g", "status": "no_activity", "conclusion": "本期无正式外部评审结果。", "reason": "CNAS初次申请尚未提交，第一轮模拟外审安排在本次管理评审之后。"},
+      {"clause": "8.9.2.h", "status": "formed", "conclusion": "两场所、八方法、五项库内国标与三项库外DB65的SIM活动范围已评价。", "reason": ""},
+      {"clause": "8.9.2.i", "status": "formed", "conclusion": "SIM客户与人员反馈已汇总，未冒充真实客户或员工意见。", "reason": ""},
+      {"clause": "8.9.2.j", "status": "formed", "conclusion": "SIM投诉已调查、独立决定并关闭。", "reason": ""},
+      {"clause": "8.9.2.k", "status": "formed", "conclusion": "八项治理改进通过受影响场景复演评价有效。", "reason": ""},
+      {"clause": "8.9.2.l", "status": "formed", "conclusion": "两场所SIM人员、设备、环境、标准物质和系统资源充分性已评价。", "reason": ""},
+      {"clause": "8.9.2.m", "status": "formed", "conclusion": "公正性、权限、依据变化、标志误用和数据完整性风险均有去向。", "reason": ""},
+      {"clause": "8.9.2.n", "status": "formed", "conclusion": "质控、能力验证、比对、设备核查和v0.2技术记录证据已评价。", "reason": ""},
+      {"clause": "8.9.2.o", "status": "formed", "conclusion": "培训、监督、供应商、备份恢复、系统失效替代和外部依据覆盖层均已纳入。", "reason": ""}
+    ],
+    "outputs": [
+      {"clause": "8.9.3.a", "decision": "维持SIM治理过程有效性，并把八项关闭状态作为外审起跑基线。", "responsible_id": "SIM-R2-U-QM", "due_date": "2026-07-15", "resources": "SIM质量负责人、内审证据和只读候选包", "status": "completed", "completion_evidence": "SIM-R2-MR-ACTION-EVIDENCE-001", "verification_result": "SIM实验室主任复核完成，未形成正式发布。"},
+      {"clause": "8.9.3.b", "decision": "持续运行16条链及不开展项反向测试，重大变更时重开受影响审核。", "responsible_id": "SIM-R2-U-TM", "due_date": "2026-07-15", "resources": "v0.2技术记录、报告要素和业务策略验证器", "status": "completed", "completion_evidence": "SIM-R2-MR-ACTION-EVIDENCE-002", "verification_result": "SIM实验室主任复核完成，未编造方法参数。"},
+      {"clause": "8.9.3.c", "decision": "保留两场所SIM人员、设备和独立验证资源供两轮模拟外审。", "responsible_id": "SIM-R2-U-DIRECTOR", "due_date": "2026-07-15", "resources": "8013隔离环境、SIM角色、证据附件存储", "status": "completed", "completion_evidence": "SIM-R2-MR-ACTION-EVIDENCE-003", "verification_result": "SIM资源决定已登记，不构成真实资源批准。"},
+      {"clause": "8.9.3.d", "decision": "外审后如发生重大文件变化，按影响范围重开内审和管理评审。", "responsible_id": "SIM-R2-U-QM", "due_date": "2026-07-15", "resources": "影响分析矩阵、审核计划和管理评审清单", "status": "completed", "completion_evidence": "SIM-R2-MR-ACTION-EVIDENCE-004", "verification_result": "重开规则已纳入本执行清单并可由运行测试核验。"}
+    ],
+    "final_approval": {
+      "role_code": "lab_director",
+      "user_id": "SIM-R2-U-DIRECTOR",
+      "approved_date": "2026-07-16",
+      "simulation_only": true,
+      "formal_approval": false
+    }
+  },
+  "reopen_policy": {
+    "trigger": "major_document_change_after_external_review",
+    "impact_scope_rule": "按变更影响的条款、场所、方法、岗位、记录模板和LIMS链条重开，不机械重跑无影响项。",
+    "reopen_internal_audit": true,
+    "reopen_management_review": true,
+    "required_states": {
+      "audit_schedule": "planned",
+      "management_review": "follow_up"
+    },
+    "history_action": "sim_reopen_required"
+  },
+  "claims_boundary": {
+    "all_data_sim": true,
+    "explicit_business_dates": true,
+    "formal_cma_cnas_claim": false,
+    "formal_document_release": false,
+    "real_operation_evidence": false
+  }
+}

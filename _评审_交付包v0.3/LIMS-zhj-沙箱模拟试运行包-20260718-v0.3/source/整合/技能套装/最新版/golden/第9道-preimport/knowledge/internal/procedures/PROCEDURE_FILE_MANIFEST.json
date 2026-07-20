@@ -1,0 +1,17 @@
+{
+  "included": [
+    {
+      "doc_number": "XZTC/CX-02-2022",
+      "title": "设施与环境条件控制和维护程序",
+      "relative_path": "procedures/XZTC_CX-02-2022.md",
+      "document_kind": "procedure",
+      "reason": "numbered_procedure",
+      "year": "2022",
+      "file_name": "XZTC_CX-02-2022.md",
+      "extension": "md",
+      "status": "current",
+      "number": "CX-02",
+      "version": "2022"
+    }
+  ]
+}

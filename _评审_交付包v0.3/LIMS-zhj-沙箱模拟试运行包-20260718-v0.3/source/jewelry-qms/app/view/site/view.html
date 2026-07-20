@@ -1,0 +1,20 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">场所 {$record.name}</h5>
+        <div>
+            <a href="/site/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            <a href="/site/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="140">代码</th><td>{$record.code}</td></tr>
+            <tr><th>名称</th><td>{$record.name}</td></tr>
+            <tr><th>类型</th><td>{if $record.site_type == 'main'}主场所{else}分场所{/if}</td></tr>
+            <tr><th>状态</th><td>{$record.status}</td></tr>
+            <tr><th>联系人</th><td>{$record.contact_person|default='-'}</td></tr>
+            <tr><th>电话</th><td>{$record.phone|default='-'}</td></tr>
+            <tr><th>地址</th><td>{$record.address|default='-'}</td></tr>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0",
+  "candidate": {
+    "id": "SIM-REG-CNAS-LIST-2026-04-15",
+    "title": "CNAS实验室认可规范文件清单2026-04-15版复核候选",
+    "first_seen_at": "2026-07-19",
+    "last_seen_at": "2026-07-19",
+    "content_hash": "b48604bcfab2e8eaab807d57f5aee5adb5f78a7af6e0c8e6b35fe4db5ce71387",
+    "relevance": "机构处于CNAS初次申请筹备阶段，本轮考卷和文件候选须使用当前规范清单校准。",
+    "preliminary_applicability": "CNAS初次申请筹备、未提交、未受理、未认可；仅形成SIM候选，不得使用认可标识或宣称认可状态。",
+    "announcement_number": null,
+    "document_type": "CNAS实验室认可规范文件清单",
+    "published_date": "2026-04-20",
+    "effective_date": "2026-04-15",
+    "analysis_rule_version": "qms-regulatory-change-monitor-decision-rules-v0.1",
+    "analysis_confidence": 0.96
+  },
+  "source": {
+    "source_key": "cnas-lab-normative-list-2026-04-15",
+    "source_mode": "official_web_pdf_and_local_legal_copies",
+    "source_name": "中国合格评定国家认可委员会",
+    "canonical_url": "https://www.cnas.org.cn/rkgf/rkgfqd/art/2024/art_afbac01cc985457b80a7ca8640979021.html",
+    "evidence": {
+      "summary": "CNAS官网页面发布2026-04-15版实验室认可规范文件清单；清单列有CL01:2018、G001:2024、A015:2018、GL011:2025和GL012:2025等。本轮仅按初次申请筹备进行适用性冻结。",
+      "references": [
+        {
+          "kind": "official_list_page",
+          "label": "CNAS实验室认可规范文件清单",
+          "locator": "2026-04-15版PDF入口",
+          "url": "https://www.cnas.org.cn/rkgf/rkgfqd/art/2024/art_afbac01cc985457b80a7ca8640979021.html"
+        },
+        {
+          "kind": "official_normative_page",
+          "label": "CNAS认可准则页面",
+          "locator": "CL01:2018及G001:2024条目",
+          "url": "https://www.cnas.org.cn/rkgf/sysrk/rkzz/index.html"
+        },
+        {
+          "kind": "official_field_application_page",
+          "label": "CNAS-CL01-A015:2018珠宝玉石贵金属领域应用说明",
+          "locator": "CNAS官方文件页",
+          "url": "https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_ae18369a0d80415ca08e4e13c2e0a10b.html"
+        }
+      ]
+    }
+  },
+  "impact_assessment": {
+    "cma_scope_mark": {
+      "conclusion": "no_match",
+      "evidence": [
+        "现有规则扫描未发现CNAS规范清单直接改变CMA能力项目或CMA标志规则。"
+      ],
+      "rule_ids": [
+        "SIM-NO-MATCH-CMA-CNAS-LIST"
+      ],
+      "confidence": 0.92
+    },
+    "qms_documents": {
+      "conclusion": "likely",
+      "evidence": [
+        "初次申请筹备文件应同时承接CL01、G001和珠宝领域A015。",
+        "GL011:2025和GL012:2025可作为内审和管理评审参考依据。"
+      ],
+      "rule_ids": [
+        "SIM-CNAS-QMS-BASELINE-01",
+        "SIM-CNAS-INTERNAL-AUDIT-MR-GUIDE-01"
+      ],
+      "confidence": 0.97
+    },
+    "personnel_authorization": {
+      "conclusion": "likely",
+      "evidence": [
+        "G001:2024及A015:2018包含人员能力、经历和授权相关要求，需进入初次申请考卷。"
+      ],
+      "rule_ids": [
+        "SIM-CNAS-PERSONNEL-AUTH-01"
+      ],
+      "confidence": 0.91
+    },
+    "equipment_calibration": {
+      "conclusion": "likely",
+      "evidence": [
+        "CL01、G001、A015及计量溯源相关专用要求需映射设备、标准物质、校准和期间核查证据。"
+      ],
+      "rule_ids": [
+        "SIM-CNAS-EQUIPMENT-TRACEABILITY-01"
+      ],
+      "confidence": 0.9
+    },
+    "lims_rules": {
+      "conclusion": "likely",
+      "evidence": [
+        "CL01 7.11要求数据和信息管理控制，本轮需验证权限、审计轨迹、备份恢复和变更验证。",
+        "CNAS尚未认可，系统和报告不得误用认可标识或认可状态声明。"
+      ],
+      "rule_ids": [
+        "SIM-CNAS-LIMS-7-11-01",
+        "SIM-CNAS-MARK-NEGATIVE-01"
+      ],
+      "confidence": 0.95
+    },
+    "training": {
+      "conclusion": "likely",
+      "evidence": [
+        "初次申请筹备涉及人员对认可规则、准则、专业应用要求和岗位授权边界的培训与能力确认。"
+      ],
+      "rule_ids": [
+        "SIM-CNAS-TRAINING-01"
+      ],
+      "confidence": 0.92
+    }
+  },
+  "review": {
+    "status": "adopted_for_sim_only_user_authorized_formal_adoption_unapproved",
+    "reviewed_at": "2026-07-19"
+  }
+}

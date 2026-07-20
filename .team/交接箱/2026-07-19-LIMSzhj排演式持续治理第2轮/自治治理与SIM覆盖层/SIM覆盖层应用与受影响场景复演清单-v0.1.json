@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "run_id": "SIM-GOV-R2-20260719",
+  "environment": "8013",
+  "status": "pending_independent_replay_verification",
+  "formal_effect": false,
+  "current_files_written": false,
+  "candidates": [
+    {
+      "id": "R2-FILE-001",
+      "state_before": "verified_candidate",
+      "payload": "候选覆盖层/SIM-质量手册差异覆盖候选-v0.1.md",
+      "sha256": "cd0fb998304c19c1ddb8ecc322493549d47e59a9c34de9d4200b6b15fe3837ff",
+      "application": "read_only_manual_difference_overlay"
+    },
+    {
+      "id": "R2-FILE-002",
+      "state_before": "verified_candidate",
+      "payload": "候选覆盖层/SIM-程序与结构覆盖候选-v0.1.md",
+      "sha256": "9a00d8b9d0dd3e0c002869edfa1231c64fcd624445ec47953143ea19f32b8494",
+      "application": "read_only_procedure_and_structure_overlay"
+    },
+    {
+      "id": "R2-FILE-003",
+      "state_before": "verified_candidate",
+      "payload": "候选覆盖层/SIM-记录模板语义覆盖候选-v0.2.md",
+      "sha256": "371ee52fefbe8683e65868a0032a242ef999fda8d52cc7a53960ec02192b3783",
+      "application": "read_only_semantic_overlay_plus_new_sim_v02_templates"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "six_month_v02",
+      "sha256": "314d52a405231024be6f80fdcb7b173871201c8d170ec821f1b982be8f64855a",
+      "first_apply": "passed",
+      "repeat_apply": "passed"
+    },
+    {
+      "id": "audit_capa_management_review",
+      "sha256": "932df52f93de5ddc2169583cd82830521419afbbd86a232030ef947c24c8369c",
+      "first_apply": "passed",
+      "repeat_apply": "passed"
+    }
+  ],
+  "root_replay": {
+    "six_month_v02_assertions": "382/382",
+    "internal_audit_coverage": "132/132",
+    "negative_persistence_tests": "8/8",
+    "status": "passed_pending_independent_verification"
+  },
+  "authorized_next_state": null
+}

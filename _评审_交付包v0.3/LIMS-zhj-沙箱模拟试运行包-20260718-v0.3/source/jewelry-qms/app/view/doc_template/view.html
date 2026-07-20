@@ -1,0 +1,35 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">查看文件模板</h5>
+        <div>
+            <a href="/doc_template/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            <a href="/doc_template/index" class="btn btn-sm btn-outline-secondary">返回列表</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            {volist name="fields" id="field"}
+            <tr>
+                <th width="150">{$field.label}</th>
+                <td>{$field.value|default='-'}</td>
+            </tr>
+            {/volist}
+            {empty name="fields"}
+            <tr><th>名称</th><td>{$record.name|default='-'}</td></tr>
+            <tr><th>编号</th><td>{$record.code|default='-'}</td></tr>
+            <tr><th>状态</th><td>
+                {if $record.status == 'active'}<span class="badge bg-success">启用</span>
+                {elseif $record.status == 'draft'}<span class="badge bg-secondary">草稿</span>
+                {elseif $record.status == 'inactive'}<span class="badge bg-warning text-dark">停用</span>
+                {else}<span class="badge bg-secondary">{$record.status|default='-'}</span>{/if}
+            </td></tr>
+            <tr><th>所属部门</th><td>{$record.department_name|default='-'}</td></tr>
+            <tr><th>负责人</th><td>{$record.responsible_person|default='-'}</td></tr>
+            <tr><th>描述</th><td>{$record.description|default='-'}</td></tr>
+            <tr><th>备注</th><td>{$record.remark|default='-'}</td></tr>
+            <tr><th>创建时间</th><td>{$record.create_time|default='-'}</td></tr>
+            <tr><th>更新时间</th><td>{$record.update_time|default='-'}</td></tr>
+            {/empty}
+        </table>
+    </div>
+</div>

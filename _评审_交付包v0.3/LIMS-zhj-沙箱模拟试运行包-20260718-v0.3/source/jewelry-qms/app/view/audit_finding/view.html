@@ -1,0 +1,83 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">审核发现 {$record.finding_number}</h5>
+        <div>
+            {if !$record.capa_id}
+            <form method="post" action="/audit_finding/createCapa?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('创建CAPA？')">创建CAPA</button>
+            </form>
+            {/if}
+            <a href="/audit_schedule/view?id={$record.audit_schedule_id}" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="120">类型</th><td>{$findingTypes[$record.finding_type]|default=$record.finding_type}</td></tr>
+            <tr><th>条款</th><td>{$record.clause|default='-'}</td></tr>
+            <tr><th>描述</th><td>{$record.description}</td></tr>
+            <tr><th>状态</th><td>{:qms_status_label('audit_finding', $record.status)}</td></tr>
+            <tr><th>截止日期</th><td>{$record.due_date|default='-'}</td></tr>
+            <tr><th>CAPA</th><td>{if $capa}<a href="/capa/view?id={$capa.id}">{$capa.capa_number}</a>{else}-{/if}</td></tr>
+        </table>
+    </div>
+</div>
+{include file="common/external_evidence_references" /}
+
+<div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">整改证据附件</h5></div>
+    <div class="card-body">
+        <form method="post" action="/audit_finding/uploadEvidence" enctype="multipart/form-data" class="row g-3 align-items-end mb-3">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="col-md-5">
+                <label class="form-label required">证据文件</label>
+                <input type="file" name="evidence_file" class="form-control" required>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">说明</label>
+                <input type="text" name="comment" class="form-control" placeholder="整改照片、记录表、复核说明等">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">上传证据</button>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead><tr><th>文件名</th><th>说明</th><th>上传时间</th><th>操作</th></tr></thead>
+                <tbody>
+                    {volist name="evidenceFiles" id="file"}
+                    <tr>
+                        <td>{$file.file_details|default='-'}</td>
+                        <td>{$file.comment|default='-'}</td>
+                        <td>{$file.created|default='-'}</td>
+                        <td><a href="/audit_finding/downloadEvidence?id={$record.id}&file_id={$file.id}">下载</a></td>
+                    </tr>
+                    {/volist}
+                    {empty name="evidenceFiles"}
+                    <tr><td colspan="4" class="text-center text-muted">暂无整改证据附件</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0">变更历史</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>时间</th><th>字段</th><th>原值</th><th>新值</th><th>操作人</th></tr></thead>
+            <tbody>
+                {volist name="fieldChangeLogs" id="log"}
+                <tr>
+                    <td>{$log.changed_at|default='-'}</td>
+                    <td>{$log.field_label|default=$log.field_name|default='-'}</td>
+                    <td>{$log.old_value_display|default='-'}</td>
+                    <td>{$log.new_value_display|default='-'}</td>
+                    <td>{$log.changed_by_display|default='未知用户（岗位未登记）'}</td>
+                </tr>
+                {/volist}
+                {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

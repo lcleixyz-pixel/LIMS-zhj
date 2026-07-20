@@ -1,0 +1,3 @@
+null_batch	145
+sim_batch	15
+employees_non_sim	0

@@ -1,0 +1,2 @@
+ERROR 1054 (42S22) at line 3: Unknown column 'plan_id' in 'where clause'
+audit_plans	1

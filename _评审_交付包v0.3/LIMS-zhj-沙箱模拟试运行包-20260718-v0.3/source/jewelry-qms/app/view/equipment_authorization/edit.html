@@ -1,0 +1,29 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑设备授权使用人</h5></div>
+    <div class="card-body">
+        <form method="post" action="/equipment_authorization/edit?id={$record.id}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">设备</label>
+                    <select name="equipment_id" class="form-select" required>
+                        {volist name="equipments" id="eq"}<option value="{$eq.id}" {if $record.equipment_id == $eq.id}selected{/if}>{$eq.equipment_number} {$eq.name}</option>{/volist}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">人员</label>
+                    <select name="employee_id" class="form-select" required>
+                        {volist name="employees" id="employee"}<option value="{$employee.id}" {if $record.employee_id == $employee.id}selected{/if}>{$employee.employee_number} {$employee.name}</option>{/volist}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3"><label class="form-label required">授权日期</label><input type="date" name="authorized_date" class="form-control" value="{$record.authorized_date}" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">有效期至</label><input type="date" name="valid_until" class="form-control" value="{$record.valid_until|default=''}"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">授权人</label><select name="authorized_by" class="form-select"><option value="">请选择</option>{volist name="users" id="u"}<option value="{$u.id}" {if $record.authorized_by == $u.id}selected{/if}>{$u.name|default=$u.username}</option>{/volist}</select></div>
+                <div class="col-md-6 mb-3"><label class="form-label">状态</label><select name="status" class="form-select">{volist name="statusOptions" id="option"}<option value="{$option.value}" {if $record.status == $option.value}selected{/if}>{$option.label}</option>{/volist}</select></div>
+                <div class="col-12 mb-3"><label class="form-label">授权范围</label><textarea name="authorization_scope" class="form-control" rows="3">{$record.authorization_scope|default=''}</textarea></div>
+                <div class="col-12 mb-3"><label class="form-label">备注</label><textarea name="remarks" class="form-control" rows="2">{$record.remarks|default=''}</textarea></div>
+            </div>
+            <a href="/equipment_authorization/view?id={$record.id}" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0",
+  "candidate": {
+    "id": "SIM-REG-2026-14",
+    "title": "市场监管总局2026年第14号一单一库公告及机构SIM分流影响候选",
+    "first_seen_at": "2026-07-19",
+    "last_seen_at": "2026-07-19",
+    "content_hash": "2436475df80d301175d936ab230accc2bf838dd9e4c0a710183c92ad12dce401",
+    "relevance": "本轮排演需验证库内项目CMA路径与库外项目CMA=false路径，且报告不得对库外项目误用CMA标志。",
+    "preliminary_applicability": "user_confirmed_for_sim；仅用于SIM考卷和分流，不构成机构正式CMA能力范围结论。",
+    "announcement_number": "市场监管总局公告2026年第14号",
+    "document_type": "监管公告及官方问答",
+    "published_date": "2026-04-23",
+    "effective_date": "2026-06-01",
+    "analysis_rule_version": "qms-regulatory-change-monitor-decision-rules-v0.1",
+    "analysis_confidence": 0.94
+  },
+  "source": {
+    "source_key": "samr-2026-14-one-list-one-library",
+    "source_mode": "official_web_and_user_confirmed_for_sim",
+    "source_name": "国家市场监督管理总局",
+    "canonical_url": "https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/rkjcs/art/2026/art_ea608a4306a34b8bb1f3c548a91cffa8.html",
+    "evidence": {
+      "summary": "官方公告载明一单一库范围、库外项目不得使用CMA证书和标志及2026-06-01实施；官方问答进一步说明库外项目报告不应也无需使用CMA标志。五项国标库内、三项DB65库外为用户确认的SIM事实，不冒充官方能力查询结果。",
+      "references": [
+        {
+          "kind": "official_announcement",
+          "label": "市场监管总局关于对检验检测机构资质认定实施一单一库管理的公告",
+          "locator": "公告第一项、实施日期及附件入口",
+          "url": "https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/rkjcs/art/2026/art_ea608a4306a34b8bb1f3c548a91cffa8.html"
+        },
+        {
+          "kind": "official_faq",
+          "label": "检验检测机构资质认定一单一库常见问题解答",
+          "locator": "问题3及库外项目CMA标志说明",
+          "url": "https://www.samr.gov.cn/rzjgs/xczl/art/2026/art_b1a54b8398da4f03a910ad0f8c1c2afb.html"
+        },
+        {
+          "kind": "user_confirmed_for_sim",
+          "label": "本轮五项库内国标与三项库外DB65分流事实",
+          "locator": "本任务用户固定决策",
+          "url": null
+        }
+      ]
+    }
+  },
+  "impact_assessment": {
+    "cma_scope_mark": {
+      "conclusion": "likely",
+      "evidence": [
+        "官方公告明确库外项目不得在报告上标注CMA标志。",
+        "用户已确认五项国标按库内SIM路径，三项DB65按库外且CMA=false路径。"
+      ],
+      "rule_ids": [
+        "SIM-ONE-LIST-CMA-01",
+        "SIM-OUT-OF-LIBRARY-CMA-FALSE-01"
+      ],
+      "confidence": 0.98
+    },
+    "qms_documents": {
+      "conclusion": "likely",
+      "evidence": [
+        "合同评审、方法清单、报告控制和外来文件控制需承接库内外分流规则。",
+        "本轮须形成只供SIM复演的文件候选，不自动发布。"
+      ],
+      "rule_ids": [
+        "SIM-QMS-METHOD-SCOPE-01",
+        "SIM-QMS-REPORT-MARK-01"
+      ],
+      "confidence": 0.94
+    },
+    "personnel_authorization": {
+      "conclusion": "possible",
+      "evidence": [
+        "授权人员在合同评审和报告签发时需识别CMA标志边界。",
+        "公告本身未改变珠宝检测岗位资格条件。"
+      ],
+      "rule_ids": [
+        "SIM-AUTH-SCOPE-AWARENESS-01"
+      ],
+      "confidence": 0.78
+    },
+    "equipment_calibration": {
+      "conclusion": "no_match",
+      "evidence": [
+        "现有规则扫描未发现公告直接改变设备校准、检定、期间核查或计量溯源要求。"
+      ],
+      "rule_ids": [
+        "SIM-NO-MATCH-EQUIPMENT-2026-14"
+      ],
+      "confidence": 0.9
+    },
+    "lims_rules": {
+      "conclusion": "likely",
+      "evidence": [
+        "合同、方法、报告模板和签发校验应根据能力项目库状态控制CMA标志。",
+        "库外地方标准应保留检测服务路径但强制CMA=false。"
+      ],
+      "rule_ids": [
+        "SIM-LIMS-CMA-MARK-GATE-01",
+        "SIM-LIMS-METHOD-SCOPE-TRACE-01"
+      ],
+      "confidence": 0.97
+    },
+    "training": {
+      "conclusion": "likely",
+      "evidence": [
+        "合同评审、检测、复核、报告审核与签发岗位需理解库内外分流及标志使用规则。"
+      ],
+      "rule_ids": [
+        "SIM-TRAINING-ONE-LIST-01"
+      ],
+      "confidence": 0.9
+    }
+  },
+  "review": {
+    "status": "adopted_for_sim_only_user_confirmed_formal_adoption_unapproved",
+    "reviewed_at": "2026-07-19"
+  }
+}

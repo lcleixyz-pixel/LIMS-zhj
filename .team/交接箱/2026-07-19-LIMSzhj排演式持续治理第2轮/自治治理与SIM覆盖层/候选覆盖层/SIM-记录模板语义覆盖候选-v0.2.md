@@ -1,0 +1,410 @@
+# SIM 记录模板语义覆盖候选 v0.2
+
+> 文件状态：`draft_candidate`  
+> 演练编号：`SIM-GOV-R2-20260719`  
+> 性质：第二轮逐字段候选；只读复算现用 161 个源文件和 8013 当前模板，不写 8013、不改现用文件。  
+> 边界：旧轮 v0.2 只作字段回归素材；本文件重新固定当前源 hash、8013 schema 和候选字段。尚待新的独立验证。
+
+## 1. 新鲜复算结论
+
+| 项目 | 数值 |
+|---|---:|
+| 现用记录源文件 | 161 |
+| 8013 非删除模板总数 | 152 |
+| 现用基线模板（trial_batch 为空） | 145 |
+| 第二轮专用 SIM 夹具模板 | 7 |
+| 现用基线精确 schema | 94 |
+| 重复 schema 组/成员 | 13 / 64 |
+| 重点现用模板实例 | 0 |
+
+重点现用模板当前没有实例，因此本轮只能给出旧实例孤儿键的零实例迁移规则，不能冒充已完成迁移。103 项现有 SIM 实例属于 7 项专用夹具，不能替代 145 项现用模板保真验证。
+
+## 2. 逐字段矩阵
+
+### XZTC/BG-09-01 合同评审记录表
+
+- 身份：`XZTC/BG-09-01+e4cb6474d2704381d44b1d6b8aa907f5f893f51b+合同评审记录表`
+- 源文件：`现用文件/记录表格/记录表格2017/09合同评审程序/09-01合同评审记录表.doc`
+- SHA256：`f118b66622d262a37ed9c57702b135068e1b3238b45c7b03dd059f82f57762ec`
+- 当前 schema：`7c67eba1db7f`
+- 候选字段：25
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 委托单位 `client_name` | 表头“委托单位”；现用原表字段 | 识别委托方 | 综合办公室/样品管理员 | 建立合同评审；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：委托/合同 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | client_name | direct_source/include_in_candidate |
+| 项目名称 `project_name` | 表头“项目名称”；现用原表字段 | 识别受评审项目 | 综合办公室/样品管理员 | 建立合同评审；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：委托/合同 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | project_name | direct_source/include_in_candidate |
+| 合同编号 `contract_number` | 表头“合同编号”；CX-09 4.2-4.4 | 关联书面合同 | 综合办公室 | 存在书面合同或协议；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：委托/合同 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | contract_number | cross_source/include_in_candidate |
+| 参数/标准及版本 `standards_and_parameters` | 表头“参数”；CX-09 4.3,4.5.1 | 识别项目、参数和方法版本 | 检测室提供/组织人录入 | 确定检测项目和方法；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：方法清单、报告 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | standards_and_parameters[] | direct_source/include_in_candidate |
+| 检测项目是否在能力范围 `scope_capable` | 评审内容1；CX-09 4.5.2 | 判断技术能力范围 | 技术负责人/简评样品管理员 | 每次全面评审或首次简评；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：能力范围 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | scope_capable | direct_source/include_in_candidate |
+| 口头约定后是否与客户确认 `oral_requirement_confirmed` | 评审内容2；CX-09 4.1 | 确认口头要求 | 综合办公室 | 存在口头要求；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：客户沟通 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | oral_requirement_confirmed | direct_source/include_in_candidate |
+| 是否签订文字合同/协议 `written_contract_signed` | 评审内容3；CX-09 4.2-4.4 | 确认合同形式 | 综合办公室 | 确定合同形式；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：合同 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | written_contract_signed | direct_source/include_in_candidate |
+| 仪器设备是否满足 `equipment_capable` | 评审内容4；CX-09 4.5.2 | 判断设备资源满足性 | 技术负责人/检测室 | 资源评审；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：设备 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_capable | direct_source/include_in_candidate |
+| 人员数量与技能是否满足 `personnel_capable` | 评审内容5；CX-09 4.5.2 | 判断人员能力满足性 | 技术负责人/检测室 | 资源评审；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：人员授权 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | personnel_capable | direct_source/include_in_candidate |
+| 能否按时提供报告 `delivery_capable` | 评审内容6；CX-09 4.5 | 判断交付能力 | 综合办公室会同检测室 | 交付评审；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：报告 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | delivery_capable | direct_source/include_in_candidate |
+| 方法能否满足项目 `method_capable` | 评审内容7；CX-09 4.1,4.3 | 判断方法适用性 | 技术负责人/检测室 | 方法选择；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：方法 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | method_capable | direct_source/include_in_candidate |
+| 是否符合法律法规 `legal_compliance` | 评审内容8；CX-09 4.5.7 | 判断合规边界 | 技术负责人 | 合规评审；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：外部依据 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | legal_compliance | direct_source/include_in_candidate |
+| 是否需分包 `subcontract_required` | 评审内容9；CX-09 4.3；冻结事实不分包 | 记录分包适用性；本轮固定否 | 技术负责人 | 每次全面评审；required_fixed_no_for_sim | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：NEG-03 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | subcontract_required | cross_source/include_in_candidate |
+| 其他评审内容 `other_review_items` | 评审内容10；现用原表字段 | 补充特殊要求 | 评审组织人 | 存在其他要求；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | other_review_items | direct_source/include_in_candidate |
+| 能否以适当方法完成全部项目 `conclusion_all_items` | 评审结论1；现用原表字段 | 形成方法能力结论 | 技术负责人 | 评审收口；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：评审结论 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | conclusion_all_items | direct_source/include_in_candidate |
+| 人员/技术/设备/环境能否满足 `conclusion_resources` | 评审结论2；现用原表字段 | 形成资源结论 | 技术负责人 | 评审收口；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：评审结论 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | conclusion_resources | direct_source/include_in_candidate |
+| 合同期能否按时提供报告 `conclusion_delivery` | 评审结论3；现用原表字段 | 形成交付结论 | 技术负责人 | 评审收口；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：评审结论 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | conclusion_delivery | direct_source/include_in_candidate |
+| 其他结论 `conclusion_other` | 评审结论4；现用原表字段 | 补充结论 | 技术负责人 | 存在补充结论；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | conclusion_other | direct_source/include_in_candidate |
+| 评审人员会签 `review_signatures` | 页尾会签区；CX-09 4.6-4.7 | 证明评审参与和批准 | 全体评审人/批准人 | 结论形成后；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | review_signatures[] | direct_source/include_in_candidate |
+| 评审日期 `review_date` | 原表无独立栏；签核时点要求；GB/T 27025-2019 7.1；冻结运行时间线 | 记录评审完成时间 | 评审组织人 | 会签；pending_confirmation | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：审计轨迹 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | review_date | sim_extension/include_in_candidate |
+| 适用场所 `site_id` | 原表无；第二轮冻结扩展；冻结画像第5节 | 限定实施场所 | 评审组织人/技术负责人 | 两场所能力判定；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：场所、授权 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | site_id | sim_extension/include_in_candidate |
+| CMA范围核验状态 `cma_scope_status` | 原表无；第二轮冻结扩展；一单一库冻结 | 逐项目判定CMA状态 | 质量负责人/授权复核岗位 | 涉及CMA标志；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：报告标志 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | cma_scope_status | sim_extension/include_in_candidate |
+| CNAS状态 `cnas_status` | 原表无；第二轮冻结扩展；冻结画像第5节 | 固定初次申请筹备且未认可 | 质量负责人 | 涉及CNAS声明；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：报告标志 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | cnas_status | sim_extension/include_in_candidate |
+| 允许的报告标志 `allowed_report_marks` | 原表无；第二轮冻结扩展；CMA/CNAS冻结考卷 | 控制报告标志 | 质量负责人/报告复核岗位 | 确定报告属性；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：报告 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | allowed_report_marks[] | sim_extension/include_in_candidate |
+| 限制/客户告知 `limitations_and_customer_notice` | 原表无；第二轮冻结扩展；CX-09 4.1；一单一库冻结 | 记录能力或标志限制及客户沟通 | 综合办公室 | 存在限制；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：客户沟通 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | limitations_and_customer_notice | sim_extension/include_in_candidate |
+
+### XZTC/BG-28-01 样品台账
+
+- 身份：`XZTC/BG-28-01+d6779f9f4217864c5998caf627de951d896e872e+样品台账`
+- 源文件：`现用文件/记录表格/记录表格2017/28样品处置和管理程序/28-01样品台帐.doc`
+- SHA256：`780b05d42cf703399431407ab9a81a1f87fb2a39f8c1c7c962a20751f917ab52`
+- 当前 schema：`8bb86a443a8a`
+- 候选字段：16
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 序号 `sequence_no` | 表头“序号”；原表字段；系统顺序号 | 标识台账行 | 系统/样品管理员 | 新增样品行；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：样品 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | sequence_no | cross_source/include_in_candidate |
+| 委托单号 `entrustment_number` | 表头“委托单号”；CX-28 4.1.2 | 关联委托 | 样品管理员 | 接收样品；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：委托 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | entrustment_number | direct_source/include_in_candidate |
+| 客户名称 `customer_name` | 表头“客户名称”；现用原表字段 | 识别送样客户 | 样品管理员 | 接收样品；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：客户 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | customer_name | direct_source/include_in_candidate |
+| 来样日期 `received_at` | 表头“来样日期”；CX-28 4.1 | 记录接收时间 | 样品管理员 | 接收样品；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：样品接收 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | received_at | direct_source/include_in_candidate |
+| 样品名称 `sample_name` | 表头“样品名称”；现用原表字段 | 识别样品 | 样品管理员 | 接收样品；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：样品 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | sample_name | direct_source/include_in_candidate |
+| 数量 `quantity` | 表头“数量”；CX-28 4.1.1 | 记录接收数量 | 样品管理员 | 初验清点；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：样品 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | quantity | direct_source/include_in_candidate |
+| 样品编号 `sample_number` | 表头“样品编号”；CX-28 4.2.1 | 形成唯一标识 | 样品管理员 | 统一编号；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：样品唯一标识 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | sample_number | direct_source/include_in_candidate |
+| 测试项目及要求 `test_items_and_requirements` | 表头“测试项目及要求”；CX-28 4.1.1-4.1.2 | 关联检测要求 | 样品管理员/检测室 | 接收和委托确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：方法、委托 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | test_items_and_requirements | direct_source/include_in_candidate |
+| 样品管理员 `sample_administrator` | 表头“样品管理员”；CX-28 3.2 | 记录接收责任人 | 样品管理员 | 接收登记；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：人员 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | sample_administrator | direct_source/include_in_candidate |
+| 样品领取人 `received_by` | 表头“样品领取人”；CX-28 4.3.1 | 记录交接领取人 | 实际领取人 | 进入检测室；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：流转 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | received_by | direct_source/include_in_candidate |
+| 还样人 `returned_by` | 表头“还样人”；原表字段 | 记录退还责任人 | 实际还样人 | 退回或交回；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：流转 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | returned_by | cross_source/include_in_candidate |
+| 领取时间 `checkout_at` | 表头“领取时间”；现用原表字段 | 记录领取时点 | 样品管理员/领取人 | 领取；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：流转 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | checkout_at | direct_source/include_in_candidate |
+| 备注 `remarks` | 表头“备注”；原表字段 | 记录异常或约定 | 样品管理员 | 异常或补充；conditional_on_exception | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：异常 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | remarks | cross_source/include_in_candidate |
+| 样品状态/流转节点 `custody_events` | 原表无独立列；程序要求状态控制；CX-28 4.3 | 保存逐节点流转事件 | 各节点责任人 | 状态变化；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：审计轨迹 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | custody_events[] | sim_extension/include_in_candidate |
+| 不抽样/客户送样标记 `sampling_responsibility` | 原表无；第二轮冻结扩展；冻结事实不抽样 | 明确样品由客户送检 | 样品管理员 | 接收；required_fixed_customer_submitted | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：NEG-01 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | sampling_responsibility | sim_extension/include_in_candidate |
+| 不留样/例外留存决定 `retention_decision` | 原表无；第二轮冻结扩展；冻结事实不留样 | 记录不留样及合法例外评审 | 样品管理员/技术负责人复核例外 | 完检处置前；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：NEG-02 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | retention_decision | sim_extension/include_in_candidate |
+
+### XZTC/BG-22-02 标准方法确认记录
+
+- 身份：`XZTC/BG-22-02+de78f8ae8a2ccfdd4264ae995a64f4cc6404c212+标准方法确认记录`
+- 源文件：`现用文件/记录表格/记录表格2017/22检测方法的选择与确认程序/22-02标准方法确认记录.doc`
+- SHA256：`319761553e34b4457587ec81c2cf8f031fd657e7c7a3bd25c3cc5b65751566be`
+- 当前 schema：`265fad2a0fc9`
+- 候选字段：29
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 标准方法名称/代号（含年号） `method_name` | 表头；现用原表字段 | 识别方法和版本 | 确认人 | 首次使用/换版/重新确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：方法 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | method_name | direct_source/include_in_candidate |
+| 确认组别/确认人 `confirmation_group_or_person` | 表头；原表字段 | 识别确认主体 | 确认组织人 | 建立记录；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：人员 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | confirmation_group_or_person | cross_source/include_in_candidate |
+| 人员确认 `confirm_personnel` | 确认内容“人员”；现用原表字段 | 确认人员条件 | 确认人 | 资源确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：人员 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | confirm_personnel | direct_source/include_in_candidate |
+| 设备确认 `confirm_equipment` | 确认内容“设备”；现用原表字段 | 确认设备条件 | 确认人 | 资源确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：设备 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | confirm_equipment | direct_source/include_in_candidate |
+| 试剂标准确认 `confirm_reagent_standard` | 确认内容“试剂标准”；现用原表字段 | 确认试剂/标准品条件 | 确认人 | 资源确认；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：标准物质 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | confirm_reagent_standard | direct_source/include_in_candidate |
+| 环境条件确认 `confirm_environment` | 确认内容“环境条件”；现用原表字段 | 确认环境条件 | 确认人 | 资源确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：环境 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | confirm_environment | direct_source/include_in_candidate |
+| 对标准原理的理解 `understanding_of_principle` | 人员项；现用原表字段 | 评价方法理解 | 确认对象/确认人 | 人员确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | understanding_of_principle | direct_source/include_in_candidate |
+| 是否进行过操作 `operation_experience` | 人员项；现用原表字段 | 评价操作经历 | 确认对象/确认人 | 人员确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | operation_experience | direct_source/include_in_candidate |
+| 操作过程熟悉程度 `familiarity_with_operation` | 人员项；现用原表字段 | 评价操作熟悉程度 | 确认对象/确认人 | 人员确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | familiarity_with_operation | direct_source/include_in_candidate |
+| 主要设备名称 `equipment_name` | 设备项；现用原表字段 | 识别实施设备 | 确认人 | 设备确认；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：设备 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_name | direct_source/include_in_candidate |
+| 设备满足性 `equipment_satisfaction` | 设备项；现用原表字段 | 形成设备结论 | 确认人 | 设备确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：设备 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_satisfaction | direct_source/include_in_candidate |
+| 是否有要求的试剂 `reagent_availability` | 试剂标准项；现用原表字段 | 确认试剂可用性 | 确认人 | 方法要求试剂；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | reagent_availability | direct_source/include_in_candidate |
+| 是否有要求的标准品 `standard_availability` | 试剂标准项；现用原表字段 | 确认标准品可用性 | 确认人 | 方法要求标准品；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | standard_availability | direct_source/include_in_candidate |
+| 试剂标准满足性 `reagent_standard_satisfaction` | 试剂标准项；现用原表字段 | 形成试剂标准结论 | 确认人 | 适用时；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | reagent_standard_satisfaction | direct_source/include_in_candidate |
+| 环境条件满足性 `env_satisfaction` | 环境项；现用原表字段 | 形成环境结论 | 确认人 | 环境确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：环境 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | env_satisfaction | direct_source/include_in_candidate |
+| 是否有特殊环境要求 `env_special_requirement` | 环境项；现用原表字段 | 识别特殊环境要求 | 确认人 | 环境确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：环境 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | env_special_requirement | direct_source/include_in_candidate |
+| 特殊环境要求描述 `env_special_requirement_desc` | 环境项；现用原表字段 | 描述特殊环境要求 | 确认人 | 选择有特殊要求；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：环境 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | env_special_requirement_desc | direct_source/include_in_candidate |
+| 备注 `remarks` | 备注区；现用原表字段 | 补充说明 | 确认人 | 有补充；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | remarks | direct_source/include_in_candidate |
+| 确认结论 `confirmation_conclusion` | 结论区；现用原表字段 | 形成方法确认结论 | 确认人 | 确认收口；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：方法 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | confirmation_conclusion | direct_source/include_in_candidate |
+| 确认意见 `confirmation_opinion` | 结论区；现用原表字段 | 说明结论依据或限制 | 确认人 | 结论形成；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：方法 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | confirmation_opinion | direct_source/include_in_candidate |
+| 确认人签名 `confirmer_signature` | 签核区；现用原表字段 | 确认责任签核 | 确认人 | 完成确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | confirmer_signature | direct_source/include_in_candidate |
+| 确认人日期 `confirmer_date` | 签核区；现用原表字段 | 记录确认时点 | 确认人 | 完成确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | confirmer_date | direct_source/include_in_candidate |
+| 复核者签名 `reviewer_signature` | 签核区；现用原表字段 | 复核责任签核 | 复核者 | 复核完成；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | reviewer_signature | direct_source/include_in_candidate |
+| 复核者日期 `reviewer_date` | 签核区；现用原表字段 | 记录复核时点 | 复核者 | 复核完成；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | reviewer_date | direct_source/include_in_candidate |
+| 各专业领域技术负责人意见 `tech_opinion` | 技术负责人意见栏；原表字段；CX-22 4.5 | 记录技术意见 | 专业领域技术负责人 | 技术确认；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：技术负责人 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | tech_opinion | direct_source/include_in_candidate |
+| 各专业领域技术负责人签名 `tech_signature` | 意见栏下签核；现用原表字段 | 技术责任签核 | 专业领域技术负责人 | 最终确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | tech_signature | direct_source/include_in_candidate |
+| 各专业领域技术负责人日期 `tech_date` | 意见栏下签核；现用原表字段 | 记录技术确认时点 | 专业领域技术负责人 | 最终确认；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | tech_date | direct_source/include_in_candidate |
+| 适用场所 `site_id` | 原表无；第二轮冻结扩展；冻结画像第5节 | 限定方法实施场所 | 技术负责人 | 两场所能力不同；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：场所 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | site_id | sim_extension/include_in_candidate |
+| 授权范围 `authorization_scope` | 原表无；第二轮冻结扩展；冻结画像第5节 | 关联人员方法活动授权 | 技术负责人 | 人员授权有差异；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：人员授权 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | authorization_scope | sim_extension/include_in_candidate |
+
+### XZTC/BG-29-02 报告抽查情况记录表
+
+- 身份：`XZTC/BG-29-02+10f7055ee45a2e43ccc8186f93c34ec9492590bc+报告抽查情况记录表`
+- 源文件：`现用文件/记录表格/记录表格2017/29结果报告管理程序/29-02报告抽查情况记录表.doc`
+- SHA256：`d8157eb60011f0a52205c3d1205d257237204e422b9a980ab266f2844b669ff8`
+- 当前 schema：`52bbc3627dc9`
+- 候选字段：15
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 检测项目 `test_item` | 表头；现用原表字段 | 识别抽查项目 | 监督员 | 建立抽查批次；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | test_item | direct_source/include_in_candidate |
+| 委托编号 `entrustment_number` | 表头；现用原表字段 | 关联被抽查业务 | 监督员 | 抽取报告；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：委托 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | entrustment_number | direct_source/include_in_candidate |
+| 抽查数量 `sampled_report_count` | 表头；现用原表字段 | 记录抽查样本数 | 监督员 | 抽查统计；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | sampled_report_count | direct_source/include_in_candidate |
+| 缺陷数量 `defect_count` | 表头；现用原表字段 | 记录缺陷数 | 监督员 | 抽查统计；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | defect_count | direct_source/include_in_candidate |
+| 是否按标准/方法完成 `method_followed` | 抽查内容1；CX-29 4.2,4.7 | 检查方法执行 | 监督员 | 逐批检查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | checks.method_followed | direct_source/include_in_candidate |
+| 仪器设备使用是否匹配 `equipment_matched` | 抽查内容2；现用原表字段 | 检查设备匹配 | 监督员 | 逐批检查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：设备 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | checks.equipment_matched | direct_source/include_in_candidate |
+| 环境条件是否符合 `environment_compliant` | 抽查内容3；现用原表字段 | 检查环境符合 | 监督员 | 逐批检查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：环境 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | checks.environment_compliant | direct_source/include_in_candidate |
+| 数据是否合理 `data_reasonable` | 抽查内容4；现用原表字段 | 检查数据合理性 | 监督员 | 逐批检查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | checks.data_reasonable | direct_source/include_in_candidate |
+| 检测结论是否正确 `conclusion_correct` | 抽查内容5；现用原表字段 | 检查结论正确性 | 监督员 | 逐批检查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | checks.conclusion_correct | direct_source/include_in_candidate |
+| 其他检查 `other_findings` | 抽查内容6；现用原表字段 | 记录其他发现 | 监督员 | 有其他发现；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | other_findings | direct_source/include_in_candidate |
+| 监督员签名 `supervisor_signature` | 签核区；CX-29 4.7.3 | 抽查责任签核 | 监督员 | 完成抽查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supervisor_signature | direct_source/include_in_candidate |
+| 抽查日期 `inspection_date` | 签核区；现用原表字段 | 记录抽查时点 | 监督员 | 完成抽查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | inspection_date | direct_source/include_in_candidate |
+| 技术负责人意见 `technical_opinion` | 签核区；CX-29 4.7.4 | 记录处置决定 | 技术负责人 | 抽查结果处置；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：CAPA | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | technical_opinion | direct_source/include_in_candidate |
+| 技术负责人签名/日期 `technical_signature_date` | 签核区；现用原表字段 | 处置责任签核 | 技术负责人 | 形成处置决定；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | technical_signature_date | direct_source/include_in_candidate |
+| 报告编号/标准/CMA/CNAS标志 `report_trace` | 原表无；第二轮冻结扩展；一单一库及CNAS冻结 | 关联具体报告并反测标志 | 报告复核岗位/监督员 | 抽到具体报告；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：报告、CMA/CNAS | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | report_trace | sim_extension/include_in_candidate |
+
+### XZTC/BG-02-01 检测环境监控记录表
+
+- 身份：`XZTC/BG-02-01+a5d68e996e4264ac7080e8cfbdddbbb634f484e0+检测环境监控记录表`
+- 源文件：`现用文件/记录表格/记录表格2017/02设施与环境条件控制和维护程序/02-01《检测环境监控记录表》.doc`
+- SHA256：`e94b2acb5a30261ac8b318570894772b50d3c8c4de70963667ea813a92f484f4`
+- 当前 schema：`e2cd4cd23615`
+- 候选字段：11
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 记录月份 `record_month` | 页首年/月；现用原表字段 | 标识月度记录 | 检测人员 | 新建月度记录；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | record_month | direct_source/include_in_candidate |
+| 监控区域 `site_area` | 页首；现用原表字段 | 识别场所区域 | 检测人员 | 新建月度记录；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：场所 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | site_area | direct_source/include_in_candidate |
+| 温度要求 `temperature_requirement` | 页首；CX-02 4.2.3.4 | 引用适用温度要求 | 技术负责人设定/检测人员引用 | 方法或场所要求建立/变更；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：方法/场所要求 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | temperature_requirement | direct_source/include_in_candidate |
+| 湿度要求 `humidity_requirement` | 页首；CX-02 4.2.3.4 | 引用适用湿度要求 | 技术负责人设定/检测人员引用 | 方法或场所要求建立/变更；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：方法/场所要求 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | humidity_requirement | direct_source/include_in_candidate |
+| 监测日期/时间 `observed_at` | 每日明细行；原表日行；时间粒度待核 | 记录观测时点 | 检测人员 | 每次监测；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：审计轨迹 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | readings[].observed_at | cross_source/include_in_candidate |
+| 温度（℃） `temperature_c` | 明细列；现用原表字段 | 记录温度观测值 | 检测人员 | 每次监测；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | readings[].temperature_c | direct_source/include_in_candidate |
+| 湿度（%） `humidity_percent` | 明细列；现用原表字段 | 记录湿度观测值 | 检测人员 | 每次监测；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | readings[].humidity_percent | direct_source/include_in_candidate |
+| 记录人 `recorded_by` | 明细列；CX-02 3.3.1 | 记录观测责任人 | 检测人员 | 每次监测；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | readings[].recorded_by | direct_source/include_in_candidate |
+| 备注 `remarks` | 明细列；现用原表字段 | 记录偏离或调整 | 检测人员 | 偏离/异常；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | readings[].remarks | direct_source/include_in_candidate |
+| 温/湿度计编号 `monitoring_device_code` | 页尾；现用原表字段 | 关联监测设备 | 检测人员/设备管理员 | 建立记录或设备变化；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：设备 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | monitoring_device_code | direct_source/include_in_candidate |
+| 偏离处置/停止工作关联 `deviation_action_id` | 原表无专栏；CX-02 4.2.3.6-4.2.3.7 | 关联超限处置 | 检测人员/技术负责人 | 超限；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：不符合工作 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | deviation_action_id | sim_extension/include_in_candidate |
+
+### XZTC/BG-30-01 年度内部质量监控计划表
+
+- 身份：`XZTC/BG-30-01+26ca22cbf2615c3dd76d61ef5cd8c709e85eafe4+年度内部质量监控计划表`
+- 源文件：`现用文件/记录表格/记录表格2017/30检测结果质量控制及能力验证程序/30-01年度内部质量监控计划表.doc`
+- SHA256：`025b597805b4e5bbc479889c59e00645df4168198e56c581dc04361a62c46248`
+- 当前 schema：`7ad5fabb2d04`
+- 候选字段：9
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 序号 `sequence_no` | 表头；现用原表字段 | 标识计划行 | 系统/技术负责人 | 新增计划行；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | plan_items[].sequence_no | cross_source/include_in_candidate |
+| 计划监控项目 `monitoring_item` | 表头；CX-30 4.2.1.1 | 识别监控对象 | 技术负责人 | 年度策划；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | plan_items[].monitoring_item | direct_source/include_in_candidate |
+| 采用的监控方法 `monitoring_method` | 表头；CX-30 4.1.1 | 记录监控方式 | 技术负责人 | 年度策划；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | plan_items[].monitoring_method | direct_source/include_in_candidate |
+| 计划监控时间 `planned_time` | 表头；CX-30 4.2.1.2 | 安排实施时间 | 技术负责人 | 年度策划；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | plan_items[].planned_time | direct_source/include_in_candidate |
+| 评价准则 `evaluation_criteria` | 表头；CX-30 4.2.1.5 | 记录误差/统计评价准则 | 技术负责人 | 年度策划；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | plan_items[].evaluation_criteria | direct_source/include_in_candidate |
+| 监控实施负责人 `responsible_person` | 表头；CX-30 4.2.1.6 | 分配责任 | 技术负责人指定 | 年度策划；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | plan_items[].responsible_person | direct_source/include_in_candidate |
+| 备注 `remarks` | 表头；现用原表字段 | 补充限制或状态 | 技术负责人 | 有补充；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | plan_items[].remarks | direct_source/include_in_candidate |
+| 编制人/日期 `prepared_by_date` | 原表无独立签核栏；CX-30 3.1-3.3 | 记录编制责任和时点 | 技术负责人 | 计划完成；pending_confirmation | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | prepared_by_date | sim_extension/include_in_candidate |
+| 批准人/日期 `approved_by_date` | 原表无独立签核栏；CX-30 3.1.1,4.2.7 | 记录批准责任和时点 | 实验室主任 | 计划实施前；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | approved_by_date | sim_extension/include_in_candidate |
+
+### XZTC/BG-30-03 能力验证计划表
+
+- 身份：`XZTC/BG-30-03+1c2da4af408e9bae42a3e1db52db39d2c2e83342+能力验证计划表`
+- 源文件：`现用文件/记录表格/记录表格2017/30检测结果质量控制及能力验证程序/30-03能力验证计划表.doc`
+- SHA256：`fb3ab7ed1151c0cdc646906a32e943a9d68dad8e76ee9319b36bb778b48b13bf`
+- 当前 schema：`7ad5fabb2d04`
+- 候选字段：10
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 实验室名称 `laboratory_name` | 页首；现用原表字段 | 识别实验室 | 技术负责人 | 建立计划；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | laboratory_name | direct_source/include_in_candidate |
+| 序号 `sequence_no` | 表头；现用原表字段 | 标识计划行 | 系统/技术负责人 | 新增计划行；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | pt_items[].sequence_no | cross_source/include_in_candidate |
+| 参加项目 `participation_item` | 表头；CX-30 4.2.4.1 | 识别PT项目 | 技术负责人 | 选择项目；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | pt_items[].participation_item | direct_source/include_in_candidate |
+| 检测方法 `test_method` | 表头；现用原表字段 | 关联方法 | 技术负责人 | 选择项目；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：方法 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | pt_items[].test_method | direct_source/include_in_candidate |
+| 参加年度 `participation_year` | 表头；现用原表字段 | 记录计划年度 | 技术负责人 | 年度策划；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | pt_items[].participation_year | direct_source/include_in_candidate |
+| 组织单位 `provider` | 表头；现用原表字段 | 识别能力验证提供者 | 技术负责人 | 获取PT信息；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：外部服务 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | pt_items[].provider | direct_source/include_in_candidate |
+| 备注 `remarks` | 表头；现用原表字段 | 补充限制或状态 | 技术负责人 | 有补充；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | pt_items[].remarks | direct_source/include_in_candidate |
+| 计划责任人/实验人员 `responsible_person_participants` | 原表无独立列；CX-30 4.2.3,4.2.4.4 | 记录责任和参与人员 | 技术负责人 | 计划分派；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：人员 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | pt_items[].responsible_person/participants[] | sim_extension/include_in_candidate |
+| 批准人/日期 `approved_by_date` | 原表无独立栏；CX-30 4.2.3.1,4.2.7 | 记录批准责任和时点 | 实验室主任 | 报名/执行前；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | approved_by_date | sim_extension/include_in_candidate |
+| CNAS状态/不替代真实PT声明 `simulation_disclaimer` | 原表无；SIM治理元数据；冻结画像CNAS初次申请筹备 | 防止SIM计划冒充真实PT | 质量负责人/技术负责人 | SIM筹备场景；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：CNAS | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | governance_metadata.cnas_status/simulation_disclaimer | sim_extension/include_in_candidate |
+
+### XZTC/BG-19-01 记录归档登记表
+
+- 身份：`XZTC/BG-19-01+7be548ed1ae58e04906a49fd4fa52646f0d47792+记录归档登记表`
+- 源文件：`现用文件/记录表格/记录表格2017/19记录控制程序/19-01记录归档登记表.docx`
+- SHA256：`2b1d1fd5ec96b6a177fc22a5250ed44800b7c0b958e238f23f3ece41c49da578`
+- 当前 schema：`15a27608bf58`
+- 候选字段：10
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 序号 `sequence_no` | 表头；现用原表字段 | 标识归档行 | 系统/资料管理员 | 新增归档行；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | archive_items[].sequence_no | cross_source/include_in_candidate |
+| 记录名称 `record_name` | 表头；现用原表字段 | 识别归档记录 | 资料管理员 | 接收归档；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | archive_items[].record_name | direct_source/include_in_candidate |
+| 控制编号 `control_number` | 表头；现用原表字段 | 关联受控编号 | 资料管理员 | 接收归档；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | archive_items[].control_number | direct_source/include_in_candidate |
+| 份数 `copy_count` | 表头；现用原表字段 | 记录交接数量 | 资料管理员 | 清点交接；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | archive_items[].copy_count | direct_source/include_in_candidate |
+| 呈交人 `submitted_by` | 表头；现用原表字段 | 记录呈交责任人 | 实际呈交人 | 交接；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | archive_items[].submitted_by | direct_source/include_in_candidate |
+| 归档人 `archived_by` | 表头；CX-19 3.4 | 记录归档责任人 | 资料管理员 | 入档；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | archive_items[].archived_by | direct_source/include_in_candidate |
+| 归档日期 `archived_at` | 表头；现用原表字段 | 记录归档时点 | 资料管理员 | 入档；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | archive_items[].archived_at | direct_source/include_in_candidate |
+| 电子记录集关联 `record_set_link` | 原表无；原表和程序未确定承接字段 | 关联电子记录集 | 资料管理员/系统管理员 | 电子归档；pending_carrier | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：电子记录 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | 阻断，不映射 | evidence_insufficient/exclude_pending_carrier |
+| 检索测试 `retrieval_test` | 原表无；属于运行验证，不属于本原表字段 | 证明记录可检索 | 资料管理员 | 治理验证；pending_carrier | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：系统验证 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | 阻断，不映射 | evidence_insufficient/exclude_pending_carrier |
+| 追加式修改规则 `modification_rule` | 原表无；属于运行验证，不属于本原表字段 | 证明修改保留原值 | 资料管理员/系统管理员 | 记录更正；pending_carrier | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：审计轨迹 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | 阻断，不映射 | evidence_insufficient/exclude_pending_carrier |
+
+### XZTC/BG-26-01 计算机软件登记表
+
+- 身份：`XZTC/BG-26-01+2829bc979a3bb123443990551e3e7b06ebbeb04f+计算机软件登记表`
+- 源文件：`现用文件/记录表格/记录表格2017/26计算机文件及数据控制程序/26-01计算机软件登记表.doc`
+- SHA256：`cf8b433b3a7f063b8f540743e0228497fa0917cb9e8b25b1318d6602bdb628c8`
+- 当前 schema：`1dcb9d51f9ff`
+- 候选字段：10
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 软件编号 `software_code` | 表头；现用原表字段 | 唯一识别软件 | 办公室 | 安装使用后登记；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | software_items[].software_code | direct_source/include_in_candidate |
+| 软件名称 `software_name` | 表头；现用原表字段 | 识别软件 | 办公室 | 登记；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | software_items[].software_name | direct_source/include_in_candidate |
+| 购置日期 `purchase_date` | 表头；现用原表字段 | 记录购置时间 | 办公室 | 购置软件；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | software_items[].purchase_date | direct_source/include_in_candidate |
+| 保管人 `custodian` | 表头；CX-26 3.2,4.5.2 | 记录保管责任 | 办公室/资料管理员 | 登记或移交；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | software_items[].custodian | direct_source/include_in_candidate |
+| 备注 `remarks` | 表头；现用原表字段 | 记录许可/版本/借用补充 | 办公室 | 有补充；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | software_items[].remarks | direct_source/include_in_candidate |
+| 系统版本 `system_version` | 原表无；BG-26-01原表不承接系统验证 | 记录计算机化系统版本 | 系统管理员 | 系统登记；pending_carrier | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：系统验证 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | 阻断，不映射 | evidence_insufficient/exclude_pending_carrier |
+| 适用性验证状态 `validation_status` | 原表无；需独立计算机化系统验证载体 | 记录系统投入使用前验证 | 技术负责人/系统管理员 | 投入使用或变更；pending_carrier | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：系统验证 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | 阻断，不映射 | evidence_insufficient/exclude_pending_carrier |
+| 备份记录 `backup` | 原表无；不应塞入软件登记表备注 | 记录备份执行 | 系统管理员 | 备份；pending_carrier | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：备份 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | 阻断，不映射 | evidence_insufficient/exclude_pending_carrier |
+| 恢复测试 `restore_test` | 原表无；需独立恢复验证载体 | 证明恢复可用 | 系统管理员/技术负责人 | 恢复演练；pending_carrier | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：恢复 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | 阻断，不映射 | evidence_insufficient/exclude_pending_carrier |
+| 系统限制 `limitation` | 原表无；承接载体未确定 | 记录限制和替代措施 | 技术负责人/系统管理员 | 识别限制；pending_carrier | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：系统失效替代 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | 阻断，不映射 | evidence_insufficient/exclude_pending_carrier |
+
+### XZTC/BG-11-01 供应商评价表
+
+- 身份：`XZTC/BG-11-01+4d8a2162d75aa2e10e0ef4a70e78b2b320681ce2+供应商评价表`
+- 源文件：`现用文件/记录表格/记录表格2017/11外部支持服务和供应品管理程序/11-01供应商评价表.doc`
+- SHA256：`978602137f4c90d801d4a0053b13aead169443c82dba6d2e6e9207d15edc2a4f`
+- 当前 schema：`15a27608bf58`
+- 候选字段：42
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 评价类型 `evaluation_type` | 原件含供应品/计量服务两个子表；原件结构差异 | 区分评价对象类型 | 评价组织人 | 新建评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | evaluation_type | sim_extension/include_in_candidate |
+| 所购物品名称/服务名称 `subject_name` | 两个子表页首；现用原表字段 | 识别评价对象 | 设备管理员/采购员 | 初评/再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | subject_name | direct_source/include_in_candidate |
+| 供应商 `supplier_name` | 两个子表页首；现用原表字段 | 识别供方 | 设备管理员/采购员 | 初评/再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supplier_name | direct_source/include_in_candidate |
+| 规格型号 `product_specification` | 供应品子表页首；现用原表字段 | 记录供应品规格 | 设备管理员/采购员 | 供应品评价；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | product_specification | direct_source/include_in_candidate |
+| 地址 `address` | 两个子表页首；现用原表字段 | 记录供方地址 | 设备管理员/采购员 | 初评；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | address | direct_source/include_in_candidate |
+| 联系电话 `phone` | 两个子表页首；现用原表字段 | 记录供方联系方式 | 设备管理员/采购员 | 初评；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | phone | direct_source/include_in_candidate |
+| 评价人/评价日期 `evaluator_date` | 两个子表签核；现用原表字段 | 记录评价责任和时点 | 实际评价人 | 评价完成；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | evaluator/evaluation_date | direct_source/include_in_candidate |
+| 生产规模/交付进度/履约能力符合 `supply_delivery_capability` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：生产规模/交付进度/履约能力符合 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.delivery_capability | direct_source/include_in_candidate |
+| 货源稳定 `supply_supply_stability` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：货源稳定 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.supply_stability | direct_source/include_in_candidate |
+| 供货质量符合 `supply_product_quality` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：供货质量符合 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.product_quality | direct_source/include_in_candidate |
+| 包装运输质量符合 `supply_packaging_transport` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：包装运输质量符合 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.packaging_transport | direct_source/include_in_candidate |
+| 技术指标符合标准 `supply_technical_indicators` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：技术指标符合标准 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.technical_indicators | direct_source/include_in_candidate |
+| 价格合理 `supply_price_reasonable` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：价格合理 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.price_reasonable | direct_source/include_in_candidate |
+| 质量与价格其他 `supply_quality_price_other` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：质量与价格其他 | 设备管理员/采购员 | 供应商初评或年度再评价；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.quality_price_other | direct_source/include_in_candidate |
+| 服务热情、按时按量交货 `supply_service_delivery` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：服务热情、按时按量交货 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.service_delivery | direct_source/include_in_candidate |
+| 及时联系并收集意见 `supply_customer_contact` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：及时联系并收集意见 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.customer_contact | direct_source/include_in_candidate |
+| 售后服务及时有效 `supply_after_sales` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：售后服务及时有效 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.after_sales | direct_source/include_in_candidate |
+| 服务与信誉其他 `supply_service_other` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：服务与信誉其他 | 设备管理员/采购员 | 供应商初评或年度再评价；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.service_other | direct_source/include_in_candidate |
+| 技术和生产工艺先进 `supply_technology_process` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：技术和生产工艺先进 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.technology_process | direct_source/include_in_candidate |
+| 管理制度能控制产品质量 `supply_management_control` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：管理制度能控制产品质量 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.management_control | direct_source/include_in_candidate |
+| 技术与管理其他 `supply_technology_other` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：技术与管理其他 | 设备管理员/采购员 | 供应商初评或年度再评价；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.technology_other | direct_source/include_in_candidate |
+| 设备设施满足产品要求 `supply_facilities_suitable` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：设备设施满足产品要求 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.facilities_suitable | direct_source/include_in_candidate |
+| 设备设施其他 `supply_facilities_other` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：设备设施其他 | 设备管理员/采购员 | 供应商初评或年度再评价；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.facilities_other | direct_source/include_in_candidate |
+| 生产经营范围符合 `supply_business_scope` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：生产经营范围符合 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.business_scope | direct_source/include_in_candidate |
+| 生产许可证/准用证 `supply_licenses` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：生产许可证/准用证 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.licenses | direct_source/include_in_candidate |
+| ISO 9000认证 `supply_iso9000` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：ISO 9000认证 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.iso9000 | direct_source/include_in_candidate |
+| ISO/IEC 17025认可 `supply_iso17025` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：ISO/IEC 17025认可 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.iso17025 | direct_source/include_in_candidate |
+| 法定计量认证/认可及附表 `supply_metrology_authorization` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：法定计量认证/认可及附表 | 设备管理员/采购员 | 供应商初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.metrology_authorization | direct_source/include_in_candidate |
+| 质量保证能力其他 `supply_quality_assurance_other` | 供应品子表对应评价项；现用原表字段 | 评价供应品供方：质量保证能力其他 | 设备管理员/采购员 | 供应商初评或年度再评价；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：供应商评价 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | supply_checks.quality_assurance_other | direct_source/include_in_candidate |
+| 具备检定/校准机构法律资质 `calibration_legal_qualification` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：具备检定/校准机构法律资质 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | calibration_checks.legal_qualification | direct_source/include_in_candidate |
+| 本实验室设备在其能力范围内 `calibration_scope_match` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：本实验室设备在其能力范围内 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | calibration_checks.scope_match | direct_source/include_in_candidate |
+| 价格合理 `calibration_price_reasonable` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：价格合理 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | calibration_checks.price_reasonable | direct_source/include_in_candidate |
+| 质量与价格其他 `calibration_quality_price_other` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：质量与价格其他 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | calibration_checks.quality_price_other | direct_source/include_in_candidate |
+| 服务热情、按时检定 `calibration_timely_service` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：服务热情、按时检定 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | calibration_checks.timely_service | direct_source/include_in_candidate |
+| 及时联系、收集意见并满足要求 `calibration_customer_contact` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：及时联系、收集意见并满足要求 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | calibration_checks.customer_contact | direct_source/include_in_candidate |
+| 服务与信誉其他 `calibration_service_other` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：服务与信誉其他 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | calibration_checks.service_other | direct_source/include_in_candidate |
+| 其他说明 `calibration_other` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：其他说明 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | calibration_checks.other | direct_source/include_in_candidate |
+| 法律资质文件附件 `calibration_legal_attachment` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：法律资质文件附件 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | attachments.legal | direct_source/include_in_candidate |
+| 能力范围附件 `calibration_scope_attachment` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：能力范围附件 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | attachments.scope | direct_source/include_in_candidate |
+| 审批意见 `calibration_approval_opinion` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：审批意见 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | calibration_checks.approval_opinion | direct_source/include_in_candidate |
+| 技术负责人/日期 `calibration_technical_signature_date` | 计量服务子表对应评价/签核项；计量服务子表对应评价项 | 评价计量服务供方：技术负责人/日期 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | calibration_checks.technical_signature_date | direct_source/include_in_candidate |
+| 实验室主任批准/日期 `calibration_lab_director_approval_date` | 计量服务子表对应评价/签核项；CX-11 4.2.5.2；原表未见独立栏 | 评价计量服务供方：实验室主任批准/日期 | 设备管理员/采购员；签核按字段 | 计量服务初评或年度再评价；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：计量服务供应商 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | calibration_checks.lab_director_approval_date | sim_extension/include_in_candidate |
+
+### XZTC/BG-03-01 仪器设备台账
+
+- 身份：`XZTC/BG-03-01+95eff9510ff94aa1d8a2a6a50d97185366b6a664+仪器设备台账`
+- 源文件：`现用文件/记录表格/记录表格2017/03仪器设备管理程序/03-01仪器设备台帐.doc`
+- SHA256：`cad939eb9a52ca934a062046a9f6b72ccca0454a8898c96b7c1709e40b55727e`
+- 当前 schema：`1f11228d9a3d`
+- 候选字段：14
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 序号 `sequence_no` | 表头；现用原表字段 | 标识设备行 | 系统/设备管理员 | 新增设备；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].sequence_no | cross_source/include_in_candidate |
+| 编号 `equipment_code` | 表头；CX-03 4.1.4 | 唯一识别设备 | 设备管理员 | 设备建档；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].equipment_code | direct_source/include_in_candidate |
+| 名称 `equipment_name` | 表头；现用原表字段 | 识别设备 | 设备管理员 | 设备建档；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].equipment_name | direct_source/include_in_candidate |
+| 规格型号 `model_spec` | 表头；现用原表字段 | 记录规格型号 | 设备管理员 | 设备建档；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].model_spec | direct_source/include_in_candidate |
+| 生产厂 `manufacturer` | 表头；现用原表字段 | 记录制造商 | 设备管理员 | 设备建档；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].manufacturer | direct_source/include_in_candidate |
+| 出厂编号 `factory_number` | 表头；现用原表字段 | 记录出厂编号 | 设备管理员 | 设备建档；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].factory_number | direct_source/include_in_candidate |
+| 购进日期 `purchase_date` | 表头；现用原表字段 | 记录购进日期 | 设备管理员 | 设备建档；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].purchase_date | direct_source/include_in_candidate |
+| 扩展不确定度/最大允差/准确度等级 `accuracy` | 表头；CX-03 4.1.4 | 记录适用准确度指标 | 设备管理员/技术负责人 | 建档或能力更新；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].accuracy | direct_source/include_in_candidate |
+| 测量范围 `measurement_range` | 表头；CX-03 4.1.4 | 记录量程 | 设备管理员/技术负责人 | 建档或能力更新；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].measurement_range | direct_source/include_in_candidate |
+| 溯源方式 `traceability_method` | 表头及填表说明；现用原表字段 | 记录计量溯源方式 | 设备管理员 | 确定溯源方式；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].traceability_method | direct_source/include_in_candidate |
+| 备注 `remarks` | 表头；现用原表字段 | 补充状态或限制 | 设备管理员 | 有补充；optional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].remarks | direct_source/include_in_candidate |
+| 责任人 `responsible_person` | 原表无独立栏；CX-03 4.1.4 | 记录设备责任人 | 设备管理员 | 建档或责任变更；pending_confirmation | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：人员 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].responsible_person | sim_extension/include_in_candidate |
+| 稳定性 `stability_specification` | 原表无独立栏；CX-03 4.1.4；承接方式待核 | 记录稳定性指标或关联主数据 | 设备管理员/技术负责人 | 技术指标更新；pending_confirmation | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：设备主数据 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].stability_specification | sim_extension/include_in_candidate |
+| 分辨率 `resolution_specification` | 原表无独立栏；CX-03 4.1.4；承接方式待核 | 记录分辨率指标或关联主数据 | 设备管理员/技术负责人 | 技术指标更新；pending_confirmation | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：设备主数据 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_items[].resolution_specification | sim_extension/include_in_candidate |
+
+### XZTC/BG-04-03 仪器设备和标准物质期间核查记录表
+
+- 身份：`XZTC/BG-04-03+9f2acdd8d6108240478a8ba84dfde9d7a41e9308+仪器设备和标准物质期间核查记录表`
+- 源文件：`现用文件/记录表格/记录表格2017/04仪器设备和标准物质期间核查程序/04-03仪器设备和标准物质期间核查记录表.doc`
+- SHA256：`b576b8490719d2b8e2933e3d111e947159a4d966858939132970dfc9abbf6a0a`
+- 当前 schema：`146758db0f21`
+- 候选字段：18
+
+| 字段 | 来源定位/依据 | 业务含义 | 岗位 | 触发/必填 | 更正与关联 | 保存依据状态 | LIMS 映射 | 来源等级/处置 |
+|---|---|---|---|---|---|---|---|---|
+| 名称 `equipment_name` | 表头“名称”；现用原表字段 | 识别核查对象 | 设备管理员 | 开展核查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_name | direct_source/include_in_candidate |
+| 型号规格 `model_spec` | 表头“型号规格”；现用原表字段 | 记录对象规格 | 设备管理员 | 开展核查；conditional | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | model_spec | direct_source/include_in_candidate |
+| 编号 `equipment_code` | 表头“编号”；现用原表字段 | 关联设备/标物编号 | 设备管理员 | 开展核查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | equipment_code | direct_source/include_in_candidate |
+| 核查依据 `check_basis` | 表头“核查依据”；CX-04 4.3-4.4 | 关联受控核查依据 | 设备管理员/技术负责人 | 制定/实施核查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：作业指导书 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | check_basis | direct_source/include_in_candidate |
+| 核查所用仪器设备或标准物质 `check_resources` | 表头；现用原表字段 | 记录核查资源 | 设备管理员/核查人员 | 实施核查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：设备/标准物质 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | check_resources | direct_source/include_in_candidate |
+| 核查人员 `check_personnel` | 表头；CX-04 4.6-4.7 | 记录实施人员 | 核查人员 | 实施核查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：人员 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | check_personnel | direct_source/include_in_candidate |
+| 核查过程记录 `process_record` | 主体过程区；现用原表字段 | 记录核查过程 | 设备管理员 | 实施核查；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | process_record | direct_source/include_in_candidate |
+| 记录人（设备管理员） `recorder` | 过程区签核；现用原表字段 | 记录过程责任人 | 设备管理员 | 完成过程记录；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | recorder | direct_source/include_in_candidate |
+| 记录日期 `record_date` | 过程区签核；现用原表字段 | 记录过程时点 | 设备管理员 | 完成过程记录；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | record_date | direct_source/include_in_candidate |
+| 核查结果判定 `result_judgement` | 结果区；现用原表字段 | 形成核查结论 | 核查人员/技术负责人复核 | 核查收口；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | result_judgement | direct_source/include_in_candidate |
+| 核查人员签名 `checkers` | 结果区签核；现用原表字段 | 核查责任签核 | 核查人员 | 判定完成；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | checkers | direct_source/include_in_candidate |
+| 核查日期 `check_date` | 结果区签核；现用原表字段 | 记录核查时点 | 核查人员 | 判定完成；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | check_date | direct_source/include_in_candidate |
+| 审核人意见 `reviewer_opinion` | 审核区；CX-04 3.2 | 记录审核意见 | 技术负责人 | 审核；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | reviewer_opinion | direct_source/include_in_candidate |
+| 审核人签名 `reviewer` | 审核区；现用原表字段 | 审核责任签核 | 技术负责人 | 审核；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：权限 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | reviewer | direct_source/include_in_candidate |
+| 审核日期 `review_date` | 审核区；现用原表字段 | 记录审核时点 | 技术负责人 | 审核；required | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：未识别到可证直接关联；不据此假定无关联 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | review_date | direct_source/include_in_candidate |
+| 核查方法 `check_method` | 当前schema硬编码；基础原表无独立栏；须回链具体作业指导书 | 具体核查方法 | 技术负责人 | 制定核查；pending_evidence | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：技术依据 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | 阻断，不映射 | evidence_insufficient/block_until_basis |
+| 判定标准/限值 `acceptance_criteria` | 当前schema硬编码；基础原表无独立栏；须回链具体作业指导书/方法正文 | 具体判定准则 | 技术负责人 | 制定核查；pending_evidence | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：技术依据 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | 阻断，不映射 | evidence_insufficient/block_until_basis |
+| 测量数据/单位/计算 `measurement_data` | 当前schema通用五列；19变体未逐一建立数据列、单位和计算依据 | 设备或标物专属数据结构 | 核查人员 | 实施核查；pending_evidence | 保留原值、新值、更正人、更正时间和理由；锁定后不得覆盖原值，按CX-19更正规则处理；关联：技术记录 | CX-19 4.5.3.3提供一般规则；本表具体期限须与BG-19-03/04及更长期外部要求复核，当前不编造期限 | 阻断，不映射 | evidence_insufficient/block_until_basis |
+
+## 3. BG-04-03 的 19 个同号变体
+
+身份固定为 `doc_number + source_file_sha1 + object_identity`。对象名称和源表预填值只用于区分源表，不作为 SIM 设备事实。
+
+| 对象 | SHA1 | SHA256 | 当前 schema | 可证字段 | 证据不足字段 |
+|---|---|---|---|---|---|
+| 测金仪 | `887c8ad5d07088a054e844493a509b4df113ab7c` | `75567e82f3dea3f4eb32e3666ffe2a156b544c60959af82c35e27c794a543ff0` | `c9a1ed1be1c3` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 电子天平-TP02 | `3104e1d1f1dfa594bf0358f2f6f40cce4caec54d` | `c2a72ef8f21a078efea93a9f0b0c1f8f93f0bc1dfa71ef83a6df7324380c17cb` | `14a62940ec55` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 电子天平-TP03 | `2f07a0c04fa54dd182917df672cdbee9bc17ab93` | `b2c1551686c65be708de4d05a6444121b81b342950c97022381e11bffc8339c3` | `f7ef463bcf97` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 电子天平-TP04 | `93853734e4c76b2dfd47926709a3670a2666d7cb` | `c54b344deeb7c041df9372f056dfe4dd02fa747f9fb197341e543202e68fbcf7` | `cd708e01c769` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 紫外 | `28bc3220320c32fcff725bb0f0b434ed260fab45` | `06b4b472963f247162d2c39bde9f206536c575ccdcd93920cc8e988e7444aaba` | `ac563f3b6b4b` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 红外光谱仪 | `a587818981d75210300eecb28adeca1c3c9004cf` | `dd1778a57770f8b07f84268e5399a0892e62bd19cebc0fa75c5ebf9fc7de994d` | `6792437c0da7` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 折射仪-ZSY01doc | `09d3b3df4e340b01855386d09bae3b18d18c92cc` | `d34c8066d9650d19f4da61f3a248e4bc267b10303a1a9853ce46f7a515f25487` | `d5f8c7597402` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 折射仪-ZSY02doc | `67a542c23a35958bc639f69dfc44c396e59ab733` | `f86a962315e35d0ab8aed091833428c26933778c5fdf4b3ed4508a1c9c296fd3` | `aea50d1df5fa` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 通用未指定对象 | `9f2acdd8d6108240478a8ba84dfde9d7a41e9308` | `b576b8490719d2b8e2933e3d111e947159a4d966858939132970dfc9abbf6a0a` | `146758db0f21` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 合成红宝石标样 | `6b015a473a83661710853d6a8d8a19bea2050ff0` | `8f7083e16b41961bc23f4ddf503253909aa7ad405722101b053753f7cf012408` | `b6141578de51` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 尖晶石标样 | `7dd73b6df12ca16a0016489fe966fa986e21af4f` | `24946561dcf07185b78b73458baf60e9259e1cd45e1cccbbcd008d7da5515fa8` | `5a6798e85b0e` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 金标片G05 | `1596b85990e544f730cae803c790c01f5edfc192` | `f094268071eb03801e5a6d06b4191d7f4f2c810a7b360d6c464a57d474dce67f` | `aac61d277430` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 金标片G06 | `d478585a966d2721048b55b332374c64a44a83a7` | `e475bddf2b48388a971dc56e80a6f5a5069219ed7b5c0207ab6151db8c06beac` | `a511800704d2` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 金标片G08 | `60587f773ac17c15af8fa29f8f6de261888828a9` | `8a3fc9aff15e0f27586615e804ea0e4c71bb62303409533bb0cd2c430086864e` | `03ac8b90c9d4` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 金标片G09 | `862d741634ef42845caf97fc537f75130c7733b0` | `9899a50918d5e402b1cd8763ab2081560130eed2575feeb5dd19071cfeafb3b6` | `4070fb0b170c` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 金标片G10 | `e3df14a3cb951063528f884f23e114b77a8f2305` | `a4e440c0f3772b416629e373881825df8a59804534ed10036587e603ced6094a` | `17d8ece91943` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 银标片G04 | `2866767813ede4ff824d6efd0b5e2fb333782104` | `8a4f322f3a5ac91a9bc6e8f3a0a96913df3b1c71bedac88a12923bf4645d317b` | `2f7678c92a45` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 银标片G18 | `db7c1ea2b69fb354ed20f7137d4374ddb722b3de` | `01a3b645c14298afd9a699219d3ed4bb6de75c1d4abb62375fc19ff3a4898556` | `0e6803b95616` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+| 锆石标样 | `bae78e81d8b744b8058744e80c0dcc47c7456c25` | `61921f45d0ce0515fcc4b676a2a3870615892fa5d9a4e8e07eb97bf9ae14fdd1` | `ebfadcff9cd8` | equipment_name, model_spec, equipment_code, check_basis, check_resources, check_personnel, process_record, recorder, record_date, result_judgement, checkers, check_date, reviewer_opinion, reviewer, review_date | check_method, acceptance_criteria, measurement_data |
+
+三类证据不足统一保持阻断：具体核查方法、具体判定准则/限值、设备或标物专属测量数据结构（含单位、重复次数、计算和判定）。源表中存在预填数字也不能替代作业指导书或方法正文。
+
+## 4. 旧实例孤儿键迁移预览
+
+- 当前 8013 的 12 项重点现用模板实例数：0。
+- 旧实例不原地覆盖；未知键保留原值并标记 `orphan_pending_review`。
+- 类型不匹配不自动强转；数组/子表按原粒度映射。
+- 同号模板必须先按 `doc_number+source_file_sha1+object_identity` 选定身份。
+- 本候选只给规则，`database_write_performed=false`。
+
+完整逐键规则见同名 JSON 的 `orphan_key_migration_preview`。
+
+## 5. 待独立验证
+
+1. 重新计算 161/145/94/13/64 和 19 个变体 hash。
+2. 对 12 项记录逐字段回看当前源 Word/Doc 和程序条款。
+3. 检查每个字段的来源、业务含义、岗位、触发、必填、更正、关联、保存依据状态、LIMS 映射和来源等级。
+4. 反向检查 evidence_insufficient 项没有技术值、单位、计算或限值。
+5. 检查 8013 中重点模板实例数仍为 0，孤儿键规则没有写库。
+6. 验证通过前保持 `draft_candidate`；本文件不自行推进状态。

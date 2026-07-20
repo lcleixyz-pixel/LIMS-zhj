@@ -1,0 +1,73 @@
+{
+  "document_status": "sim_candidate_frozen",
+  "as_of": "2026-07-19",
+  "rehearsal_run_id": "SIM-GOV-R2-20260719",
+  "purpose": "第二轮排演式持续治理的机构适用性开关，不构成正式机构画像、CMA能力范围或CNAS认可状态证明。",
+  "sites": [
+    {
+      "site_id": "SIM-SITE-URUMQI",
+      "formal_site_head": true,
+      "real_identity_included": false
+    },
+    {
+      "site_id": "SIM-SITE-HOTAN",
+      "formal_site_head": true,
+      "real_identity_included": false
+    }
+  ],
+  "governance_roles": {
+    "quality_manager": {
+      "unique": true,
+      "sim_role_id": "SIM-ROLE-QM-01",
+      "real_identity_included": false
+    },
+    "technical_manager": {
+      "unique": true,
+      "sim_role_id": "SIM-ROLE-TM-01",
+      "real_identity_included": false
+    },
+    "management_review_final_approver": {
+      "sim_role_id": "SIM-ROLE-LAB-DIRECTOR-01",
+      "role_name": "实验室主任",
+      "real_identity_included": false
+    }
+  },
+  "cnas_status": {
+    "stage": "initial_application_preparation",
+    "application_submitted": false,
+    "application_accepted": false,
+    "accredited": false,
+    "cnas_mark_allowed": false
+  },
+  "method_scope_for_sim": {
+    "cma_in_library_user_confirmed_for_sim": [
+      "GB/T 16552-2017",
+      "GB/T 16553-2017",
+      "GB/T 38821-2020",
+      "GB 11887-2012及第1号修改单",
+      "GB/T 18043-2013"
+    ],
+    "out_of_library_cma_false_cnas_initial_candidate": [
+      "DB65/T 035-2010",
+      "DB65/T 3442-2013",
+      "DB65/T 4828-2024"
+    ]
+  },
+  "negative_test_only": [
+    "抽样",
+    "留样",
+    "分包",
+    "钻石分级",
+    "GB/T 44914-2024和田玉分级",
+    "CNAS认可标识或认可状态声明"
+  ],
+  "privacy_and_simulation_boundary": {
+    "real_certificate_data_used": false,
+    "real_personnel_data_used": false,
+    "real_equipment_data_used": false,
+    "real_signatures_used": false,
+    "sim_function_mapping_only": true
+  },
+  "evidence_status": "user_confirmed_for_sim",
+  "approval_boundary": "仅冻结为SIM考卷事实；不得据此对外宣称正式CMA/CNAS状态。"
+}

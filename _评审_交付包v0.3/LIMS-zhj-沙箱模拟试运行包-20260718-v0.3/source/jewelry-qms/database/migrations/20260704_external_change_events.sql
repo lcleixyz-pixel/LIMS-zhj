@@ -1,0 +1,35 @@
+-- T2.7 external change event registry for CNAS/CMA/standard announcements.
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `qms_external_change_events` (
+  `id` varchar(36) NOT NULL,
+  `company_id` varchar(36) NOT NULL,
+  `event_code` varchar(80) NOT NULL COMMENT '变更事件编号',
+  `source_kind` enum('cnas','samr','standard_platform','gb','internal','other') NOT NULL DEFAULT 'cnas' COMMENT '公告来源类型',
+  `source_name` varchar(300) NOT NULL COMMENT '公告/依据名称',
+  `source_url` varchar(500) DEFAULT NULL COMMENT '公告或查新链接',
+  `announcement_number` varchar(120) DEFAULT NULL COMMENT '公告编号',
+  `old_source_id` varchar(36) DEFAULT NULL COMMENT '旧外部依据 qms_sources.id',
+  `new_source_id` varchar(36) DEFAULT NULL COMMENT '新外部依据 qms_sources.id',
+  `old_version` varchar(80) DEFAULT NULL,
+  `new_version` varchar(80) DEFAULT NULL,
+  `published_date` date DEFAULT NULL,
+  `effective_date` date DEFAULT NULL,
+  `event_summary` text NOT NULL,
+  `graph_snapshot_hash` char(64) DEFAULT NULL COMMENT '登记时追溯图谱快照哈希',
+  `status` enum('registered','assessing','revising','closed','exempted') DEFAULT 'registered',
+  `close_reason` text,
+  `publish` tinyint(1) DEFAULT 1,
+  `soft_delete` tinyint(1) DEFAULT 0,
+  `created` datetime DEFAULT NULL,
+  `modified` datetime DEFAULT NULL,
+  `created_by` varchar(36) DEFAULT NULL,
+  `modified_by` varchar(36) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `event_code` (`event_code`),
+  KEY `company_status` (`company_id`,`status`),
+  KEY `source_kind` (`source_kind`),
+  KEY `effective_date` (`effective_date`),
+  KEY `old_source_id` (`old_source_id`),
+  KEY `new_source_id` (`new_source_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

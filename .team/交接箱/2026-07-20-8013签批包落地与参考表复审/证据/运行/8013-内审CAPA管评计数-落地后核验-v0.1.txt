@@ -1,0 +1,7 @@
+t	c
+audit_plans	1
+audit_schedules	2
+audit_checklists	132
+audit_findings	8
+capas	10
+management_reviews	1

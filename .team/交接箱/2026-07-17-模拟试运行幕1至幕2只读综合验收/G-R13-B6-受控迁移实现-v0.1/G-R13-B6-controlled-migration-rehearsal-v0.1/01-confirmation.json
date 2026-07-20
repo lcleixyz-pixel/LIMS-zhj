@@ -1,0 +1,37 @@
+{
+    "schema_version": "g-r13-b6-confirmation-v0.1",
+    "status": "approved",
+    "target_database": "jewelry_qms_p0_r13b6",
+    "company_id": "00000000-0000-0000-0000-000000000001",
+    "document_number": "ORG-APPOINT-2026-01",
+    "effective_date": "2026-07-17",
+    "source_excerpt": "经人工确认的人员、岗位、场所和授权关系，仅用于 B6 隔离迁移演练。",
+    "people": {
+        "hetian_document_controller": {
+            "formal_name": "如则托合提",
+            "employee_number": "E012"
+        },
+        "hetian_equipment_manager": {
+            "formal_name": "米尔布拉",
+            "employee_number": "E013"
+        }
+    },
+    "reviews": {
+        "quality_manager": {
+            "name": "张晓磊",
+            "decision": "approved",
+            "date": "2026-07-17"
+        },
+        "technical_manager": {
+            "name": "刘恒春",
+            "decision": "approved",
+            "date": "2026-07-17"
+        },
+        "top_management": {
+            "name": "俞炳星",
+            "decision": "approved",
+            "date": "2026-07-17"
+        }
+    },
+    "rehearsal_marker": "B6_REHEARSAL_ONLY_NOT_REAL_APPROVAL"
+}

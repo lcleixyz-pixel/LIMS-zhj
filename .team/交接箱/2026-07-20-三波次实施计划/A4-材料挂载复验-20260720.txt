@@ -1,0 +1,70 @@
+=== A4 mount + recheck 2026-07-20 23:39:09 +0900 ===
+container=lims-zhj-wave1-smoke-20260720-app-1
+
+----- mount check -----
+OK file /app/docs/import-preview/record-forms-import-preview.md size=96149
+
+OK file /docs/import-preview/record-forms-import-preview.md size=96149
+
+OK dir /现用文件 entries=285
+total 2684
+drwxr-xr-x 6 root root     192 Jul 20 17:19 .
+drwxr-xr-x 1 root root    4096 Jul 20 22:36 ..
+-rw-r--r-- 1 root root 1915008 Jul 20 17:19 作业指导书181201.docx
+drwxr-xr-x 4 root root     128 Jul 20 17:19 程序文件
+drwxr-xr-x 3 root root      96 Jul 20 17:19 记录表格
+-rw-r--r-- 1 root root  827184 Jul 20 17:19 质量手册（第四版）.docx
+
+
+----- A4 recheck via wave1_smoke_runner.sh -----
+list:
+record_forms_batch_smoke.php
+record_forms_equipment_fidelity_smoke.php
+record_forms_file_control_fidelity_smoke.php
+record_forms_personnel_fidelity_smoke.php
+record_form_fillability_readiness_smoke.php
+
+----- summary -----
+# 全量 smoke 汇总（A1 判定口径）
+
+- 清单：`a4-smoke-list-20260720.txt`（1）
+- 判定：PASS = exit=0 且哨兵(passed/OK/smoke通过)；Exception]/Fatal error → FAIL
+- 统计：**PASS=1 / FAIL=0 / TOTAL=1**
+- 原始输出：`a4-smoke-raw-20260720.txt`
+
+## FAIL 清单
+
+（无）
+
+----- raw (truncated if huge) -----
+===== [1] record_forms_batch_smoke.php =====
+record_forms_batch_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+
+----- A4 recheck (stdin-safe, 5 scripts) 2026-07-20 23:39:53 +0900 -----
+
+----- A4 five-script summary -----
+PASS=5 FAIL=0 TOTAL=5
+FAIL list: （无）
+
+===== [1] record_forms_batch_smoke.php =====
+record_forms_batch_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [2] record_forms_equipment_fidelity_smoke.php =====
+record_forms_equipment_fidelity_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [3] record_forms_file_control_fidelity_smoke.php =====
+record_forms_file_control_fidelity_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [4] record_forms_personnel_fidelity_smoke.php =====
+record_forms_personnel_fidelity_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [5] record_form_fillability_readiness_smoke.php =====
+record_form_fillability_readiness_smoke passed
+EXIT_CODE=0
+RESULT=PASS

@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.1",
+  "run_id": "SIM-GOV-R2-20260719",
+  "environment": "8013",
+  "status": "sim_applied",
+  "independent_replay": {
+    "status": "passed",
+    "report": "../独立验证/独立验证-8013覆盖层应用与受影响场景复演-v0.1.md",
+    "sha256": "e286af9611a6e12f7bc390bb8f1f2f35b4c895aff26d54f216e31bb4adbc50a5"
+  },
+  "candidates": [
+    {
+      "id": "R2-FILE-001",
+      "state": "sim_applied"
+    },
+    {
+      "id": "R2-FILE-002",
+      "state": "sim_applied"
+    },
+    {
+      "id": "R2-FILE-003",
+      "state": "sim_applied"
+    }
+  ],
+  "findings_closed": [
+    "R2-FIND-001",
+    "R2-FIND-002",
+    "R2-FIND-003",
+    "R2-FIND-004",
+    "R2-FIND-005",
+    "R2-FIND-006",
+    "R2-FIND-007",
+    "R2-FIND-008"
+  ],
+  "formal_release": false,
+  "current_baseline_templates_modified": false
+}

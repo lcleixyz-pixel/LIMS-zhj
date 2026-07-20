@@ -1,0 +1,20 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">合格供应商名录</h5></div>
+    <div class="card-body">
+        <table class="table table-striped table-sm">
+            <thead><tr><th>编号</th><th>名称</th><th>服务类型</th><th>联系人</th><th>电话</th></tr></thead>
+            <tbody>
+                {volist name="items" id="item"}
+                <tr>
+                    <td>{$item.supplier_number|default='-'}</td>
+                    <td><a href="/supplier/view?id={$item.id}">{$item.name}</a></td>
+                    <td>{$item.service_type|default='-'}</td>
+                    <td>{$item.contact_person|default='-'}</td>
+                    <td>{$item.phone|default='-'}</td>
+                </tr>
+                {/volist}
+                {empty name="items"}<tr><td colspan="5" class="text-center text-muted">暂无合格供应商</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

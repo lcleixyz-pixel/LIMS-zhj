@@ -1,0 +1,86 @@
+{
+    "generated_at": "2026-07-20T18:48:29+08:00",
+    "mode": "dry-run",
+    "database_write_performed": 0,
+    "total_active_employees": 11,
+    "blank_employee_number_count": 0,
+    "blank_email_count": 10,
+    "duplicate_employee_number_groups": 0,
+    "duplicate_email_groups": 0,
+    "blank_employee_number_note": "空串在 MySQL UNIQUE 下会互撞；上唯一索引前应归一为 NULL",
+    "blank_email_note": "空串在 MySQL UNIQUE 下会互撞；上唯一索引前应归一为 NULL",
+    "duplicate_employee_numbers": [],
+    "duplicate_emails": [],
+    "blank_employee_numbers": [],
+    "blank_emails": [
+        {
+            "id": "9f4f9c77-0551-4c38-a7ac-a5b20d929a6d",
+            "name": "俞炳星",
+            "employee_number": "E000",
+            "publish": 1
+        },
+        {
+            "id": "76b4ebdc-cafd-4ca0-9637-d3194c0fc594",
+            "name": "曹红",
+            "employee_number": "E003",
+            "publish": 1
+        },
+        {
+            "id": "d39db2de-8942-4e7c-99d8-86eabfa4a057",
+            "name": "李成辉",
+            "employee_number": "E004",
+            "publish": 1
+        },
+        {
+            "id": "f589817c-f82c-4ed6-8b0b-66fb81f6210f",
+            "name": "刘恒春",
+            "employee_number": "E005",
+            "publish": 1
+        },
+        {
+            "id": "40eea6cc-9d5b-48f8-8ace-873a21b35197",
+            "name": "付丽",
+            "employee_number": "E006",
+            "publish": 1
+        },
+        {
+            "id": "72812ba5-b58c-4846-9566-abd4dc033c67",
+            "name": "米尔布拉·阿卜杜麦麦提",
+            "employee_number": "E007",
+            "publish": 1
+        },
+        {
+            "id": "c402ff6e-357c-4485-99ea-718916721eba",
+            "name": "如则托合提·阿卜杜加帕尔",
+            "employee_number": "E008",
+            "publish": 1
+        },
+        {
+            "id": "936bdb6a-89d7-49b3-8721-009c038553e2",
+            "name": "毛天一",
+            "employee_number": "E009",
+            "publish": 1
+        },
+        {
+            "id": "9e82e78d-aa6e-40cc-81df-5e13cc915362",
+            "name": "王胜林",
+            "employee_number": "E010",
+            "publish": 1
+        },
+        {
+            "id": "477281ff-4862-4dee-9496-eb52d830f209",
+            "name": "史广",
+            "employee_number": "E011",
+            "publish": 1
+        }
+    ],
+    "proposed_actions": [
+        {
+            "kind": "blank_email",
+            "count": 10,
+            "action": "normalize_empty_string_to_null"
+        }
+    ],
+    "ready_for_unique_index": "no",
+    "blocking_items": 1
+}

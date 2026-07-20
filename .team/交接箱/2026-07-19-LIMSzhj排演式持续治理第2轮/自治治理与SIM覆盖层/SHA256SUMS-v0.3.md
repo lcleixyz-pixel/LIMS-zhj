@@ -1,0 +1,18 @@
+# 自治治理状态路由 v0.3 哈希清单
+
+```text
+b37123fc78babdf14896a5856c4aa7c1a091b43d27389880c3e5276745b77680  自治治理主台账-v0.3.md
+2c5680b5c95c31bde761d14fb3a3fcf460d149dc91c9c56be3074ca161807912  自治治理主台账-v0.3.json
+cd0fb998304c19c1ddb8ecc322493549d47e59a9c34de9d4200b6b15fe3837ff  候选覆盖层/SIM-质量手册差异覆盖候选-v0.1.md
+9a00d8b9d0dd3e0c002869edfa1231c64fcd624445ec47953143ea19f32b8494  候选覆盖层/SIM-程序与结构覆盖候选-v0.1.md
+371ee52fefbe8683e65868a0032a242ef999fda8d52cc7a53960ec02192b3783  候选覆盖层/SIM-记录模板语义覆盖候选-v0.2.md
+23a466896e8faa0917b907904f679b0009b4a65a83f95fc1db6693588645d7de  候选覆盖层/SIM-记录模板语义覆盖候选-v0.2.json
+ee8d59fc29eba6daaf14ed09afcdd98b22e051ad42af2e3f2add4dfb58c8e421  ../独立验证/独立验证-记录模板语义覆盖候选-v0.2.md
+d0a7ffa17803a0d97dfd0f9321ddef5c42920647e9dfb957ee8256575ee51475  机器检查/build_governance_ledger_v03.py
+2926467ad7aaec55b33e7678324caab7361cc0bcc8a2520aa2169c538447737d  机器检查/validate_governance_package_v03.py
+540a76ccc95f472fb3e23b239c39852188fc02005f9ba0dc9dd53ea3de2f5cfb  机器检查/test_validate_governance_package_v03.py
+8879e27d1fa191e2ed743316e7e55eb7c65425e350b98bbba66d53849df7a227  机器检查/验证报告-v0.3.md
+```
+
+本清单不包含自身哈希。候选载荷哈希与 v0.2 完全一致，用于证明本轮只推进状态、未修改候选。
+

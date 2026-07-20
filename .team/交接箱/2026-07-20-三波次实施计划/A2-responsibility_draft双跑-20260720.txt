@@ -1,0 +1,13 @@
+=== A2 responsibility_draft dual-run 2026-07-20 23:38:23 +0900 ===
+container=lims-zhj-wave1-smoke-20260720-app-1
+note: smoke fixture patched to insert soft_delete=1 for duplicate history under active-only UNIQUE
+
+----- RUN 1 -----
+qms_responsibility_draft_smoke passed
+----- RUN 1 exit=0 -----
+
+----- RUN 2 -----
+qms_responsibility_draft_smoke passed
+----- RUN 2 exit=0 -----
+
+SUMMARY: run1_exit=0 run2_exit=0

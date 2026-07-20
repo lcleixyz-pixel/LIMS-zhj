@@ -1,0 +1,5 @@
+source_code,name,source_type,version,freshness_checked_at,freshness_result,freshness_status,status,freshness_evidence
+CNAS_CL01_G001_2024,CNAS-CL01-G001:2024《检测和校准实验室能力认可准则的应用要求》,external_standard,2024,2026-07-07,官方页面可查，候选稿按现行应用要求使用。,current,published,https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_72245f37cbac480697079c8cf78d8b4b.html
+CNAS_CL01_G003_2021_REV2023,CNAS-CL01-G003:2021《测量不确定度的要求》（2023-01-01 第一次修订）,external_standard,2021/2023修订,2026-07-07,官方页面可查，替换第四版中的 2018 口径。,current,published,https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_69a6ecdcb8634b33ab6acbb6c335f56f.html
+SAMR_CMA_APPRAISAL_RULES_2023_21,《检验检测机构资质认定评审准则》（国家市场监督管理总局公告 2023 年第 21 号）,regulatory_rule,2023,2026-07-07,用于 CMA 已取得状态下的主要资质认定评审依据。,current,published,https://zwfw.samr.gov.cn/scjg/wyb/rzrkjyjc/2024082707005060849/
+RBT_045_2020,RB/T 045-2020《检验检测机构管理和技术能力评价 内部审核要求》,industry_standard,2020,2026-07-07,不作为第五版候选稿现行依据。,obsolete,obsolete,https://hbba.sacinfo.org.cn/snDetail/f696005a52113a9675dd8b535adfb30f622e2b50f81f5562a84c72d9c364020d

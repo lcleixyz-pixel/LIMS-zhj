@@ -1,0 +1,1072 @@
+{
+  "schema_version": "1.2",
+  "ledger_id": "SIM-GOV-R2-LEDGER-003",
+  "rehearsal_run_id": "SIM-GOV-R2-20260719",
+  "generated_at": "2026-07-19",
+  "effect_scope": "sim_only_noncontrolled_candidate",
+  "issue_state_enum": [
+    "open",
+    "accepted",
+    "remediating",
+    "verifying",
+    "closed",
+    "escalated"
+  ],
+  "file_state_enum": [
+    "draft_candidate",
+    "returned",
+    "verified_candidate",
+    "sim_applied"
+  ],
+  "boundary": {
+    "production_write": false,
+    "current_file_overwrite": false,
+    "formal_approval": false,
+    "formal_release": false,
+    "self_verification": false,
+    "old_validation_inherited": false,
+    "allowed_initial_file_states": [
+      "draft_candidate",
+      "verified_candidate"
+    ],
+    "verified_candidate_requires_independent_pass": true,
+    "sim_applied_requires_replay_gate": true
+  },
+  "sources": [
+    {
+      "source_id": "SRC-BASIS-FREEZE",
+      "title": "依据与机构画像冻结包 v0.1",
+      "path_scope": "project",
+      "path": ".team/交接箱/2026-07-19-LIMSzhj排演式持续治理第2轮/依据与画像/依据与机构画像冻结包-v0.1.md",
+      "sha256": "8f1351f9c488a95b95ff9189ae226fb72e23910f5c80cfaaed0e4df1656dad49",
+      "role": "second_round_frozen_basis"
+    },
+    {
+      "source_id": "SRC-EXAM",
+      "title": "全要素排演考卷与适用性冻结 v0.1",
+      "path_scope": "project",
+      "path": ".team/交接箱/2026-07-19-LIMSzhj排演式持续治理第2轮/依据与画像/全要素排演考卷与适用性冻结-v0.1.md",
+      "sha256": "c7b9f3b06f125b7e8935409ed98bad9c11dff85db8e075b468314571cc826263",
+      "role": "second_round_frozen_exam"
+    },
+    {
+      "source_id": "SRC-CURRENT-MANUAL",
+      "title": "质量手册第四版导出层",
+      "path_scope": "project",
+      "path": "knowledge/internal/manual/XZTC_SC-质量手册_第四版.md",
+      "sha256": "28ecd667478a94d21070f11860f6c8181e7f72d60c80b5e7c5c7744e2729281a",
+      "role": "current_baseline_locator_only"
+    },
+    {
+      "source_id": "SRC-CURRENT-INDEX",
+      "title": "内部体系文件导出索引",
+      "path_scope": "project",
+      "path": "knowledge/internal/INTERNAL_EXPORT_INDEX.md",
+      "sha256": "63cb8abbc9cdcf88b870335ae2daf31fe30cbdb349b0b666b59aca39849893fb",
+      "role": "current_baseline_inventory"
+    },
+    {
+      "source_id": "SRC-PROCEDURE-MANIFEST",
+      "title": "2022程序文件枚举清单",
+      "path_scope": "project",
+      "path": "knowledge/internal/procedures/PROCEDURE_FILE_MANIFEST.json",
+      "sha256": "133b6d3728071b5b38390d58539e4ce829209b4a2f5f1122bce694fe47a5cd3f",
+      "role": "current_baseline_inventory"
+    },
+    {
+      "source_id": "SRC-CX05",
+      "title": "实现测量可溯源程序导出层",
+      "path_scope": "project",
+      "path": "knowledge/internal/procedures/XZTC_CX-05-2022-实现测量可溯源程序.md",
+      "sha256": "c4dcada82a68a6d812351d438e4a6a240a6b98818c2a0bf243c3c89b2e97959d",
+      "role": "current_baseline_locator_only"
+    },
+    {
+      "source_id": "SRC-CX21",
+      "title": "管理评审程序导出层",
+      "path_scope": "project",
+      "path": "knowledge/internal/procedures/XZTC_CX-21-2022-管理评审程序.md",
+      "sha256": "4772a18abe3e3c3fc3fad4305ad14a11409aad52c6af79b9d8e0c89fd1931645",
+      "role": "current_baseline_locator_only"
+    },
+    {
+      "source_id": "SRC-CX28",
+      "title": "样品处置和管理程序导出层",
+      "path_scope": "project",
+      "path": "knowledge/internal/procedures/XZTC_CX-28-2022-样品处置和管理程序.md",
+      "sha256": "f348462e4891614762cc648551484a477374a18085c7a1a2b698355658fca95e",
+      "role": "current_baseline_locator_only"
+    },
+    {
+      "source_id": "SRC-CX31",
+      "title": "检测工作的监督程序导出层",
+      "path_scope": "project",
+      "path": "knowledge/internal/procedures/XZTC_CX-31-2022-检测工作的监督程序.md",
+      "sha256": "4a045b82e50c74de539b5c1cefdf5d9499919bda3c23febc44086f94372f7646",
+      "role": "current_baseline_locator_only"
+    },
+    {
+      "source_id": "SRC-CX35",
+      "title": "抽样控制程序导出层",
+      "path_scope": "project",
+      "path": "knowledge/internal/procedures/XZTC_CX-35-2022-抽样控制程序.md",
+      "sha256": "5ff6801d8d79451f9ec5f55f35241d53dbdfd657242b72cae605889deded3d89",
+      "role": "current_baseline_locator_only"
+    },
+    {
+      "source_id": "SRC-TEMPLATE-SERVICE",
+      "title": "记录模板批量服务代码基线",
+      "path_scope": "git_commit",
+      "path": "jewelry-qms/app/service/RecordFormBatchTemplateService.php",
+      "sha256": "1050db7ba60c4d2401ba0d4198b21b231c3b56a800b9744fcae15aaaf0c7cb3a",
+      "role": "frozen_code_baseline_at_commit",
+      "git_commit": "2503f15a34d3a0d079429353616d66c3a370eddc"
+    },
+    {
+      "source_id": "SRC-MANUAL-MATERIAL",
+      "title": "第五版质量手册候选素材",
+      "path_scope": "project",
+      "path": ".team/交接箱/2026-07-07-第五版候选修订准备/10-质量手册第五版候选稿.md",
+      "sha256": "aa1d992eb7da1d8d99519cf6ef03ac5d0ac6fed1d6e7f3095ea3ec8db969caa0",
+      "role": "source_material_only"
+    },
+    {
+      "source_id": "SRC-OLD-PROGRAM-CANDIDATE",
+      "title": "旧轮手册程序记录整改候选 v0.2",
+      "path_scope": "absolute",
+      "path": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.team/交接箱/2026-07-19-LIMSzhj完整沙箱持续治理演练/候选整改/手册程序记录整改候选包-v0.2.md",
+      "sha256": "422010ed3c5ab0f593b754c544eea9c49fe69caf589620cfd3eee427cb5234dc",
+      "role": "source_material_only_no_inherited_conclusion"
+    },
+    {
+      "source_id": "SRC-OLD-TEMPLATE-CANDIDATE",
+      "title": "旧轮记录模板逐字段治理候选 v0.2",
+      "path_scope": "absolute",
+      "path": "/Users/lc.leixyz/Documents/AI工作台/01-项目代码/LIMS-zhj/.team/交接箱/2026-07-19-LIMSzhj完整沙箱持续治理演练/候选整改/记录模板逐字段治理候选-v0.2.md",
+      "sha256": "e33a1875d87f30f40f060d902ede97460224368b9d106a2d0052fcee54ea1c78",
+      "role": "source_material_only_no_inherited_conclusion"
+    },
+    {
+      "source_id": "SRC-INDEPENDENT-VALIDATION-R1",
+      "title": "独立验证-半年运行与自治候选 v0.1",
+      "path_scope": "project",
+      "path": ".team/交接箱/2026-07-19-LIMSzhj排演式持续治理第2轮/独立验证/独立验证-半年运行与自治候选-v0.1.md",
+      "sha256": "bf07a2e2cba7910840ece56b411389cfce9a449e165daa4585852e1f279832ed",
+      "role": "independent_validation_result"
+    },
+    {
+      "source_id": "SRC-R2-TEMPLATE-FRESH-SNAPSHOT",
+      "title": "8013记录模板新鲜复算 v0.2",
+      "path_scope": "package",
+      "path": "候选覆盖层/8013记录模板新鲜复算-v0.2.json",
+      "sha256": "80cfc3df2b253cec9d35260f31d643048f77df8b1faef71bfeb56be70f1ce55a",
+      "role": "read_only_fresh_evidence"
+    },
+    {
+      "source_id": "SRC-R2-TEMPLATE-CANDIDATE-V02",
+      "title": "SIM记录模板语义覆盖候选 v0.2",
+      "path_scope": "package",
+      "path": "候选覆盖层/SIM-记录模板语义覆盖候选-v0.2.md",
+      "sha256": "371ee52fefbe8683e65868a0032a242ef999fda8d52cc7a53960ec02192b3783",
+      "machine_json_path": "候选覆盖层/SIM-记录模板语义覆盖候选-v0.2.json",
+      "machine_json_sha256": "23a466896e8faa0917b907904f679b0009b4a65a83f95fc1db6693588645d7de",
+      "role": "draft_candidate_pending_new_independent_validation"
+    },
+    {
+      "source_id": "SRC-INDEPENDENT-TEMPLATE-V02-PASS",
+      "title": "独立验证：记录模板语义覆盖候选 v0.2",
+      "path_scope": "project",
+      "path": ".team/交接箱/2026-07-19-LIMSzhj排演式持续治理第2轮/独立验证/独立验证-记录模板语义覆盖候选-v0.2.md",
+      "sha256": "ee8d59fc29eba6daaf14ed09afcdd98b22e051ad42af2e3f2add4dfb58c8e421",
+      "role": "independent_validation_pass_authorizing_verified_candidate_only"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "R2-FIND-001",
+      "title": "第四版手册61处程序引用仍指向2018版",
+      "classification": "objective_document_gap",
+      "severity": "high",
+      "issue_state": "remediating",
+      "objective_basis": [
+        {
+          "source_id": "SRC-CURRENT-MANUAL",
+          "locator": "L498-L1642",
+          "requirement": "61处旧程序引用可重复检出"
+        },
+        {
+          "source_id": "SRC-EXAM",
+          "locator": "EX-8.2, EX-8.3",
+          "requirement": "手册、程序和现行版本应一致"
+        }
+      ],
+      "old_value": "第四版手册导出层存在61处XZTC/CX-...-2018引用",
+      "proposed_new_value": "SIM候选逐行映射到2022程序清单；本轮重新独立复算",
+      "impact_objects": [
+        "质量手册",
+        "37份程序",
+        "程序目录",
+        "文件追溯链"
+      ],
+      "candidate_file_ids": [
+        "R2-FILE-001"
+      ],
+      "verification": {
+        "status": "pending_independent_validation",
+        "required_checks": [
+          "逐行61/61复算",
+          "目标编号唯一存在",
+          "第五版素材差异复核"
+        ],
+        "evidence_links": []
+      },
+      "replay": {
+        "status": "not_run",
+        "scenario_ids": [
+          "EX-8.2",
+          "EX-8.3"
+        ],
+        "evidence_links": []
+      },
+      "transitions": [
+        {
+          "from": "open",
+          "to": "accepted",
+          "reason": "当前导出层可复现61处旧引用"
+        },
+        {
+          "from": "accepted",
+          "to": "remediating",
+          "reason": "已生成SIM差异候选，等待独立验证"
+        }
+      ]
+    },
+    {
+      "finding_id": "R2-FIND-002",
+      "title": "CX-05和CX-31存在8处历史程序引用",
+      "classification": "objective_document_gap",
+      "severity": "medium",
+      "issue_state": "remediating",
+      "objective_basis": [
+        {
+          "source_id": "SRC-CX05",
+          "locator": "L156, L158",
+          "requirement": "两处2018程序引用"
+        },
+        {
+          "source_id": "SRC-CX31",
+          "locator": "L120, L126, L128, L136, L138, L144",
+          "requirement": "六处2019程序引用和一处标题差异"
+        },
+        {
+          "source_id": "SRC-EXAM",
+          "locator": "EX-8.3",
+          "requirement": "程序引用应保持现行和一致"
+        }
+      ],
+      "old_value": "CX-05引用2018版，CX-31引用2019版",
+      "proposed_new_value": "SIM程序候选统一为2022版并保持记录节边界",
+      "impact_objects": [
+        "CX-05",
+        "CX-31",
+        "设备",
+        "监督",
+        "报告追溯"
+      ],
+      "candidate_file_ids": [
+        "R2-FILE-002"
+      ],
+      "verification": {
+        "status": "pending_independent_validation",
+        "required_checks": [
+          "2+6位置复算",
+          "标题与程序枚举一致"
+        ],
+        "evidence_links": []
+      },
+      "replay": {
+        "status": "not_run",
+        "scenario_ids": [
+          "EX-6.4",
+          "EX-8.3"
+        ],
+        "evidence_links": []
+      },
+      "transitions": [
+        {
+          "from": "open",
+          "to": "accepted",
+          "reason": "当前程序导出层可重复检出"
+        },
+        {
+          "from": "accepted",
+          "to": "remediating",
+          "reason": "已形成程序引用差异候选"
+        }
+      ]
+    },
+    {
+      "finding_id": "R2-FIND-003",
+      "title": "CX-21批准职责冲突且记录清单错挂",
+      "classification": "objective_document_gap",
+      "severity": "high",
+      "issue_state": "remediating",
+      "objective_basis": [
+        {
+          "source_id": "SRC-CX21",
+          "locator": "L36, L118, L140-L144",
+          "requirement": "实验室主任和总经理批准冲突，末尾错挂BG-20记录"
+        },
+        {
+          "source_id": "SRC-BASIS-FREEZE",
+          "locator": "第5节",
+          "requirement": "管理评审报告最终批准岗位为实验室主任"
+        },
+        {
+          "source_id": "SRC-EXAM",
+          "locator": "EX-8.9",
+          "requirement": "职责和证据链应一致"
+        }
+      ],
+      "old_value": "4.6.2写公司总经理批准，记录清单列BG-20-02/08/06",
+      "proposed_new_value": "最终批准统一为实验室主任；移除BG-20错挂；BG-21第三项身份保持待核",
+      "impact_objects": [
+        "CX-21",
+        "管理评审报告",
+        "角色权限矩阵",
+        "程序记录清单"
+      ],
+      "candidate_file_ids": [
+        "R2-FILE-001",
+        "R2-FILE-002"
+      ],
+      "verification": {
+        "status": "pending_independent_validation",
+        "required_checks": [
+          "岗位冻结事实核对",
+          "BG-20错挂核对",
+          "BG-21-03不得推定"
+        ],
+        "evidence_links": []
+      },
+      "replay": {
+        "status": "not_run",
+        "scenario_ids": [
+          "EX-8.9"
+        ],
+        "evidence_links": []
+      },
+      "transitions": [
+        {
+          "from": "open",
+          "to": "accepted",
+          "reason": "当前程序内部冲突可复现"
+        },
+        {
+          "from": "accepted",
+          "to": "remediating",
+          "reason": "已形成职责和记录清单候选"
+        }
+      ]
+    },
+    {
+      "finding_id": "R2-FIND-004",
+      "title": "CX-28正常路径与不留样不分包冻结事实冲突",
+      "classification": "objective_applicability_gap",
+      "severity": "high",
+      "issue_state": "remediating",
+      "objective_basis": [
+        {
+          "source_id": "SRC-CX28",
+          "locator": "L76, L94, L96, L120-L130",
+          "requirement": "现有程序把留样、自行处置和分包样品纳入正常路径"
+        },
+        {
+          "source_id": "SRC-BASIS-FREEZE",
+          "locator": "第1节",
+          "requirement": "本轮不留样、不分包"
+        },
+        {
+          "source_id": "SRC-EXAM",
+          "locator": "EX-7.4, EX-7.7-NR, NEG-02, NEG-03",
+          "requirement": "不开展项只作反向测试且无误写"
+        }
+      ],
+      "old_value": "留样、检测人员自行处置、留样复测和分包样品为正常条款",
+      "proposed_new_value": "SIM正常路径限定为接收、标识、流转、保护、退回或授权处置；留样和分包入口阻断",
+      "impact_objects": [
+        "质量手册7.4",
+        "CX-28",
+        "BG-28",
+        "合同",
+        "投诉",
+        "样品状态"
+      ],
+      "candidate_file_ids": [
+        "R2-FILE-001",
+        "R2-FILE-002",
+        "R2-FILE-003"
+      ],
+      "verification": {
+        "status": "pending_independent_validation",
+        "required_checks": [
+          "程序差异核对",
+          "不留样反向测试",
+          "不分包反向测试",
+          "样品基本控制不得删除"
+        ],
+        "evidence_links": []
+      },
+      "replay": {
+        "status": "not_run",
+        "scenario_ids": [
+          "EX-7.4",
+          "NEG-02",
+          "NEG-03"
+        ],
+        "evidence_links": []
+      },
+      "transitions": [
+        {
+          "from": "open",
+          "to": "accepted",
+          "reason": "程序文本与冻结事实直接冲突"
+        },
+        {
+          "from": "accepted",
+          "to": "remediating",
+          "reason": "已形成手册程序和模板差异候选"
+        }
+      ]
+    },
+    {
+      "finding_id": "R2-FIND-005",
+      "title": "CX-35导出层污染且正式适用状态证据不足",
+      "classification": "objective_export_gap_with_evidence_limit",
+      "severity": "high",
+      "issue_state": "remediating",
+      "objective_basis": [
+        {
+          "source_id": "SRC-CX35",
+          "locator": "L112-L144",
+          "requirement": "出现异源公司名称、声明和乱码"
+        },
+        {
+          "source_id": "SRC-BASIS-FREEZE",
+          "locator": "第1节",
+          "requirement": "本轮不开展机构负责的抽样"
+        },
+        {
+          "source_id": "SRC-EXAM",
+          "locator": "EX-7.3, NEG-01",
+          "requirement": "抽样只作禁止性反向测试"
+        }
+      ],
+      "old_value": "导出内容可进入抽样程序阅读且L112起污染",
+      "proposed_new_value": "SIM覆盖层阻断其正常执行和自动发布；Word原件及正式适用状态保持待核",
+      "impact_objects": [
+        "CX-35",
+        "抽样入口",
+        "文件编译",
+        "程序结构"
+      ],
+      "candidate_file_ids": [
+        "R2-FILE-001",
+        "R2-FILE-002"
+      ],
+      "verification": {
+        "status": "pending_independent_validation",
+        "required_checks": [
+          "确认污染仅在导出层",
+          "不得推定Word原件",
+          "抽样入口反向测试"
+        ],
+        "evidence_links": []
+      },
+      "replay": {
+        "status": "not_run",
+        "scenario_ids": [
+          "NEG-01",
+          "EX-8.3"
+        ],
+        "evidence_links": []
+      },
+      "transitions": [
+        {
+          "from": "open",
+          "to": "accepted",
+          "reason": "导出污染可复现；原件结论受限"
+        },
+        {
+          "from": "accepted",
+          "to": "remediating",
+          "reason": "已提出SIM执行和发布阻断候选"
+        }
+      ]
+    },
+    {
+      "finding_id": "R2-FIND-006",
+      "title": "方法场所和报告标志需逐项目分流",
+      "classification": "objective_control_gap_candidate",
+      "severity": "high",
+      "issue_state": "remediating",
+      "objective_basis": [
+        {
+          "source_id": "SRC-BASIS-FREEZE",
+          "locator": "第3, 5, 6节",
+          "requirement": "5项国标库内SIM路径，3项DB65固定CMA=false，CNAS初次申请筹备"
+        },
+        {
+          "source_id": "SRC-EXAM",
+          "locator": "CMA-01-CMA-08, CNAS-01-CNAS-06",
+          "requirement": "合同和报告须逐项目、逐场所、逐授权判定"
+        }
+      ],
+      "old_value": "现用文件未统一承接第二轮一单一库和初次申请冻结状态",
+      "proposed_new_value": "手册与CX-09/CX-22/CX-24/CX-29/CX-01-02/CX-08形成一致的SIM分流候选",
+      "impact_objects": [
+        "质量手册",
+        "合同评审",
+        "方法控制",
+        "人员授权",
+        "报告签发",
+        "外来文件"
+      ],
+      "candidate_file_ids": [
+        "R2-FILE-001",
+        "R2-FILE-002",
+        "R2-FILE-003"
+      ],
+      "verification": {
+        "status": "pending_independent_validation",
+        "required_checks": [
+          "16条方法场所链",
+          "DB65 CMA反向测试",
+          "CNAS标识反向测试",
+          "不生成方法技术参数"
+        ],
+        "evidence_links": []
+      },
+      "replay": {
+        "status": "not_run",
+        "scenario_ids": [
+          "CMA-01",
+          "CMA-08",
+          "CNAS-01",
+          "CNAS-06"
+        ],
+        "evidence_links": []
+      },
+      "transitions": [
+        {
+          "from": "open",
+          "to": "accepted",
+          "reason": "第二轮冻结事实已形成明确控制要求"
+        },
+        {
+          "from": "accepted",
+          "to": "remediating",
+          "reason": "已生成跨文件SIM分流候选"
+        }
+      ]
+    },
+    {
+      "finding_id": "R2-FIND-007",
+      "title": "当前模板字段语义保真需在8013重新取证",
+      "classification": "evidence_gap",
+      "severity": "high",
+      "issue_state": "verifying",
+      "objective_basis": [
+        {
+          "source_id": "SRC-TEMPLATE-SERVICE",
+          "locator": "manifest与schemaFor逻辑",
+          "requirement": "代码结构不能证明每张表逐字段保真"
+        },
+        {
+          "source_id": "SRC-OLD-TEMPLATE-CANDIDATE",
+          "locator": "第2-16节",
+          "requirement": "仅作为历史回归题库，不继承其旧轮结论"
+        },
+        {
+          "source_id": "SRC-EXAM",
+          "locator": "第8节",
+          "requirement": "记录字段必须回链且不得编造"
+        }
+      ],
+      "old_value": "代码基线预期145项模板；当前逐字段语义结果尚未在8013冻结",
+      "proposed_new_value": "先在8013复算模板数量、重复schema、原表字段和孤儿键，再决定接受或退回候选",
+      "impact_objects": [
+        "145项模板",
+        "12张重点表",
+        "SIM实例",
+        "LIMS字段映射"
+      ],
+      "candidate_file_ids": [
+        "R2-FILE-003"
+      ],
+      "verification": {
+        "status": "candidate_validation_passed_pending_sim_application_and_replay",
+        "required_checks": [
+          "8013模板数量和状态",
+          "重复schema复算",
+          "12表逐字段原表核对",
+          "孤儿键识别"
+        ],
+        "evidence_links": [
+          {
+            "source_id": "SRC-R2-TEMPLATE-FRESH-SNAPSHOT",
+            "sha256": "80cfc3df2b253cec9d35260f31d643048f77df8b1faef71bfeb56be70f1ce55a"
+          },
+          {
+            "source_id": "SRC-R2-TEMPLATE-CANDIDATE-V02",
+            "sha256": "371ee52fefbe8683e65868a0032a242ef999fda8d52cc7a53960ec02192b3783"
+          },
+          {
+            "source_id": "SRC-INDEPENDENT-TEMPLATE-V02-PASS",
+            "sha256": "ee8d59fc29eba6daaf14ed09afcdd98b22e051ad42af2e3f2add4dfb58c8e421"
+          }
+        ]
+      },
+      "replay": {
+        "status": "not_run",
+        "scenario_ids": [
+          "EX-7.5",
+          "EX-8.4"
+        ],
+        "evidence_links": []
+      },
+      "transitions": [
+        {
+          "from": "open",
+          "to": "accepted",
+          "reason": "8013只读新鲜复算已固定161源文件、145现用模板、94种schema、13重复组、64重复成员",
+          "performed_by": "lab-qms-engineer-governance-router",
+          "formal_effect": false
+        },
+        {
+          "from": "accepted",
+          "to": "remediating",
+          "reason": "已形成12表209字段、BG-04-03 19变体和孤儿键零实例预览候选v0.2",
+          "performed_by": "lab-qms-engineer-governance-router",
+          "formal_effect": false
+        },
+        {
+          "from": "remediating",
+          "to": "verifying",
+          "reason": "R2-FILE-003已获新的独立验证PASS；进入SIM应用与受影响场景复演闸门",
+          "performed_by": "lab-qms-engineer-governance-router",
+          "formal_effect": false
+        }
+      ]
+    },
+    {
+      "finding_id": "R2-FIND-008",
+      "title": "设备变体和系统验证记录承接方式证据不足",
+      "classification": "evidence_gap",
+      "severity": "medium",
+      "issue_state": "verifying",
+      "objective_basis": [
+        {
+          "source_id": "SRC-OLD-TEMPLATE-CANDIDATE",
+          "locator": "第11, 12, 14, 15, 18节",
+          "requirement": "BG-04-03变体、BG-19-01扩展、BG-26-01扩展及BG-03-01差异需要新鲜核源"
+        },
+        {
+          "source_id": "SRC-EXAM",
+          "locator": "EX-6.4, EX-7.11, EX-8.4",
+          "requirement": "字段不得无依据生成，运行证据不能冒充原表字段"
+        }
+      ],
+      "old_value": "承接载体、变体专属字段和编号尚未确认",
+      "proposed_new_value": "保持证据不足；只登记候选方向，不生成编号、限值、单位或计算",
+      "impact_objects": [
+        "BG-04-03",
+        "BG-19-01",
+        "BG-26-01",
+        "BG-03-01",
+        "设备和系统验证记录"
+      ],
+      "candidate_file_ids": [
+        "R2-FILE-003"
+      ],
+      "verification": {
+        "status": "candidate_validation_passed_pending_sim_application_and_replay",
+        "required_checks": [
+          "19个BG-04-03变体逐一核源",
+          "记录扩展与原表分层",
+          "编号和源文件hash核对"
+        ],
+        "evidence_links": [
+          {
+            "source_id": "SRC-R2-TEMPLATE-FRESH-SNAPSHOT",
+            "sha256": "80cfc3df2b253cec9d35260f31d643048f77df8b1faef71bfeb56be70f1ce55a"
+          },
+          {
+            "source_id": "SRC-R2-TEMPLATE-CANDIDATE-V02",
+            "sha256": "371ee52fefbe8683e65868a0032a242ef999fda8d52cc7a53960ec02192b3783"
+          },
+          {
+            "source_id": "SRC-INDEPENDENT-TEMPLATE-V02-PASS",
+            "sha256": "ee8d59fc29eba6daaf14ed09afcdd98b22e051ad42af2e3f2add4dfb58c8e421"
+          }
+        ]
+      },
+      "replay": {
+        "status": "not_run",
+        "scenario_ids": [
+          "EX-6.4",
+          "EX-7.11",
+          "EX-8.4"
+        ],
+        "evidence_links": []
+      },
+      "transitions": [
+        {
+          "from": "open",
+          "to": "accepted",
+          "reason": "8013只读新鲜复算已固定161源文件、145现用模板、94种schema、13重复组、64重复成员",
+          "performed_by": "lab-qms-engineer-governance-router",
+          "formal_effect": false
+        },
+        {
+          "from": "accepted",
+          "to": "remediating",
+          "reason": "已形成12表209字段、BG-04-03 19变体和孤儿键零实例预览候选v0.2",
+          "performed_by": "lab-qms-engineer-governance-router",
+          "formal_effect": false
+        },
+        {
+          "from": "remediating",
+          "to": "verifying",
+          "reason": "R2-FILE-003已获新的独立验证PASS；进入SIM应用与受影响场景复演闸门",
+          "performed_by": "lab-qms-engineer-governance-router",
+          "formal_effect": false
+        }
+      ]
+    }
+  ],
+  "file_candidates": [
+    {
+      "candidate_file_id": "R2-FILE-001",
+      "document_type": "manual_overlay",
+      "target_document_number": "XZTC/SC",
+      "target_title": "质量手册第二轮SIM差异覆盖",
+      "file_state": "verified_candidate",
+      "payload_path": "候选覆盖层/SIM-质量手册差异覆盖候选-v0.1.md",
+      "payload_sha256": "cd0fb998304c19c1ddb8ecc322493549d47e59a9c34de9d4200b6b15fe3837ff",
+      "based_on_findings": [
+        "R2-FIND-001",
+        "R2-FIND-003",
+        "R2-FIND-004",
+        "R2-FIND-005",
+        "R2-FIND-006"
+      ],
+      "source_material_ids": [
+        "SRC-CURRENT-MANUAL",
+        "SRC-MANUAL-MATERIAL",
+        "SRC-BASIS-FREEZE",
+        "SRC-EXAM"
+      ],
+      "version_relation": {
+        "baseline": "质量手册第四版",
+        "material": "第五版候选素材",
+        "candidate": "第二轮SIM差异覆盖v0.1",
+        "replaces_current": false
+      },
+      "changes": [
+        {
+          "change_id": "R2-CHG-M-001",
+          "source": "SRC-BASIS-FREEZE 第5-6节",
+          "old_value": "第五版素材未完整固定第二轮两场所、八方法及库内外分流",
+          "new_value": "增加两场所、五项国标库内SIM、三项DB65 CMA=false和CNAS初次申请边界",
+          "impact_objects": [
+            "手册范围",
+            "合同",
+            "方法",
+            "报告"
+          ],
+          "field_sources": [
+            "SRC-BASIS-FREEZE",
+            "SRC-EXAM"
+          ]
+        },
+        {
+          "change_id": "R2-CHG-M-002",
+          "source": "SRC-EXAM NEG-01-NEG-05",
+          "old_value": "第五版素材仍保留条件启用抽样和留样等正常描述",
+          "new_value": "本轮只保留禁止性反向测试；未来启用须另行受控评审",
+          "impact_objects": [
+            "手册7.3",
+            "手册7.4",
+            "手册7.7"
+          ],
+          "field_sources": [
+            "SRC-BASIS-FREEZE",
+            "SRC-EXAM"
+          ]
+        }
+      ],
+      "verification": {
+        "status": "passed",
+        "validator_role": "independent_document_validator",
+        "result_links": [
+          {
+            "source_id": "SRC-INDEPENDENT-VALIDATION-R1",
+            "path": ".team/交接箱/2026-07-19-LIMSzhj排演式持续治理第2轮/独立验证/独立验证-半年运行与自治候选-v0.1.md",
+            "sha256": "bf07a2e2cba7910840ece56b411389cfce9a449e165daa4585852e1f279832ed"
+          }
+        ],
+        "scope_limit": "文件候选独立核查通过；不代表已sim_applied或复演通过"
+      },
+      "replay": {
+        "status": "not_run",
+        "scenario_ids": [
+          "EX-5.3",
+          "EX-7.3",
+          "EX-8.2",
+          "EX-8.9"
+        ],
+        "evidence_links": []
+      },
+      "effect_boundary": "sim_overlay_only_noncontrolled"
+    },
+    {
+      "candidate_file_id": "R2-FILE-002",
+      "document_type": "procedure_and_structure_overlay",
+      "target_document_number": "MULTI-CX",
+      "target_title": "程序修订及新增废止结构候选",
+      "file_state": "verified_candidate",
+      "payload_path": "候选覆盖层/SIM-程序与结构覆盖候选-v0.1.md",
+      "payload_sha256": "9a00d8b9d0dd3e0c002869edfa1231c64fcd624445ec47953143ea19f32b8494",
+      "based_on_findings": [
+        "R2-FIND-002",
+        "R2-FIND-003",
+        "R2-FIND-004",
+        "R2-FIND-005",
+        "R2-FIND-006"
+      ],
+      "source_material_ids": [
+        "SRC-PROCEDURE-MANIFEST",
+        "SRC-CX05",
+        "SRC-CX21",
+        "SRC-CX28",
+        "SRC-CX31",
+        "SRC-CX35",
+        "SRC-OLD-PROGRAM-CANDIDATE",
+        "SRC-BASIS-FREEZE",
+        "SRC-EXAM"
+      ],
+      "version_relation": {
+        "baseline": "2022现用程序导出层",
+        "material": "旧轮v0.2整改方向",
+        "candidate": "第二轮SIM程序与结构覆盖v0.1",
+        "replaces_current": false
+      },
+      "changes": [
+        {
+          "change_id": "R2-CHG-P-001",
+          "source": "SRC-CX05, SRC-CX31, SRC-PROCEDURE-MANIFEST",
+          "old_value": "8处历史程序引用",
+          "new_value": "统一到2022程序编号和现行标题",
+          "impact_objects": [
+            "CX-05",
+            "CX-31"
+          ],
+          "field_sources": [
+            "SRC-CX05",
+            "SRC-CX31",
+            "SRC-PROCEDURE-MANIFEST"
+          ]
+        },
+        {
+          "change_id": "R2-CHG-P-002",
+          "source": "SRC-CX21, SRC-BASIS-FREEZE",
+          "old_value": "管理评审最终批准岗位冲突且错挂内审记录",
+          "new_value": "统一实验室主任并移除BG-20错挂；不推定BG-21-03身份",
+          "impact_objects": [
+            "CX-21",
+            "管理评审权限",
+            "记录清单"
+          ],
+          "field_sources": [
+            "SRC-CX21",
+            "SRC-BASIS-FREEZE"
+          ]
+        },
+        {
+          "change_id": "R2-CHG-P-003",
+          "source": "SRC-CX28, SRC-CX35, SRC-BASIS-FREEZE",
+          "old_value": "留样分包抽样进入现用程序正常路径",
+          "new_value": "SIM正常路径阻断不开展项；程序正式适用状态保持候选",
+          "impact_objects": [
+            "CX-28",
+            "CX-35",
+            "CX-10/BG-10"
+          ],
+          "field_sources": [
+            "SRC-CX28",
+            "SRC-CX35",
+            "SRC-BASIS-FREEZE"
+          ]
+        }
+      ],
+      "verification": {
+        "status": "passed",
+        "validator_role": "independent_document_validator",
+        "result_links": [
+          {
+            "source_id": "SRC-INDEPENDENT-VALIDATION-R1",
+            "path": ".team/交接箱/2026-07-19-LIMSzhj排演式持续治理第2轮/独立验证/独立验证-半年运行与自治候选-v0.1.md",
+            "sha256": "bf07a2e2cba7910840ece56b411389cfce9a449e165daa4585852e1f279832ed"
+          }
+        ],
+        "scope_limit": "文件候选独立核查通过；不代表已sim_applied或复演通过"
+      },
+      "replay": {
+        "status": "not_run",
+        "scenario_ids": [
+          "EX-7.1",
+          "EX-7.3",
+          "EX-7.4",
+          "EX-7.8",
+          "EX-8.3",
+          "EX-8.9"
+        ],
+        "evidence_links": []
+      },
+      "effect_boundary": "sim_overlay_only_noncontrolled"
+    },
+    {
+      "candidate_file_id": "R2-FILE-003",
+      "document_type": "record_template_overlay",
+      "target_document_number": "MULTI-BG",
+      "target_title": "记录模板语义覆盖候选",
+      "file_state": "verified_candidate",
+      "payload_path": "候选覆盖层/SIM-记录模板语义覆盖候选-v0.2.md",
+      "payload_sha256": "371ee52fefbe8683e65868a0032a242ef999fda8d52cc7a53960ec02192b3783",
+      "based_on_findings": [
+        "R2-FIND-004",
+        "R2-FIND-006",
+        "R2-FIND-007",
+        "R2-FIND-008"
+      ],
+      "source_material_ids": [
+        "SRC-TEMPLATE-SERVICE",
+        "SRC-OLD-TEMPLATE-CANDIDATE",
+        "SRC-BASIS-FREEZE",
+        "SRC-EXAM",
+        "SRC-R2-TEMPLATE-FRESH-SNAPSHOT",
+        "SRC-R2-TEMPLATE-CANDIDATE-V02"
+      ],
+      "version_relation": {
+        "baseline": "8013现用145模板与161个记录源文件（只读新鲜复算）",
+        "material": "旧轮v0.2仅作素材，不继承结论",
+        "candidate": "第二轮SIM记录模板语义覆盖v0.2",
+        "replaces_current": false
+      },
+      "changes": [
+        {
+          "change_id": "R2-CHG-T-001",
+          "source": "161源文件、145现用模板新鲜复算及12份源表",
+          "old_value": "v0.1仅列12张表治理方向",
+          "new_value": "12张重点表共209字段的逐字段机器可验候选",
+          "impact_objects": [
+            "12张重点表",
+            "模板版本",
+            "SIM实例"
+          ],
+          "field_sources": [
+            "SRC-R2-TEMPLATE-FRESH-SNAPSHOT",
+            "SRC-R2-TEMPLATE-CANDIDATE-V02"
+          ]
+        },
+        {
+          "change_id": "R2-CHG-T-002",
+          "source": "19份BG-04-03源表及8013当前schema",
+          "old_value": "同号变体身份和字段差异未逐一固定",
+          "new_value": "19变体分别记录三段式身份、SHA256、可证字段和证据不足字段",
+          "impact_objects": [
+            "BG-04-03",
+            "变体身份",
+            "技术参数门禁"
+          ],
+          "field_sources": [
+            "SRC-R2-TEMPLATE-FRESH-SNAPSHOT",
+            "SRC-R2-TEMPLATE-CANDIDATE-V02"
+          ]
+        },
+        {
+          "change_id": "R2-CHG-T-003",
+          "source": "8013当前实例只读统计",
+          "old_value": "孤儿键迁移证据缺失",
+          "new_value": "确认重点基线实例为0并形成不写库的孤儿键迁移预览规则",
+          "impact_objects": [
+            "旧实例",
+            "孤儿键",
+            "模板升级"
+          ],
+          "field_sources": [
+            "SRC-R2-TEMPLATE-FRESH-SNAPSHOT"
+          ]
+        }
+      ],
+      "verification": {
+        "status": "passed",
+        "validator_role": "independent_record_template_validator",
+        "result_links": [
+          {
+            "source_id": "SRC-INDEPENDENT-TEMPLATE-V02-PASS",
+            "path": ".team/交接箱/2026-07-19-LIMSzhj排演式持续治理第2轮/独立验证/独立验证-记录模板语义覆盖候选-v0.2.md",
+            "sha256": "ee8d59fc29eba6daaf14ed09afcdd98b22e051ad42af2e3f2add4dfb58c8e421"
+          }
+        ],
+        "scope_limit": "仅授权verified_candidate；不授权sim_applied、正式发布或问题关闭",
+        "machine_precheck": {
+          "status": "passed",
+          "validator": "机器检查/validate_record_template_candidate_v02.py",
+          "unit_tests": "6/6 passed",
+          "not_an_independent_pass": true
+        }
+      },
+      "replay": {
+        "status": "not_run",
+        "scenario_ids": [
+          "EX-7.1",
+          "EX-7.4",
+          "EX-7.5",
+          "EX-7.8",
+          "EX-8.4"
+        ],
+        "evidence_links": []
+      },
+      "effect_boundary": "sim_overlay_only_noncontrolled",
+      "machine_payload_path": "候选覆盖层/SIM-记录模板语义覆盖候选-v0.2.json",
+      "machine_payload_sha256": "23a466896e8faa0917b907904f679b0009b4a65a83f95fc1db6693588645d7de",
+      "fresh_snapshot_path": "候选覆盖层/8013记录模板新鲜复算-v0.2.json",
+      "fresh_snapshot_sha256": "80cfc3df2b253cec9d35260f31d643048f77df8b1faef71bfeb56be70f1ce55a"
+    }
+  ],
+  "optimization_register": {
+    "path": "纯优化建议清单-v0.1.md",
+    "excluded_from_findings": true,
+    "excluded_from_acceptance_rate": true
+  },
+  "independent_validation": {
+    "required": true,
+    "handoff_path": "独立验证交接说明-v0.2.md",
+    "builder_may_self_verify": false,
+    "candidate_files_may_advance_before_validation": false,
+    "passed_candidates": [
+      "R2-FILE-001",
+      "R2-FILE-002",
+      "R2-FILE-003"
+    ],
+    "pending_candidates": [],
+    "no_candidate_sim_applied": true,
+    "next_gate": "8013_sim_overlay_application_and_affected_scenario_replay"
+  },
+  "previous_ledger": {
+    "path": "自治治理主台账-v0.2.json",
+    "sha256": "a63974ecf5c20d03a0e9d209d2bd082b3ae1cf075442114699ba274ab1a66801"
+  }
+}

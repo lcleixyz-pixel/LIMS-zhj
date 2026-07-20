@@ -1,0 +1,34 @@
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">新增部门</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="/department/add">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="name" class="form-label required">部门名称</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{$form.name|default=''}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="code" class="form-label">部门编号</label>
+                        <input type="text" class="form-control" id="code" name="code" value="{$form.code|default=''}" placeholder="如 TEST、QM">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="publish" class="form-label">状态</label>
+                        <select name="publish" id="publish" class="form-select">
+                            <option value="1" {if !isset($form.publish) || $form.publish == 1}selected{/if}>启用</option>
+                            <option value="0" {if isset($form.publish) && $form.publish == 0}selected{/if}>停用</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="text-end">
+                <a href="/department/index" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>

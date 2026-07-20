@@ -1,0 +1,19 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">{$pageTitle|default='详情'}</h5>
+        <div>
+            <a href="/training_record/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            <a href="/training_record/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="160">培训ID</th><td>{$record.training_id|default=''}</td></tr>
+            <tr><th>员工ID</th><td>{$record.employee_id|default=''}</td></tr>
+            <tr><th>出勤</th><td>{$record.attendance|default=''}</td></tr>
+            <tr><th>成绩</th><td>{$record.evaluation_score|default='-'}</td></tr>
+            <tr><th>结果</th><td>{$record.evaluation_result|default=''}</td></tr>
+            <tr><th>备注</th><td>{$record.remarks|default='-'}</td></tr>
+        </table>
+    </div>
+</div>

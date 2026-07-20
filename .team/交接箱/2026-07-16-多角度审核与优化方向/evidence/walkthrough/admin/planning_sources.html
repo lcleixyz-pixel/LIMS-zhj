@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>珠宝检测实验室质量管理系统 - 系统管理员</title>
+    <meta name="csrf-token" content="83a7dd7ec7a068ab521db6ae948934ba">    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/qms.css" rel="stylesheet">
+    <link href="/static/css/qms-copilot.css" rel="stylesheet">
+    <link href="/static/css/qms-responsibility.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+</head>
+<body
+    data-qms-controller="planningsource"
+    data-qms-action="index"
+    data-qms-record-id=""
+    data-qms-route="planning_source/index"
+    data-qms-module="planning_source"
+    data-qms-title="planningsource/index"
+    data-qms-copilot-enabled="1"
+    data-qms-ai-configured="0"
+>
+<div class="container-fluid qms-header">
+    <div class="row align-items-center py-2">
+        <div class="col-md-3">
+            <h5 class="mb-0"><a href="/dashboard/index" class="text-decoration-none text-dark">珠宝检测实验室质量管理系统</a></h5>
+            <small class="text-muted">珠宝检测实验室 QMS</small>
+        </div>
+        <div class="col-md-6 text-center">
+            <span class="badge bg-secondary">CMA/CNAS 质量管理体系</span>
+        </div>
+        <div class="col-md-3 text-end">
+            <strong>系统管理员</strong>
+                        <a href="/notification/index" class="badge bg-secondary ms-1 text-decoration-none" title="暂无未读通知">0</a>
+                        <br>
+            <a href="/login/changePassword" class="btn btn-sm btn-outline-secondary">修改密码</a>
+            <a href="/login/logout" class="btn btn-sm btn-primary">退出</a>
+        </div>
+    </div>
+</div>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard/index">工作台</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/calendar/index">本月待办</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">记录填报</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/record_form_template/index">记录模板</a></li>
+                        <li><a class="dropdown-item" href="/record_form_instance/index">填写记录</a></li>
+                        <li><a class="dropdown-item" href="/record_form_instance/reviewDashboard?year=2025">2025 运行确认</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/record_form_template/review">模板复核</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">体系文件</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/document/index">体系文件列表</a></li>
+                        <li><a class="dropdown-item" href="/document/add">新建文件</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/doc_template/index">文件模板管理</a></li>
+                        <li><a class="dropdown-item" href="/doc_category/index">文件分类</a></li>
+                    </ul>
+                </li>
+                                <li class="nav-item">
+                    <a class="nav-link" href="/compliance/index">审核准备</a>
+                </li>
+                                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">审核与评审</a>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header text-muted">内部审核</h6></li>
+                        <li><a class="dropdown-item" href="/audit_plan/index">内审计划</a></li>
+                        <li><a class="dropdown-item" href="/audit_schedule/index">审核日程</a></li>
+                        <li><a class="dropdown-item" href="/audit_checklist/index">审核检查表</a></li>
+                        <li><a class="dropdown-item" href="/audit_finding/index">审核发现</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">管理评审</h6></li>
+                        <li><a class="dropdown-item" href="/management_review/index">管理评审</a></li>
+                        <li><a class="dropdown-item" href="/review_action/index">评审决议</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">质量改进</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/capa/index">CAPA</a></li>
+                        <li><a class="dropdown-item" href="/nonconformity/index">不符合工作</a></li>
+                        <li><a class="dropdown-item" href="/complaint/index">客户投诉</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">资源管理</a>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header text-muted">设备与计量</h6></li>
+                        <li><a class="dropdown-item" href="/equipment/index">设备台账</a></li>
+                        <li><a class="dropdown-item" href="/equipment_transfer/index">设备调拨</a></li>
+                        <li><a class="dropdown-item" href="/equipment_maintenance/index">维护保养</a></li>
+                        <li><a class="dropdown-item" href="/equipment_authorization/index">设备授权使用人</a></li>
+                        <li><a class="dropdown-item" href="/calibration/index">校准记录</a></li>
+                        <li><a class="dropdown-item" href="/reference_material/index">标准物质台账</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">人员与培训</h6></li>
+                        <li><a class="dropdown-item" href="/training_plan/index">培训计划</a></li>
+                        <li><a class="dropdown-item" href="/training/index">培训活动</a></li>
+                        <li><a class="dropdown-item" href="/training_record/index">培训记录明细</a></li>
+                        <li><a class="dropdown-item" href="/competency_record/index">能力确认</a></li>
+                        <li><a class="dropdown-item" href="/employee_certificate/index">人员资质证书</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">供应商</h6></li>
+                        <li><a class="dropdown-item" href="/supplier/index">供应商管理</a></li>
+                        <li><a class="dropdown-item" href="/supplier/qualified">合格供应商名录</a></li>
+                    </ul>
+                </li>
+                                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">体系策划</a>
+                    <ul class="dropdown-menu">
+                                                <li><h6 class="dropdown-header text-muted">策划与要素</h6></li>
+                        <li><a class="dropdown-item" href="/planning/index">策划中心</a></li>
+                        <li><a class="dropdown-item" href="/planning/elements">要素管理</a></li>
+                        <li><a class="dropdown-item" href="/planning/objectives">质量方针目标</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">文件与追溯</h6></li>
+                        <li><a class="dropdown-item" href="/planning/sources">外部依据</a></li>
+                        <li><a class="dropdown-item" href="/planning/clauses">条款库</a></li>
+                        <li><a class="dropdown-item" href="/planning/structures">文件结构化</a></li>
+                        <li><a class="dropdown-item" href="/planning/traceability">追溯矩阵</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">外部变化管理</h6></li>
+                        <li>
+                            <a class="dropdown-item d-flex justify-content-between align-items-center" href="/planning/regulatory-candidates">
+                                <span>法规候选池</span>
+                                                            </a>
+                        </li>
+                        <li><a class="dropdown-item" href="/planning/change-events">变更事件</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted">岗位责任</h6></li>
+                        <li><a class="dropdown-item" href="/planning/responsibilities">责任链</a></li>
+                                            </ul>
+                </li>
+                                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">系统设置</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/department/index">部门</a></li>
+                        <li><a class="dropdown-item" href="/site/index">场所管理</a></li>
+                        <li><a class="dropdown-item" href="/employee/index">员工</a></li>
+                        <li><a class="dropdown-item" href="/user/index">用户</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/import/index">批量导入</a></li>
+                                                <li><a class="dropdown-item" href="/ai_assistant/index">AI 文档助理</a></li>
+                                                <li><a class="dropdown-item" href="/ai_settings/index">AI 服务配置</a></li>
+                                                <li><a class="dropdown-item" href="/notification/index">通知中心</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container mt-3">
+        <div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">外部依据</h4>
+        <div class="text-muted small">登记正式依据并直接抽取到条款库，同时保留查新日期、结论和证据来源。</div>
+    </div>
+    <form method="post" action="/planning/sources/seed" class="qms-page-actions m-0">
+        <button type="submit" class="btn btn-primary btn-sm">登记内置依据并抽取条款</button>
+    </form>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">上传依据文件</h5></div>
+    <div class="card-body">
+        <form method="post" action="/planning/sources/upload" enctype="multipart/form-data" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small text-muted">选择 PDF 或 Word 文件</label>
+                <input type="file" name="source_file" class="form-control form-control-sm" accept=".pdf,.doc,.docx">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">查新日期</label>
+                <input type="date" name="freshness_checked_at" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted">查新结论</label>
+                <input type="text" name="freshness_result" class="form-control form-control-sm" placeholder="例如：现行有效" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted">证据来源</label>
+                <input type="text" name="freshness_evidence" class="form-control form-control-sm" placeholder="官网清单、公告或查新记录" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">下次查新</label>
+                <input type="date" name="next_freshness_due" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small text-muted">查新状态</label>
+                <select name="freshness_status" class="form-select form-select-sm">
+                    <option value="current">现行</option>
+                    <option value="due">待查新</option>
+                    <option value="unknown">未知</option>
+                    <option value="obsolete">废止</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-sm btn-outline-primary w-100">上传并抽取条款</button>
+            </div>
+        </form>
+        <div class="text-muted small mt-2">系统将根据文件名识别依据编号，规范化归档到固定位置，并直接抽取到正式条款库。</div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">处理进度</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle qms-table-wide">
+                <thead>
+                    <tr>
+                        <th>依据编号</th>
+                        <th>归档文件</th>
+                        <th>抽取状态</th>
+                        <th>Markdown结构</th>
+                        <th>条款数</th>
+                        <th>匹配要素</th>
+                        <th>未匹配条款</th>
+                        <th>查新证据</th>
+                    </tr>
+                </thead>
+                <tbody>
+                                        <tr>
+                        <td>CNAS-CL01-A015:2018</td>
+                        <td>
+                                                        <span class="badge badge-status-draft">缺失</span>
+                                                        <div class="text-muted small">参考/2025年最新版CMA和CNAS质量体系/07-CNAS-CL01-A015：2018 检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明.pdf</div>
+                        </td>
+                        <td>
+                                                        <span class="badge badge-status-effective">已抽取</span>
+                                                    </td>
+                        <td>
+                                                        <a href="/planning/structures/view?id=a2d2ff99-82ee-4abe-9e7d-173698aa28df" class="badge badge-status-effective text-decoration-none">已结构化</a>
+                                                        <div class="text-muted small">runtime/qms_structured/external_basis/CNAS-CL01-A015_2018-2018.md</div>
+                        </td>
+                        <td>18</td>
+                        <td>0</td>
+                        <td>18</td>
+                        <td>参考/2025年最新版CMA和CNAS质量体系/07-CNAS-CL01-A015：2018 检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明.pdf</td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>
+                                                        <span class="badge badge-status-draft">缺失</span>
+                                                        <div class="text-muted small">参考/2025年最新版CMA和CNAS质量体系/03+-CNAS-CL01-G001：2024《检测和校准实验室能力认可准则的应用要求》.pdf</div>
+                        </td>
+                        <td>
+                                                        <span class="badge badge-status-effective">已抽取</span>
+                                                    </td>
+                        <td>
+                                                        <a href="/planning/structures/view?id=63be90aa-a529-4575-9257-06df8b2b3442" class="badge badge-status-effective text-decoration-none">已结构化</a>
+                                                        <div class="text-muted small">runtime/qms_structured/external_basis/CNAS-CL01-G001_2024-2024.md</div>
+                        </td>
+                        <td>37</td>
+                        <td>37</td>
+                        <td>0</td>
+                        <td>参考/2025年最新版CMA和CNAS质量体系/03+-CNAS-CL01-G001：2024《检测和校准实验室能力认可准则的应用要求》.pdf</td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01:2018</td>
+                        <td>
+                                                        <span class="badge badge-status-draft">缺失</span>
+                                                        <div class="text-muted small">参考/2025年最新版CMA和CNAS质量体系/04-CNAS-CL01 检测和校准实验室能力认可准则 2018 年 09 月 01 日实施.pdf</div>
+                        </td>
+                        <td>
+                                                        <span class="badge bg-secondary">待抽取</span>
+                                                    </td>
+                        <td>
+                                                        <a href="/planning/structures/view?id=5470b209-9e84-4ff6-8133-e1b8c41327e1" class="badge badge-status-effective text-decoration-none">已结构化</a>
+                                                        <div class="text-muted small">runtime/qms_structured/external_basis/CNAS-CL01_2018-2018_2019-02-20第一次修订.md</div>
+                        </td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>参考/2025年最新版CMA和CNAS质量体系/04-CNAS-CL01 检测和校准实验室能力认可准则 2018 年 09 月 01 日实施.pdf</td>
+                    </tr>
+                                        <tr>
+                        <td>GB/T 27025-2019</td>
+                        <td>
+                                                        <span class="badge badge-status-draft">缺失</span>
+                                                        <div class="text-muted small">参考/2025年最新版CMA和CNAS质量体系/05-GBT 27025-2019 检测和校准实验室能力的通用要求.pdf</div>
+                        </td>
+                        <td>
+                                                        <span class="badge badge-status-effective">已抽取</span>
+                                                    </td>
+                        <td>
+                                                        <a href="/planning/structures/view?id=f5d11844-3466-4257-bfdb-01d851f1726a" class="badge badge-status-effective text-decoration-none">已结构化</a>
+                                                        <div class="text-muted small">runtime/qms_structured/external_basis/GB_T_27025-2019-2019.md</div>
+                        </td>
+                        <td>185</td>
+                        <td>29</td>
+                        <td>156</td>
+                        <td>参考/2025年最新版CMA和CNAS质量体系/05-GBT 27025-2019 检测和校准实验室能力的通用要求.pdf</td>
+                    </tr>
+                                        <tr>
+                        <td>市场监管总局公告2023年第21号</td>
+                        <td>
+                                                        <span class="badge badge-status-draft">缺失</span>
+                                                        <div class="text-muted small">参考/2025年最新版CMA和CNAS质量体系/06-新检验检测机构资质认定评审准则2023带附件.docx</div>
+                        </td>
+                        <td>
+                                                        <span class="badge badge-status-effective">已抽取</span>
+                                                    </td>
+                        <td>
+                                                        <a href="/planning/structures/view?id=8c814880-dcee-440b-8c11-a750efbcdd02" class="badge badge-status-effective text-decoration-none">已结构化</a>
+                                                        <div class="text-muted small">runtime/qms_structured/external_basis/市场监管总局公告2023年第21号-2023年第21号公告.md</div>
+                        </td>
+                        <td>28</td>
+                        <td>0</td>
+                        <td>28</td>
+                        <td>参考/2025年最新版CMA和CNAS质量体系/06-新检验检测机构资质认定评审准则2023带附件.docx</td>
+                    </tr>
+                                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">内置依据清单</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead><tr><th>依据编号</th><th>名称</th><th>版本</th><th>本地文件</th></tr></thead>
+                <tbody>
+                                        <tr>
+                        <td>CNAS-CL01:2018</td>
+                        <td>检测和校准实验室能力认可准则</td>
+                        <td>2018（2019-02-20第一次修订）</td>
+                        <td>参考/2025年最新版CMA和CNAS质量体系/04-CNAS-CL01 检测和校准实验室能力认可准则 2018 年 09 月 01 日实施.pdf</td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>检测和校准实验室能力认可准则的应用要求</td>
+                        <td>2024</td>
+                        <td>参考/2025年最新版CMA和CNAS质量体系/03+-CNAS-CL01-G001：2024《检测和校准实验室能力认可准则的应用要求》.pdf</td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-A015:2018</td>
+                        <td>检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明</td>
+                        <td>2018</td>
+                        <td>参考/2025年最新版CMA和CNAS质量体系/07-CNAS-CL01-A015：2018 检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明.pdf</td>
+                    </tr>
+                                        <tr>
+                        <td>GB/T 27025-2019</td>
+                        <td>检测和校准实验室能力的通用要求</td>
+                        <td>2019</td>
+                        <td>参考/2025年最新版CMA和CNAS质量体系/05-GBT 27025-2019 检测和校准实验室能力的通用要求.pdf</td>
+                    </tr>
+                                        <tr>
+                        <td>市场监管总局公告2023年第21号</td>
+                        <td>检验检测机构资质认定评审准则</td>
+                        <td>2023年第21号公告</td>
+                        <td>参考/2025年最新版CMA和CNAS质量体系/06-新检验检测机构资质认定评审准则2023带附件.docx</td>
+                    </tr>
+                                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">正式依据登记</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle qms-table-wide">
+                <thead>
+                    <tr>
+                        <th>依据编号</th>
+                        <th>名称</th>
+                        <th>类型</th>
+                        <th>查新日期</th>
+                        <th>查新结论</th>
+                        <th>下次查新</th>
+                        <th>状态</th>
+                        <th class="qms-action-cell">入口</th>
+                    </tr>
+                </thead>
+                <tbody>
+                                        <tr>
+                        <td>CNAS-CL01-A015:2018</td>
+                        <td>检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明</td>
+                        <td>
+                            认可说明
+                                                    </td>
+                        <td>2026-07-16</td>
+                        <td>本地正式依据文件缺失</td>
+                        <td>2027-07-16</td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell">
+                            <form method="post" action="/planning/sources/extract-clauses?id=ca12db97-35d8-4a18-aa50-d27a7ae13d1c" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">更新条款库</button>
+                            </form>
+                                                        <form method="post" action="/planning/sources/obsolete?id=ca12db97-35d8-4a18-aa50-d27a7ae13d1c" class="d-inline" onsubmit="return confirm('确认标记该依据废止？');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">废止</button>
+                            </form>
+                                                        <details class="mt-2 text-start">
+                                <summary class="text-primary small" role="button">更新查新</summary>
+                                <form method="post" action="/planning/sources/freshness?id=ca12db97-35d8-4a18-aa50-d27a7ae13d1c" class="mt-2">
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新日期</label>
+                                        <input type="date" name="freshness_checked_at" class="form-control form-control-sm" value="2026-07-16" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新结论</label>
+                                        <input type="text" name="freshness_result" class="form-control form-control-sm" value="本地正式依据文件缺失" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">证据来源</label>
+                                        <input type="text" name="freshness_evidence" class="form-control form-control-sm" value="参考/2025年最新版CMA和CNAS质量体系/07-CNAS-CL01-A015：2018 检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明.pdf" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">下次查新</label>
+                                        <input type="date" name="next_freshness_due" class="form-control form-control-sm" value="2027-07-16">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新状态</label>
+                                        <select name="freshness_status" class="form-select form-select-sm">
+                                            <option value="current" >现行</option>
+                                            <option value="due" selected>待查新</option>
+                                            <option value="unknown" >未知</option>
+                                            <option value="obsolete" >废止</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">保存查新</button>
+                                </form>
+                            </details>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01-G001:2024</td>
+                        <td>检测和校准实验室能力认可准则的应用要求</td>
+                        <td>
+                            认可说明
+                                                    </td>
+                        <td>2026-07-16</td>
+                        <td>本地正式依据文件缺失</td>
+                        <td>2027-07-16</td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell">
+                            <form method="post" action="/planning/sources/extract-clauses?id=49adf27e-0435-4ec8-b648-1920f668abc8" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">更新条款库</button>
+                            </form>
+                                                        <form method="post" action="/planning/sources/obsolete?id=49adf27e-0435-4ec8-b648-1920f668abc8" class="d-inline" onsubmit="return confirm('确认标记该依据废止？');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">废止</button>
+                            </form>
+                                                        <details class="mt-2 text-start">
+                                <summary class="text-primary small" role="button">更新查新</summary>
+                                <form method="post" action="/planning/sources/freshness?id=49adf27e-0435-4ec8-b648-1920f668abc8" class="mt-2">
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新日期</label>
+                                        <input type="date" name="freshness_checked_at" class="form-control form-control-sm" value="2026-07-16" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新结论</label>
+                                        <input type="text" name="freshness_result" class="form-control form-control-sm" value="本地正式依据文件缺失" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">证据来源</label>
+                                        <input type="text" name="freshness_evidence" class="form-control form-control-sm" value="参考/2025年最新版CMA和CNAS质量体系/03+-CNAS-CL01-G001：2024《检测和校准实验室能力认可准则的应用要求》.pdf" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">下次查新</label>
+                                        <input type="date" name="next_freshness_due" class="form-control form-control-sm" value="2027-07-16">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新状态</label>
+                                        <select name="freshness_status" class="form-select form-select-sm">
+                                            <option value="current" >现行</option>
+                                            <option value="due" selected>待查新</option>
+                                            <option value="unknown" >未知</option>
+                                            <option value="obsolete" >废止</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">保存查新</button>
+                                </form>
+                            </details>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td>CNAS-CL01:2018</td>
+                        <td>检测和校准实验室能力认可准则</td>
+                        <td>
+                            标准
+                                                    </td>
+                        <td>2026-07-16</td>
+                        <td>本地正式依据文件缺失</td>
+                        <td>2027-07-16</td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell">
+                            <form method="post" action="/planning/sources/extract-clauses?id=125a69e1-ca0d-408e-ac65-a89282b826a3" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">更新条款库</button>
+                            </form>
+                                                        <form method="post" action="/planning/sources/obsolete?id=125a69e1-ca0d-408e-ac65-a89282b826a3" class="d-inline" onsubmit="return confirm('确认标记该依据废止？');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">废止</button>
+                            </form>
+                                                        <details class="mt-2 text-start">
+                                <summary class="text-primary small" role="button">更新查新</summary>
+                                <form method="post" action="/planning/sources/freshness?id=125a69e1-ca0d-408e-ac65-a89282b826a3" class="mt-2">
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新日期</label>
+                                        <input type="date" name="freshness_checked_at" class="form-control form-control-sm" value="2026-07-16" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新结论</label>
+                                        <input type="text" name="freshness_result" class="form-control form-control-sm" value="本地正式依据文件缺失" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">证据来源</label>
+                                        <input type="text" name="freshness_evidence" class="form-control form-control-sm" value="参考/2025年最新版CMA和CNAS质量体系/04-CNAS-CL01 检测和校准实验室能力认可准则 2018 年 09 月 01 日实施.pdf" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">下次查新</label>
+                                        <input type="date" name="next_freshness_due" class="form-control form-control-sm" value="2027-07-16">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新状态</label>
+                                        <select name="freshness_status" class="form-select form-select-sm">
+                                            <option value="current" >现行</option>
+                                            <option value="due" selected>待查新</option>
+                                            <option value="unknown" >未知</option>
+                                            <option value="obsolete" >废止</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">保存查新</button>
+                                </form>
+                            </details>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td>GB/T 27025-2019</td>
+                        <td>检测和校准实验室能力的通用要求</td>
+                        <td>
+                            标准
+                                                    </td>
+                        <td>2026-07-16</td>
+                        <td>本地正式依据文件缺失</td>
+                        <td>2027-07-16</td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell">
+                            <form method="post" action="/planning/sources/extract-clauses?id=a9288fd9-af50-41ea-98c8-890b5fa2ef61" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">更新条款库</button>
+                            </form>
+                                                        <form method="post" action="/planning/sources/obsolete?id=a9288fd9-af50-41ea-98c8-890b5fa2ef61" class="d-inline" onsubmit="return confirm('确认标记该依据废止？');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">废止</button>
+                            </form>
+                                                        <details class="mt-2 text-start">
+                                <summary class="text-primary small" role="button">更新查新</summary>
+                                <form method="post" action="/planning/sources/freshness?id=a9288fd9-af50-41ea-98c8-890b5fa2ef61" class="mt-2">
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新日期</label>
+                                        <input type="date" name="freshness_checked_at" class="form-control form-control-sm" value="2026-07-16" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新结论</label>
+                                        <input type="text" name="freshness_result" class="form-control form-control-sm" value="本地正式依据文件缺失" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">证据来源</label>
+                                        <input type="text" name="freshness_evidence" class="form-control form-control-sm" value="参考/2025年最新版CMA和CNAS质量体系/05-GBT 27025-2019 检测和校准实验室能力的通用要求.pdf" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">下次查新</label>
+                                        <input type="date" name="next_freshness_due" class="form-control form-control-sm" value="2027-07-16">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新状态</label>
+                                        <select name="freshness_status" class="form-select form-select-sm">
+                                            <option value="current" >现行</option>
+                                            <option value="due" selected>待查新</option>
+                                            <option value="unknown" >未知</option>
+                                            <option value="obsolete" >废止</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">保存查新</button>
+                                </form>
+                            </details>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td>市场监管总局公告2023年第21号</td>
+                        <td>检验检测机构资质认定评审准则</td>
+                        <td>
+                            法规/准则
+                                                    </td>
+                        <td>2026-07-16</td>
+                        <td>本地正式依据文件缺失</td>
+                        <td>2027-07-16</td>
+                        <td>
+                            <span class="badge badge-status-effective">已发布</span>
+                                                    </td>
+                        <td class="qms-action-cell">
+                            <form method="post" action="/planning/sources/extract-clauses?id=83bb279f-7d4e-4e43-84c4-9110ba73e366" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">更新条款库</button>
+                            </form>
+                                                        <form method="post" action="/planning/sources/obsolete?id=83bb279f-7d4e-4e43-84c4-9110ba73e366" class="d-inline" onsubmit="return confirm('确认标记该依据废止？');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">废止</button>
+                            </form>
+                                                        <details class="mt-2 text-start">
+                                <summary class="text-primary small" role="button">更新查新</summary>
+                                <form method="post" action="/planning/sources/freshness?id=83bb279f-7d4e-4e43-84c4-9110ba73e366" class="mt-2">
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新日期</label>
+                                        <input type="date" name="freshness_checked_at" class="form-control form-control-sm" value="2026-07-16" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新结论</label>
+                                        <input type="text" name="freshness_result" class="form-control form-control-sm" value="本地正式依据文件缺失" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">证据来源</label>
+                                        <input type="text" name="freshness_evidence" class="form-control form-control-sm" value="参考/2025年最新版CMA和CNAS质量体系/06-新检验检测机构资质认定评审准则2023带附件.docx" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">下次查新</label>
+                                        <input type="date" name="next_freshness_due" class="form-control form-control-sm" value="2027-07-16">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted">查新状态</label>
+                                        <select name="freshness_status" class="form-select form-select-sm">
+                                            <option value="current" >现行</option>
+                                            <option value="due" selected>待查新</option>
+                                            <option value="unknown" >未知</option>
+                                            <option value="obsolete" >废止</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">保存查新</button>
+                                </form>
+                            </details>
+                        </td>
+                    </tr>
+                                    </tbody>
+            </table>
+        </div>
+        <nav><ul class="pagination pagination-sm justify-content-center"></ul></nav>
+    </div>
+</div>
+
+</div>
+<button type="button" id="qmsCopilotFab" data-bs-toggle="offcanvas" data-bs-target="#qmsCopilotDrawer" aria-label="QMS Copilot">💬</button>
+<div class="offcanvas offcanvas-end" tabindex="-1" id="qmsCopilotDrawer" aria-labelledby="qmsCopilotDrawerLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="qmsCopilotDrawerLabel">QMS Copilot</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="关闭"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column p-0">
+        <div class="qms-copilot-toolbar">
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <select id="qmsCopilotMode" class="form-select form-select-sm" style="width:auto;">
+                    <option value="general">通用</option>
+                    <option value="context" selected>上下文</option>
+                    <option value="expert">评审专家</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="qmsCopilotNewChat">新对话</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" id="qmsCopilotClearMine">清空我的会话</button>
+            </div>
+            <div id="qmsCopilotStatus" class="small text-muted pt-1"></div>
+        </div>
+        <div id="qmsCopilotMessages" class="qms-copilot-messages"></div>
+        <div class="qms-copilot-input-row">
+            <textarea id="qmsCopilotInput" class="form-control" rows="2" placeholder="输入问题，Enter 发送"></textarea>
+            <button type="button" class="btn btn-primary" id="qmsCopilotSendBtn">发送</button>
+        </div>
+    </div>
+</div>
+<div class="container mt-4">
+    <footer class="text-center text-muted py-3">
+        <small>&copy; 2026 珠宝检测实验室质量管理系统 v2.1.0</small>
+    </footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="/static/js/csrf.js?v=20260609"></script>
+<script src="/static/js/qms-copilot.js?v=20260609"></script>
+<style>
+    #think_page_trace {position:fixed; bottom:0; right:0; font-size:14px; width:100%; z-index:999999; color:#000; text-align:left; font-family:'微软雅黑';}
+    #think_page_trace_tab {display:none; background:white; margin:0; height: 250px;}
+    #think_page_trace_tab_tit {height:30px; padding: 6px 12px 0; border-bottom:1px solid #ececec; border-top:1px solid #ececec; font-size:16px;}
+    #think_page_trace_tab_tit>span {color:#000; padding-right:12px; height:30px; line-height:30px; display:inline-block; margin-right:3px; cursor:pointer; font-weight:700;}
+    #think_page_trace_tab_cont {overflow:auto; height:212px; padding:0; line-height:24px;}
+    #think_page_trace_tab_cont>div {display:none;}
+    #think_page_trace_tab_cont>div>ol {padding:0; margin:0;}
+    #think_page_trace_tab_cont>div>ol>li {border-bottom:1px solid #eee; font-size:14px; padding:0 12px;}
+    #think_page_trace_close {display:none; text-align:right; height:15px; position:absolute; top:10px; right:12px; cursor:pointer; z-index: 999999;}
+    #think_page_trace_close>img {vertical-align:top;}
+    #think_page_trace_open {height:30px; float:right; text-align:right; overflow:hidden; position:fixed; bottom:0; right:0; color:#000; line-height:30px; cursor:pointer; z-index:999999;}
+    #think_page_trace_open>div {background:#232323; color:#fff; padding:0 6px; float:right; line-height:30px; font-size:14px;}
+</style>
+
+<div id="think_page_trace">
+    <div id="think_page_trace_tab">
+        <div id="think_page_trace_tab_tit">
+                        <span>基本</span>
+                        <span>文件</span>
+                        <span>流程</span>
+                        <span>错误</span>
+                        <span>SQL</span>
+                        <span>调试</span>
+                    </div>
+        <div id="think_page_trace_tab_cont">
+                        <div>
+                <ol>
+                    <li>请求信息 : 2026-07-16 10:23:57 HTTP/1.1 GET : http://127.0.0.1:8010/planning/sources</li><li>运行时间 : 0.018667s [ 吞吐率：53.57req/s ] 内存消耗：923.90kb 文件加载：170</li><li>缓存信息 : 0 reads,0 writes</li><li>会话信息 : SESSION_ID=da33d0dc3ef697e8ed0598a5a91bae16</li>                </ol>
+            </div>
+                        <div>
+                <ol>
+                    <li>/app/public/router.php ( 0.78 KB )</li><li>/app/public/index.php ( 0.79 KB )</li><li>/app/vendor/autoload.php ( 0.73 KB )</li><li>/app/vendor/composer/autoload_real.php ( 1.63 KB )</li><li>/app/vendor/composer/platform_check.php ( 0.90 KB )</li><li>/app/vendor/composer/ClassLoader.php ( 15.99 KB )</li><li>/app/vendor/composer/autoload_static.php ( 4.73 KB )</li><li>/app/vendor/topthink/think-helper/src/helper.php ( 8.34 KB )</li><li>/app/vendor/topthink/think-validate/src/helper.php ( 2.19 KB )</li><li>/app/vendor/topthink/think-orm/src/helper.php ( 1.47 KB )</li><li>/app/vendor/topthink/think-orm/stubs/load_stubs.php ( 0.16 KB )</li><li>/app/vendor/topthink/framework/src/think/Exception.php ( 1.69 KB )</li><li>/app/vendor/topthink/think-container/src/Facade.php ( 2.71 KB )</li><li>/app/vendor/symfony/deprecation-contracts/function.php ( 0.99 KB )</li><li>/app/vendor/symfony/polyfill-mbstring/bootstrap.php ( 0.35 KB )</li><li>/app/vendor/symfony/polyfill-mbstring/bootstrap80.php ( 9.81 KB )</li><li>/app/vendor/symfony/var-dumper/Resources/functions/dump.php ( 1.60 KB )</li><li>/app/vendor/topthink/think-dumper/src/helper.php ( 0.18 KB )</li><li>/app/vendor/symfony/var-dumper/VarDumper.php ( 4.23 KB )</li><li>/app/vendor/topthink/framework/src/think/App.php ( 15.30 KB )</li><li>/app/vendor/topthink/think-container/src/Container.php ( 15.76 KB )</li><li>/app/vendor/psr/container/src/ContainerInterface.php ( 1.02 KB )</li><li>/app/app/provider.php ( 0.19 KB )</li><li>/app/vendor/topthink/framework/src/think/Http.php ( 6.22 KB )</li><li>/app/vendor/topthink/think-helper/src/helper/Str.php ( 7.29 KB )</li><li>/app/vendor/topthink/framework/src/think/Env.php ( 4.68 KB )</li><li>/app/app/common.php ( 1.95 KB )</li><li>/app/vendor/topthink/framework/src/helper.php ( 18.77 KB )</li><li>/app/vendor/topthink/framework/src/think/Config.php ( 5.93 KB )</li><li>/app/config/app.php ( 0.95 KB )</li><li>/app/config/cache.php ( 0.78 KB )</li><li>/app/config/console.php ( 0.91 KB )</li><li>/app/config/cookie.php ( 0.56 KB )</li><li>/app/config/database.php ( 2.14 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/Env.php ( 1.67 KB )</li><li>/app/config/filesystem.php ( 0.61 KB )</li><li>/app/config/lang.php ( 0.91 KB )</li><li>/app/config/log.php ( 1.35 KB )</li><li>/app/config/middleware.php ( 0.19 KB )</li><li>/app/config/qms.php ( 6.72 KB )</li><li>/app/config/route.php ( 1.89 KB )</li><li>/app/config/session.php ( 0.68 KB )</li><li>/app/config/trace.php ( 0.34 KB )</li><li>/app/config/view.php ( 0.99 KB )</li><li>/app/app/event.php ( 0.25 KB )</li><li>/app/vendor/topthink/framework/src/think/Event.php ( 7.77 KB )</li><li>/app/app/service.php ( 0.13 KB )</li><li>/app/app/AppService.php ( 0.26 KB )</li><li>/app/vendor/topthink/framework/src/think/Service.php ( 1.64 KB )</li><li>/app/vendor/topthink/framework/src/think/Lang.php ( 7.35 KB )</li><li>/app/vendor/topthink/framework/src/lang/zh-cn.php ( 13.70 KB )</li><li>/app/vendor/topthink/framework/src/think/initializer/Error.php ( 3.31 KB )</li><li>/app/vendor/topthink/framework/src/think/initializer/RegisterService.php ( 1.33 KB )</li><li>/app/vendor/services.php ( 0.14 KB )</li><li>/app/vendor/topthink/framework/src/think/service/PaginatorService.php ( 1.52 KB )</li><li>/app/vendor/topthink/framework/src/think/service/ValidateService.php ( 0.99 KB )</li><li>/app/vendor/topthink/framework/src/think/service/ModelService.php ( 2.04 KB )</li><li>/app/vendor/topthink/think-trace/src/Service.php ( 0.77 KB )</li><li>/app/vendor/topthink/framework/src/think/Middleware.php ( 6.72 KB )</li><li>/app/vendor/topthink/framework/src/think/initializer/BootService.php ( 0.77 KB )</li><li>/app/vendor/topthink/think-orm/src/Paginator.php ( 11.86 KB )</li><li>/app/vendor/topthink/think-validate/src/Validate.php ( 63.20 KB )</li><li>/app/vendor/topthink/think-orm/src/Model.php ( 23.55 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/Attribute.php ( 21.05 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/AutoWriteData.php ( 4.20 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/Conversion.php ( 6.75 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/DbConnect.php ( 5.16 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/ModelEvent.php ( 2.33 KB )</li><li>/app/vendor/topthink/think-orm/src/model/concern/RelationShip.php ( 28.30 KB )</li><li>/app/vendor/topthink/think-helper/src/contract/Arrayable.php ( 0.09 KB )</li><li>/app/vendor/topthink/think-helper/src/contract/Jsonable.php ( 0.13 KB )</li><li>/app/vendor/topthink/think-orm/src/model/contract/Modelable.php ( 0.09 KB )</li><li>/app/vendor/topthink/framework/src/think/Db.php ( 2.88 KB )</li><li>/app/vendor/topthink/think-orm/src/DbManager.php ( 8.52 KB )</li><li>/app/vendor/topthink/framework/src/think/Log.php ( 6.28 KB )</li><li>/app/vendor/topthink/framework/src/think/Manager.php ( 3.92 KB )</li><li>/app/vendor/psr/log/src/LoggerTrait.php ( 2.69 KB )</li><li>/app/vendor/psr/log/src/LoggerInterface.php ( 2.71 KB )</li><li>/app/vendor/topthink/framework/src/think/Cache.php ( 4.92 KB )</li><li>/app/vendor/psr/simple-cache/src/CacheInterface.php ( 4.71 KB )</li><li>/app/vendor/topthink/think-helper/src/helper/Arr.php ( 17.45 KB )</li><li>/app/vendor/topthink/framework/src/think/cache/driver/File.php ( 7.84 KB )</li><li>/app/vendor/topthink/framework/src/think/cache/Driver.php ( 9.02 KB )</li><li>/app/vendor/topthink/framework/src/think/contract/CacheHandlerInterface.php ( 1.99 KB )</li><li>/app/app/Request.php ( 0.09 KB )</li><li>/app/vendor/topthink/framework/src/think/Request.php ( 54.64 KB )</li><li>/app/vendor/topthink/framework/src/think/traits/UrlHandler.php ( 6.05 KB )</li><li>/app/vendor/topthink/framework/src/think/traits/DomainHandler.php ( 5.49 KB )</li><li>/app/vendor/topthink/framework/src/think/traits/HttpMethodHandler.php ( 4.74 KB )</li><li>/app/app/middleware.php ( 0.08 KB )</li><li>/app/vendor/topthink/framework/src/think/Pipeline.php ( 2.61 KB )</li><li>/app/vendor/topthink/think-trace/src/TraceDebug.php ( 3.40 KB )</li><li>/app/vendor/topthink/framework/src/think/middleware/SessionInit.php ( 1.94 KB )</li><li>/app/vendor/topthink/framework/src/think/Session.php ( 1.80 KB )</li><li>/app/vendor/topthink/framework/src/think/session/driver/File.php ( 6.27 KB )</li><li>/app/vendor/topthink/framework/src/think/contract/SessionHandlerInterface.php ( 0.87 KB )</li><li>/app/vendor/topthink/framework/src/think/session/Store.php ( 7.12 KB )</li><li>/app/vendor/topthink/framework/src/think/Route.php ( 23.73 KB )</li><li>/app/vendor/topthink/framework/src/think/route/RuleName.php ( 5.74 KB )</li><li>/app/vendor/topthink/framework/src/think/route/Domain.php ( 2.53 KB )</li><li>/app/vendor/topthink/framework/src/think/route/RuleGroup.php ( 22.41 KB )</li><li>/app/vendor/topthink/framework/src/think/route/Rule.php ( 27.49 KB )</li><li>/app/vendor/topthink/framework/src/think/route/RuleItem.php ( 9.78 KB )</li><li>/app/route/app.php ( 12.95 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/Route.php ( 4.70 KB )</li><li>/app/vendor/topthink/framework/src/think/route/dispatch/Controller.php ( 4.74 KB )</li><li>/app/vendor/topthink/framework/src/think/route/Dispatch.php ( 11.32 KB )</li><li>/app/app/middleware/Auth.php ( 1.98 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/Session.php ( 1.79 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/Config.php ( 1.37 KB )</li><li>/app/app/model/NotificationUser.php ( 0.24 KB )</li><li>/app/app/model/BaseModel.php ( 1.89 KB )</li><li>/app/vendor/topthink/think-orm/src/db/connector/Mysql.php ( 5.73 KB )</li><li>/app/vendor/topthink/think-orm/src/db/PDOConnection.php ( 53.74 KB )</li><li>/app/vendor/topthink/think-orm/src/db/Connection.php ( 8.39 KB )</li><li>/app/vendor/topthink/think-orm/src/db/ConnectionInterface.php ( 4.57 KB )</li><li>/app/vendor/topthink/think-orm/src/db/builder/Mysql.php ( 16.58 KB )</li><li>/app/vendor/topthink/think-orm/src/db/Builder.php ( 24.07 KB )</li><li>/app/vendor/topthink/think-orm/src/db/BaseBuilder.php ( 27.50 KB )</li><li>/app/vendor/topthink/think-orm/src/db/Query.php ( 15.97 KB )</li><li>/app/vendor/topthink/think-orm/src/db/BaseQuery.php ( 45.13 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/TimeFieldQuery.php ( 7.43 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/AggregateQuery.php ( 3.26 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/ModelRelationQuery.php ( 20.07 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/ParamsBind.php ( 3.66 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/ResultOperation.php ( 7.01 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/WhereQuery.php ( 19.37 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/JoinAndViewQuery.php ( 7.11 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/TableFieldInfo.php ( 2.63 KB )</li><li>/app/vendor/topthink/think-orm/src/db/concern/Transaction.php ( 2.77 KB )</li><li>/app/vendor/topthink/framework/src/think/log/driver/File.php ( 6.10 KB )</li><li>/app/vendor/topthink/framework/src/think/contract/LogHandlerInterface.php ( 0.86 KB )</li><li>/app/vendor/topthink/framework/src/think/log/Channel.php ( 3.89 KB )</li><li>/app/vendor/topthink/framework/src/think/event/LogRecord.php ( 1.02 KB )</li><li>/app/app/model/QmsExternalChangeCandidate.php ( 0.16 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/View.php ( 1.70 KB )</li><li>/app/vendor/topthink/framework/src/think/View.php ( 4.39 KB )</li><li>/app/vendor/topthink/think-view/src/Think.php ( 8.38 KB )</li><li>/app/vendor/topthink/framework/src/think/contract/TemplateHandlerInterface.php ( 1.60 KB )</li><li>/app/vendor/topthink/think-template/src/Template.php ( 46.61 KB )</li><li>/app/vendor/topthink/think-template/src/template/driver/File.php ( 2.41 KB )</li><li>/app/vendor/topthink/think-template/src/template/contract/DriverInterface.php ( 0.86 KB )</li><li>/app/app/middleware/Rbac.php ( 2.30 KB )</li><li>/app/app/service/RbacService.php ( 1.86 KB )</li><li>/app/app/middleware/PageContext.php ( 1.43 KB )</li><li>/app/app/service/PageContextBuilder.php ( 21.24 KB )</li><li>/app/app/service/ComplianceCheckService.php ( 42.24 KB )</li><li>/app/vendor/topthink/think-orm/src/facade/Db.php ( 0.93 KB )</li><li>/app/vendor/topthink/think-helper/src/Collection.php ( 16.47 KB )</li><li>/app/app/service/AiSettingsService.php ( 9.33 KB )</li><li>/app/vendor/topthink/framework/src/think/middleware/FormTokenCheck.php ( 1.27 KB )</li><li>/app/app/middleware/AuditLog.php ( 6.72 KB )</li><li>/app/app/controller/PlanningSource.php ( 5.08 KB )</li><li>/app/app/BaseController.php ( 2.19 KB )</li><li>/app/app/model/QmsSource.php ( 0.16 KB )</li><li>/app/vendor/topthink/think-orm/src/model/type/Date.php ( 0.32 KB )</li><li>/app/vendor/topthink/think-orm/src/model/type/DateTime.php ( 1.76 KB )</li><li>/app/vendor/topthink/think-orm/src/model/contract/Typeable.php ( 0.26 KB )</li><li>/app/vendor/topthink/think-orm/src/model/Collection.php ( 7.04 KB )</li><li>/app/vendor/topthink/think-orm/src/paginator/driver/Bootstrap.php ( 5.48 KB )</li><li>/app/app/service/QmsPlanningImportService.php ( 99.79 KB )</li><li>/app/app/service/QmsElementService.php ( 94.22 KB )</li><li>/app/app/model/QmsClause.php ( 0.27 KB )</li><li>/app/app/model/QmsStructuredDocument.php ( 0.54 KB )</li><li>/app/runtime/temp/37bd39687270fe362fb947e1e4c6f228.php ( 32.37 KB )</li><li>/app/vendor/topthink/framework/src/think/facade/Request.php ( 9.20 KB )</li><li>/app/vendor/topthink/framework/src/think/Response.php ( 9.07 KB )</li><li>/app/vendor/topthink/framework/src/think/response/Html.php ( 0.97 KB )</li><li>/app/vendor/topthink/framework/src/think/Cookie.php ( 6.06 KB )</li><li>/app/vendor/topthink/think-trace/src/Html.php ( 4.42 KB )</li>                </ol>
+            </div>
+                        <div>
+                <ol>
+                                    </ol>
+            </div>
+                        <div>
+                <ol>
+                                    </ol>
+            </div>
+                        <div>
+                <ol>
+                    <li>CONNECT:[ UseTime:0.000412s ] mysql:host=db;port=3306;dbname=jewelry_qms;charset=utf8mb4</li><li>SHOW FULL COLUMNS FROM `notification_users` [ RunTime:0.000503s ]</li><li>SELECT COUNT(*) AS think_count FROM `notification_users` WHERE  `user_id` = '00000000-0000-0000-0000-000000000040'  AND `status` = 0 [ RunTime:0.000124s ]</li><li>SHOW FULL COLUMNS FROM `qms_external_change_candidates` [ RunTime:0.000537s ]</li><li>SELECT COUNT(*) AS think_count FROM `qms_external_change_candidates` WHERE  `soft_delete` = 0  AND `review_status` = 'pending' [ RunTime:0.000171s ]</li><li>SHOW FULL COLUMNS FROM `compliance_snapshots` [ RunTime:0.000388s ]</li><li>SELECT `id` FROM `compliance_snapshots` WHERE  `company_id` = '00000000-0000-0000-0000-000000000001' ORDER BY `snapshot_time` DESC,`id` DESC LIMIT 1 [ RunTime:0.000163s ]</li><li>SHOW FULL COLUMNS FROM `compliance_check_results` [ RunTime:0.000363s ]</li><li>SELECT `r`.*,`c`.`check_name`,`c`.`clause_number`,`c`.`severity`,`c`.`suggestion_template`,`c`.`weight`,`c`.`element_key` FROM `compliance_check_results` `r` LEFT JOIN `compliance_checks` `c` ON `c`.`id`=`r`.`check_id` WHERE  `r`.`snapshot_id` = '2f8b3a14-9b92-434e-9abf-169dd19f3fec' ORDER BY `c`.`sort_order` ASC [ RunTime:0.000280s ]</li><li>SHOW FULL COLUMNS FROM `system_settings` [ RunTime:0.000330s ]</li><li>SELECT * FROM `system_settings` WHERE  `company_id` = '00000000-0000-0000-0000-000000000001'  AND `setting_key` = 'ai.deepseek.api_key'  AND `value_type` = 'secret' LIMIT 1 [ RunTime:0.000139s ]</li><li>SHOW FULL COLUMNS FROM `qms_sources` [ RunTime:0.000375s ]</li><li>SELECT COUNT(*) AS think_count FROM `qms_sources` WHERE  `soft_delete` = 0 [ RunTime:0.000134s ]</li><li>SELECT * FROM `qms_sources` WHERE  `soft_delete` = 0 ORDER BY `status` ASC,`source_code` ASC LIMIT 0,20 [ RunTime:0.000158s ]</li><li>SELECT * FROM `qms_sources` WHERE  `soft_delete` = 0 ORDER BY `source_code` ASC [ RunTime:0.000178s ]</li><li>SHOW FULL COLUMNS FROM `qms_clauses` [ RunTime:0.000400s ]</li><li>SELECT `id` FROM `qms_clauses` WHERE  `source_id` = 'ca12db97-35d8-4a18-aa50-d27a7ae13d1c'  AND `soft_delete` = 0 [ RunTime:0.000177s ]</li><li>SHOW FULL COLUMNS FROM `qms_element_clause_links` [ RunTime:0.000346s ]</li><li>SELECT DISTINCT  COUNT(`clause_id`) AS think_count FROM `qms_element_clause_links` WHERE  `clause_id` IN ('974ada96-9dfc-4d34-8d41-50adb2e82be7','00f8b7a6-48fc-4150-8e3f-6a64db28f77d','90072e6d-3b16-4aad-b045-962c0c0f38fa','783de648-b258-40bc-b6d8-85537ff4b26a','cc3ec9c2-635f-4ab1-9366-45d5759e8975','4ebc0dca-c3b3-4f84-aca1-37e6a39f6e00','e3eee63e-7db0-4edf-bd5a-2e6fdc3b8c9f','63eb843f-00d9-45c1-8400-f18926db071d','6f1383dd-e305-4aee-9765-c0d6610f5cf4','33cad486-ecdd-43ce-ac6b-e76b34a9b869','ee7ef75d-0eb5-41bd-93ae-967a15a57eb9','b540f28d-bdcd-4266-918c-3312332070c3','5e158346-5f55-49ef-81da-c88b4c6dd937','fba4b6ec-a728-4b99-9dc6-3f39c57dcc76','76f7c239-6ac7-4ab7-80a7-b2a31ab624b5','9bc677fc-df70-45c5-ad3b-fffaa0dae9a5','f7134be2-b929-49ca-a83f-caa48434892c','63938dad-a41b-4878-b882-f737cfb1ea1f')  AND `soft_delete` = 0 [ RunTime:0.000215s ]</li><li>SELECT DISTINCT  COUNT(`element_id`) AS think_count FROM `qms_element_clause_links` WHERE  `clause_id` IN ('974ada96-9dfc-4d34-8d41-50adb2e82be7','00f8b7a6-48fc-4150-8e3f-6a64db28f77d','90072e6d-3b16-4aad-b045-962c0c0f38fa','783de648-b258-40bc-b6d8-85537ff4b26a','cc3ec9c2-635f-4ab1-9366-45d5759e8975','4ebc0dca-c3b3-4f84-aca1-37e6a39f6e00','e3eee63e-7db0-4edf-bd5a-2e6fdc3b8c9f','63eb843f-00d9-45c1-8400-f18926db071d','6f1383dd-e305-4aee-9765-c0d6610f5cf4','33cad486-ecdd-43ce-ac6b-e76b34a9b869','ee7ef75d-0eb5-41bd-93ae-967a15a57eb9','b540f28d-bdcd-4266-918c-3312332070c3','5e158346-5f55-49ef-81da-c88b4c6dd937','fba4b6ec-a728-4b99-9dc6-3f39c57dcc76','76f7c239-6ac7-4ab7-80a7-b2a31ab624b5','9bc677fc-df70-45c5-ad3b-fffaa0dae9a5','f7134be2-b929-49ca-a83f-caa48434892c','63938dad-a41b-4878-b882-f737cfb1ea1f')  AND `soft_delete` = 0 [ RunTime:0.000169s ]</li><li>SHOW FULL COLUMNS FROM `qms_structured_documents` [ RunTime:0.000355s ]</li><li>SELECT * FROM `qms_structured_documents` WHERE  `document_role` = 'external_basis'  AND `doc_number` = 'CNAS-CL01-A015:2018'  AND `version` = '2018'  AND `soft_delete` = 0 LIMIT 1 [ RunTime:0.000169s ]</li><li>SELECT `id` FROM `qms_clauses` WHERE  `source_id` = '49adf27e-0435-4ec8-b648-1920f668abc8'  AND `soft_delete` = 0 [ RunTime:0.000165s ]</li><li>SELECT DISTINCT  COUNT(`clause_id`) AS think_count FROM `qms_element_clause_links` WHERE  `clause_id` IN ('a37cf771-bae8-4ea2-bc4f-df9f9b8ce445','2e948fe4-b18b-4d35-af39-0b986fb6056e','564fe0ab-d6a4-489a-a21d-f29e288b592e','f0f35071-def2-453b-b205-066004128bc7','ca6341d0-ea88-4ef7-96fa-4ac0d8f6e53d','f505d93d-c4f9-4805-ba84-c61e278456ed','bbb43e06-cead-46a1-a743-97cbcdce4e1a','a7dec63e-b457-4c2c-9b1b-9452e39a6724','3b11e03a-03ab-4131-94e5-6ea8f0759564','0b8555de-a056-42ed-b02d-d4c35ecc7a2d','9954a6c3-e6e9-45e0-81b8-02e56ed37fbe','af5de99c-dfe7-41ae-b90e-f41e91a3bfc4','8d937bb9-6efa-4372-a52e-578641f27b8a','8dcabb34-b479-41cf-8919-83dcd58298f4','4ccef38a-ace6-45b5-a058-4db6173a8de5','3d0a1520-e291-4b4d-8d2b-6b51ae68ca3e','2965820c-ddb6-4ef8-9b79-8469788baca5','50cba9a4-71f5-4484-ba5c-3a9ef31937cb','fadae3c2-2ec7-4013-ae3e-d407f52e904d','9a604e5b-c2e8-4d0e-8681-210df7c30ece','07dc0661-75e0-4a37-9987-4e904a16838c','fc3468fe-01c8-437d-84b4-7c9e4e0b9338','6eba61b4-03fe-4cb7-ba95-2b1b609fce57','bf919bf3-74a3-44a4-9d67-e9c8b15aa031','26648714-5c80-4bdc-a24e-2341488f3f2e','5d3f8f28-8db8-46e6-809b-d919c2f35195','d258dd3e-1487-4ee0-9676-d362b185d6ff','88db8cd6-f86d-454c-b26f-1721f7da0f98','6253e22a-e7eb-4ff4-bb10-3c96275a054f','0c3ad947-5629-447d-8c27-2b8d19224f3c','4ceb87d4-c18f-49c2-9f95-04f19956e15f','b309531a-f72d-4132-bf9d-f1b12bffee91','ce5bedaf-e332-45b2-bc99-a3cee985b965','cf8293cf-f204-4ad4-af0b-f69132da305c','eef60665-b342-48eb-ad16-2536ac972c4b','8388305e-8f81-4840-afa5-cfda8a5f5380','a974e4b1-5e72-4268-b7fb-76a91703b93d')  AND `soft_delete` = 0 [ RunTime:0.000230s ]</li><li>SELECT DISTINCT  COUNT(`element_id`) AS think_count FROM `qms_element_clause_links` WHERE  `clause_id` IN ('a37cf771-bae8-4ea2-bc4f-df9f9b8ce445','2e948fe4-b18b-4d35-af39-0b986fb6056e','564fe0ab-d6a4-489a-a21d-f29e288b592e','f0f35071-def2-453b-b205-066004128bc7','ca6341d0-ea88-4ef7-96fa-4ac0d8f6e53d','f505d93d-c4f9-4805-ba84-c61e278456ed','bbb43e06-cead-46a1-a743-97cbcdce4e1a','a7dec63e-b457-4c2c-9b1b-9452e39a6724','3b11e03a-03ab-4131-94e5-6ea8f0759564','0b8555de-a056-42ed-b02d-d4c35ecc7a2d','9954a6c3-e6e9-45e0-81b8-02e56ed37fbe','af5de99c-dfe7-41ae-b90e-f41e91a3bfc4','8d937bb9-6efa-4372-a52e-578641f27b8a','8dcabb34-b479-41cf-8919-83dcd58298f4','4ccef38a-ace6-45b5-a058-4db6173a8de5','3d0a1520-e291-4b4d-8d2b-6b51ae68ca3e','2965820c-ddb6-4ef8-9b79-8469788baca5','50cba9a4-71f5-4484-ba5c-3a9ef31937cb','fadae3c2-2ec7-4013-ae3e-d407f52e904d','9a604e5b-c2e8-4d0e-8681-210df7c30ece','07dc0661-75e0-4a37-9987-4e904a16838c','fc3468fe-01c8-437d-84b4-7c9e4e0b9338','6eba61b4-03fe-4cb7-ba95-2b1b609fce57','bf919bf3-74a3-44a4-9d67-e9c8b15aa031','26648714-5c80-4bdc-a24e-2341488f3f2e','5d3f8f28-8db8-46e6-809b-d919c2f35195','d258dd3e-1487-4ee0-9676-d362b185d6ff','88db8cd6-f86d-454c-b26f-1721f7da0f98','6253e22a-e7eb-4ff4-bb10-3c96275a054f','0c3ad947-5629-447d-8c27-2b8d19224f3c','4ceb87d4-c18f-49c2-9f95-04f19956e15f','b309531a-f72d-4132-bf9d-f1b12bffee91','ce5bedaf-e332-45b2-bc99-a3cee985b965','cf8293cf-f204-4ad4-af0b-f69132da305c','eef60665-b342-48eb-ad16-2536ac972c4b','8388305e-8f81-4840-afa5-cfda8a5f5380','a974e4b1-5e72-4268-b7fb-76a91703b93d')  AND `soft_delete` = 0 [ RunTime:0.000191s ]</li><li>SELECT * FROM `qms_structured_documents` WHERE  `document_role` = 'external_basis'  AND `doc_number` = 'CNAS-CL01-G001:2024'  AND `version` = '2024'  AND `soft_delete` = 0 LIMIT 1 [ RunTime:0.000094s ]</li><li>SELECT `id` FROM `qms_clauses` WHERE  `source_id` = '125a69e1-ca0d-408e-ac65-a89282b826a3'  AND `soft_delete` = 0 [ RunTime:0.000069s ]</li><li>SELECT * FROM `qms_structured_documents` WHERE  `document_role` = 'external_basis'  AND `doc_number` = 'CNAS-CL01:2018'  AND `version` = '2018（2019-02-20第一次修订）'  AND `soft_delete` = 0 LIMIT 1 [ RunTime:0.000096s ]</li><li>SELECT `id` FROM `qms_clauses` WHERE  `source_id` = 'a9288fd9-af50-41ea-98c8-890b5fa2ef61'  AND `soft_delete` = 0 [ RunTime:0.000236s ]</li><li>SELECT DISTINCT  COUNT(`clause_id`) AS think_count FROM `qms_element_clause_links` WHERE  `clause_id` IN ('e4cd91af-6337-4f2b-90a4-2a2915b9426e','35c88443-3ca8-49fd-b9f1-4d04c696a7b1','49662d33-b395-4ae1-8045-a5dbe42ba247','63d7f37b-1957-48d0-88a6-56f03eb2cfde','6383946c-1d56-45bf-a1b6-dbfda64fc6f1','8dbc462b-3e17-44e2-b48a-09561341685f','a1f808f6-0440-4700-a6da-24c20ab8337d','7469ce7a-57be-4f91-9bb6-ccef1fd7bdcc','04b1beec-42ba-4477-8d0f-da2f3c4eed43','2833ff1b-2079-4328-a139-5f2410cc2ac7','4b65395f-8704-4b0b-88e7-6f033be9b50b','8f6a21c5-6e24-4861-95f1-7e651e3d9fe3','fcfe54ff-c50e-410a-bf9a-10056ca129cf','9c8fb671-ab8e-49e2-a781-5f23f2ddbf91','2b3a654d-e2a4-42ec-9fed-18ca3e2b2cd4','45b3bb95-450f-400a-86d9-4ed60e1c7328','f0affd7e-c752-42d8-b92d-7eefba844c03','5adf698b-1f67-419d-ae6d-fd831631a705','ae5a6419-c781-411e-961f-2d2de2cfca47','108f5a72-44b7-40f4-8271-ab9f60437c4a','be4cd822-bf0a-42c8-9dd8-2b26a22f223d','b9ee51ac-04b3-413d-a79e-ca25bf4cf885','4b731ca3-ecef-4cdd-bf0f-6c9dc9d9e727','e244edd7-6b25-4d1c-999f-03be79889489','c0a6de68-aa3b-4184-96dc-59d8be9d2391','e501cf6a-3e88-40a3-a6a0-9b27d79b22da','554b96bf-6426-4b6b-ba52-3ddf1fc288f5','8d4386ad-c1f3-4800-83b3-4532d68ddb7e','378922ca-6e3d-461d-aac1-b6697b70c6b9','cce3a2bd-fafc-487b-a25f-d28e83d1eaa8','5d691d1d-9bdf-4eb5-8e31-0a1b9de3c3fd','cf9b0e04-e5d9-4910-a21c-70dc5dcd84d4','0c87df7b-3ffd-42e4-9121-6deac0e98f67','c88b9769-ae12-4bd4-b596-a2ed6043e645','6f71ba07-8657-4175-b2c5-939a2602994c','c89474ec-93dd-4120-90a4-8ce527bb5f60','1d65f35e-f144-4dfe-a7ec-82d8f6a829be','53f000fe-1101-4428-a037-1b79e1ccca00','35b08bbb-75fa-4cfa-805f-ec57c1142c6f','675cc751-2dca-4ee7-bd9f-1e0ea1a138aa','1d26c5e8-e39a-446b-8335-9ade1ed84e31','8afe0bff-b267-411a-9a2f-0f9134bf3551','f74ce24b-fcd3-4eb1-b0d5-3d03dd48a52b','3cd817d6-2878-4d02-8227-f616e803e461','5f25c8f9-9bbd-47d6-b23f-386431da8d1f','a4bcd5ec-b1fd-46b0-a8a9-f1d5a40161d3','bb1f2275-30b5-494b-9f44-a4ca1a1619ef','ff6679d3-9c2a-4fa8-8bcf-a4ac031c6f8e','a34a7cbc-9cda-40a3-8cce-9d21baa307a0','09e6dd97-d3de-49fa-b834-d7c5b75a5c4a','7700ff57-2cd8-4e22-86bb-0f7e0dae683e','9e96e5b1-f969-4c21-89b7-b800e8df152d','add12d1a-e10f-4482-87f3-ce0bf1359773','9d58d20a-6a01-4ccf-984a-6a78ba6d21e8','9b20b2ef-b856-4569-9b4d-6eb8e0c5e34d','6cbd87ed-7e0b-48ce-bce1-99295d3c49b3','26b81834-631d-4b53-a5b6-15710fb69b12','c9493410-9699-4cb5-9370-b859b58b350d','57ab9bc9-8f3e-4e93-9743-ec3f96f9655f','f02fc3a4-d533-4e5e-9aed-bd884880f8be','1e4b7003-dc32-45c7-969e-644b0c1713cb','e9b439b3-fd41-4c3b-987c-64066f0f48d8','655649e9-6c06-4dcd-a6bd-8102730e944a','59db1e87-821d-4290-be02-c04079263da9','e67c6d3c-9ab7-4232-aab2-5f97c1dcb87e','272c2025-f994-486c-9799-dd69fed46202','b59fc157-b5a8-456a-b94e-54a938ee512e','36152adc-5b30-420a-a3ad-86761ff848df','29026f93-8501-46d4-9c1d-9b790d34e8dc','02a8c9eb-e787-4444-b709-29d428ddec74','171510ce-5b63-4cc1-81f4-ee5941c155ba','0180a9ec-227e-4e1b-b80b-1e2e468846f2','e67008d0-8e91-45cd-8a70-ec5f047529c5','0605269a-21e4-432b-b6ea-3111cc469498','65d20d90-441c-4a50-8f6e-adac2232ba18','61591af3-9130-493d-898e-7a06ed5b4cf8','eedab170-e26f-46be-b76c-536cd39ab172','214fd1c6-65d4-48e3-8129-54d830b6363c','525575cb-2b2f-498c-a969-add13909882d','ff473f31-082a-4a9b-a251-16834509ffdc','e6ac66b6-b572-408f-b24e-394fcd8684c0','07377583-8262-4aaa-becf-a36c34ae51d9','704841c8-0ab7-4874-b857-98bac8dcd999','afd47fb3-68a8-43c4-b550-fc5d54cfa180','153bb376-a1e7-423f-84f3-9ad33be97fd6','7d9cdcf1-fd61-4571-8357-d1a772740b7f','d7150f6d-2bb9-4d43-b2b9-786bedf098b2','0210b29c-226e-4230-9098-fe36b706c272','bdc25314-2674-422d-a112-4e49e9fe6491','efee286a-978b-4df7-a740-32344313debe','fa389904-ee3e-4ec3-b8ba-d0f3d701722e','3840b1d8-e9ef-4080-b4c0-bf3c3e2ef02e','8f10e683-5fb7-4adc-8a66-66ae7bb44c83','ed464cb9-e539-4b59-a9dd-ecb581be02a0','25bc2a1b-d102-45fd-9459-eb9930eac5ff','a116d3f7-468c-4605-9912-d74a3fe1d912','5c7de52e-8341-49c2-abaf-3cf4c614ffff','92a05b19-4451-4d75-a963-39df7fb2a48b','25ce0a00-58af-4c27-b3f5-83ca1e3e2172','8a80c656-76c7-47ff-9efa-5fd111a97f0e','f4a4026c-12e3-4db9-89ff-d39407de861a','90cc741f-691a-4085-8e0f-d36579006321','9724903b-89e6-42f5-88bc-efcd761ec593','52977bb8-6c87-4608-8db9-f245e577f378','4500ad27-c8de-4b09-a318-37949686f95e','a50a8677-cfaf-4430-8c6d-1b618bf924e8','4f908ca8-af85-4875-8556-5774997f7cf2','56ec2f72-01de-4994-949e-ba5f365505e5','e28686f2-99eb-42bb-bc8f-5a9312f2ae1d','756af30b-a817-4017-8ca1-1ae7760a7441','298aec87-4787-4a57-8477-93a3973c41cf','46cae94f-aaf2-4d68-88c4-c9a6f9d4aca2','8f0dfcbb-2e62-48d6-ac37-7ee728daea02','2eb7ebd6-2431-42f6-b0cf-f51e3ad501d6','85ab0582-9545-4715-9778-2c8f078e091f','37f12d85-8e1a-44ea-964c-586be515d496','adbca1b9-1f40-4556-a76c-053db939a73d','f7538df7-5efa-4f42-bf37-bc5358737059','d0f18a9b-f66b-495d-a7d0-cd3706245e2b','216086af-4e13-4674-8860-4f10e07b302d','68f985c2-4f99-45b2-baac-a323d64e289e','e1e63e0e-7d04-484f-a7a6-da0d144c62aa','eb8534cc-e079-4b66-b52d-a866e9d1b29b','175a81a8-3774-4701-bf1f-61828baf094d','1655a184-7bbb-4525-92d3-ad5082a8900a','0959cb9d-98f2-4b41-bfa1-6db7c3c07365','f8365367-1536-47f4-a667-cbc4339559db','9c1b95b6-dc55-4207-9095-457136d70067','54084ef2-4868-48de-824c-f5dbfe0eca2d','726aaaf9-e058-4f14-9ab6-33ee61d34a86','cc724eb8-f017-43e1-af3d-82497325bb9b','e559d270-a030-40f9-9b89-758588e1d8e1','5b2261b5-cd0b-4750-9d26-bde61a19633e','07a99fa5-0872-4cdb-a918-b9c16ea51f61','399480a9-7895-41ed-9f2b-1b58783a4617','af29c4d0-7dbf-487e-b48f-c76bd8bf4de6','4be0183b-5300-4e52-bd91-186b38ed5a26','5d3f647d-871a-45b8-ba24-602a994375c0','397d0379-a082-48f6-a03e-060c0e876ec5','1bd01b68-34b2-4153-a267-cb6d2ded9c05','f43dc90c-cf45-4284-94de-b4eaaa79b18b','937bdc4a-5722-45e9-afad-03768ed52f15','7122cc2b-d272-4f97-a898-6f2c47aad724','f15d8cb5-8253-4a8c-ba75-2ff240ae69e4','f5082535-78cb-4e97-83fe-808267b32324','a443c867-94dd-423a-a068-0350f303414f','4eeba257-fed2-44c2-9651-ce74521c2831','a63cac72-753d-4e47-ab09-86c03c38eece','4bfac27f-c657-4066-ada7-3f7ecb66e877','f5c9a53c-f066-4a50-a219-d248efaf85a8','6ff8067a-2565-46a2-b0d0-686cf1fe1102','cb54ce63-eb24-4946-a2e0-1e85b4f154b4','434f9684-b379-4c2a-86c4-99e43b43a6fc','5402fea8-c5d2-4f63-bdaa-c58b8b2f20bf','5fd581ff-73e6-484c-b405-2f9003646685','5e1fa706-a5e4-4b5c-a56c-d2a4cac0ed3d','9ee48808-6f91-4134-85b5-c435bb09007f','bc75f47e-efc0-471d-bd3f-34c57c340fe1','74dca82d-dbb8-440b-909c-848f160d3b92','e0ce86c8-d4cc-4e0f-89e0-654c521d772e','30b7f6bf-2ab2-462f-9ab2-ef64e9ef2c44','a53b62ae-14ba-42d8-a47c-6843dd1cf7f5','1e27478f-dc2b-473b-a7d2-27cab9b3d856','3fba19c0-56d2-4721-8c60-02097d958642','56e3490e-a4fc-4139-89c6-30803bc825eb','b7c09851-0c92-4f7b-b68b-f6782c8feee2','e8fc4c83-f8e0-4df8-ad04-5a69ca33425b','93132472-ca03-4072-a306-0ebab54d7e20','68bd3183-ea3e-4a07-9681-bfa92ee1fb4d','18c57b44-8b6a-4b6b-9d54-2b52553fe9fb','093b2958-bbba-4b5a-981e-25b86861596f','93f8c63a-bce2-4bfe-abbf-8e7a4320eaef','38f77525-fef4-40a2-a1fa-8c1cd1d96c0a','7872d45d-fc4e-4fdc-ad8c-88b58917ed11','5bb5cb7b-03ad-489b-87e0-bf6e36c4d27a','b6f4a811-8848-4066-900d-7993d71cb9e9','f1c4ee32-d686-4f73-be1c-284389e54560','3afdd764-d59f-4625-b87b-1f02441404fa','df81c600-7c5f-492e-9270-a312be8c9f67','b1cf9980-3e9a-4f77-a865-2998ffbdd6d9','29c2704f-a17e-4b00-8105-26ecbcc0a684','cf8b5cc2-82ce-4094-846f-6e4c48080bd2','e730a8ab-009b-4152-bf89-e3dada5ec7c4','24ea5519-2cc6-4b13-87a2-326ba6a3caee','7a088ede-82b4-4f30-aa89-46ceda73e6bf')  AND `soft_delete` = 0 [ RunTime:0.000592s ]</li><li>SELECT DISTINCT  COUNT(`element_id`) AS think_count FROM `qms_element_clause_links` WHERE  `clause_id` IN ('e4cd91af-6337-4f2b-90a4-2a2915b9426e','35c88443-3ca8-49fd-b9f1-4d04c696a7b1','49662d33-b395-4ae1-8045-a5dbe42ba247','63d7f37b-1957-48d0-88a6-56f03eb2cfde','6383946c-1d56-45bf-a1b6-dbfda64fc6f1','8dbc462b-3e17-44e2-b48a-09561341685f','a1f808f6-0440-4700-a6da-24c20ab8337d','7469ce7a-57be-4f91-9bb6-ccef1fd7bdcc','04b1beec-42ba-4477-8d0f-da2f3c4eed43','2833ff1b-2079-4328-a139-5f2410cc2ac7','4b65395f-8704-4b0b-88e7-6f033be9b50b','8f6a21c5-6e24-4861-95f1-7e651e3d9fe3','fcfe54ff-c50e-410a-bf9a-10056ca129cf','9c8fb671-ab8e-49e2-a781-5f23f2ddbf91','2b3a654d-e2a4-42ec-9fed-18ca3e2b2cd4','45b3bb95-450f-400a-86d9-4ed60e1c7328','f0affd7e-c752-42d8-b92d-7eefba844c03','5adf698b-1f67-419d-ae6d-fd831631a705','ae5a6419-c781-411e-961f-2d2de2cfca47','108f5a72-44b7-40f4-8271-ab9f60437c4a','be4cd822-bf0a-42c8-9dd8-2b26a22f223d','b9ee51ac-04b3-413d-a79e-ca25bf4cf885','4b731ca3-ecef-4cdd-bf0f-6c9dc9d9e727','e244edd7-6b25-4d1c-999f-03be79889489','c0a6de68-aa3b-4184-96dc-59d8be9d2391','e501cf6a-3e88-40a3-a6a0-9b27d79b22da','554b96bf-6426-4b6b-ba52-3ddf1fc288f5','8d4386ad-c1f3-4800-83b3-4532d68ddb7e','378922ca-6e3d-461d-aac1-b6697b70c6b9','cce3a2bd-fafc-487b-a25f-d28e83d1eaa8','5d691d1d-9bdf-4eb5-8e31-0a1b9de3c3fd','cf9b0e04-e5d9-4910-a21c-70dc5dcd84d4','0c87df7b-3ffd-42e4-9121-6deac0e98f67','c88b9769-ae12-4bd4-b596-a2ed6043e645','6f71ba07-8657-4175-b2c5-939a2602994c','c89474ec-93dd-4120-90a4-8ce527bb5f60','1d65f35e-f144-4dfe-a7ec-82d8f6a829be','53f000fe-1101-4428-a037-1b79e1ccca00','35b08bbb-75fa-4cfa-805f-ec57c1142c6f','675cc751-2dca-4ee7-bd9f-1e0ea1a138aa','1d26c5e8-e39a-446b-8335-9ade1ed84e31','8afe0bff-b267-411a-9a2f-0f9134bf3551','f74ce24b-fcd3-4eb1-b0d5-3d03dd48a52b','3cd817d6-2878-4d02-8227-f616e803e461','5f25c8f9-9bbd-47d6-b23f-386431da8d1f','a4bcd5ec-b1fd-46b0-a8a9-f1d5a40161d3','bb1f2275-30b5-494b-9f44-a4ca1a1619ef','ff6679d3-9c2a-4fa8-8bcf-a4ac031c6f8e','a34a7cbc-9cda-40a3-8cce-9d21baa307a0','09e6dd97-d3de-49fa-b834-d7c5b75a5c4a','7700ff57-2cd8-4e22-86bb-0f7e0dae683e','9e96e5b1-f969-4c21-89b7-b800e8df152d','add12d1a-e10f-4482-87f3-ce0bf1359773','9d58d20a-6a01-4ccf-984a-6a78ba6d21e8','9b20b2ef-b856-4569-9b4d-6eb8e0c5e34d','6cbd87ed-7e0b-48ce-bce1-99295d3c49b3','26b81834-631d-4b53-a5b6-15710fb69b12','c9493410-9699-4cb5-9370-b859b58b350d','57ab9bc9-8f3e-4e93-9743-ec3f96f9655f','f02fc3a4-d533-4e5e-9aed-bd884880f8be','1e4b7003-dc32-45c7-969e-644b0c1713cb','e9b439b3-fd41-4c3b-987c-64066f0f48d8','655649e9-6c06-4dcd-a6bd-8102730e944a','59db1e87-821d-4290-be02-c04079263da9','e67c6d3c-9ab7-4232-aab2-5f97c1dcb87e','272c2025-f994-486c-9799-dd69fed46202','b59fc157-b5a8-456a-b94e-54a938ee512e','36152adc-5b30-420a-a3ad-86761ff848df','29026f93-8501-46d4-9c1d-9b790d34e8dc','02a8c9eb-e787-4444-b709-29d428ddec74','171510ce-5b63-4cc1-81f4-ee5941c155ba','0180a9ec-227e-4e1b-b80b-1e2e468846f2','e67008d0-8e91-45cd-8a70-ec5f047529c5','0605269a-21e4-432b-b6ea-3111cc469498','65d20d90-441c-4a50-8f6e-adac2232ba18','61591af3-9130-493d-898e-7a06ed5b4cf8','eedab170-e26f-46be-b76c-536cd39ab172','214fd1c6-65d4-48e3-8129-54d830b6363c','525575cb-2b2f-498c-a969-add13909882d','ff473f31-082a-4a9b-a251-16834509ffdc','e6ac66b6-b572-408f-b24e-394fcd8684c0','07377583-8262-4aaa-becf-a36c34ae51d9','704841c8-0ab7-4874-b857-98bac8dcd999','afd47fb3-68a8-43c4-b550-fc5d54cfa180','153bb376-a1e7-423f-84f3-9ad33be97fd6','7d9cdcf1-fd61-4571-8357-d1a772740b7f','d7150f6d-2bb9-4d43-b2b9-786bedf098b2','0210b29c-226e-4230-9098-fe36b706c272','bdc25314-2674-422d-a112-4e49e9fe6491','efee286a-978b-4df7-a740-32344313debe','fa389904-ee3e-4ec3-b8ba-d0f3d701722e','3840b1d8-e9ef-4080-b4c0-bf3c3e2ef02e','8f10e683-5fb7-4adc-8a66-66ae7bb44c83','ed464cb9-e539-4b59-a9dd-ecb581be02a0','25bc2a1b-d102-45fd-9459-eb9930eac5ff','a116d3f7-468c-4605-9912-d74a3fe1d912','5c7de52e-8341-49c2-abaf-3cf4c614ffff','92a05b19-4451-4d75-a963-39df7fb2a48b','25ce0a00-58af-4c27-b3f5-83ca1e3e2172','8a80c656-76c7-47ff-9efa-5fd111a97f0e','f4a4026c-12e3-4db9-89ff-d39407de861a','90cc741f-691a-4085-8e0f-d36579006321','9724903b-89e6-42f5-88bc-efcd761ec593','52977bb8-6c87-4608-8db9-f245e577f378','4500ad27-c8de-4b09-a318-37949686f95e','a50a8677-cfaf-4430-8c6d-1b618bf924e8','4f908ca8-af85-4875-8556-5774997f7cf2','56ec2f72-01de-4994-949e-ba5f365505e5','e28686f2-99eb-42bb-bc8f-5a9312f2ae1d','756af30b-a817-4017-8ca1-1ae7760a7441','298aec87-4787-4a57-8477-93a3973c41cf','46cae94f-aaf2-4d68-88c4-c9a6f9d4aca2','8f0dfcbb-2e62-48d6-ac37-7ee728daea02','2eb7ebd6-2431-42f6-b0cf-f51e3ad501d6','85ab0582-9545-4715-9778-2c8f078e091f','37f12d85-8e1a-44ea-964c-586be515d496','adbca1b9-1f40-4556-a76c-053db939a73d','f7538df7-5efa-4f42-bf37-bc5358737059','d0f18a9b-f66b-495d-a7d0-cd3706245e2b','216086af-4e13-4674-8860-4f10e07b302d','68f985c2-4f99-45b2-baac-a323d64e289e','e1e63e0e-7d04-484f-a7a6-da0d144c62aa','eb8534cc-e079-4b66-b52d-a866e9d1b29b','175a81a8-3774-4701-bf1f-61828baf094d','1655a184-7bbb-4525-92d3-ad5082a8900a','0959cb9d-98f2-4b41-bfa1-6db7c3c07365','f8365367-1536-47f4-a667-cbc4339559db','9c1b95b6-dc55-4207-9095-457136d70067','54084ef2-4868-48de-824c-f5dbfe0eca2d','726aaaf9-e058-4f14-9ab6-33ee61d34a86','cc724eb8-f017-43e1-af3d-82497325bb9b','e559d270-a030-40f9-9b89-758588e1d8e1','5b2261b5-cd0b-4750-9d26-bde61a19633e','07a99fa5-0872-4cdb-a918-b9c16ea51f61','399480a9-7895-41ed-9f2b-1b58783a4617','af29c4d0-7dbf-487e-b48f-c76bd8bf4de6','4be0183b-5300-4e52-bd91-186b38ed5a26','5d3f647d-871a-45b8-ba24-602a994375c0','397d0379-a082-48f6-a03e-060c0e876ec5','1bd01b68-34b2-4153-a267-cb6d2ded9c05','f43dc90c-cf45-4284-94de-b4eaaa79b18b','937bdc4a-5722-45e9-afad-03768ed52f15','7122cc2b-d272-4f97-a898-6f2c47aad724','f15d8cb5-8253-4a8c-ba75-2ff240ae69e4','f5082535-78cb-4e97-83fe-808267b32324','a443c867-94dd-423a-a068-0350f303414f','4eeba257-fed2-44c2-9651-ce74521c2831','a63cac72-753d-4e47-ab09-86c03c38eece','4bfac27f-c657-4066-ada7-3f7ecb66e877','f5c9a53c-f066-4a50-a219-d248efaf85a8','6ff8067a-2565-46a2-b0d0-686cf1fe1102','cb54ce63-eb24-4946-a2e0-1e85b4f154b4','434f9684-b379-4c2a-86c4-99e43b43a6fc','5402fea8-c5d2-4f63-bdaa-c58b8b2f20bf','5fd581ff-73e6-484c-b405-2f9003646685','5e1fa706-a5e4-4b5c-a56c-d2a4cac0ed3d','9ee48808-6f91-4134-85b5-c435bb09007f','bc75f47e-efc0-471d-bd3f-34c57c340fe1','74dca82d-dbb8-440b-909c-848f160d3b92','e0ce86c8-d4cc-4e0f-89e0-654c521d772e','30b7f6bf-2ab2-462f-9ab2-ef64e9ef2c44','a53b62ae-14ba-42d8-a47c-6843dd1cf7f5','1e27478f-dc2b-473b-a7d2-27cab9b3d856','3fba19c0-56d2-4721-8c60-02097d958642','56e3490e-a4fc-4139-89c6-30803bc825eb','b7c09851-0c92-4f7b-b68b-f6782c8feee2','e8fc4c83-f8e0-4df8-ad04-5a69ca33425b','93132472-ca03-4072-a306-0ebab54d7e20','68bd3183-ea3e-4a07-9681-bfa92ee1fb4d','18c57b44-8b6a-4b6b-9d54-2b52553fe9fb','093b2958-bbba-4b5a-981e-25b86861596f','93f8c63a-bce2-4bfe-abbf-8e7a4320eaef','38f77525-fef4-40a2-a1fa-8c1cd1d96c0a','7872d45d-fc4e-4fdc-ad8c-88b58917ed11','5bb5cb7b-03ad-489b-87e0-bf6e36c4d27a','b6f4a811-8848-4066-900d-7993d71cb9e9','f1c4ee32-d686-4f73-be1c-284389e54560','3afdd764-d59f-4625-b87b-1f02441404fa','df81c600-7c5f-492e-9270-a312be8c9f67','b1cf9980-3e9a-4f77-a865-2998ffbdd6d9','29c2704f-a17e-4b00-8105-26ecbcc0a684','cf8b5cc2-82ce-4094-846f-6e4c48080bd2','e730a8ab-009b-4152-bf89-e3dada5ec7c4','24ea5519-2cc6-4b13-87a2-326ba6a3caee','7a088ede-82b4-4f30-aa89-46ceda73e6bf')  AND `soft_delete` = 0 [ RunTime:0.000566s ]</li><li>SELECT * FROM `qms_structured_documents` WHERE  `document_role` = 'external_basis'  AND `doc_number` = 'GB/T 27025-2019'  AND `version` = '2019'  AND `soft_delete` = 0 LIMIT 1 [ RunTime:0.000145s ]</li><li>SELECT `id` FROM `qms_clauses` WHERE  `source_id` = '83bb279f-7d4e-4e43-84c4-9110ba73e366'  AND `soft_delete` = 0 [ RunTime:0.000149s ]</li><li>SELECT DISTINCT  COUNT(`clause_id`) AS think_count FROM `qms_element_clause_links` WHERE  `clause_id` IN ('8576dfe2-c5db-4583-bda3-53a8d12151b5','3aac54a2-ae60-4d96-b4c3-d7252c7a3022','501f1401-7e0e-4f77-b086-70553fd3732e','85f2c4f9-a06b-49a9-afca-5d14beaeef3b','70ed6ce6-2b7d-44da-af08-a57e3d5b63d8','3a8eca16-d57e-4714-9e23-fedce7d7bd3d','a804620a-5fab-477b-b0fd-1d4f9c19609b','96c36a14-440a-41f8-9e68-54221c579109','fe8b35e2-dddf-4fe6-8efe-008293fe8e46','2ac38d69-c31c-4335-a9f1-49759429d067','aec45af9-240c-46a6-a826-d01faaf7012a','810057c5-7489-4d9b-b3a4-780d6b72387a','28c104da-bad3-4a44-b9a4-4d00b4c76eec','e90da1fc-fcd9-4fa8-848f-a69b49f9799e','6c46e93f-bfe1-4f44-9a97-53ced5c30d2c','aa454ac5-1b30-4576-8f2e-cc9435e560de','e09de017-953a-4666-aa80-50e66a9b0748','1782b8f4-243b-4853-839a-c645c62bad0e','57c86c9f-67ce-43fa-bf17-2378e844eaa0','a329694e-9646-4781-8c3b-df55c9d57c7c','5a079e35-2964-41d5-bf5b-461018ce6b6a','d4b19a31-23f3-417c-9feb-7b32fe0a60a3','79eb104f-bc64-47a6-9d97-23e20ab96244','7d9b2dd0-8065-4678-83c1-406bbea3a860','f8afa85c-24e6-48bc-873e-34315e3d9fe3','2dc1e51b-4ad6-4656-b153-d79fdb9efb22','00d182af-de86-4002-bb5f-7ee06af52103','5ccfd2a9-cd23-445a-b656-fd7d48a59ead')  AND `soft_delete` = 0 [ RunTime:0.000185s ]</li><li>SELECT DISTINCT  COUNT(`element_id`) AS think_count FROM `qms_element_clause_links` WHERE  `clause_id` IN ('8576dfe2-c5db-4583-bda3-53a8d12151b5','3aac54a2-ae60-4d96-b4c3-d7252c7a3022','501f1401-7e0e-4f77-b086-70553fd3732e','85f2c4f9-a06b-49a9-afca-5d14beaeef3b','70ed6ce6-2b7d-44da-af08-a57e3d5b63d8','3a8eca16-d57e-4714-9e23-fedce7d7bd3d','a804620a-5fab-477b-b0fd-1d4f9c19609b','96c36a14-440a-41f8-9e68-54221c579109','fe8b35e2-dddf-4fe6-8efe-008293fe8e46','2ac38d69-c31c-4335-a9f1-49759429d067','aec45af9-240c-46a6-a826-d01faaf7012a','810057c5-7489-4d9b-b3a4-780d6b72387a','28c104da-bad3-4a44-b9a4-4d00b4c76eec','e90da1fc-fcd9-4fa8-848f-a69b49f9799e','6c46e93f-bfe1-4f44-9a97-53ced5c30d2c','aa454ac5-1b30-4576-8f2e-cc9435e560de','e09de017-953a-4666-aa80-50e66a9b0748','1782b8f4-243b-4853-839a-c645c62bad0e','57c86c9f-67ce-43fa-bf17-2378e844eaa0','a329694e-9646-4781-8c3b-df55c9d57c7c','5a079e35-2964-41d5-bf5b-461018ce6b6a','d4b19a31-23f3-417c-9feb-7b32fe0a60a3','79eb104f-bc64-47a6-9d97-23e20ab96244','7d9b2dd0-8065-4678-83c1-406bbea3a860','f8afa85c-24e6-48bc-873e-34315e3d9fe3','2dc1e51b-4ad6-4656-b153-d79fdb9efb22','00d182af-de86-4002-bb5f-7ee06af52103','5ccfd2a9-cd23-445a-b656-fd7d48a59ead')  AND `soft_delete` = 0 [ RunTime:0.000189s ]</li><li>SELECT * FROM `qms_structured_documents` WHERE  `document_role` = 'external_basis'  AND `doc_number` = '市场监管总局公告2023年第21号'  AND `version` = '2023年第21号公告'  AND `soft_delete` = 0 LIMIT 1 [ RunTime:0.000152s ]</li>                </ol>
+            </div>
+                        <div>
+                <ol>
+                                    </ol>
+            </div>
+                    </div>
+    </div>
+    <div id="think_page_trace_close">
+        <img src="data:image/gif;base64,R0lGODlhDwAPAJEAAAAAAAMDA////wAAACH/C1hNUCBEYXRhWE1QPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS4wLWMwNjAgNjEuMTM0Nzc3LCAyMDEwLzAyLzEyLTE3OjMyOjAwICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdFJlZj0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlUmVmIyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1IFdpbmRvd3MiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6MUQxMjc1MUJCQUJDMTFFMTk0OUVGRjc3QzU4RURFNkEiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6MUQxMjc1MUNCQUJDMTFFMTk0OUVGRjc3QzU4RURFNkEiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDoxRDEyNzUxOUJBQkMxMUUxOTQ5RUZGNzdDNThFREU2QSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDoxRDEyNzUxQUJBQkMxMUUxOTQ5RUZGNzdDNThFREU2QSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PgH//v38+/r5+Pf29fTz8vHw7+7t7Ovq6ejn5uXk4+Lh4N/e3dzb2tnY19bV1NPS0dDPzs3My8rJyMfGxcTDwsHAv769vLu6ubi3trW0s7KxsK+urayrqqmop6alpKOioaCfnp2cm5qZmJeWlZSTkpGQj46NjIuKiYiHhoWEg4KBgH9+fXx7enl4d3Z1dHNycXBvbm1sa2ppaGdmZWRjYmFgX15dXFtaWVhXVlVUU1JRUE9OTUxLSklIR0ZFRENCQUA/Pj08Ozo5ODc2NTQzMjEwLy4tLCsqKSgnJiUkIyIhIB8eHRwbGhkYFxYVFBMSERAPDg0MCwoJCAcGBQQDAgEAACH5BAAAAAAALAAAAAAPAA8AAAIdjI6JZqotoJPR1fnsgRR3C2jZl3Ai9aWZZooV+RQAOw==" />
+    </div>
+</div>
+<div id="think_page_trace_open">
+    <div>0.018999s </div>
+    <img width="30" style="" title="ShowPageTrace" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyBpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBXaW5kb3dzIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjVERDVENkZGQjkyNDExRTE5REY3RDQ5RTQ2RTRDQUJCIiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjVERDVENzAwQjkyNDExRTE5REY3RDQ5RTQ2RTRDQUJCIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6NURENUQ2RkRCOTI0MTFFMTlERjdENDlFNDZFNENBQkIiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6NURENUQ2RkVCOTI0MTFFMTlERjdENDlFNDZFNENBQkIiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz5fx6IRAAAMCElEQVR42sxae3BU1Rk/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">
+</div>
+
+<script type="text/javascript">
+    (function(){
+        var tab_tit  = document.getElementById('think_page_trace_tab_tit').getElementsByTagName('span');
+        var tab_cont = document.getElementById('think_page_trace_tab_cont').getElementsByTagName('div');
+        var open     = document.getElementById('think_page_trace_open');
+        var close    = document.getElementById('think_page_trace_close').children[0];
+        var trace    = document.getElementById('think_page_trace_tab');
+        var cookie   = document.cookie.match(/thinkphp_show_page_trace=(\d\|\d)/);
+        var history  = (cookie && typeof cookie[1] != 'undefined' && cookie[1].split('|')) || [0,0];
+        open.onclick = function(){
+            trace.style.display = 'block';
+            this.style.display = 'none';
+            close.parentNode.style.display = 'block';
+            history[0] = 1;
+            document.cookie = 'thinkphp_show_page_trace='+history.join('|')
+        }
+        close.onclick = function(){
+            trace.style.display = 'none';
+            this.parentNode.style.display = 'none';
+            open.style.display = 'block';
+            history[0] = 0;
+            document.cookie = 'thinkphp_show_page_trace='+history.join('|')
+        }
+        for(var i = 0; i < tab_tit.length; i++){
+            tab_tit[i].onclick = (function(i){
+                return function(){
+                    for(var j = 0; j < tab_cont.length; j++){
+                        tab_cont[j].style.display = 'none';
+                        tab_tit[j].style.color = '#999';
+                    }
+                    tab_cont[i].style.display = 'block';
+                    tab_tit[i].style.color = '#000';
+                    history[1] = i;
+                    document.cookie = 'thinkphp_show_page_trace='+history.join('|')
+                }
+            })(i)
+        }
+        parseInt(history[0]) && open.click();
+        tab_tit[history[1]].click();
+    })();
+</script>
+</body>
+</html>

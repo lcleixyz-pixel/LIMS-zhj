@@ -1,0 +1,110 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">变更事件 {$record.event_code}</h5>
+        <div>
+            <a href="/planning/change-events/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            <a href="/planning/change-events" class="btn btn-sm btn-outline-secondary">返回台账</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered align-middle">
+            <tr><th width="160">状态</th><td><span class="badge bg-secondary">{:qms_status_label('planning_change_event', $record.status)}</span></td></tr>
+            <tr><th>来源类型</th><td>{$sourceKindLabels[$record.source_kind]|default=$record.source_kind}</td></tr>
+            <tr><th>公告/依据名称</th><td>{$record.source_name}</td></tr>
+            <tr><th>公告编号</th><td>{$record.announcement_number|default='-'}</td></tr>
+            <tr><th>公告链接</th><td>{if $record.source_url}<a href="{$record.source_url}" target="_blank" rel="noopener">{$record.source_url}</a>{else}-{/if}</td></tr>
+            <tr><th>发布日期/生效日期</th><td>{$record.published_date|default='-'} / {$record.effective_date|default='-'}</td></tr>
+            <tr><th>版本变化</th><td>{$record.old_version|default='-'} → {$record.new_version|default='-'}</td></tr>
+            <tr><th>旧外部依据</th><td>{if $oldSource}{$oldSource.source_code} - {$oldSource.name}{else}-{/if}</td></tr>
+            <tr><th>新外部依据</th><td>{if $newSource}{$newSource.source_code} - {$newSource.name}{else}-{/if}</td></tr>
+            <tr><th>图谱快照哈希</th><td><code>{$record.graph_snapshot_hash|default='-'}</code></td></tr>
+            <tr><th>变更摘要</th><td>{$record.event_summary|nl2br|raw}</td></tr>
+            <tr><th>关闭/豁免说明</th><td>{$record.close_reason|default='-'}</td></tr>
+        </table>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">状态流转</h5></div>
+    <div class="card-body">
+        <form method="post" action="/planning/change-events/transition" class="row g-2 align-items-end">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="col-md-4">
+                <label class="form-label small text-muted">下一动作</label>
+                <select name="action" class="form-select form-select-sm">
+                    <option value="assess">开始影响评估</option>
+                    <option value="revise">进入修订处理</option>
+                    <option value="close">关闭事件</option>
+                    <option value="exempt">不适用归档</option>
+                    <option value="reopen">重新登记</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small text-muted">关闭/豁免说明</label>
+                <input type="text" name="close_reason" class="form-control form-control-sm" placeholder="关闭或不适用时填写">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary btn-sm w-100">更新状态</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">公告与查新附件</h5></div>
+    <div class="card-body">
+        <form method="post" action="/planning/change-events/upload-attachment" enctype="multipart/form-data" class="row g-3 align-items-end mb-3">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="col-md-5">
+                <label class="form-label required">附件文件</label>
+                <input type="file" name="event_file" class="form-control" required>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">说明</label>
+                <input type="text" name="comment" class="form-control" placeholder="公告截图、官网页面、查新记录等">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">上传附件</button>
+            </div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped mb-0">
+                <thead><tr><th>文件名</th><th>说明</th><th>上传时间</th><th>操作</th></tr></thead>
+                <tbody>
+                    {volist name="attachments" id="file"}
+                    <tr>
+                        <td>{$file.file_details|default='-'}</td>
+                        <td>{$file.comment|default='-'}</td>
+                        <td>{$file.created|default='-'}</td>
+                        <td><a href="/planning/change-events/download-attachment?id={$record.id}&file_id={$file.id}">下载</a></td>
+                    </tr>
+                    {/volist}
+                    {empty name="attachments"}
+                    <tr><td colspan="4" class="text-center text-muted">暂无公告或查新附件</td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0">字段变更记录</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>时间</th><th>字段</th><th>原值</th><th>新值</th><th>操作人</th></tr></thead>
+            <tbody>
+                {volist name="fieldChangeLogs" id="log"}
+                <tr>
+                    <td>{$log.changed_at|default='-'}</td>
+                    <td>{$log.field_label|default=$log.field_name|default='-'}</td>
+                    <td>{$log.old_value_display|default='-'}</td>
+                    <td>{$log.new_value_display|default='-'}</td>
+                    <td>{$log.changed_by_display|default='未知用户（岗位未登记）'}</td>
+                </tr>
+                {/volist}
+                {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

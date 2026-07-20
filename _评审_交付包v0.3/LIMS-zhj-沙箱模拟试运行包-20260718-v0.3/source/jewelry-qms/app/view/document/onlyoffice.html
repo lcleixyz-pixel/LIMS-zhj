@@ -1,0 +1,45 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">ONLYOFFICE - {$doc.doc_number|default=''}</h5>
+        <div class="d-flex gap-1">
+            {if $doc.file_path}
+            <a href="/document/download?id={$doc.id}" class="btn btn-sm btn-outline-info">下载附件</a>
+            {/if}
+            <a href="/document/view?id={$doc.id}" class="btn btn-sm btn-outline-secondary">返回文件</a>
+        </div>
+    </div>
+    <div class="card-body">
+        {if $onlyofficeReady}
+        <div id="onlyofficeEditor" style="height: 76vh; min-height: 560px; border: 1px solid #dee2e6;"></div>
+        <script src="{$onlyofficeServerUrl}/web-apps/apps/api/documents/api.js"></script>
+        <script>
+        (function () {
+            var config = {$editorConfigJson|raw};
+            new DocsAPI.DocEditor("onlyofficeEditor", config);
+        })();
+        </script>
+        {else}
+        <div class="alert alert-warning mb-3">
+            ONLYOFFICE 未配置或当前文件没有附件。配置 ONLYOFFICE_SERVER_URL 与 ONLYOFFICE_ENABLED 后，可在此页面加载在线编辑器。
+        </div>
+        <table class="table table-bordered mb-0">
+            <tr>
+                <th width="160">文件编号</th>
+                <td>{$doc.doc_number|default=''}</td>
+            </tr>
+            <tr>
+                <th>文件标题</th>
+                <td>{$doc.title|default=''}</td>
+            </tr>
+            <tr>
+                <th>附件地址</th>
+                <td>
+                    {if $doc.file_path}
+                    <a href="{$downloadUrl}">{$doc.file_name|default=$doc.file_path}</a>
+                    {else}无{/if}
+                </td>
+            </tr>
+        </table>
+        {/if}
+    </div>
+</div>

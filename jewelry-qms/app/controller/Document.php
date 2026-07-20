@@ -96,7 +96,7 @@ class Document extends BaseController
             $document->status = 'draft';
             $document->prepared_by = Session::get('user.employee_id');
 
-            if (!empty($_FILES['document_file']['name'])) {
+            if (!empty($_FILES['document_file']['name'] ?? '')) {
                 $upload = FileService::upload($_FILES['document_file'], 'documents', $id);
                 if ($upload) {
                     $document->file_name = $upload['file_name'];
@@ -169,7 +169,7 @@ class Document extends BaseController
                 return View::fetch('document/edit');
             }
 
-            if (!empty($_FILES['document_file']['name'])) {
+            if (!empty($_FILES['document_file']['name'] ?? '')) {
                 $upload = FileService::upload($_FILES['document_file'], 'documents', $id);
                 if ($upload) {
                     $data['file_name'] = $upload['file_name'];
@@ -435,7 +435,7 @@ class Document extends BaseController
             $newDocument->change_reason = trim((string)$this->request->post('change_reason', ''));
             $newDocument->publish = 0;
 
-            if (!empty($_FILES['document_file']['name'])) {
+            if (!empty($_FILES['document_file']['name'] ?? '')) {
                 $upload = FileService::upload($_FILES['document_file'], 'documents', $newId);
                 if ($upload) {
                     $newDocument->file_name = $upload['file_name'];

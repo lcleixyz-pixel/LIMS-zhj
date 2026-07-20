@@ -1,0 +1,239 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">变更影响预检</h4>
+        <div class="text-muted small">在发起文件修订前，先确认会牵动的内容块、记录模板、体系要素和人工待办。</div>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/planning/structures" class="btn btn-sm btn-outline-secondary">返回文件结构化</a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">变更申请</h5></div>
+    <div class="card-body">
+        <form method="get" action="/planning/structures/change-impact" class="row g-3">
+            <div class="col-md-5">
+                <label for="id" class="form-label">拟修订文件</label>
+                <select id="id" name="id" class="form-select form-select-sm">
+                    {volist name="preview.document_options" id="option"}
+                    <option value="{$option.id}" {if $preview.selected_document.id == $option.id}selected{/if}>
+                        {$option.doc_number} {$option.title}（{$option.document_role_label} · {$option.version|default='-'}）
+                    </option>
+                    {/volist}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label for="revision_note" class="form-label">变更原因</label>
+                <input id="revision_note" name="revision_note" type="text" value="{$preview.revision_note|default=''}" class="form-control form-control-sm" placeholder="例如：依据新版方法标准修订记录要求">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-sm btn-primary w-100">生成影响分析</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">影响分析</h5>
+        {if !empty($preview.selected_document)}
+        <span class="text-muted small">{$preview.selected_document.doc_number|default='-'} {$preview.selected_document.title|default=''}</span>
+        {/if}
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="text-muted small">内容块</div>
+                <div class="h5 mb-0">{$preview.summary.block_count|default=0}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">已有关联块</div>
+                <div class="h5 mb-0">{$preview.summary.linked_block_count|default=0}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">受影响记录表格</div>
+                <div class="h5 mb-0">{:count($preview['summary']['record_forms'] ?? [])}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">受影响要素</div>
+                <div class="h5 mb-0">{:count($preview['summary']['elements'] ?? [])}</div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <div class="fw-semibold mb-1">记录表格</div>
+                <div class="small text-muted">
+                    {if empty($preview.summary.record_forms)}
+                    暂无已登记记录表格影响。
+                    {else}
+                    {:implode('、', $preview['summary']['record_forms'])}
+                    {/if}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="fw-semibold mb-1">体系要素</div>
+                <div class="small text-muted">
+                    {if empty($preview.summary.elements)}
+                    暂无已登记要素影响。
+                    {else}
+                    {:implode('、', $preview['summary']['elements'])}
+                    {/if}
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>内容块</th>
+                        <th>类型</th>
+                        <th>受影响追溯</th>
+                        <th class="qms-action-cell">下一步</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="preview.impact_rows" id="row"}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{$row.block_section_number|default=''} {$row.block_title|default='-'}</div>
+                            <div class="text-muted small">{$row.block_stable_key|default=''}</div>
+                        </td>
+                        <td>{$row.block_type|default='-'}</td>
+                        <td>
+                            <details>
+                                <summary>{$row.trace_summary|default='查看影响对象'}</summary>
+                                <div class="small text-muted mt-2">
+                                    <div>要素：{if empty($row.trace_targets.elements)}-{else}{:implode('、', $row['trace_targets']['elements'])}{/if}</div>
+                                    <div>条款：{if empty($row.trace_targets.clauses)}-{else}{:implode('、', $row['trace_targets']['clauses'])}{/if}</div>
+                                    <div>手册章节：{if empty($row.trace_targets.manual_sections)}-{else}{:implode('、', $row['trace_targets']['manual_sections'])}{/if}</div>
+                                    <div>程序文件：{if empty($row.trace_targets.procedures)}-{else}{:implode('、', $row['trace_targets']['procedures'])}{/if}</div>
+                                    <div>记录表格：{if empty($row.trace_targets.record_forms)}-{else}{:implode('、', $row['trace_targets']['record_forms'])}{/if}</div>
+                                    <div>运行模块：{if empty($row.trace_targets.modules)}-{else}{:implode('、', $row['trace_targets']['modules'])}{/if}</div>
+                                    <div>岗位：{if empty($row.trace_targets.positions)}-{else}{:implode('、', $row['trace_targets']['positions'])}{/if}</div>
+                                </div>
+                            </details>
+                        </td>
+                        <td class="qms-action-cell">
+                            <div class="qms-page-actions justify-content-end">
+                                <a href="{$row.block_edit_url}" class="btn btn-sm btn-outline-primary">编辑内容块</a>
+                                <a href="{$row.trace_review_url}" class="btn btn-sm btn-outline-secondary">复核追溯</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="preview.impact_rows"}
+                    <tr><td colspan="4"><div class="qms-empty-state">请选择一份已结构化的受控文件。</div></td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">记录模板/培训待办</h5></div>
+    <div class="card-body">
+        <form method="post" action="/planning/structures/change-request/save" class="row g-3">
+            <input type="hidden" name="id" value="{$preview.selected_document.id|default=''}">
+            <input type="hidden" name="revision_note" value="{$preview.revision_note|default=''}">
+            <div class="col-md-8">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="task_record_template" name="manual_tasks[record_template_review]" value="1">
+                    <label class="form-check-label" for="task_record_template">复核受影响记录模板字段和打印版式</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="task_training" name="manual_tasks[training_required]" value="1">
+                    <label class="form-check-label" for="task_training">确认是否需要培训或宣贯</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="task_publish" name="manual_tasks[publish_review]" value="1">
+                    <label class="form-check-label" for="task_publish">修订草稿完成后走复核发布</label>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <button type="submit" class="btn btn-sm btn-primary mb-1" {if empty($preview.revision_note)}disabled title="请先填写变更原因并生成影响分析"{/if}>保存变更申请</button>
+                {if !empty($preview.selected_document.structure_url)}
+                <a href="{$preview.selected_document.structure_url}" class="btn btn-sm btn-outline-primary">查看结构化文件</a>
+                {/if}
+                {if !empty($preview.selected_document.revision_url)}
+                <a href="{$preview.selected_document.revision_url}" class="btn btn-sm btn-outline-warning">发起文件修订</a>
+                {/if}
+                {if !empty($preview.selected_document.id)}
+                <button type="submit" form="publish_structure_from_change_impact" class="btn btn-sm btn-outline-success" onclick="return confirm('确认发布当前结构化文件？')">发布结构化文件</button>
+                {/if}
+            </div>
+        </form>
+        {if !empty($preview.selected_document.id)}
+        <form id="publish_structure_from_change_impact" method="post" action="/planning/structures/publish" class="d-none">
+            <input type="hidden" name="id" value="{$preview.selected_document.id}">
+            <input type="hidden" name="publish_note" value="变更影响预检发布：{$preview.revision_note|default=''}">
+        </form>
+        {/if}
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">已保存变更申请</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>变更原因</th>
+                        <th>记录表格</th>
+                        <th>人工待办</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="preview.change_requests" id="request"}
+                    <tr>
+                        <td class="text-nowrap">{$request.created|default='-'}</td>
+                        <td>
+                            {$request.revision_note|default='-'}
+                            {if $request.status_to == 'closed'}
+                            <span class="badge bg-success ms-1">已关闭</span>
+                            {else}
+                            <span class="badge bg-warning text-dark ms-1">待处理</span>
+                            {/if}
+                        </td>
+                        <td>
+                            {if empty($request.trace_snapshot.impact_summary.record_forms)}
+                            <span class="text-muted">-</span>
+                            {else}
+                            {:implode('、', $request['trace_snapshot']['impact_summary']['record_forms'])}
+                            {/if}
+                        </td>
+                        <td>
+                            <form method="post" action="/planning/structures/change-request/update" class="m-0">
+                                <input type="hidden" name="change_request_id" value="{$request.id}">
+                                <input type="hidden" name="structured_document_id" value="{$preview.selected_document.id|default=''}">
+                                <input type="hidden" name="revision_note" value="{$preview.revision_note|default=''}">
+                                {foreach $request.trace_snapshot.manual_tasks as $taskKey => $task}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="saved_{$request.id}_{$taskKey}" name="manual_tasks[{$taskKey}]" value="1" {if $task.checked}checked{/if} {if $request.status_to == 'closed'}disabled{/if}>
+                                    <label class="form-check-label small" for="saved_{$request.id}_{$taskKey}">{$task.label}</label>
+                                </div>
+                                {/foreach}
+                                <div class="mt-2">
+                                    {if $request.status_to == 'closed'}
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled>已关闭</button>
+                                    {else}
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">保存待办</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-success" name="close_request" value="1" onclick="return confirm('确认关闭该变更申请？')">关闭申请</button>
+                                    {/if}
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="preview.change_requests"}
+                    <tr><td colspan="4"><div class="qms-empty-state">暂无已保存变更申请。</div></td></tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

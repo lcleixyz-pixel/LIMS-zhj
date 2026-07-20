@@ -1,0 +1,210 @@
+admin login=302
+admin	dashboard/index	200	51442	
+admin	calendar/index	200	40176	
+admin	notification/index	200	38867	
+admin	compliance/index	200	57108	
+admin	document/index	200	61682	
+admin	doc_template/index	200	39410	
+admin	record_form_template/index	200	174620	
+admin	record_form_instance/index	200	44788	
+admin	record_form_instance/create	200	174814	
+admin	record_form_instance/reviewDashboard	200	44925	
+admin	audit_plan/index	200	39445	
+admin	audit_finding/index	200	39478	
+admin	management_review/index	200	39522	
+admin	review_action/index	200	39483	
+admin	capa/index	200	39038	
+admin	nonconformity/index	200	39488	
+admin	complaint/index	200	39473	
+admin	equipment/index	200	40413	
+admin	calibration/index	200	39474	
+admin	reference_material/index	200	39307	
+admin	training_plan/index	200	39515	
+admin	training/index	200	39496	
+admin	training_record/index	200	39476	
+admin	competency_record/index	200	39521	
+admin	employee_certificate/index	200	39363	
+admin	supplier/index	200	39365	
+admin	supplier/qualified	200	38735	
+admin	planning/index	200	465431	
+admin	planning/elements	200	383630	
+admin	planning/objectives	200	47747	
+admin	planning/sources	200	98705	
+admin	planning/clauses	200	68230	
+admin	planning/structures	200	742322	
+admin	planning/traceability	200	369990	
+admin	planning/regulatory-candidates	200	41713	
+admin	planning/change-events	200	43046	
+admin	planning/responsibilities	200	68279	
+admin	user/index	200	43725	
+admin	employee/index	200	48857	
+admin	import/index	200	39045	
+admin	ai_settings/index	200	55179	
+qm_test login=200
+qm_test	dashboard/index	200	26507	LOGIN_PAGE
+qm_test	calendar/index	200	26507	LOGIN_PAGE
+qm_test	notification/index	200	26507	LOGIN_PAGE
+qm_test	compliance/index	200	26507	LOGIN_PAGE
+qm_test	document/index	200	26507	LOGIN_PAGE
+qm_test	doc_template/index	200	26507	LOGIN_PAGE
+qm_test	record_form_template/index	200	26507	LOGIN_PAGE
+qm_test	record_form_instance/index	200	26507	LOGIN_PAGE
+qm_test	record_form_instance/create	200	26507	LOGIN_PAGE
+qm_test	record_form_instance/reviewDashboard	200	26507	LOGIN_PAGE
+qm_test	audit_plan/index	200	26507	LOGIN_PAGE
+qm_test	audit_finding/index	200	26507	LOGIN_PAGE
+qm_test	management_review/index	200	26507	LOGIN_PAGE
+qm_test	review_action/index	200	26507	LOGIN_PAGE
+qm_test	capa/index	200	26507	LOGIN_PAGE
+qm_test	nonconformity/index	200	26507	LOGIN_PAGE
+qm_test	complaint/index	200	26507	LOGIN_PAGE
+qm_test	equipment/index	200	26507	LOGIN_PAGE
+qm_test	calibration/index	200	26507	LOGIN_PAGE
+qm_test	reference_material/index	200	26507	LOGIN_PAGE
+qm_test	training_plan/index	200	26507	LOGIN_PAGE
+qm_test	training/index	200	26507	LOGIN_PAGE
+qm_test	training_record/index	200	26507	LOGIN_PAGE
+qm_test	competency_record/index	200	26507	LOGIN_PAGE
+qm_test	employee_certificate/index	200	26507	LOGIN_PAGE
+qm_test	supplier/index	200	26507	LOGIN_PAGE
+qm_test	supplier/qualified	200	26507	LOGIN_PAGE
+qm_test	planning/index	200	26507	LOGIN_PAGE
+qm_test	planning/elements	200	26507	LOGIN_PAGE
+qm_test	planning/objectives	200	26507	LOGIN_PAGE
+qm_test	planning/sources	200	26507	LOGIN_PAGE
+qm_test	planning/clauses	200	26507	LOGIN_PAGE
+qm_test	planning/structures	200	26507	LOGIN_PAGE
+qm_test	planning/traceability	200	26507	LOGIN_PAGE
+qm_test	planning/regulatory-candidates	200	26507	LOGIN_PAGE
+qm_test	planning/change-events	200	26507	LOGIN_PAGE
+qm_test	planning/responsibilities	200	26507	LOGIN_PAGE
+qm_test	user/index	200	26507	LOGIN_PAGE
+qm_test	employee/index	200	26507	LOGIN_PAGE
+qm_test	import/index	200	26507	LOGIN_PAGE
+qm_test	ai_settings/index	200	26507	LOGIN_PAGE
+auditor_test login=302
+auditor_test	dashboard/index	200	49603	
+auditor_test	calendar/index	200	36551	
+auditor_test	notification/index	200	35242	
+auditor_test	compliance/index	200	53483	
+auditor_test	document/index	200	58056	
+auditor_test	doc_template/index	200	49784	
+auditor_test	record_form_template/index	200	170995	
+auditor_test	record_form_instance/index	200	41162	
+auditor_test	record_form_instance/create	200	171189	
+auditor_test	record_form_instance/reviewDashboard	200	41300	
+auditor_test	audit_plan/index	200	35820	
+auditor_test	audit_finding/index	200	35853	
+auditor_test	management_review/index	200	49784	
+auditor_test	review_action/index	200	49784	
+auditor_test	capa/index	200	35413	
+auditor_test	nonconformity/index	200	35863	
+auditor_test	complaint/index	200	35847	
+auditor_test	equipment/index	200	49784	
+auditor_test	calibration/index	200	49784	
+auditor_test	reference_material/index	200	49784	
+auditor_test	training_plan/index	200	49784	
+auditor_test	training/index	200	49784	
+auditor_test	training_record/index	200	49784	
+auditor_test	competency_record/index	200	49784	
+auditor_test	employee_certificate/index	200	49784	
+auditor_test	supplier/index	200	49784	
+auditor_test	supplier/qualified	200	49784	
+auditor_test	planning/index	200	49784	
+auditor_test	planning/elements	200	49784	
+auditor_test	planning/objectives	200	49784	
+auditor_test	planning/sources	200	49784	
+auditor_test	planning/clauses	200	49784	
+auditor_test	planning/structures	200	49784	
+auditor_test	planning/traceability	200	49784	
+auditor_test	planning/regulatory-candidates	200	49784	
+auditor_test	planning/change-events	200	49784	
+auditor_test	planning/responsibilities	200	64154	
+auditor_test	user/index	200	49784	
+auditor_test	employee/index	200	49784	
+auditor_test	import/index	200	49784	
+auditor_test	ai_settings/index	200	49784	
+head_test login=302
+head_test	dashboard/index	200	49457	
+head_test	calendar/index	200	36405	
+head_test	notification/index	200	35096	
+head_test	compliance/index	200	49638	
+head_test	document/index	200	57911	
+head_test	doc_template/index	200	49638	
+head_test	record_form_template/index	200	170849	
+head_test	record_form_instance/index	200	41016	
+head_test	record_form_instance/create	200	171043	
+head_test	record_form_instance/reviewDashboard	200	41153	
+head_test	audit_plan/index	200	49638	
+head_test	audit_finding/index	200	49638	
+head_test	management_review/index	200	49638	
+head_test	review_action/index	200	49638	
+head_test	capa/index	200	35267	
+head_test	nonconformity/index	200	35717	
+head_test	complaint/index	200	35702	
+head_test	equipment/index	200	36642	
+head_test	calibration/index	200	35703	
+head_test	reference_material/index	200	35535	
+head_test	training_plan/index	200	35744	
+head_test	training/index	200	35725	
+head_test	training_record/index	200	35705	
+head_test	competency_record/index	200	35751	
+head_test	employee_certificate/index	200	35592	
+head_test	supplier/index	200	49638	
+head_test	supplier/qualified	200	49638	
+head_test	planning/index	200	49638	
+head_test	planning/elements	200	49638	
+head_test	planning/objectives	200	49638	
+head_test	planning/sources	200	49638	
+head_test	planning/clauses	200	49638	
+head_test	planning/structures	200	49638	
+head_test	planning/traceability	200	49638	
+head_test	planning/regulatory-candidates	200	49638	
+head_test	planning/change-events	200	49638	
+head_test	planning/responsibilities	200	64008	
+head_test	user/index	200	49638	
+head_test	employee/index	200	49638	
+head_test	import/index	200	49638	
+head_test	ai_settings/index	200	49638	
+staff_test login=302
+staff_test	dashboard/index	200	49451	
+staff_test	calendar/index	200	36398	
+staff_test	notification/index	200	35090	
+staff_test	compliance/index	200	49632	
+staff_test	document/index	200	57904	
+staff_test	doc_template/index	200	49632	
+staff_test	record_form_template/index	200	170843	
+staff_test	record_form_instance/index	200	41010	
+staff_test	record_form_instance/create	200	171037	
+staff_test	record_form_instance/reviewDashboard	200	41148	
+staff_test	audit_plan/index	200	49632	
+staff_test	audit_finding/index	200	49632	
+staff_test	management_review/index	200	49632	
+staff_test	review_action/index	200	49632	
+staff_test	capa/index	200	49632	
+staff_test	nonconformity/index	200	49632	
+staff_test	complaint/index	200	35696	
+staff_test	equipment/index	200	49632	
+staff_test	calibration/index	200	49632	
+staff_test	reference_material/index	200	49632	
+staff_test	training_plan/index	200	49632	
+staff_test	training/index	200	49632	
+staff_test	training_record/index	200	49632	
+staff_test	competency_record/index	200	49632	
+staff_test	employee_certificate/index	200	49632	
+staff_test	supplier/index	200	49632	
+staff_test	supplier/qualified	200	49632	
+staff_test	planning/index	200	49632	
+staff_test	planning/elements	200	49632	
+staff_test	planning/objectives	200	49632	
+staff_test	planning/sources	200	49632	
+staff_test	planning/clauses	200	49632	
+staff_test	planning/structures	200	49632	
+staff_test	planning/traceability	200	49632	
+staff_test	planning/regulatory-candidates	200	49632	
+staff_test	planning/change-events	200	49632	
+staff_test	planning/responsibilities	200	64002	
+staff_test	user/index	200	49632	
+staff_test	employee/index	200	49632	
+staff_test	import/index	200	49632	
+staff_test	ai_settings/index	200	49632	

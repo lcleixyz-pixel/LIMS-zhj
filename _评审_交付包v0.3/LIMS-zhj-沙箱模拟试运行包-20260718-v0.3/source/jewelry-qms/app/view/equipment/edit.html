@@ -1,0 +1,25 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">编辑设备</h5></div>
+    <div class="card-body">
+        <form method="post" action="/equipment/edit">
+            <input type="hidden" name="id" value="{$record.id}">
+            <div class="row">
+                <div class="col-md-6 mb-3"><label class="form-label required">设备编号</label><input name="equipment_number" value="{$record.equipment_number}" class="form-control" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label required">设备名称</label><input name="name" value="{$record.name}" class="form-control" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">型号</label><input name="model" value="{$record.model|default=''}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">制造商</label><input name="manufacturer" value="{$record.manufacturer|default=''}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">场所</label><input class="form-control" value="{$siteMap[$record.site_id]|default='未指定'}" readonly><div class="form-text">场所变更须通过设备调拨流程，不可在设备编辑页直接修改。</div></div>
+                <div class="col-md-6 mb-3"><label class="form-label">位置</label><input name="location" value="{$record.location|default=''}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">状态</label><select name="status" class="form-select">{foreach $statusLabels as $key=>$label}<option value="{$key}" {if $record.status == $key}selected{/if}>{$label}</option>{/foreach}</select></div>
+                <div class="col-md-6 mb-3"><label class="form-label">校准周期(月)</label><input type="number" name="calibration_cycle_months" value="{$record.calibration_cycle_months|default=12}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">上次校准</label><input type="date" name="last_calibration_date" value="{$record.last_calibration_date|default=''}" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">下次校准</label><input type="date" name="next_calibration_date" value="{$record.next_calibration_date|default=''}" class="form-control"></div>
+                <div class="col-md-6 mb-3 form-check mt-4"><input type="checkbox" name="calibration_required" value="1" class="form-check-input" {if $record.calibration_required}checked{/if} id="cal_req"><label for="cal_req">需要校准</label></div>
+            </div>
+            <div class="text-end">
+                <a href="/equipment/index" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary">更新</button>
+            </div>
+        </form>
+    </div>
+</div>

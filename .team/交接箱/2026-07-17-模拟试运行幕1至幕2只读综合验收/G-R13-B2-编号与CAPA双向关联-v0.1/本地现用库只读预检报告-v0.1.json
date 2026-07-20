@@ -1,0 +1,32 @@
+{
+  "report_version": "v0.1",
+  "generated_at": "2026-07-17T11:29:18+08:00",
+  "target": "local-current-jewelry_qms",
+  "mode": "read_only",
+  "blocked": false,
+  "counts": {
+    "duplicate_complaint_numbers": 0,
+    "duplicate_capa_numbers": 0,
+    "duplicate_nc_numbers": 0,
+    "malformed_business_numbers": 0,
+    "duplicate_capa_sources": 0,
+    "invalid_capa_ids": 0,
+    "invalid_source_capa_links": 0,
+    "orphan_source_capas": 0,
+    "reverse_link_mismatches": 0
+  },
+  "candidate_ids": {
+    "duplicate_complaint_numbers": [],
+    "duplicate_capa_numbers": [],
+    "duplicate_nc_numbers": [],
+    "malformed_business_numbers": [],
+    "duplicate_capa_sources": [],
+    "invalid_capa_ids": [],
+    "invalid_source_capa_links": [],
+    "orphan_source_capas": [],
+    "reverse_link_mismatches": []
+  },
+  "privacy": "仅输出记录标识和汇总数量，不输出客户、人员或联系方式",
+  "migration_applied": false,
+  "note": "本报告来自候选代码对当前本地库的只读扫描；未执行唯一约束迁移或数据修复。"
+}

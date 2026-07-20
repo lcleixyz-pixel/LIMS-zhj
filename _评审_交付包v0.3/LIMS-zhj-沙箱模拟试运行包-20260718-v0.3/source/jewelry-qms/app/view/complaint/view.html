@@ -1,0 +1,50 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">投诉 {$record.complaint_number}</h5>
+        <div>
+            {if $record.status != 'closed' && qms_can_action('complaint', 'advance', $record)}
+            <a href="/complaint/advance?id={$record.id}" class="btn btn-sm btn-success">推进处理</a>
+            {if !$record.capa_id && qms_can_action('complaint', 'create_capa', $record)}<a href="/complaint/createCapa?id={$record.id}" class="btn btn-sm btn-warning" onclick="return confirm('创建CAPA？')">创建CAPA</a>{/if}
+            {/if}
+            {if qms_can_action('complaint', 'manage', $record)}<a href="/complaint/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>{/if}
+            <a href="/complaint/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="150">状态</th><td>{:qms_status_label('complaint', $record.status)}</td></tr>
+            <tr><th>受理日期</th><td>{$record.received_date|default='-'}</td></tr>
+            <tr><th>客户</th><td>{$record.customer_name} / {$record.contact|default='-'}</td></tr>
+            <tr><th>报告编号</th><td>{$record.report_number|default='-'}</td></tr>
+            <tr><th>责任人</th><td>{$record.assignee.name|default='-'}</td></tr>
+            <tr><th>处理期限</th><td>{$record.due_date|default='-'}</td></tr>
+            <tr><th>投诉内容</th><td>{$record.description}</td></tr>
+            <tr><th>调查情况</th><td>{$record.investigation|default='-'}</td></tr>
+            <tr><th>处理措施</th><td>{$record.handling|default='-'}</td></tr>
+            <tr><th>客户反馈</th><td>{$record.response|default='-'}</td></tr>
+            <tr><th>关联CAPA</th><td>{if $capa}<a href="/capa/view?id={$capa.id}">{$capa.capa_number}</a>{else}-{/if}</td></tr>
+        </table>
+    </div>
+</div>
+{include file="common/external_evidence_references" /}
+
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0">变更历史</h6></div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm table-striped mb-0">
+            <thead><tr><th>时间</th><th>字段</th><th>原值</th><th>新值</th><th>操作人/岗位</th></tr></thead>
+            <tbody>
+                {volist name="fieldChangeLogs" id="log"}
+                <tr>
+                    <td>{$log.changed_at|default='-'}</td>
+                    <td>{$log.field_label|default=$log.field_name|default='-'}</td>
+                    <td>{$log.old_value_display|default='-'}</td>
+                    <td>{$log.new_value_display|default='-'}</td>
+                    <td>{$log.changed_by_display|default='未知用户（岗位未登记）'}</td>
+                </tr>
+                {/volist}
+                {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

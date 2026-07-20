@@ -1,0 +1,20 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <h5 class="mb-0">{$pageTitle|default='详情'}</h5>
+        <div>
+            <a href="/review_action/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+            <a href="/review_action/index" class="btn btn-sm btn-outline-secondary">返回</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr><th width="180">管理评审ID</th><td>{$record.management_review_id|default=''}</td></tr>
+            <tr><th>措施内容</th><td>{$record.action_item|default=''}</td></tr>
+            <tr><th>责任人</th><td>{$record.responsible_id|default='-'}</td></tr>
+            <tr><th>截止日</th><td>{$record.due_date|default='-'}</td></tr>
+            <tr><th>完成日</th><td>{$record.completion_date|default='-'}</td></tr>
+            <tr><th>验证</th><td>{$record.verification|default='-'}</td></tr>
+            <tr><th>状态</th><td>{$record.status|default=''}</td></tr>
+        </table>
+    </div>
+</div>

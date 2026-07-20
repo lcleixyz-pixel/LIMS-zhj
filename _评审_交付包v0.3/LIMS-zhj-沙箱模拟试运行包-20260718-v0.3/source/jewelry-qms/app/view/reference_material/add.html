@@ -1,0 +1,20 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">新增标准物质</h5></div>
+    <div class="card-body">
+        <form method="post" action="/reference_material/add">
+            <div class="row">
+                <div class="col-md-6 mb-3"><label class="form-label required">编号</label><input name="code" class="form-control" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label required">名称</label><input name="name" class="form-control" required></div>
+                <div class="col-md-6 mb-3"><label class="form-label">批号</label><input name="lot_number" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">生产/供应单位</label><input name="manufacturer" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">溯源证书编号</label><input name="traceability_certificate_number" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">有效期至</label><input type="date" name="valid_until" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">存放位置</label><input name="storage_location" class="form-control"></div>
+                <div class="col-md-6 mb-3"><label class="form-label">状态</label><select name="status" class="form-select">{volist name="statusOptions" id="option"}<option value="{$option.value}">{$option.label}</option>{/volist}</select></div>
+                <div class="col-12 mb-3"><label class="form-label">备注</label><textarea name="remarks" class="form-control" rows="3"></textarea></div>
+            </div>
+            <a href="/reference_material/index" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </form>
+    </div>
+</div>
