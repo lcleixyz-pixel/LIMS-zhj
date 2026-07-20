@@ -11,6 +11,7 @@ if (!function_exists('root_path')) {
     }
 }
 
+use app\middleware\Rbac;
 use app\service\RecordFormBatchTemplateService;
 use app\service\RecordFormPrintService;
 use app\service\RecordFormSchemaRebuilder;
@@ -346,7 +347,6 @@ $indexSource = file_get_contents(dirname(__DIR__) . '/app/view/record_form_templ
 assert_contains('系统维护', $indexSource, 'Template index keeps batch build under maintenance tools');
 assert_contains('批量建立模板', $indexSource, 'Template index still exposes batch build action inside maintenance tools');
 
-$rbacSource = file_get_contents(dirname(__DIR__) . '/app/middleware/Rbac.php') ?: '';
-assert_contains('seedbatch', $rbacSource, 'RBAC treats batch build as a write action');
+assert_true(Rbac::requiresWritePermission('POST', 'seedbatch'), 'RBAC treats batch build as a write action');
 
 echo "record_forms_batch_smoke passed\n";

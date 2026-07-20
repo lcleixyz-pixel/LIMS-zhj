@@ -5,11 +5,15 @@
             {if $record.status != 'closed'}
                 {if $record.status == 'verifying'}
                     {if qms_can_action('capa', 'close', $record)}
-                    <a href="/capa/advance?id={$record.id}" class="btn btn-sm btn-success">推进状态</a>
+                    <form method="post" action="/capa/advance?id={$record.id}" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-success">推进状态</button>
+                    </form>
                     {/if}
                 {else /}
                     {if qms_can_action('capa', 'advance', $record)}
-                    <a href="/capa/advance?id={$record.id}" class="btn btn-sm btn-success">推进状态</a>
+                    <form method="post" action="/capa/advance?id={$record.id}" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-success">推进状态</button>
+                    </form>
                     {/if}
                 {/if}
             {/if}

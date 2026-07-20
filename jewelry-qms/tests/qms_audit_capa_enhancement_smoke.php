@@ -7,6 +7,7 @@ require __DIR__ . '/../app/common.php';
 $app = new think\App();
 $app->initialize();
 
+use app\middleware\Rbac;
 use app\service\FileAttachmentService;
 use app\service\WorkflowService;
 use think\facade\Config;
@@ -70,8 +71,8 @@ assert_contains('effectiveness_result', $schema, 'Schema documents CAPA effectiv
 assert_contains('audit_finding/uploadEvidence', $route, 'Route exposes audit finding evidence upload');
 assert_contains('audit_finding/downloadEvidence', $route, 'Route exposes audit finding evidence download');
 assert_contains('capa/reviewEffectiveness', $route, 'Route exposes CAPA effectiveness review');
-assert_contains('uploadevidence', $rbac, 'RBAC protects evidence upload as write action');
-assert_contains('revieweffectiveness', $rbac, 'RBAC protects CAPA effectiveness review as write action');
+assert_true(Rbac::requiresWritePermission('POST', 'uploadevidence'), 'RBAC protects evidence upload as write action');
+assert_true(Rbac::requiresWritePermission('POST', 'revieweffectiveness'), 'RBAC protects CAPA effectiveness review as write action');
 assert_contains('FileAttachmentService', $auditFindingController, 'Audit finding controller delegates file attachment handling');
 assert_contains('整改证据附件', $auditFindingView, 'Audit finding detail shows evidence attachment panel');
 assert_contains('effectiveness_review_date', $capaController, 'CAPA controller handles effectiveness review date');

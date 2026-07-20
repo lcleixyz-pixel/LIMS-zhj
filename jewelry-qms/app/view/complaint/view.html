@@ -4,7 +4,11 @@
         <div>
             {if $record.status != 'closed' && qms_can_action('complaint', 'advance', $record)}
             <a href="/complaint/advance?id={$record.id}" class="btn btn-sm btn-success">推进处理</a>
-            {if !$record.capa_id && qms_can_action('complaint', 'create_capa', $record)}<a href="/complaint/createCapa?id={$record.id}" class="btn btn-sm btn-warning" onclick="return confirm('创建CAPA？')">创建CAPA</a>{/if}
+            {if !$record.capa_id && qms_can_action('complaint', 'create_capa', $record)}
+            <form method="post" action="/complaint/createCapa?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('创建CAPA？')">创建CAPA</button>
+            </form>
+            {/if}
             {/if}
             {if qms_can_action('complaint', 'manage', $record)}<a href="/complaint/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>{/if}
             <a href="/complaint/index" class="btn btn-sm btn-outline-secondary">返回</a>

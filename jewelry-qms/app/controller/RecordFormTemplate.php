@@ -734,6 +734,15 @@ class RecordFormTemplate extends BaseController
             $errors[] = '名称不能为空';
         }
 
+        try {
+            $schema = RecordFormSchemaService::decode((string)($data['field_schema'] ?? '[]'));
+            if ($schema === []) {
+                $errors[] = '字段配置不能为空：草稿与发布均至少需要一个字段';
+            }
+        } catch (InvalidArgumentException $exception) {
+            $errors[] = $exception->getMessage();
+        }
+
         $printTemplateKey = trim((string)($data['print_template_key'] ?? ''));
         if ($printTemplateKey === '') {
             $errors[] = '打印模板键不能为空';

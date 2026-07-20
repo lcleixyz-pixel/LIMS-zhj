@@ -17,6 +17,32 @@ class Employee extends CrudBase
     protected string $viewPrefix = 'employee';
     protected string $pageTitle = '员工管理';
 
+    protected function validationRules(array $data, ?string $recordId = null): array
+    {
+        return [
+            'name' => 'require',
+            'employee_number' => $this->uniqueModelFieldRule(
+                EmployeeModel::class,
+                'employee_number',
+                $recordId,
+                '员工编号已存在'
+            ),
+            'email' => $this->uniqueModelFieldRule(
+                EmployeeModel::class,
+                'email',
+                $recordId,
+                '邮箱已存在'
+            ),
+        ];
+    }
+
+    protected function validationMessages(array $data, ?string $recordId = null): array
+    {
+        return [
+            'name.require' => '姓名不能为空',
+        ];
+    }
+
     protected function assignFormContext(): void
     {
         View::assign('sites', Site::where('soft_delete', 0)->where('status', 'active')->order('sort_order', 'asc')->select());

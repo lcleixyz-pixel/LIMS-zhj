@@ -1,0 +1,24 @@
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">新增期间核查计划（机制入口）</h5></div>
+    <div class="card-body">
+        <div class="alert alert-warning py-2">{$mechanismNotice}</div>
+        <form method="post" action="/equipment_period_check/add">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">设备 ID</label>
+                    <input name="equipment_id" class="form-control" value="{$form.equipment_id|default=''}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">计划日期</label>
+                    <input type="date" name="plan_date" class="form-control" value="{$form.plan_date|default=''}" required>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">备注</label>
+                    <textarea name="note" class="form-control" rows="3">{$form.note|default=''}</textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">保存</button>
+            <a href="/equipment_period_check/index" class="btn btn-outline-secondary">返回</a>
+        </form>
+    </div>
+</div>

@@ -98,6 +98,16 @@ class PlanningRegulatoryCandidate extends BaseController
             return redirect('/planning/regulatory-candidates/view?id=' . rawurlencode((string)$candidate->id));
         }
 
+        if ($status === 'confirmed_applicable') {
+            $clauseError = $this->validateReferencedClauseNumbers($candidate);
+            if ($clauseError !== null) {
+                Session::flash('validation_errors', [$clauseError]);
+                Session::flash('warning', $clauseError);
+
+                return redirect('/planning/regulatory-candidates/view?id=' . rawurlencode((string)$candidate->id));
+            }
+        }
+
         Db::transaction(function () use ($candidate, $status): void {
             $candidate->save([
                 'review_status' => $status,
@@ -182,6 +192,45 @@ class PlanningRegulatoryCandidate extends BaseController
         }
 
         return $candidate;
+    }
+
+    private function validateReferencedClauseNumbers(QmsExternalChangeCandidate $candidate): ?string
+    {
+        $posted = trim((string)$this->request->post('clause_numbers', ''));
+        $numbers = [];
+        if ($posted !== '') {
+            foreach (preg_split('/[\s,;，；]+/u', $posted) ?: [] as $item) {
+                $item = trim((string)$item);
+                if ($item !== '') {
+                    $numbers[] = $item;
+                }
+            }
+        }
+
+        $scanText = trim((string)($candidate->analysis_rationale ?? ''))
+            . "\n"
+            . trim((string)$this->request->post('review_comment', ''));
+        if (preg_match_all('/\b\d+(?:\.\d+)+\b/', $scanText, $matches) > 0) {
+            foreach ($matches[0] as $item) {
+                $numbers[] = (string)$item;
+            }
+        }
+        $numbers = array_values(array_unique($numbers));
+        if ($numbers === []) {
+            return null;
+        }
+
+        $existing = Db::name('qms_clauses')
+            ->where('soft_delete', 0)
+            ->whereIn('clause_number', $numbers)
+            ->column('clause_number');
+        $existing = array_map('strval', $existing);
+        $missing = array_values(array_diff($numbers, $existing));
+        if ($missing === []) {
+            return null;
+        }
+
+        return '条款号不存在于现行条款库：' . implode('、', $missing);
     }
 
     private static function sourceTrustFor(string $monitorRunId): string

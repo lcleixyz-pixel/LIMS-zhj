@@ -3,19 +3,23 @@
         <h5 class="mb-0">记录详情 - {$record.record_title}</h5>
         <div class="d-flex gap-1">
             <a href="/record_form_instance/print?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-info">打印预览</a>
-            {if $canExportPdf}
+            {if $canExportPdf && qms_can_action('record_form_instance', 'exportPdf', $record)}
             <form method="post" action="/record_form_instance/exportPdf?id={$record.id}" class="d-inline">
                 <input type="hidden" name="pdf_token" value="{$pdfToken}">
                 <button type="submit" class="btn btn-sm btn-outline-success">生成PDF</button>
             </form>
+            {elseif $canExportPdf}
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="无生成 PDF 权限">生成PDF</button>
             {else}
             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已归档或已作废记录不能重新生成 PDF">生成PDF</button>
             {/if}
             {if $record.generated_pdf_path}
             <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-primary">下载PDF</a>
             {/if}
-            {if $canEdit}
+            {if $canEdit && qms_can_action('record_form_instance', 'edit', $record)}
             <a href="/record_form_instance/edit?id={$record.id}" class="btn btn-sm btn-outline-secondary">编辑</a>
+            {elseif $canEdit}
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="无编辑权限">编辑</button>
             {else}
             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已形成 PDF 后不可直接编辑；如需更正，请先走作废/换版/更正流程。">编辑</button>
             {/if}

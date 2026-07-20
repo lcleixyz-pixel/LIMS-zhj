@@ -1,7 +1,7 @@
 <?php
 return [
     'title' => '珠宝检测实验室质量管理系统',
-    'version' => '2.1.0',
+    'version' => '2.2.0',
     'company_id' => '00000000-0000-0000-0000-000000000001',
     'environment_label' => getenv('QMS_ENV_LABEL') ?: '',
     'environment_notice' => getenv('QMS_ENV_NOTICE') ?: '',
@@ -9,6 +9,7 @@ return [
         'enabled' => env('QMS_TRIAL_MODE', getenv('QMS_TRIAL_MODE') ?: false),
         'batch' => env('QMS_TRIAL_BATCH', getenv('QMS_TRIAL_BATCH') ?: ''),
     ],
+    'simulation_uuid_prefix' => (bool)(env('QMS_SIM_UUID', getenv('QMS_SIM_UUID') ?: false)),
 
     'docLevels' => [
         1 => '质量手册',
@@ -40,7 +41,7 @@ return [
             'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningregulatorycandidate', 'planningchangeevent', 'planningobjective', 'planningresponsibility',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'management_review', 'review_action', 'capa', 'nonconformity', 'complaint', 'external_evidence_reference',
-            'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',
+            'equipment', 'equipment_maintenance', 'equipment_authorization', 'equipment_period_check', 'calibration', 'reference_material',
             'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate',
             'supplier', 'supplier_evaluation', 'import', 'notification',
             'department', 'employee', 'site', 'equipment_transfer', 'user',
@@ -51,7 +52,7 @@ return [
         ],
         'department_head' => [
             'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'capa', 'nonconformity', 'complaint', 'external_evidence_reference',
-            'equipment', 'equipment_maintenance', 'equipment_authorization', 'calibration', 'reference_material',
+            'equipment', 'equipment_maintenance', 'equipment_authorization', 'equipment_period_check', 'calibration', 'reference_material',
             'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate', 'notification',
         ],
         'staff' => [
@@ -182,6 +183,17 @@ return [
         'enabled' => env('ONLYOFFICE_ENABLED', false),
         'server_url' => env('ONLYOFFICE_SERVER_URL', ''),
         'jwt_secret' => env('ONLYOFFICE_JWT_SECRET', ''),
+    ],
+
+    'docuseal' => [
+        // 实验特性：默认关闭。隔离联调设 DOCUSEAL_SIGNING_ENABLED=1；生产暂关。
+        'signing_enabled' => filter_var(
+            env('DOCUSEAL_SIGNING_ENABLED', getenv('DOCUSEAL_SIGNING_ENABLED') ?: '0'),
+            FILTER_VALIDATE_BOOLEAN
+        ),
+        'base_url' => env('DOCUSEAL_BASE_URL', 'http://127.0.0.1:3100'),
+        'api_key' => env('DOCUSEAL_API_KEY', ''),
+        'webhook_secret' => env('DOCUSEAL_WEBHOOK_SECRET', ''),
     ],
 
     'ai' => [

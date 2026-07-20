@@ -27,6 +27,23 @@ class Calibration extends BusinessBase
         'next_due_date.date' => '下次到期日期格式不正确',
     ];
 
+    protected function validateFormData(array $data, ?string $recordId = null): array
+    {
+        $errors = parent::validateFormData($data, $recordId);
+        $result = trim((string)($data['result'] ?? ''));
+        $passLike = in_array($result, ['pass', '合格'], true);
+        if ($passLike) {
+            if (trim((string)($data['calibration_org'] ?? '')) === '') {
+                $errors[] = '结果为合格时必须填写校准机构';
+            }
+            if (trim((string)($data['certificate_number'] ?? '')) === '') {
+                $errors[] = '结果为合格时必须填写证书编号';
+            }
+        }
+
+        return $errors;
+    }
+
     protected function resultLabels(): array
     {
         return ['pass' => '合格', 'fail' => '不合格', 'limited' => '限用'];

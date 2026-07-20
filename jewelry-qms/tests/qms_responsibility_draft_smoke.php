@@ -157,13 +157,14 @@ catalog_in_transaction(function (): void {
     );
     catalog_assert(($globalAssignment['id'] ?? '') !== '', 'Removed draft assignment can be restored idempotently');
 
+    // active-only UNIQUE: insert soft-deleted history row directly (cannot insert second active same number).
     $duplicateEmployeeId = responsibility_fixture_row('employees', [
         'company_id' => $companyId,
         'primary_site_id' => $siteId,
         'employee_number' => $employeeNumber,
         'name' => '责任链重复工号历史人员',
+        'soft_delete' => 1,
     ]);
-    Db::name('employees')->where('id', $duplicateEmployeeId)->update(['soft_delete' => 1]);
     responsibility_assert_throws(
         fn () => QmsResponsibilityDraftService::saveAssignment(
             (string)$namedDuty['id'],

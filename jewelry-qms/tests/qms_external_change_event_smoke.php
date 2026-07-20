@@ -7,6 +7,7 @@ require __DIR__ . '/../app/common.php';
 $app = new think\App();
 $app->initialize();
 
+use app\middleware\Rbac;
 use app\model\QmsExternalChangeEvent;
 use app\service\ExternalChangeEventService;
 use think\facade\Db;
@@ -149,7 +150,7 @@ assert_contains('View::assign(\'record\', $this->emptyRecord())', $controller, '
 assert_contains('View::assign(\'record\', array_merge($this->emptyRecord(), $data))', $controller, 'Validation redisplay receives array data compatible with template dot access');
 assert_contains('CREATE TABLE `system_settings`', $schema, 'Baseline schema includes system_settings required by page context middleware');
 assert_contains('QmsExternalChangeEvent', $fieldAudit, 'Field audit whitelists external change event');
-assert_contains('transition', $rbac, 'RBAC covers external change transitions');
+assert_true(Rbac::requiresWritePermission('POST', 'transition'), 'RBAC covers external change transitions');
 assert_contains('transition', $auditLog, 'Audit log covers external change transitions');
 assert_contains('FileAttachmentService::upload', $controller, 'Controller stores attachments through shared attachment service');
 assert_contains('currentGraphSnapshotHash', $service, 'Service can stamp graph snapshot hash');

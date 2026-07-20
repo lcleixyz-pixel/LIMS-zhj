@@ -143,8 +143,8 @@ assert_contains('departmentOptions', $instanceController, 'Record editor exposes
 assert_contains('firstPersonColumn', $instanceController, 'Record editor can attach picker to any person column');
 assert_contains('firstDepartmentColumn', $instanceController, 'Record editor detects department columns for picker fill');
 
-$rbacSource = file_get_contents($root . '/app/middleware/Rbac.php') ?: '';
-assert_contains('updatereview', $rbacSource, 'RBAC treats review update as a write action');
+require_once $root . '/app/middleware/Rbac.php';
+assert_true(\app\middleware\Rbac::requiresWritePermission('POST', 'updatereview'), 'RBAC treats review update as a write action');
 
 $auditSource = file_get_contents($root . '/app/middleware/AuditLog.php') ?: '';
 assert_contains('updatereview', $auditSource, 'Audit log tracks template review updates');

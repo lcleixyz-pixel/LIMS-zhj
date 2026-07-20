@@ -57,6 +57,50 @@ class PlanningDashboard extends BaseController
         return redirect($redirectTo);
     }
 
+    public function batchDecide()
+    {
+        $redirectTo = $this->safePlanningRedirect((string)$this->request->post('redirect_to', '/planning/index'));
+        if (!$this->request->isPost()) {
+            Session::flash('warning', '请从建议池提交批量采纳/驳回。');
+
+            return redirect($redirectTo);
+        }
+
+        $decision = trim((string)$this->request->post('decision', ''));
+        if (!in_array($decision, ['accepted', 'rejected'], true)) {
+            Session::flash('warning', '批量处置动作无效，仅支持 accepted / rejected。');
+
+            return redirect($redirectTo);
+        }
+
+        $ids = $this->request->post('suggestion_ids/a', []);
+        if (!is_array($ids) || $ids === []) {
+            Session::flash('warning', '请至少选择一条建议。');
+
+            return redirect($redirectTo);
+        }
+
+        $note = trim((string)$this->request->post('review_note', '批量处置'));
+        $ok = 0;
+        $errors = [];
+        foreach ($ids as $suggestionId) {
+            try {
+                QmsElementService::reviewAgentSuggestion((string)$suggestionId, $decision, $note);
+                $ok++;
+            } catch (RuntimeException $exception) {
+                $errors[] = $exception->getMessage();
+            }
+        }
+
+        if ($errors === []) {
+            Session::flash('success', '已批量处理建议 ' . $ok . ' 条。');
+        } else {
+            Session::flash('warning', '批量处理完成 ' . $ok . ' 条；失败：' . implode('；', array_slice($errors, 0, 3)));
+        }
+
+        return redirect($redirectTo);
+    }
+
     private function safePlanningRedirect(string $path): string
     {
         $path = trim($path);

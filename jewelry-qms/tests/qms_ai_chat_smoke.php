@@ -280,7 +280,7 @@ assert_contains("Route::post('ai_chat/send'", $route, 'Route registers ai_chat s
 assert_contains("Route::get('ai_settings/index'", $route, 'Route registers ai_settings index');
 assert_contains('PageContext::class', $route, 'Route group loads PageContext middleware');
 assert_contains("'ai_chat'", $config, 'quality_manager permissions include ai_chat');
-assert_contains("'save'", $rbac, 'RBAC treats save as write action');
+assert_true(\app\middleware\Rbac::requiresWritePermission('POST', 'save'), 'RBAC treats save as write action');
 assert_contains("'purge'", $audit, 'AuditLog records purge actions');
 assert_contains('AiPurgeChat::class', $console, 'Console registers ai:purge-chat command');
 assert_contains('data-qms-controller', $layout, 'Layout exposes page context data attributes');
