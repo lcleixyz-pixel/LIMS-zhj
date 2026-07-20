@@ -11,6 +11,7 @@ Route::rule('login/changePassword', 'Login/changePassword');
 Route::get('api/v1/employees', 'Api/employees');
 Route::get('api/v1/equipments', 'Api/equipments');
 Route::get('api/v1/customers', 'Api/customers');
+Route::post('docuseal/webhook', 'DocuSealWebhook/handle');
 
 Route::group(function () {
     Route::get('/', 'Dashboard/index');
@@ -74,6 +75,9 @@ Route::group(function () {
     Route::post('record_form_template/seedBatch', 'RecordFormTemplate/seedBatch');
     Route::post('record_form_template/seedGap', 'RecordFormTemplate/seedGap');
 
+    Route::rule('equipment_period_check/index', 'EquipmentPeriodCheck/index');
+    Route::rule('equipment_period_check/add', 'EquipmentPeriodCheck/add');
+
     Route::rule('record_form_instance/index', 'RecordFormInstance/index');
     Route::get('record_form_instance/reviewDashboard', 'RecordFormInstance/reviewDashboard');
     Route::post('record_form_instance/updateLayoutStatus', 'RecordFormInstance/updateLayoutStatus');
@@ -88,6 +92,7 @@ Route::group(function () {
 
     Route::rule('planning/index', 'PlanningDashboard/index');
     Route::post('planning/suggestions/review', 'PlanningDashboard/reviewSuggestion');
+    Route::post('planning/suggestions/batchDecide', 'PlanningDashboard/batchDecide');
     Route::rule('planning/elements/view', 'PlanningElement/view');
     Route::rule('planning/elements/edit', 'PlanningElement/edit');
     Route::post('planning/elements/modules/map', 'PlanningElement/mapBusinessModule');
@@ -152,11 +157,10 @@ Route::group(function () {
     Route::post('import/upload', 'Import/upload');
 
     Route::rule('notification/index', 'Notification/index');
-    Route::get('notification/read', 'Notification/read');
-    Route::get('notification/markAllRead', 'Notification/markAllRead');
+    Route::post('notification/read', 'Notification/read');
+    Route::post('notification/markAllRead', 'Notification/markAllRead');
 
-    Route::get('capa/advance', 'Capa/advance');
-    Route::rule('capa/advance', 'Capa/advance');
+    Route::post('capa/advance', 'Capa/advance');
     Route::post('calibration/uploadCertificate', 'Calibration/uploadCertificate');
     Route::get('calibration/downloadCertificate', 'Calibration/downloadCertificate');
     Route::post('audit_plan/approve', 'AuditPlan/approve');
@@ -165,19 +169,19 @@ Route::group(function () {
     Route::post('audit_schedule/complete', 'AuditSchedule/complete');
     Route::post('audit_finding/uploadEvidence', 'AuditFinding/uploadEvidence');
     Route::get('audit_finding/downloadEvidence', 'AuditFinding/downloadEvidence');
-    Route::get('nonconformity/createCapa', 'Nonconformity/createCapa');
-    Route::get('complaint/createCapa', 'Complaint/createCapa');
+    Route::post('nonconformity/createCapa', 'Nonconformity/createCapa');
+    Route::post('complaint/createCapa', 'Complaint/createCapa');
     Route::rule('complaint/advance', 'Complaint/advance');
     Route::post('capa/reviewEffectiveness', 'Capa/reviewEffectiveness');
     Route::post('management_review/complete', 'ManagementReview/complete');
     Route::rule('review_action/verify', 'ReviewAction/verify');
-    Route::get('review_action/createCapa', 'ReviewAction/createCapa');
-    Route::get('training/complete', 'Training/complete');
-    Route::get('training_plan/approve', 'TrainingPlan/approve');
-    Route::get('training_plan/complete', 'TrainingPlan/complete');
+    Route::post('review_action/createCapa', 'ReviewAction/createCapa');
+    Route::post('training/complete', 'Training/complete');
+    Route::post('training_plan/approve', 'TrainingPlan/approve');
+    Route::post('training_plan/complete', 'TrainingPlan/complete');
     Route::post('employee_certificate/uploadAttachment', 'EmployeeCertificate/uploadAttachment');
     Route::get('employee_certificate/downloadAttachment', 'EmployeeCertificate/downloadAttachment');
-    Route::get('supplier/qualified', 'Supplier/qualified');
+    Route::post('supplier/qualified', 'Supplier/qualified');
     Route::rule('equipment_transfer/index', 'EquipmentTransfer/index');
     Route::rule('equipment_transfer/add', 'EquipmentTransfer/add');
     Route::rule('equipment_transfer/view', 'EquipmentTransfer/view');

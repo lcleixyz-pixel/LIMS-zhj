@@ -47,8 +47,8 @@ FlinkISO、FlinkISO Lite 和 CakePHP legacy 参考代码已拆至独立归档仓
 
 | 组件 | 当前版本 | 说明 |
 |------|----------|------|
-| 工作区 | 2.1.0 | ThinkPHP 8 主项目 + P1 业务深化 |
-| jewelry-qms | 2.1.0 | 与 `config/qms.php` 和 `CHANGELOG.md` 保持一致 |
+| 工作区 | 2.2.0 | 缺陷治理 + 签批闸门（三波次 1+2） |
+| jewelry-qms | 2.2.0 | 与 `config/qms.php` 和 `CHANGELOG.md` 保持一致 |
 
 历史标签：
 
@@ -57,8 +57,8 @@ FlinkISO、FlinkISO Lite 和 CakePHP legacy 参考代码已拆至独立归档仓
 后续标签示例：
 
 ```bash
-git tag -a v2.1.0 -m "Jewelry QMS 2.1.0"
-git push origin v2.1.0
+git tag -a v2.2.0 -m "Jewelry QMS 2.2.0"
+git push origin v2.2.0
 ```
 
 ## 4. 提交信息规范

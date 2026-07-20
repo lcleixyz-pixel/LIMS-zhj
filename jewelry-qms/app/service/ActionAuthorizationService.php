@@ -63,6 +63,13 @@ final class ActionAuthorizationService
             ),
             'recordformtemplate.approvetrial' => self::canApproveTrialTemplate($employeeId, $record),
 
+            'recordforminstance.edit', 'recordforminstance.exportpdf', 'recordforminstance.create'
+                => self::hasAnyPosition(
+                    $employeeId,
+                    ['quality_manager', 'document_controller', 'technical_manager', 'testing_room_manager', 'internal_auditor']
+                )
+                || self::hasGlobalPosition($employeeId, ['quality_manager']),
+
             'auditplan.organize', 'auditplan.approve', 'auditplan.complete'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
             'auditschedule.organize'

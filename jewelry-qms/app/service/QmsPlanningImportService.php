@@ -2046,7 +2046,9 @@ TEXT);
     private static function cleanExtractedClauseTitle(string $title): string
     {
         $title = trim($title, " \t\n\r\0\x0B：:");
-        $title = trim(preg_replace('/[.．·]{2,}\s*[0-9]+\s*$/u', '', $title) ?? $title);
+        // 目录行页码：既可能是 ASCII 点线，也可能是中文省略号 ……
+        $title = trim(preg_replace('/(?:[.．·…]|…|\x{2026}){2,}\s*[0-9]+\s*$/u', '', $title) ?? $title);
+        $title = trim(preg_replace('/\s*[…\x{2026}]{1,}\s*[0-9]+\s*$/u', '', $title) ?? $title);
 
         return trim($title);
     }
@@ -2533,7 +2535,8 @@ TEXT);
             return $sidecarText;
         }
 
-        return is_string($output) ? $output : '';
+        // 扫描件/空抽文本不得冒充有效正文，否则会阻断 GB/T 等 fallback 模型行。
+        return '';
     }
 
     private static function hasMeaningfulExtractedText(string $text): bool

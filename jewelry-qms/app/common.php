@@ -6,20 +6,31 @@ if (!function_exists('qms_uuid')) {
     function qms_uuid(): string
     {
         if (function_exists('uuid_create')) {
-            return uuid_create(UUID_TYPE_RANDOM);
+            $uuid = uuid_create(UUID_TYPE_RANDOM);
+        } else {
+            $data = random_bytes(16);
+            $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+            $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+            $uuid = sprintf(
+                '%08s-%04s-%04s-%04s-%012s',
+                bin2hex(substr($data, 0, 4)),
+                bin2hex(substr($data, 4, 2)),
+                bin2hex(substr($data, 6, 2)),
+                bin2hex(substr($data, 8, 2)),
+                bin2hex(substr($data, 10, 6))
+            );
         }
-        $data = random_bytes(16);
-        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
-        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
 
-        return sprintf(
-            '%08s-%04s-%04s-%04s-%012s',
-            bin2hex(substr($data, 0, 4)),
-            bin2hex(substr($data, 4, 2)),
-            bin2hex(substr($data, 6, 2)),
-            bin2hex(substr($data, 8, 2)),
-            bin2hex(substr($data, 10, 6))
-        );
+        $simEnabled = (bool)\think\facade\Config::get('qms.simulation_uuid_prefix', false);
+        if (!$simEnabled) {
+            $env = getenv('QMS_SIM_UUID');
+            $simEnabled = $env === '1' || strtolower((string)$env) === 'true';
+        }
+        if ($simEnabled && !str_starts_with($uuid, 'sim-')) {
+            return 'sim-' . $uuid;
+        }
+
+        return $uuid;
     }
 }
 

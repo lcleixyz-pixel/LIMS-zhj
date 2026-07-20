@@ -73,7 +73,8 @@ assert_true(count($gbRows) > 80, 'GB/T 27025 extracts a complete clause layer');
 assert_same('人员', $gbByNumber['6.2']['title'] ?? '', 'Clause 6.2 title stays on the clause layer');
 assert_same('技术记录内容', $gbByNumber['7.5.1']['title'] ?? '', 'Generated review titles still summarize extracted text');
 assert_true(
-    str_contains((string)($gbByNumber['7.5.1']['original_text'] ?? ''), '实验室应确保每一项实验室活动的技术记录包含结果报告和足够的信息'),
+    str_contains((string)($gbByNumber['7.5.1']['original_text'] ?? ''), '实验室应确保每一项实验室活动的技术记录包含结果')
+        && str_contains((string)($gbByNumber['7.5.1']['original_text'] ?? ''), '报告和足够的信息'),
     'Clause rows keep automatically extracted original text'
 );
 

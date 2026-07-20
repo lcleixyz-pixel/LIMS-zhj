@@ -1,0 +1,66 @@
+# 隔离测试栈：wave1 全量 smoke（勿接 8010）
+# 用法：
+#   cd jewelry-qms
+#   docker compose -f compose.wave1-smoke.yaml -p lims-zhj-wave1-smoke-20260720 up -d
+name: lims-zhj-wave1-smoke-20260720
+
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: jewelry_qms
+      MYSQL_ROOT_HOST: "%"
+      TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:3318:3306"
+    volumes:
+      - wave1_smoke_db:/var/lib/mysql
+      - ./database/jewelry_qms.sql:/docker-entrypoint-initdb.d/01-jewelry-qms.sql:ro
+      - ./database/migrations:/qms-migrations:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 25s
+
+  app:
+    image: ${WAVE1_SMOKE_APP_IMAGE:-jewelry-qms-app:local}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_DEBUG: "false"
+      TZ: Asia/Shanghai
+      DB_TYPE: mysql
+      DB_HOST: db
+      DB_NAME: jewelry_qms
+      DB_USER: root
+      DB_PASS: ""
+      DB_PORT: "3306"
+      DB_CHARSET: utf8mb4
+      DEFAULT_LANG: zh-cn
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/chromium-browser
+      COMPOSER_CACHE_DIR: /tmp/composer-cache
+    ports:
+      - "127.0.0.1:8020:8000"
+    shm_size: "256mb"
+    volumes:
+      - .:/app
+      - ../docs:/docs:ro
+      - ../docs/import-preview:/app/docs/import-preview:ro
+      - ../现用文件:/现用文件:ro
+      - ../../../参考:/参考:ro
+      - ../knowledge:/knowledge
+      - wave1_smoke_vendor:/app/vendor
+      - wave1_smoke_node:/app/node_modules
+      - wave1_smoke_composer_cache:/tmp/composer-cache
+      # .env provided via bind mount ./ -> /app (copied from docker/.env.docker)
+
+volumes:
+  wave1_smoke_db:
+  wave1_smoke_vendor:
+  wave1_smoke_node:
+  wave1_smoke_composer_cache:

@@ -36,6 +36,7 @@ class FieldAuditService
             'promoted_event_id', 'promoted_at',
         ],
         'QmsExternalChangeEvent' => ['status', 'old_source_id', 'new_source_id', 'effective_date', 'graph_snapshot_hash', 'close_reason'],
+        'RecordFormInstance' => ['status', 'field_values', 'record_title'],
     ];
 
     protected static array $sensitiveFields = ['password'];
@@ -227,12 +228,42 @@ class FieldAuditService
         if (is_bool($old) || is_bool($new)) {
             return (int)$old === (int)$new;
         }
-        if (is_array($old) || is_array($new) || is_object($old) || is_object($new)) {
-            return json_encode($old, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                === json_encode($new, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if (in_array($field, self::$jsonFields, true)
+            || is_array($old) || is_array($new) || is_object($old) || is_object($new)
+        ) {
+            return self::canonicalJson($old) === self::canonicalJson($new);
         }
 
         return (string)$old === (string)$new;
+    }
+
+    private static function canonicalJson(mixed $value): string
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $value = $decoded;
+            }
+        }
+        $normalized = self::normalizeJsonValue($value);
+
+        return (string)json_encode($normalized, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    private static function normalizeJsonValue(mixed $value): mixed
+    {
+        if (!is_array($value)) {
+            return $value;
+        }
+        if (array_is_list($value)) {
+            return array_map([self::class, 'normalizeJsonValue'], $value);
+        }
+        ksort($value);
+        foreach ($value as $key => $item) {
+            $value[$key] = self::normalizeJsonValue($item);
+        }
+
+        return $value;
     }
 
     private static function fieldLabel(string $modelName, string $field): string
@@ -279,6 +310,8 @@ class FieldAuditService
             'next_calibration_date' => '下次校准日期',
             'last_calibration_date' => '上次校准日期',
             'site_id' => '场所',
+            'field_values' => '填写内容',
+            'record_title' => '记录标题',
         ];
 
         return $labels[$field] ?? ucwords(str_replace('_', ' ', $field));

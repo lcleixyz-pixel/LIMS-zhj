@@ -34,6 +34,18 @@ class Auth
             return redirect('/login/index');
         }
 
+        if ((int)Session::get('user.must_change_password', 0) === 1) {
+            $allowedWhileForced = [
+                'user/changepassword',
+                'login/changepassword',
+                'login/logout',
+                'logout/index',
+            ];
+            if (!in_array($route, $allowedWhileForced, true) && $controller !== 'logout') {
+                return redirect('/user/changePassword');
+            }
+        }
+
         $qmsConfig = Config::get('qms', []);
         $notificationCount = NotificationUser::where('user_id', Session::get('user.id'))
             ->where('status', 0)

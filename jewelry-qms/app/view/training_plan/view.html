@@ -2,8 +2,16 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">培训计划详情</h5>
         <div>
-            {if $record.status == 'draft'}<a href="/training_plan/approve?id={$record.id}" class="btn btn-sm btn-primary">批准计划</a>{/if}
-            {if $record.status != 'completed'}<a href="/training_plan/complete?id={$record.id}" class="btn btn-sm btn-outline-success">标记完成</a>{/if}
+            {if $record.status == 'draft'}
+            <form method="post" action="/training_plan/approve?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('批准计划？')">批准计划</button>
+            </form>
+            {/if}
+            {if $record.status != 'completed'}
+            <form method="post" action="/training_plan/complete?id={$record.id}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-success">标记完成</button>
+            </form>
+            {/if}
             <a href="/training/add?training_plan_id={$record.id}" class="btn btn-sm btn-outline-primary">添加培训活动</a>
             <a href="/training_plan/edit?id={$record.id}" class="btn btn-sm btn-outline-secondary">编辑</a>
             <a href="/training_plan/index" class="btn btn-sm btn-outline-secondary">返回</a>

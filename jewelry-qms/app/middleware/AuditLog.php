@@ -36,12 +36,18 @@ class AuditLog
                 : [];
             $logActions = [
                 'add',
+                'advance',
                 'approve',
                 'changepassword',
+                'complete',
                 'create',
+                'createcapa',
                 'delete',
                 'edit',
                 'exportpdf',
+                'markallread',
+                'qualified',
+                'read',
                 'restore',
                 'revise',
                 'seedbatch',

@@ -1,0 +1,25 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">期间核查计划（机制入口）</h5>
+        <a href="/equipment_period_check/add{if $equipmentId}?equipment_id={$equipmentId}{/if}" class="btn btn-sm btn-primary">新增计划</a>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning py-2">{$mechanismNotice}</div>
+        <table class="table table-sm table-striped">
+            <thead><tr><th>设备ID</th><th>计划日期</th><th>状态</th><th>备注</th></tr></thead>
+            <tbody>
+                {volist name="items" id="item"}
+                <tr>
+                    <td>{$item.equipment_id}</td>
+                    <td>{$item.plan_date|default='-'}</td>
+                    <td>{$item.status|default='-'}</td>
+                    <td>{$item.note|default='-'}</td>
+                </tr>
+                {/volist}
+                {empty name="items"}
+                <tr><td colspan="4" class="text-center text-muted">暂无计划（或表未迁移）。</td></tr>
+                {/empty}
+            </tbody>
+        </table>
+    </div>
+</div>

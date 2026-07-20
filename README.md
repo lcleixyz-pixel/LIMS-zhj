@@ -2,7 +2,7 @@
 
 本仓库的主交付物是 `jewelry-qms`：面向珠宝/宝玉石检测实验室的中文质量管理系统，技术栈为 ThinkPHP 8、MySQL 8 和 Docker。系统用于体系文件、记录填报、内审、管理评审、CAPA、设备、培训、供应商、投诉及质量体系证据管理。
 
-当前应用版本为 **2.1.0**。`2.2.0` 尚未发布，也没有对应 Git 标签。
+当前应用版本为 **2.2.0**（分支 `feature/wave1-defect-governance` 待合入 main 后打标签）。
 
 ## 当前边界
 
@@ -74,7 +74,7 @@ docker compose exec app php tests/qms_ui_navigation_template_smoke.php
 
 | 对象 | 当前状态 |
 |---|---|
-| 应用版本 | 2.1.0 |
+| 应用版本 | 2.2.0 |
 | 最新 Git 标签 | v1.0.0（历史标签，与当前应用版本不同步） |
 | 2.2.0 | 未发布、未打标签 |
 | 日常变更真值 | `docs/变更台账.md` |

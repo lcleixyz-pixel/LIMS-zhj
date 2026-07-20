@@ -6,7 +6,7 @@ type: "internal_manual"
 status: "generated"
 source_path: "现用文件/质量手册（第四版）.docx"
 source_status: "current"
-structured_document_id: "ce0755b9-09c6-4d70-ae2c-7fcb91b6da02"
+structured_document_id: "d767148b-2f47-4a84-83d8-1947abb385fc"
 generated_from: "qms_structured_documents"
 manual_edit: false
 clause_refs:

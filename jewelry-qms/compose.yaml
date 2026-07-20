@@ -62,8 +62,24 @@ services:
       retries: 30
       start_period: 20s
 
+  # 签批闸门：默认不启动。启用：docker compose --profile signing up -d docuseal
+  docuseal:
+    image: docuseal/docuseal:latest
+    profiles:
+      - signing
+    environment:
+      TZ: Asia/Shanghai
+    # 仅本机回环，不映射 0.0.0.0 公网
+    ports:
+      - "127.0.0.1:3100:3000"
+    volumes:
+      - docuseal_data:/data
+    expose:
+      - "3000"
+
 volumes:
   db_data:
   vendor:
   node_modules:
   composer_cache:
+  docuseal_data:

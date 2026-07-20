@@ -7,6 +7,7 @@ require __DIR__ . '/../app/common.php';
 $app = new think\App();
 $app->initialize();
 
+use app\middleware\Rbac;
 use app\service\DocumentControlService;
 use think\facade\Config;
 use think\facade\Db;
@@ -114,8 +115,11 @@ foreach ([
 }
 
 assert_true(class_exists(DocumentControlService::class), 'DocumentControlService exists');
-foreach (['distribute', 'confirmreceipt', 'confirmrecall', 'review'] as $action) {
-    assert_contains($action, $rbac, 'Document control write action is RBAC-covered: ' . $action);
+foreach (['distribute', 'review'] as $action) {
+    assert_true(Rbac::requiresWritePermission('POST', $action), 'Document control write action is RBAC-covered: ' . $action);
+}
+foreach (['confirmreceipt', 'confirmrecall'] as $action) {
+    assert_contains($action, $rbac, 'Document recipient channel exception retained: ' . $action);
 }
 assert_contains('DocumentControlService', $documentController, 'Document controller delegates control operations');
 assert_contains('分发记录', $documentView, 'Document detail shows distribution panel');

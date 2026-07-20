@@ -6,7 +6,30 @@
 
 ## [Unreleased]
 
-尚未发布。候选内容以 `docs/变更台账.md` 的已验证记录为准，发版时再按“新增 / 变更 / 修复 / 安全”等主题归拢，不逐行复制日常台账。
+尚未发布后续候选。
+
+## [2.2.0] - 2026-07-20
+
+### 新增
+
+- DocuSeal 自托管签署（compose profile `signing`）与 Webhook 验签落库
+- 文档状态写入守卫（非授权路径写 approved/effective 阻断）
+- 登录限流与强制改密（`must_change_password`）
+- 期间核查计划机制入口、员工唯一性与校准合格必填校验
+- 记录模板空 schema 拒存、子表列展示；记录实例字段留痕
+
+### 变更
+
+- 批准/推进类写操作统一 POST + CSRF；Cookie httponly + SameSite=Lax
+- 仿真环境可选 `sim-` UUID 前缀
+
+### 修复
+
+- 承接 main 已合入的编号年份叠加、表单字段契约、管评校准合格率枚举等 P0 修复
+
+### 安全
+
+- 清除残余 GET 写路由；Webhook 防重放/验签/哈希比对；AuditLog 覆盖关键写动作
 
 ## [2.1.0] - 2026-05-21
 

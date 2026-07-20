@@ -18,6 +18,7 @@ use app\service\ApprovalService;
 use app\service\ActionAuthorizationService;
 use app\service\ControlledPrintService;
 use app\service\DocumentControlService;
+use app\service\DocumentStatusGuardService;
 use app\service\FieldAuditService;
 use app\service\FileService;
 use app\service\QmsDocumentStructureService;
@@ -158,6 +159,15 @@ class Document extends BaseController
             $data = $this->request->post();
             // 场所属于文件受控边界，不能借编辑动作跨场所转移。
             $data['site_id'] = (string)$document->site_id;
+
+            $statusGuard = new DocumentStatusGuardService();
+            $guard = $statusGuard->guardWrite($data, 'Document', 'edit');
+            if (!$guard['allowed']) {
+                Session::flash('error', 'blocked：禁止通过编辑直写受控状态（' . $guard['status'] . '）');
+
+                return redirect('/document/edit?id=' . $id);
+            }
+
             $errors = $this->validateDocumentInput($data, (string)$id);
             if ($errors !== []) {
                 $this->flashValidationErrors($errors);
@@ -499,6 +509,22 @@ class Document extends BaseController
             });
             if ($doc->reviewed_by) {
                 \app\service\NotificationService::notifyApprovalPending($doc->reviewed_by, $doc->title, $doc->id);
+            }
+            // D-3：signing 开关开启时尝试 DocuSeal submission；失败不阻断提审，轮次表留痕
+            if (\app\service\DocuSealService::isSigningEnabled()) {
+                try {
+                    (new \app\service\DocuSealService())->startSigningForDocument($doc);
+                } catch (\Throwable $e) {
+                    try {
+                        (new \app\service\DocuSealService())->recordSigningRound(
+                            (string)$doc->id,
+                            'pending',
+                            null,
+                            'create_exception:' . $e->getMessage()
+                        );
+                    } catch (\Throwable $ignored) {
+                    }
+                }
             }
             Session::flash('success', '已提交审核');
         }

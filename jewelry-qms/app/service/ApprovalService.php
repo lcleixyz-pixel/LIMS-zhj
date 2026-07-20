@@ -87,14 +87,17 @@ class ApprovalService
         }
     }
 
-    public static function processApproval(string $approvalId, string $status, string $comments = ''): bool
+    public static function processApproval(string $approvalId, string $status, string $comments = '', ?string $actingUserId = null): bool
     {
-        $userId = Session::get('user.id');
+        $userId = $actingUserId !== null && $actingUserId !== ''
+            ? $actingUserId
+            : (string)Session::get('user.id');
         $approval = Approval::where('id', $approvalId)->where('user_id', $userId)->find();
         if (!$approval) {
             return false;
         }
-        if ((string)$approval->model_name === 'Document') {
+        // Webhook/代签路径已验签签署人身份，跳过岗位任命矩阵；会话路径仍要求有效岗位。
+        if ((string)$approval->model_name === 'Document' && ($actingUserId === null || $actingUserId === '')) {
             $employeeId = trim((string)Session::get('user.employee_id', ''));
             $positions = ActionAuthorizationService::activePositionCodes($employeeId);
             if (array_intersect($positions, self::authorizedApprovalPositions((int)$approval->approval_level)) === []) {
@@ -108,6 +111,46 @@ class ApprovalService
         $approval->comments = $comments;
         $approval->approved_on = date('Y-m-d H:i:s');
         $approval->save();
+        return true;
+    }
+
+    /**
+     * 与 Approval 控制器一致：全票通过后写 published/trial_ready，并处理旧版 obsolete。
+     * 不经 Document::edit 直写，供 webhook 复用。
+     */
+    public static function finalizeDocumentIfFullyApproved(\app\model\Document $doc): bool
+    {
+        if (!self::isFullyApproved('Document', (string)$doc->id, (int)$doc->level)) {
+            return false;
+        }
+
+        $isTrialDocument = TrialModeService::isSimulationNumber((string)$doc->doc_number);
+        $targetStatus = $isTrialDocument ? 'trial_ready' : 'published';
+        $update = [
+            'status' => $targetStatus,
+            'publish' => 1,
+        ];
+        if (!$isTrialDocument) {
+            $update['effective_date'] = $doc->effective_date ?: date('Y-m-d');
+        }
+        $doc->save($update);
+        $supersededId = trim((string)$doc->supersedes_document_id);
+        if ($supersededId !== '') {
+            $superseded = \app\model\Document::find($supersededId);
+            $maySupersede = $superseded && (
+                (!$isTrialDocument && (string)$superseded->status === 'published')
+                || ($isTrialDocument
+                    && TrialModeService::isSimulationNumber((string)$superseded->doc_number)
+                    && (string)$superseded->status === 'trial_ready')
+            );
+            if ($maySupersede) {
+                $superseded->save([
+                    'status' => 'obsolete',
+                    'publish' => 0,
+                ]);
+            }
+        }
+
         return true;
     }
 

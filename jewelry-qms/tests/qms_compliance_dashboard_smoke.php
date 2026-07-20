@@ -7,6 +7,7 @@ require __DIR__ . '/../app/common.php';
 $app = new think\App();
 $app->initialize();
 
+use app\middleware\Rbac;
 use app\service\ComplianceCheckService;
 use think\facade\Config;
 use think\facade\Db;
@@ -97,8 +98,8 @@ assert_contains("Route::post('compliance/refresh'", $route, 'Routes expose manua
 assert_contains("Route::get('compliance/dimension'", $route, 'Routes expose compliance dimension detail');
 assert_contains("Route::post('compliance/seed'", $route, 'Routes expose compliance rule seed');
 assert_contains("'compliance'", $config, 'RBAC permissions include compliance module');
-assert_contains("'refresh'", $rbac, 'RBAC treats compliance refresh as write action');
-assert_contains("'seed'", $rbac, 'RBAC treats compliance seed as write action');
+assert_true(Rbac::requiresWritePermission('POST', 'refresh'), 'RBAC treats compliance refresh as write action');
+assert_true(Rbac::requiresWritePermission('POST', 'seed'), 'RBAC treats compliance seed as write action');
 assert_contains('/compliance/index', $layout, 'Main navigation exposes audit readiness dashboard');
 
 assert_true(class_exists(\app\controller\Compliance::class), 'Compliance controller exists and matches RBAC module name');

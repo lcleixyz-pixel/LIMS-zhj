@@ -6,6 +6,7 @@ namespace app\controller;
 use app\BaseController;
 use app\model\User as UserModel;
 use app\model\UserSession;
+use app\service\LoginThrottleService;
 use think\facade\Config;
 use think\facade\Session;
 use think\facade\View;
@@ -22,45 +23,56 @@ class Login extends BaseController
     public function index()
     {
         if (Session::has('user.id')) {
-            return redirect('/dashboard/index');
+            return $this->postLoginRedirect();
         }
 
+        $throttle = new LoginThrottleService();
+        $ip = (string)$this->request->ip();
+
         if ($this->request->isPost()) {
-            $username = $this->request->post('username', '');
-            $password = $this->request->post('password', '');
+            if ($throttle->isLocked($ip)) {
+                $secs = $throttle->remainingLockSeconds($ip);
+                View::assign('error', '登录失败次数过多，请 ' . max(1, (int)ceil($secs / 60)) . ' 分钟后再试');
+            } else {
+                $username = $this->request->post('username', '');
+                $password = $this->request->post('password', '');
 
-            $user = UserModel::where('username', $username)
-                ->where('publish', 1)
-                ->where('soft_delete', 0)
-                ->find();
+                $user = UserModel::where('username', $username)
+                    ->where('publish', 1)
+                    ->where('soft_delete', 0)
+                    ->find();
 
-            if ($user && password_verify($password, $user->password)) {
-                $user->last_login = date('Y-m-d H:i:s');
-                $user->save();
+                if ($user && password_verify($password, $user->password)) {
+                    $throttle->clear($ip);
+                    $user->last_login = date('Y-m-d H:i:s');
+                    $user->save();
 
-                $sessionId = qms_uuid();
-                UserSession::create([
-                    'id' => $sessionId,
-                    'user_id' => $user->id,
-                    'start_time' => date('Y-m-d H:i:s'),
-                    'ip_address' => $this->request->ip(),
-                ]);
+                    $sessionId = qms_uuid();
+                    UserSession::create([
+                        'id' => $sessionId,
+                        'user_id' => $user->id,
+                        'start_time' => date('Y-m-d H:i:s'),
+                        'ip_address' => $ip,
+                    ]);
 
-                Session::set('user', [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'name' => $user->name,
-                    'role' => $user->role,
-                    'employee_id' => $user->employee_id,
-                    'department_id' => $user->department_id,
-                    'is_mr' => $user->is_mr,
-                    'session_id' => $sessionId,
-                ]);
+                    Session::set('user', [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                        'name' => $user->name,
+                        'role' => $user->role,
+                        'employee_id' => $user->employee_id,
+                        'department_id' => $user->department_id,
+                        'is_mr' => $user->is_mr,
+                        'session_id' => $sessionId,
+                        'must_change_password' => (int)($user->must_change_password ?? 0),
+                    ]);
 
-                return redirect('/dashboard/index');
+                    return $this->postLoginRedirect();
+                }
+
+                $throttle->recordFailure($ip);
+                View::assign('error', '用户名或密码错误');
             }
-
-            View::assign('error', '用户名或密码错误');
         }
 
         $qmsConfig = Config::get('qms', []);
@@ -97,7 +109,9 @@ class Login extends BaseController
             $user = UserModel::find(Session::get('user.id'));
             if ($user && password_verify($oldPassword, $user->password)) {
                 $user->password = password_hash($newPassword, PASSWORD_DEFAULT);
+                $user->must_change_password = 0;
                 $user->save();
+                Session::set('user.must_change_password', 0);
                 Session::flash('success', '密码已修改');
 
                 return redirect('/dashboard/index');
@@ -106,5 +120,14 @@ class Login extends BaseController
         }
 
         return View::fetch('login/change_password');
+    }
+
+    private function postLoginRedirect()
+    {
+        if ((int)Session::get('user.must_change_password', 0) === 1) {
+            return redirect('/user/changePassword');
+        }
+
+        return redirect('/dashboard/index');
     }
 }

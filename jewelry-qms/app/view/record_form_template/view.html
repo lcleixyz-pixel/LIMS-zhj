@@ -142,6 +142,26 @@
                     <td>{if $field.required}是{else}否{/if}</td>
                     <td>{$field.print_bind}</td>
                 </tr>
+                {if in_array($field.type, ['table', 'repeater', 'repeatable_table']) && !empty($field.columns)}
+                <tr>
+                    <td colspan="5" class="bg-light">
+                        <div class="small text-muted mb-1">子表列（{$field.key}）</div>
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead><tr><th>列键</th><th>列标签</th><th>类型</th><th>必填</th></tr></thead>
+                            <tbody>
+                                {volist name="field.columns" id="column"}
+                                <tr>
+                                    <td>{$column.key}</td>
+                                    <td>{$column.label|default='-'}</td>
+                                    <td>{$column.type|default='text'}</td>
+                                    <td>{if !empty($column.required)}是{else}否{/if}</td>
+                                </tr>
+                                {/volist}
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                {/if}
                 {/volist}
                 {empty name="schema"}
                 <tr><td colspan="5" class="text-center text-muted">暂无字段配置</td></tr>

@@ -172,6 +172,9 @@
                         {if condition="qms_can('calibration')"}
                         <li><a class="dropdown-item" href="/calibration/index">校准记录</a></li>
                         {/if}
+                        {if condition="qms_can('equipment')"}
+                        <li><a class="dropdown-item" href="/equipment_period_check/index">期间核查计划（机制入口）</a></li>
+                        {/if}
                         {if condition="qms_can('reference_material')"}
                         <li><a class="dropdown-item" href="/reference_material/index">标准物质台账</a></li>
                         {/if}
@@ -202,7 +205,11 @@
                         {if condition="qms_can('supplier')"}
                         <li><h6 class="dropdown-header text-muted">供应商</h6></li>
                         <li><a class="dropdown-item" href="/supplier/index">供应商管理</a></li>
-                        <li><a class="dropdown-item" href="/supplier/qualified">合格供应商名录</a></li>
+                        <li>
+                            <form method="post" action="/supplier/qualified" class="px-3 py-1">
+                                <button type="submit" class="dropdown-item border-0 bg-transparent p-0">合格供应商名录</button>
+                            </form>
+                        </li>
                         {/if}
                     </ul>
                 </li>
@@ -280,13 +287,13 @@
 </nav>
 <div class="container mt-3">
     {if session('success')}
-    <div class="alert alert-success alert-dismissible fade show">{:session('success')}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div class="alert alert-success alert-dismissible fade show">{$Think.session.success}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
     {/if}
     {if session('warning')}
-    <div class="alert alert-warning alert-dismissible fade show">{:session('warning')}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div class="alert alert-warning alert-dismissible fade show">{$Think.session.warning}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
     {/if}
     {if session('error')}
-    <div class="alert alert-danger alert-dismissible fade show">{:session('error')}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div class="alert alert-danger alert-dismissible fade show">{$Think.session.error}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
     {/if}
     {php}$validationErrors = session('validation_errors') ?: [];{/php}
     {if !empty($validationErrors)}

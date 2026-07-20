@@ -21,6 +21,10 @@ class Rbac
         'notification/read',
     ];
 
+    /**
+     * 只读 POST（搜索/筛选/导出等）显式白名单——其余 POST/PUT/DELETE/PATCH 默认要求 canWrite。
+     * 判定逻辑见 requiresWritePermission()。
+     */
     public function handle($request, \Closure $next)
     {
         $controller = strtolower($request->controller());
@@ -63,29 +67,48 @@ class Rbac
             return redirect('/dashboard/index');
         }
 
-        $writeActions = [
-            'add', 'edit', 'delete', 'create', 'seedsamples', 'seedbatch', 'updatereview', 'updatelayoutstatus', 'exportpdf',
-            'seed', 'upload', 'renderpackage', 'extractclauses', 'obsolete', 'createpolicy', 'createobjective',
-            'updateblock', 'publishdocument', 'savelink', 'deletelink', 'map', 'localelement',
-            'savechangerequest', 'updatechangerequest', 'transition', 'uploadattachment',
-            'distribute', 'confirmreceipt', 'confirmrecall', 'review',
-            'uploadevidence', 'revieweffectiveness',
-            'uploadcertificate',
-            'approve', 'complete', 'refresh',
-            'extract', 'confirm', 'reject',
-            'save', 'test', 'send', 'create', 'purge',
-        ];
-        if (in_array($action, $writeActions, true)
+        // S-5：POST/PUT/DELETE/PATCH 默认要求 canWrite（依托 S-1 写操作已改 POST）
+        if (self::requiresWritePermission((string)$request->method(), $action)
             && !$isBusinessResponsibilityApproval
             && !$isAssignedApprovalAction
             && !$isDocumentRecipientAction
             && !RbacService::canWrite($controller)) {
             SecurityAuditService::recordAccessDenied($request, 'write_access');
+            if ($request->isAjax()) {
+                return json(['code' => 403, 'msg' => '无编辑权限'], 403);
+            }
             Session::flash('error', '您没有编辑权限');
 
             return redirect('/dashboard/index');
         }
 
         return $next($request);
+    }
+
+    /**
+     * 供 smoke / 自检：变更方法且 action 不在只读 POST 白名单 → 需要 canWrite。
+     */
+    public static function requiresWritePermission(string $method, string $action): bool
+    {
+        $method = strtoupper(trim($method));
+        $action = strtolower(trim($action));
+        if (!in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'], true)) {
+            return false;
+        }
+
+        $readOnly = [
+            'index',
+            'view',
+            'exportcsv',
+            'download',
+            'downloadevidence',
+            'downloadcertificate',
+            'downloadattachment',
+            'print',
+            'printpreview',
+            'alignment',
+        ];
+
+        return !in_array($action, $readOnly, true);
     }
 }

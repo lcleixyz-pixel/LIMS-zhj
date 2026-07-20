@@ -18,7 +18,7 @@
             <tr><th>旧外部依据</th><td>{if $oldSource}{$oldSource.source_code} - {$oldSource.name}{else}-{/if}</td></tr>
             <tr><th>新外部依据</th><td>{if $newSource}{$newSource.source_code} - {$newSource.name}{else}-{/if}</td></tr>
             <tr><th>图谱快照哈希</th><td><code>{$record.graph_snapshot_hash|default='-'}</code></td></tr>
-            <tr><th>变更摘要</th><td>{$record.event_summary|nl2br|raw}</td></tr>
+            <tr><th>变更摘要</th><td style="white-space:pre-wrap;">{$record.event_summary|default=''}</td></tr>
             <tr><th>关闭/豁免说明</th><td>{$record.close_reason|default='-'}</td></tr>
         </table>
     </div>

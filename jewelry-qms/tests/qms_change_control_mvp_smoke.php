@@ -144,9 +144,9 @@ assert_true(
     'Change impact page must not nest the publish form inside the change-request form'
 );
 
-$rbacSource = file_get_contents(dirname(__DIR__) . '/app/middleware/Rbac.php') ?: '';
-assert_contains('savechangerequest', $rbacSource, 'RBAC treats change request save as a write action');
-assert_contains('updatechangerequest', $rbacSource, 'RBAC treats change request update as a write action');
+require_once dirname(__DIR__) . '/app/middleware/Rbac.php';
+assert_true(\app\middleware\Rbac::requiresWritePermission('POST', 'savechangerequest'), 'RBAC treats change request save as a write action');
+assert_true(\app\middleware\Rbac::requiresWritePermission('POST', 'updatechangerequest'), 'RBAC treats change request update as a write action');
 $auditSource = file_get_contents(dirname(__DIR__) . '/app/middleware/AuditLog.php') ?: '';
 assert_contains('savechangerequest', $auditSource, 'Audit log tracks change request saves');
 assert_contains('updatechangerequest', $auditSource, 'Audit log tracks change request updates');
