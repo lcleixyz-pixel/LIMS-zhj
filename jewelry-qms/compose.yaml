@@ -21,7 +21,7 @@ services:
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
       PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/chromium-browser
     ports:
-      - "8010:8000"
+      - "127.0.0.1:8010:8000"
     shm_size: "256mb"
     volumes:
       - .:/app
