@@ -71,7 +71,7 @@ class Login extends BaseController
                 }
 
                 $throttle->recordFailure($ip);
-                View::assign('error', '用户名或密码错误');
+                View::assign('error', '用户名或密码错误。连续多次失败将临时锁定账户，请谨慎输入。');
             }
         }
 
@@ -112,11 +112,11 @@ class Login extends BaseController
                 $user->must_change_password = 0;
                 $user->save();
                 Session::set('user.must_change_password', 0);
-                Session::flash('success', '密码已修改');
+                Session::flash('success', '密码已修改，请使用新密码重新登录。');
 
                 return redirect('/dashboard/index');
             }
-            View::assign('error', '原密码不正确');
+            View::assign('error', '原密码不正确，请确认后重试。如忘记密码请联系系统管理员。');
         }
 
         return View::fetch('login/change_password');

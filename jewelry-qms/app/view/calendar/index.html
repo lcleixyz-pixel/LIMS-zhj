@@ -3,7 +3,15 @@
         <h4>本月体系待办（{$monthLabel}）</h4>
         <small class="text-muted">到期范围 {$monthStart} ~ {$monthEnd}</small>
     </div>
+    <div class="btn-group btn-group-sm" role="group">
+        <a href="/calendar/index?filter=all" class="btn btn-outline-secondary {if $filter != 'mine'}active{/if}">全部</a>
+        <a href="/calendar/index?filter=mine" class="btn btn-outline-secondary {if $filter == 'mine'}active{/if}">指派给我</a>
+    </div>
 </div>
+
+{if $filter == 'mine'}
+<div class="alert alert-info small py-2">当前显示由本人创建的待办（基于通知创建人近似过滤）。</div>
+{/if}
 
 <div class="card">
     <div class="card-body p-0">
@@ -20,7 +28,7 @@
             </thead>
             <tbody>
                 {volist name="items" id="item"}
-                <tr class="{if $item.is_overdue}table-danger{/if}">
+                <tr class="{if $item.is_overdue}table-danger{elseif $item.days_left == 0}table-warning{/if}">
                     <td>{$item.title}</td>
                     <td><span class="badge badge-status-draft">{$item.type}</span></td>
                     <td>{$item.due_date}</td>

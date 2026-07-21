@@ -81,7 +81,7 @@
                     <td>{$log.field_label|default=$log.field_name|default='-'}</td>
                     <td>{$log.old_value_display|default='-'}</td>
                     <td>{$log.new_value_display|default='-'}</td>
-                    <td>{$log.changed_by_display|default='未知用户（岗位未登记）'}</td>
+                    <td>{$log.changed_by_display|default='人员信息待补充'}</td>
                 </tr>
                 {/volist}
                 {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}

@@ -6,6 +6,7 @@ namespace app\controller;
 use app\BaseController;
 use app\model\Notification;
 use think\facade\Db;
+use think\facade\Session;
 use think\facade\View;
 
 class Calendar extends BaseController
@@ -15,13 +16,19 @@ class Calendar extends BaseController
         $monthStart = date('Y-m-01');
         $monthEnd = date('Y-m-t');
         $today = date('Y-m-d');
+        $filter = trim((string)$this->request->get('filter', 'all'));
+        $currentUserId = (string)Session::get('user.id', '');
 
-        $notifications = Notification::where('soft_delete', 0)
+        $query = Notification::where('soft_delete', 0)
             ->where('publish', 1)
             ->whereNotNull('due_date')
-            ->whereBetween('due_date', [$monthStart, $monthEnd])
-            ->order('due_date', 'asc')
-            ->select();
+            ->whereBetween('due_date', [$monthStart, $monthEnd]);
+
+        if ($filter === 'mine' && $currentUserId !== '') {
+            $query->where('created_by', $currentUserId);
+        }
+
+        $notifications = $query->order('due_date', 'asc')->select();
 
         $items = [];
         foreach ($notifications as $n) {
@@ -56,6 +63,7 @@ class Calendar extends BaseController
         View::assign('monthEnd', $monthEnd);
         View::assign('monthLabel', date('Y年n月'));
         View::assign('today', $today);
+        View::assign('filter', $filter);
         View::assign('pageTitle', '本月体系待办');
 
         return View::fetch('calendar/index');

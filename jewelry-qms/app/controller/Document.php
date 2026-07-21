@@ -129,7 +129,7 @@ class Document extends BaseController
                 );
             });
 
-            Session::flash('success', '文件已创建');
+            Session::flash('success', '文件已创建，当前为草稿。请补充内容后提交审核。');
 
             return redirect('/document/view?id=' . $id);
         }
@@ -150,7 +150,7 @@ class Document extends BaseController
             throw new HttpException(404, '文件不存在');
         }
         if ((string)$document->status !== 'draft') {
-            Session::flash('warning', '只有草稿文件可直接编辑；审核中、已批准、试运行就绪、正式发布或已作废文件请使用受控流程');
+            Session::flash('warning', '当前状态不可直接编辑。如需修改，请先发起修订或走作废/换版流程。');
 
             return redirect('/document/view?id=' . $id);
         }
@@ -163,7 +163,7 @@ class Document extends BaseController
             $statusGuard = new DocumentStatusGuardService();
             $guard = $statusGuard->guardWrite($data, 'Document', 'edit');
             if (!$guard['allowed']) {
-                Session::flash('error', 'blocked：禁止通过编辑直写受控状态（' . $guard['status'] . '）');
+                Session::flash('error', '禁止通过编辑直接修改已受控状态。如需变更，请使用发起修订或作废流程。');
 
                 return redirect('/document/edit?id=' . $id);
             }
@@ -190,7 +190,7 @@ class Document extends BaseController
             Db::transaction(function () use ($document, $data) {
                 $document->save($data);
             });
-            Session::flash('success', '已保存');
+            Session::flash('success', '文件已保存，当前仍为草稿。确认无误后可提交审核。');
 
             return redirect('/document/view?id=' . $id);
         }
@@ -256,7 +256,12 @@ class Document extends BaseController
         View::assign('distributions', $distributions);
         View::assign('distributionUserNames', User::where('soft_delete', 0)->column('name', 'id'));
         View::assign('reviews', $reviews);
-        View::assign('distributionUsers', User::where('soft_delete', 0)->where('publish', 1)->order('name', 'asc')->select());
+        View::assign('distributionUsers', User::with('department')
+            ->where('users.soft_delete', 0)
+            ->where('users.publish', 1)
+            ->order('users.name', 'asc')
+            ->select());
+        View::assign('currentUserEmail', strtolower(trim((string)Session::get('user.email', ''))));
         View::assign('structureSummary', QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id));
         View::assign('printLogs', ControlledPrintService::recentLogs((string)$doc->id, 5));
         $signingEmbeds = [];
@@ -279,7 +284,7 @@ class Document extends BaseController
         $userIds = (array)$this->request->post('user_ids', []);
         $remarks = (string)$this->request->post('remarks', '');
         $count = DocumentControlService::distribute($id, $userIds, null, $remarks);
-        Session::flash('success', $count > 0 ? "已分发给 {$count} 位接收人" : '没有新增分发记录');
+        Session::flash('success', $count > 0 ? "已分发给 {$count} 位接收人。接收人登录后可在通知中心确认接收。" : '未新增分发记录：所选人员已在本文件分发列表中。');
 
         return redirect('/document/view?id=' . $id);
     }
@@ -289,7 +294,7 @@ class Document extends BaseController
         $distributionId = (string)$this->request->post('distribution_id', '');
         $documentId = (string)$this->request->post('document_id', '');
         $ok = DocumentControlService::confirmReceipt($distributionId, Session::get('user.id'));
-        Session::flash($ok ? 'success' : 'error', $ok ? '已确认接收' : '无法确认该分发记录');
+        Session::flash($ok ? 'success' : 'error', $ok ? '已确认接收。该文件已加入您的受控文件清单。' : '无法确认：该记录可能已被撤销，或您没有权限操作。如有疑问请联系文件管理员。');
 
         return redirect('/document/view?id=' . $documentId);
     }
@@ -299,7 +304,7 @@ class Document extends BaseController
         $distributionId = (string)$this->request->post('distribution_id', '');
         $documentId = (string)$this->request->post('document_id', '');
         $ok = DocumentControlService::confirmRecall($distributionId, Session::get('user.id'));
-        Session::flash($ok ? 'success' : 'error', $ok ? '已确认回收' : '无法确认该分发记录');
+        Session::flash($ok ? 'success' : 'error', $ok ? '已确认回收。请按文件管理员要求处理本地保存的副本。' : '无法确认：该记录可能已被撤销，或您没有权限操作。如有疑问请联系文件管理员。');
 
         return redirect('/document/view?id=' . $documentId);
     }
@@ -317,7 +322,7 @@ class Document extends BaseController
             $note = trim((string)$this->request->post('review_note', ''));
             $nextReviewDate = (string)$this->request->post('next_review_date', '');
             $review = DocumentControlService::recordReview($id, $result, $note, $nextReviewDate !== '' ? $nextReviewDate : null, Session::get('user.id'));
-            Session::flash($review ? 'success' : 'error', $review ? '评审记录已保存' : '评审记录保存失败');
+            Session::flash($review ? 'success' : 'error', $review ? '评审记录已保存。本次评审结论将影响文件后续状态，可在评审记录中查看。' : '评审记录保存失败，请检查必填项后重试。如多次失败请联系质量负责人。');
 
             return redirect('/document/view?id=' . $id);
         }
@@ -333,7 +338,7 @@ class Document extends BaseController
         $id = (string)$this->request->post('id', '');
         $note = trim((string)$this->request->post('review_note', ''));
         $review = DocumentControlService::recordReview($id, 'obsolete', $note !== '' ? $note : '文件作废并发起回收确认', null, Session::get('user.id'));
-        Session::flash($review ? 'success' : 'error', $review ? '文件已作废，回收确认通知已发出' : '文件作废失败');
+        Session::flash($review ? 'success' : 'error', $review ? '文件已作废。原接收人将收到回收确认通知，作废文件不再作为受控文件使用。' : '文件作废失败，请确认您有作废权限后重试。');
 
         return redirect('/document/view?id=' . $id);
     }
@@ -487,15 +492,15 @@ class Document extends BaseController
                     $this->_employeeToUser((string)$newDocument->approved_by)
                 );
             });
-            $message = '已生成修订版本 ' . $newVersion;
+            $message = '已生成修订版本 ' . $newVersion . '。新版本当前为草稿，编辑完成后请提交审核。';
             try {
                 $structure = QmsDocumentStructureService::refreshControlledDocumentStructure(
                     $newId,
                     '文件控制修订同步：' . (string)$this->request->post('change_reason', '')
                 );
-                $message .= '，结构化文件已同步为草稿：' . (string)($structure['structured_document']['rendered_file_path'] ?? '');
+                $message .= '（关联结构化文件已同步）';
             } catch (\Throwable $exception) {
-                $message .= '；结构化同步待处理：' . $exception->getMessage();
+                $message .= '（关联结构化文件将在后台同步：' . $exception->getMessage() . '）';
             }
             Session::flash('success', $message);
 
@@ -536,7 +541,7 @@ class Document extends BaseController
                     }
                 }
             }
-            Session::flash('success', '已提交审核');
+            Session::flash('success', '文件「' . ($doc->title ?? '') . '」已提交审核。审核人、批准人将依次收到签批通知，您可在本页查看进度。');
         }
 
         return redirect('/document/view?id=' . $id);

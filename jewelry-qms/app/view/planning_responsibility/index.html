@@ -22,7 +22,7 @@
     <a class="responsibility-workflow__step {if $viewMode == 'staffing'}active{/if}" href="/planning/responsibilities?view=staffing&version_id={$versionId}">2. 配置人员</a>
     <a class="responsibility-workflow__step {if $viewMode == 'approval'}active{/if}" href="/planning/responsibilities?view=approval&version_id={$versionId}">3. 校验并签批</a>
     <a class="responsibility-workflow__step {if $viewMode == 'effective'}active{/if}" href="/planning/responsibilities?view=effective&version_id={$versionId}">4. 查看已生效责任链</a>
-    <a class="responsibility-workflow__auxiliary {if $viewMode == 'alignment'}active{/if}" href="/planning/responsibilities/alignment?view=alignment&version_id={$versionId}">文件对齐（辅助）</a>
+    <a class="responsibility-workflow__auxiliary {if $viewMode == 'alignment'}active{/if}" href="/planning/responsibilities/alignment?view=alignment&version_id={$versionId}">文件一致性检查（辅助）</a>
 </nav>
 
 {if !$detail}
@@ -98,7 +98,7 @@
 {/if}
 
 {if $viewMode == 'staffing'}
-<div class="alert alert-info"><strong>保存后仍是草案，不构成任命。</strong>完成资格校验和业务签批后，人员授权才正式生效。</div>
+<div class="alert alert-info"><strong>保存只是草稿。</strong>完成校验并签批后，授权才正式生效。</div>
 <div class="alert alert-secondary small">需要在活动发生时指定的人员，仍须在当次活动中登记并核对。</div>
 {volist name="detail.activities" id="activity"}
 <div class="card mb-3">
@@ -184,10 +184,18 @@
         <div class="card mb-3 border-primary">
             <div class="card-header"><strong>我的待签批批次</strong> · {$pendingBatch.approver.position_label}</div>
             <div class="card-body">
-                {volist name="pendingBatch.items" id="item"}<div class="border-bottom py-2"><strong>{$item.employee_name}</strong> · {$item.position_name}<div>{$item.duty_text}</div><small class="text-muted">资格证据已锁定</small><details class="small text-muted mt-1"><summary>技术校验信息</summary><code>{$item.version_hash}</code></details></div>{/volist}
+                <div class="alert alert-light border small mb-3">
+                    您作为 <strong>{$pendingBatch.approver.position_label}</strong>，需确认以下人员的职责授权。批准后将生成正式任命证据。
+                </div>
+                {volist name="pendingBatch.items" id="item"}<div class="border-bottom py-2">
+                    <strong>{$item.employee_name}</strong> · {$item.position_name}
+                    <div class="text-muted small">{$item.duty_text}</div>
+                    <small class="text-muted">资格证据已锁定</small>
+                    <details class="small text-muted mt-1"><summary>技术校验信息</summary><code>{$item.version_hash}</code></details>
+                </div>{/volist}
                 <form method="post" action="/planning/responsibilities/approve" class="mt-3">
                     <input type="hidden" name="approval_scope" value="assignment"><input type="hidden" name="version_id" value="{$detail.id}"><input type="hidden" name="batch_key" value="{$pendingBatch.batch_key}">
-                    <textarea name="comments" class="form-control mb-2" placeholder="签批意见"></textarea>
+                    <textarea name="comments" class="form-control mb-2" placeholder="请填写签批意见，如无异议可留空"></textarea>
                     <button name="decision" value="approved" class="btn btn-success" type="submit">批准</button>
                     <button name="decision" value="rejected" class="btn btn-outline-danger" type="submit">驳回</button>
                 </form>
@@ -216,7 +224,7 @@
 
 {if $viewMode == 'alignment'}
 <div class="card">
-    <div class="card-header"><strong>文件对齐（辅助核验）</strong></div>
+    <div class="card-header"><strong>文件一致性检查（辅助核验）</strong></div>
     <div class="card-body">
         <div class="alert alert-light border"><strong>只读辅助工具</strong><div class="small text-muted mt-1">用于检查现行手册、程序文件与责任链岗位职责是否一致；不会修改受控文件，也不会生成正式任命。</div></div>
         {if $alignmentData.state == 'draft_preview_required'}
@@ -248,7 +256,7 @@
             </table>
         </div>
         {else}
-        <div class="alert alert-secondary mb-0">{$alignmentData.message|default='当前没有可展示的文件对齐结果。'}</div>
+        <div class="alert alert-secondary mb-0">{$alignmentData.message|default='当前没有可展示的文件一致性检查结果。'}</div>
         {/if}
     </div>
 </div>

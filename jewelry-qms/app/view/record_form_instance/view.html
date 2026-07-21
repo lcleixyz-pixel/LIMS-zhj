@@ -21,24 +21,25 @@
             {elseif $canEdit}
             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="无编辑权限">编辑</button>
             {else}
-            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已形成 PDF 后不可直接编辑；如需更正，请先走作废/换版/更正流程。">编辑</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="记录已锁定。请联系质量负责人发起作废/换版/更正。">编辑</button>
+            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#requestCorrectionModal">申请更正</button>
             {/if}
             <a href="/record_form_instance/index" class="btn btn-sm btn-outline-secondary">返回</a>
         </div>
     </div>
     <div class="card-body">
         <table class="table table-bordered">
-            <tr><th width="150">编号</th><td>{$record.doc_number}</td><th width="150">状态</th><td>{$record.status}</td></tr>
+            <tr><th width="150">编号</th><td>{$record.doc_number}</td><th width="150">状态</th><td>{:qms_status_label('record_form_instance', $record.status)}</td></tr>
             <tr><th>记录标题</th><td>{$record.record_title}</td><th>模板</th><td>{$template.name}</td></tr>
             <tr><th>创建时间</th><td>{$record.created|default='-'}</td><th>更新时间</th><td>{$record.modified|default='-'}</td></tr>
-            <tr><th>PDF</th><td colspan="3">{$record.generated_pdf_name|default='未生成'}</td></tr>
+            <tr><th>正式 PDF</th><td colspan="3">{$record.generated_pdf_name|default='未生成'}</td></tr>
             <tr>
-                <th>临时预览PDF</th>
+                <th>草稿预览 PDF（仅供校对）</th>
                 <td colspan="3">
                     {if $previewPdfFiles}
                     <div class="d-flex flex-wrap gap-2 align-items-center">
                         {volist name="previewPdfFiles" id="previewPdf"}
-                        <a href="{$previewPdf.download_url}" class="btn btn-sm btn-outline-primary">下载临时预览PDF</a>
+                        <a href="{$previewPdf.download_url}" class="btn btn-sm btn-outline-primary">下载草稿预览PDF</a>
                         <span class="text-muted small me-2">{$previewPdf.modified}</span>
                         {/volist}
                     </div>
@@ -86,5 +87,29 @@
         {empty name="schema"}
         <p class="text-muted mb-0">暂无字段配置</p>
         {/empty}
+    </div>
+</div>
+
+<div class="modal fade" id="requestCorrectionModal" tabindex="-1" aria-labelledby="requestCorrectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/record_form_instance/requestCorrection?id={$record.id}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="requestCorrectionModalLabel">申请更正记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small">记录已生成 PDF 或已归档，不可直接编辑。提交更正申请后，质量负责人将收到通知并协助处理。</div>
+                    <div class="mb-3">
+                        <label for="correctionReason" class="form-label">更正原因</label>
+                        <textarea name="reason" id="correctionReason" class="form-control" rows="3" required placeholder="请说明需要更正的内容及原因"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">提交申请</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>

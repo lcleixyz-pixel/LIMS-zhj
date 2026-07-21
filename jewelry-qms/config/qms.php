@@ -162,6 +162,12 @@ return [
             'closed' => '已关闭',
             'exempted' => '不适用归档',
         ],
+        'record_form_instance' => [
+            'draft' => '草稿',
+            'generated' => '已生成PDF',
+            'locked' => '已归档',
+            'voided' => '已作废',
+        ],
     ],
 
     'upload' => [

@@ -9,7 +9,7 @@ use think\facade\Session;
 use think\facade\View;
 
 /**
- * 期间核查计划机制入口（非完整业务模块）。
+ * 期间核查计划（基础入口）。
  */
 class EquipmentPeriodCheck extends BaseController
 {
@@ -22,10 +22,10 @@ class EquipmentPeriodCheck extends BaseController
         }
         $items = $query->order('created', 'desc')->limit(50)->select()->toArray();
 
-        View::assign('pageTitle', '期间核查计划（机制入口）');
+        View::assign('pageTitle', '期间核查计划');
         View::assign('items', $items);
         View::assign('equipmentId', $equipmentId);
-        View::assign('mechanismNotice', '本页仅为期间核查计划机制入口骨架，不代表完整期核计划业务。');
+        View::assign('mechanismNotice', '本页为期间核查计划基础入口，可登记计划日期与备注。');
 
         return View::fetch('equipment_period_check/index');
     }
@@ -40,13 +40,13 @@ class EquipmentPeriodCheck extends BaseController
                 Session::flash('validation_errors', ['设备与计划日期不能为空']);
                 View::assign('form', $this->request->post());
                 View::assign('pageTitle', '期间核查计划 - 新增');
-                View::assign('mechanismNotice', '本页仅为机制入口骨架。');
+                View::assign('mechanismNotice', '请填写设备与计划日期。');
 
                 return View::fetch('equipment_period_check/add');
             }
 
             if (!$this->tableReady()) {
-                Session::flash('warning', '期间核查计划表尚未迁移，仅保留入口骨架，未写入数据。');
+                Session::flash('warning', '期间核查计划表尚未迁移，仅保留入口，未写入数据。');
 
                 return redirect('/equipment_period_check/index?equipment_id=' . rawurlencode($equipmentId));
             }
@@ -64,7 +64,7 @@ class EquipmentPeriodCheck extends BaseController
                 'created' => date('Y-m-d H:i:s'),
                 'modified' => date('Y-m-d H:i:s'),
             ]);
-            Session::flash('success', '期间核查计划草稿已保存（机制入口）。');
+            Session::flash('success', '期间核查计划草稿已保存。');
 
             return redirect('/equipment_period_check/index?equipment_id=' . rawurlencode($equipmentId));
         }
@@ -74,7 +74,7 @@ class EquipmentPeriodCheck extends BaseController
             'equipment_id' => trim((string)$this->request->param('equipment_id', '')),
             'plan_date' => date('Y-m-d'),
         ]);
-        View::assign('mechanismNotice', '本页仅为机制入口骨架。');
+        View::assign('mechanismNotice', '请填写设备与计划日期。');
 
         return View::fetch('equipment_period_check/add');
     }

@@ -3,7 +3,7 @@
         <h5 class="mb-0">{$pageTitle|default='详情'}</h5>
         <div>
             <form method="post" action="/review_action/createCapa?id={$record.id}" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('创建CAPA？')">创建CAPA</button>
+                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('将为此条评审决议创建一张关联的纠正措施单，创建后可在"质量改进 → 纠正措施"中查看。是否继续？')">创建纠正措施</button>
             </form>
             <a href="/review_action/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
             <a href="/review_action/index" class="btn btn-sm btn-outline-secondary">返回</a>

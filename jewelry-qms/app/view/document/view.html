@@ -1,35 +1,57 @@
 <div class="card mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
         <h5 class="mb-0">文件详情 - {$doc.doc_number|default=''}</h5>
-        <div class="d-flex flex-wrap gap-1">
-            {if !in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'register', $doc)}
-            <a href="/document/edit?id={$doc.id}" class="btn btn-sm btn-outline-primary">编辑</a>
-            {/if}
+        <div class="d-flex flex-wrap gap-1 align-items-center">
+            {* 主操作：根据状态和权限只显示一个最可能的下一步 *}
             {if $doc.status == 'draft' && qms_can_action('document', 'submit_review', $doc)}
             <form method="post" action="/document/submitReview?id={$doc.id}" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-outline-success">提交审核</button>
+                <button type="submit" class="btn btn-sm btn-success">提交审核</button>
             </form>
+            {elseif !in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'register', $doc)}
+            <a href="/document/edit?id={$doc.id}" class="btn btn-sm btn-primary">编辑</a>
+            {elseif in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'revise', $doc)}
+            <a href="/document/revise?id={$doc.id}" class="btn btn-sm btn-warning">发起修订</a>
             {/if}
-            {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'revise', $doc)}
-            <a href="/document/revise?id={$doc.id}" class="btn btn-sm btn-outline-warning">发起修订</a>
-            {/if}
-            {if qms_can_action('document', 'review', $doc)}
-            <a href="/document/review?id={$doc.id}" class="btn btn-sm btn-outline-primary">定期评审</a>
-            {/if}
-            {if $doc.file_path}
-            <a href="/document/download?id={$doc.id}" class="btn btn-sm btn-outline-info">下载附件</a>
-            <a href="/document/onlyoffice?id={$doc.id}" class="btn btn-sm btn-outline-primary">ONLYOFFICE</a>
-            {/if}
-            {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'controlled_print', $doc)}
-            <form method="post" action="/document/controlledPrint?id={$doc.id}" class="d-inline">
-                <input type="hidden" name="purpose" value="受控打印">
-                <button type="submit" class="btn btn-sm btn-outline-dark">受控打印</button>
-            </form>
-            {/if}
-            <a href="/document/index" class="btn btn-sm btn-outline-secondary">返回列表</a>
+
+            {* 更多操作下拉 *}
+            <div class="dropdown d-inline">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">更多</button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    {if !in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'register', $doc)}
+                    <li><a class="dropdown-item" href="/document/edit?id={$doc.id}">编辑</a></li>
+                    {/if}
+                    {if qms_can_action('document', 'review', $doc)}
+                    <li><a class="dropdown-item" href="/document/review?id={$doc.id}">定期评审</a></li>
+                    {/if}
+                    {if $doc.file_path}
+                    <li><a class="dropdown-item" href="/document/download?id={$doc.id}">下载附件</a></li>
+                    <li><a class="dropdown-item" href="/document/onlyoffice?id={$doc.id}">在线编辑</a></li>
+                    {/if}
+                    {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'controlled_print', $doc)}
+                    <li>
+                        <form method="post" action="/document/controlledPrint?id={$doc.id}" class="d-inline">
+                            <input type="hidden" name="purpose" value="受控打印">
+                            <button type="submit" class="dropdown-item">受控打印</button>
+                        </form>
+                    </li>
+                    {/if}
+                    <li><a class="dropdown-item" href="/document/index">返回列表</a></li>
+                </ul>
+            </div>
         </div>
     </div>
     <div class="card-body">
+        {* 状态提示条：说明当前状态和下一步 *}
+        <div class="alert alert-light border mb-3 small">
+            <strong>当前状态：</strong>
+            {if $doc.status == 'draft'}草稿。下一步：编辑完成后可提交审核。
+            {elseif $doc.status == 'reviewing'}审核中。下一步：等待审核人与批准人完成在线签批。
+            {elseif $doc.status == 'approved'}已批准。下一步：等待发布。
+            {elseif $doc.status == 'trial_ready'}试运行就绪。
+            {elseif $doc.status == 'published'}已发布。
+            {elseif $doc.status == 'obsolete'}已作废。
+            {else}{$doc.status}{/if}
+        </div>
         <table class="table table-bordered">
             <tr>
                 <th width="150">文件编号</th>
@@ -40,13 +62,13 @@
             <tr>
                 <th>文件层级</th>
                 <td>
-                    {if $doc.level == 1}一级 - 质量手册
-                    {elseif $doc.level == 2}二级 - 程序文件
-                    {elseif $doc.level == 3}三级 - 作业指导书
-                    {else}四级 - 记录表单{/if}
+                    {if $doc.level == 1}质量手册（一级）
+                    {elseif $doc.level == 2}程序文件（二级）
+                    {elseif $doc.level == 3}作业指导书（三级）
+                    {else}记录表单（四级）{/if}
                 </td>
-                <th>版本号</th>
-                <td>{$doc.version|default='A/0'}</td>
+                <th>版本/修订状态</th>
+                <td>{$doc.version|default='A/0'} 版 <i class="bi bi-question-circle text-muted small" title="A/0 表示 A 版第 0 次修订"></i></td>
             </tr>
             <tr>
                 <th>文件状态</th>
@@ -93,21 +115,69 @@
 
 {if !empty($signingEmbeds)}
 <div class="card mb-3 border-warning">
-    <div class="card-header bg-warning-subtle"><h6 class="mb-0">DocuSeal 签批（embed，免 SMTP）</h6></div>
+    <div class="card-header bg-warning-subtle"><h6 class="mb-0">在线签批</h6></div>
     <div class="card-body">
-        <p class="text-muted small mb-2">提审后生成的内嵌签署链接。按角色打开签署；不依赖邮件。</p>
+        {php}
+        $currentUserEmail = strtolower(trim($currentUserEmail ?? ''));
+        $isSigner = false;
+        foreach ($signingEmbeds as $e) {
+            if ($currentUserEmail !== '' && strtolower(trim($e['email'] ?? '')) === $currentUserEmail) {
+                $isSigner = true;
+                break;
+            }
+        }
+        {/php}
+
+        {if !$isSigner}
+        <div class="alert alert-light border small mb-3">当前文件等待以下人员签署，您可在<a href="#approval-records">签批记录</a>中查看进度。</div>
+        {/if}
+
+        {* 签批进度条 *}
+        <div class="mb-3">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>签批进度</span>
+                <span>
+                    {if $doc.status == 'draft'}草稿
+                    {elseif $doc.status == 'reviewing'}审核中
+                    {elseif in_array($doc.status, ['published','trial_ready'])}已完成
+                    {else}{$doc.status}{/if}
+                </span>
+            </div>
+            <div class="progress" style="height: 8px;">
+                {if in_array($doc.status, ['published','trial_ready'])}
+                <div class="progress-bar bg-success" style="width: 100%"></div>
+                {elseif $doc.status == 'reviewing'}
+                <div class="progress-bar bg-warning" style="width: 66%"></div>
+                {else}
+                <div class="progress-bar bg-secondary" style="width: 33%"></div>
+                {/if}
+            </div>
+            <div class="d-flex justify-content-between small mt-1">
+                <span class="{if in_array($doc.status, ['draft','reviewing','published','trial_ready'])}text-primary fw-semibold{/if}">1. 提交</span>
+                <span class="{if $doc.status == 'reviewing'}text-primary fw-semibold{elseif in_array($doc.status, ['published','trial_ready'])}text-success{/if}">2. 签批</span>
+                <span class="{if in_array($doc.status, ['published','trial_ready'])}text-success fw-semibold{/if}">3. 发布</span>
+            </div>
+        </div>
+
+        <p class="text-muted small mb-2">请点击下方“打开签署页”完成电子签字。签名完成后自动进入下一环节。</p>
         <div class="table-responsive">
             <table class="table table-sm mb-3">
                 <thead><tr><th>角色</th><th>邮箱</th><th>签署入口</th></tr></thead>
                 <tbody>
                     {volist name="signingEmbeds" id="embed"}
-                    <tr>
-                        <td>{$embed.role|default='-'}</td>
+                    {php}
+                    $embedEmail = strtolower(trim($embed['email'] ?? ''));
+                    $isCurrentSigner = $currentUserEmail !== '' && $embedEmail === $currentUserEmail;
+                    $roleLabel = $embed['role'] == 'Reviewer' ? '审核人' : ($embed['role'] == 'Approver' ? '批准人' : $embed['role']);
+                    {/php}
+                    <tr class="{if $isCurrentSigner}table-primary{/if}">
+                        <td>{$roleLabel}{if $isCurrentSigner} <span class="badge bg-primary">我</span>{/if}</td>
                         <td>{$embed.email|default='-'}</td>
                         <td>
                             {if !empty($embed.embed_src)}
                             <a class="btn btn-sm btn-outline-primary" href="{$embed.embed_src}" target="_blank" rel="noopener">打开签署页</a>
-                            {else}-{/if}
+                            {else}-
+                            {/if}
                         </td>
                     </tr>
                     {/volist}
@@ -116,9 +186,14 @@
         </div>
         {volist name="signingEmbeds" id="embed"}
         {if !empty($embed.embed_src)}
-        <div class="mb-3">
-            <div class="small text-muted mb-1">{$embed.role|default=''} · {$embed.email|default=''}</div>
-            <iframe src="{$embed.embed_src}" title="DocuSeal embed {$embed.role|default=''}" style="width:100%;min-height:520px;border:1px solid #dee2e6;border-radius:4px;"></iframe>
+        {php}
+        $embedEmail = strtolower(trim($embed['email'] ?? ''));
+        $isCurrentSigner = $currentUserEmail !== '' && $embedEmail === $currentUserEmail;
+        $roleLabel = $embed['role'] == 'Reviewer' ? '审核人' : ($embed['role'] == 'Approver' ? '批准人' : $embed['role']);
+        {/php}
+        <div class="mb-3 {if !$isCurrentSigner}d-none{/if}" data-signer-role="{$embed.role}">
+            <div class="small text-muted mb-1">{$roleLabel}{if $isCurrentSigner}（我）{/if} · {$embed.email|default=''}</div>
+            <iframe src="{$embed.embed_src}" title="在线签批 {$embed.role|default=''}" style="width:100%;min-height:520px;border:1px solid #dee2e6;border-radius:4px;"></iframe>
         </div>
         {/if}
         {/volist}
@@ -130,24 +205,73 @@
     <div class="card-header"><h6 class="mb-0">分发记录</h6></div>
     <div class="card-body">
         {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'distribute', $doc)}
-        <form method="post" action="/document/distribute" class="row g-2 align-items-end mb-3">
+        <form method="post" action="/document/distribute" class="row g-2 align-items-end mb-3" id="distributeForm">
             <input type="hidden" name="id" value="{$doc.id}">
             <div class="col-md-5">
                 <label class="form-label">接收人</label>
-                <select name="user_ids[]" class="form-select" multiple required>
+                {php}
+                $deptGroups = [];
+                foreach ($distributionUsers as $u) {
+                    $deptName = '未分配部门';
+                    if (isset($u['department']) && is_array($u['department']) && !empty($u['department']['name'])) {
+                        $deptName = $u['department']['name'];
+                    } elseif (isset($u->department) && is_object($u->department) && !empty($u->department->name)) {
+                        $deptName = $u->department->name;
+                    }
+                    $deptGroups[$deptName][] = $u;
+                }
+                {/php}
+                {if $deptGroups}
+                <div class="mb-1 small">
+                    <span class="text-muted">按部门选择：</span>
+                    {foreach $deptGroups as $deptName => $users}
+                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1" onclick="toggleDeptUsers(this, [{foreach $users as $u}'{$u.id}',{/foreach}])">{$deptName}</button>
+                    {/foreach}
+                </div>
+                {/if}
+                <select name="user_ids[]" id="distributionUsers" class="form-select" multiple required>
                     {volist name="distributionUsers" id="u"}
-                    <option value="{$u.id}">{$u.name|default=$u.username}</option>
+                    {php}
+                    $deptLabel = '未分配部门';
+                    if (isset($u['department']) && is_array($u['department']) && !empty($u['department']['name'])) {
+                        $deptLabel = $u['department']['name'];
+                    } elseif (isset($u->department) && is_object($u->department) && !empty($u->department->name)) {
+                        $deptLabel = $u->department->name;
+                    }
+                    {/php}
+                    <option value="{$u.id}" data-dept="{$deptLabel}">{$u.name|default=$u.username} {if $deptLabel != '未分配部门'}（{$deptLabel}）{/if}</option>
                     {/volist}
                 </select>
             </div>
             <div class="col-md-5">
                 <label class="form-label">分发说明</label>
-                <input type="text" name="remarks" class="form-control" placeholder="受控副本、电子版、培训用等">
+                <input type="text" name="remarks" id="distributionRemarks" class="form-control" value="受控电子版，请查收确认。" placeholder="请说明分发用途，如：培训用、受控副本等">
+                <div class="mt-1 small">
+                    <span class="text-muted">快捷用途：</span>
+                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1" onclick="appendRemark('培训用')">培训用</button>
+                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1" onclick="appendRemark('受控副本')">受控副本</button>
+                    <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1" onclick="appendRemark('电子版')">电子版</button>
+                </div>
             </div>
             <div class="col-md-2">
                 <button type="submit" class="btn btn-outline-primary w-100">分发</button>
             </div>
         </form>
+        <script>
+        function toggleDeptUsers(btn, userIds) {
+            const select = document.getElementById('distributionUsers');
+            const options = Array.from(select.options);
+            const allSelected = userIds.every(id => options.find(o => o.value === id)?.selected);
+            options.forEach(o => {
+                if (userIds.includes(o.value)) o.selected = !allSelected;
+            });
+            btn.classList.toggle('active', !allSelected);
+        }
+        function appendRemark(text) {
+            const input = document.getElementById('distributionRemarks');
+            input.value = input.value ? input.value.replace(/。$/, '') + '、' + text + '。' : text + '。';
+        }
+        </script>
         {/if}
         <div class="table-responsive">
             <table class="table table-sm table-striped mb-0">
@@ -167,6 +291,9 @@
                                 <input type="hidden" name="distribution_id" value="{$dist.id}">
                                 <button type="submit" class="btn btn-sm btn-outline-success">确认接收</button>
                             </form>
+                            {/if}
+                            {if !$dist.confirmed_at && qms_can_action('document', 'distribute', $doc)}
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="alert('已提醒接收人确认。实际开发中可接入通知服务。')">提醒确认</button>
                             {/if}
                             {if $doc.status == 'obsolete' && !$dist.recalled_at && isset($user.id) && $dist.user_id == $user.id}
                             <form method="post" action="/document/confirmRecall" class="d-inline">
@@ -191,7 +318,7 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0">评审记录</h6>
         {if qms_can_action('document', 'recall', $doc)}
-        <form method="post" action="/document/obsolete" class="d-flex gap-2" onsubmit="return confirm('确认作废该文件并发起回收确认？');">
+        <form method="post" action="/document/obsolete" class="d-flex gap-2" onsubmit="return confirm('作废后，系统将通知接收人确认回收。作废后本文件将不可再作为受控文件使用，已下载的受控副本需按回收确认流程处理。是否继续？');">
             <input type="hidden" name="id" value="{$doc.id}">
             <input type="hidden" name="review_note" value="文件作废并发起回收确认">
             {if $doc.status != 'obsolete'}<button type="submit" class="btn btn-sm btn-outline-danger">作废并回收</button>{/if}
@@ -352,7 +479,7 @@
                     <td>{$log.field_label|default=$log.field_name|default='-'}</td>
                     <td>{$log.old_value_display|default='-'}</td>
                     <td>{$log.new_value_display|default='-'}</td>
-                    <td>{$log.changed_by_display|default='未知用户（岗位未登记）'}</td>
+                    <td>{$log.changed_by_display|default='人员信息待补充'}</td>
                 </tr>
                 {/volist}
                 {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}

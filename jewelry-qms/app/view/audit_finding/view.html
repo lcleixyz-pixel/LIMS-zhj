@@ -4,7 +4,7 @@
         <div>
             {if !$record.capa_id}
             <form method="post" action="/audit_finding/createCapa?id={$record.id}" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('创建CAPA？')">创建CAPA</button>
+                <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('将为此条审核发现创建一张关联的纠正措施单，创建后可在"质量改进 → 纠正措施"中查看。是否继续？')">创建纠正措施</button>
             </form>
             {/if}
             <a href="/audit_schedule/view?id={$record.audit_schedule_id}" class="btn btn-sm btn-outline-secondary">返回</a>
@@ -73,7 +73,7 @@
                     <td>{$log.field_label|default=$log.field_name|default='-'}</td>
                     <td>{$log.old_value_display|default='-'}</td>
                     <td>{$log.new_value_display|default='-'}</td>
-                    <td>{$log.changed_by_display|default='未知用户（岗位未登记）'}</td>
+                    <td>{$log.changed_by_display|default='人员信息待补充'}</td>
                 </tr>
                 {/volist}
                 {empty name="fieldChangeLogs"}<tr><td colspan="5" class="text-center text-muted">暂无字段变更记录</td></tr>{/empty}
