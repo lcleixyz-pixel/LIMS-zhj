@@ -6,6 +6,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - docker/.env.signing
     environment:
       APP_DEBUG: "false"
       TZ: Asia/Shanghai
