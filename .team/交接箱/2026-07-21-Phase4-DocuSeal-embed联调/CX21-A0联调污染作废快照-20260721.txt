@@ -1,0 +1,60 @@
+# CX-21 A/0 联调污染记录快照（作废前留证）— 2026-07-21
+## documents
+*************************** 1. row ***************************
+                    id: 85c70a3d-bc0e-4ebc-8949-1291d669663a
+supersedes_document_id: c6c027a5-54ba-4287-b4cd-c9234e7f0f39
+      revision_root_id: c6c027a5-54ba-4287-b4cd-c9234e7f0f39
+            company_id: 00000000-0000-0000-0000-000000000001
+           category_id: NULL
+           template_id: NULL
+                 level: 2
+            doc_number: XZTC/CX-21-2022
+                 title: ??????
+               version: A/0
+              revision: 1
+         department_id: NULL
+               site_id: NULL
+        effective_date: NULL
+           review_date: NULL
+                status: reviewing
+             file_path: ????/????/????2022/21-2022??????.docx
+             file_name: 21-2022??????.docx
+             file_type: docx
+           prepared_by: bf26c847-1181-4ed5-9881-563a6585475e
+           reviewed_by: NULL
+           approved_by: NULL
+         change_reason: cs
+               publish: 0
+           soft_delete: 0
+         record_status: 0
+               created: 2026-07-21 03:29:07
+              modified: 2026-07-21 03:29:14
+            created_by: 00000000-0000-0000-0000-000000000040
+           modified_by: 00000000-0000-0000-0000-000000000040
+## approvals
+*************************** 1. row ***************************
+             id: e883423a-4464-4b68-a930-89c4fdb6f24d
+     company_id: 00000000-0000-0000-0000-000000000001
+     model_name: Document
+controller_name: document
+         record: 85c70a3d-bc0e-4ebc-8949-1291d669663a
+        user_id: 00000000-0000-0000-0000-000000000040
+ approval_level: 1
+         status: approved
+       comments: NULL
+    approved_on: 2026-07-21 03:29:07
+  record_status: 1
+        publish: 1
+    soft_delete: 0
+        created: 2026-07-21 03:29:07
+       modified: 2026-07-21 03:29:07
+     created_by: 00000000-0000-0000-0000-000000000040
+## document_signing_rounds
+*************************** 1. row ***************************
+           id: 8f6ec651-635e-43e0-8b21-0b1768fe2c8d
+  document_id: 85c70a3d-bc0e-4ebc-8949-1291d669663a
+     round_no: 1
+     decision: pending
+submission_id: NULL
+         note: create_failed:no_signer_emails
+      created: 2026-07-21 03:29:13
