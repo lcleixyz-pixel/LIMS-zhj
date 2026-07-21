@@ -48,7 +48,7 @@ final class PlanningResponsibility extends BaseController
                 },
                 static fn (array $version): array => [(string)$version['id'], 'version_id', (string)$version['id']]
             );
-            Session::flash('success', '责任链草案已建立，人员未绑定时仍可进行结构管理。');
+            Session::flash('success', '责任链草案已建立。请在「配置人员」步骤绑定人员，再提交签批。');
 
             return $this->responsibilityRedirect((string)$version['id'], 'structure');
         } catch (Throwable $e) {
@@ -100,7 +100,7 @@ final class PlanningResponsibility extends BaseController
                 },
                 static fn (array $assignment): array => [(string)$assignment['id'], 'assignment_id', (string)$assignment['id']]
             );
-            Session::flash('success', '人员配置已保存为草案，尚未形成正式任命。');
+            Session::flash('success', '人员配置已保存为草案。完成校验并签批后，授权才正式生效。');
 
             return $this->responsibilityRedirect($versionId, 'staffing');
         } catch (Throwable $e) {
@@ -125,7 +125,7 @@ final class PlanningResponsibility extends BaseController
                 },
                 static fn (string $id): array => [$id, 'assignment_id', $id]
             );
-            Session::flash('success', '人员草案绑定已移除。');
+            Session::flash('success', '人员草案已移除。如需重新指派，可在当前页面重新配置。');
 
             return $this->responsibilityRedirect($versionId, 'staffing');
         } catch (Throwable $e) {
@@ -154,7 +154,7 @@ final class PlanningResponsibility extends BaseController
                 ($result['result'] ?? '') === 'pass' ? 'success' : 'warning',
                 '责任链校验完成：'
                     . QmsResponsibilityPresentationService::label('validation', (string)($result['result'] ?? ''))
-                    . '，发现 ' . count($result['issues'] ?? []) . ' 项。'
+                    . '，共发现 ' . count($result['issues'] ?? []) . ' 项待处理。请按提示补充后重新校验。'
             );
 
             return $this->responsibilityRedirect($versionId, 'approval');
@@ -178,7 +178,7 @@ final class PlanningResponsibility extends BaseController
                 },
                 static fn (): array => [$versionId, 'version_id', $versionId]
             );
-            Session::flash('success', '责任链版本已提交，内容哈希已锁定并按业务身份流转签批。');
+            Session::flash('success', '责任链版本已提交。版本内容已锁定，相关任命将进入签批流程。');
 
             return $this->responsibilityRedirect($versionId, 'approval');
         } catch (Throwable $e) {
@@ -207,7 +207,7 @@ final class PlanningResponsibility extends BaseController
                 },
                 static fn (array $appointment): array => [(string)$appointment['id'], 'appointment_id', (string)$appointment['id']]
             );
-            Session::flash('success', '公司总经理既有治理身份及来源证据已登记；该动作不表示由管理员任命。');
+            Session::flash('success', '公司总经理既有治理身份及来源证据已登记。该登记仅为证据记录，不作为管理员任命。');
 
             return $this->responsibilityRedirect('', 'approval');
         } catch (Throwable $e) {
@@ -231,7 +231,7 @@ final class PlanningResponsibility extends BaseController
                 },
                 static fn (array $approval): array => [(string)$approval['id'], 'approval_id', (string)$approval['id']]
             );
-            Session::flash('success', '实验室主任任命申请已流转给公司总经理签批。');
+            Session::flash('success', '实验室主任任命申请已提交。公司总经理签批通过后，任命生效。');
 
             return $this->responsibilityRedirect('', 'approval');
         } catch (Throwable $e) {
@@ -271,7 +271,7 @@ final class PlanningResponsibility extends BaseController
                     (string)$audit['record_id'],
                 ]
             );
-            Session::flash('success', '签批决定已记录；业务身份、禁止自批和版本哈希由签批服务实时复核。');
+            Session::flash('success', '签批决定已记录。本次任命将在责任链版本生效后纳入授权证据。');
 
             return $this->responsibilityRedirect($versionId, 'approval');
         } catch (Throwable $e) {
@@ -585,7 +585,7 @@ final class PlanningResponsibility extends BaseController
         }
 
         Log::error($context, ['exception' => $e]);
-        Session::flash('error', '操作失败，请联系管理员');
+        Session::flash('error', '操作失败：' . ($e->getMessage() ?: '请检查输入后重试，或联系管理员。'));
     }
 
     private function markAudit(

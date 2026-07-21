@@ -1,6 +1,6 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">ONLYOFFICE - {$doc.doc_number|default=''}</h5>
+        <h5 class="mb-0">在线编辑 - {$doc.doc_number|default=''}</h5>
         <div class="d-flex gap-1">
             {if $doc.file_path}
             <a href="/document/download?id={$doc.id}" class="btn btn-sm btn-outline-info">下载附件</a>
@@ -20,7 +20,7 @@
         </script>
         {else}
         <div class="alert alert-warning mb-3">
-            ONLYOFFICE 未配置或当前文件没有附件。配置 ONLYOFFICE_SERVER_URL 与 ONLYOFFICE_ENABLED 后，可在此页面加载在线编辑器。
+            在线编辑未配置或当前文件没有附件。配置在线编辑服务地址与启用开关后，可在此页面加载在线编辑器。
         </div>
         <table class="table table-bordered mb-0">
             <tr>

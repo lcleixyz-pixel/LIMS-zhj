@@ -1,0 +1,302 @@
+===== [1] qms_agent_suggestion_review_smoke.php =====
+qms_agent_suggestion_review_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [2] qms_ai_chat_smoke.php =====
+qms_ai_chat_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [3] qms_audit_capa_enhancement_smoke.php =====
+qms_audit_capa_enhancement_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [4] qms_business_module_mapping_smoke.php =====
+qms_business_module_mapping_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [5] qms_change_control_mvp_smoke.php =====
+qms_change_control_mvp_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [6] qms_clause_inferred_structured_evidence_smoke.php =====
+qms_clause_inferred_structured_evidence_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [7] qms_clause_manual_mapping_smoke.php =====
+qms_clause_manual_mapping_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [8] qms_clause_structured_evidence_smoke.php =====
+qms_clause_structured_evidence_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [9] qms_compliance_dashboard_smoke.php =====
+qms_compliance_dashboard_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [10] qms_controlled_document_structure_coverage_smoke.php =====
+qms_controlled_document_structure_coverage_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [11] qms_csrf_smoke.php =====
+qms_csrf_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [12] qms_current_files_enumeration_smoke.php =====
+qms_current_files_enumeration_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [13] qms_dashboard_export_smoke.php =====
+qms_dashboard_export_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [14] qms_department_view_smoke.php =====
+qms_department_view_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [15] qms_document_control_smoke.php =====
+qms_document_control_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [16] qms_document_structure_bridge_smoke.php =====
+qms_document_structure_bridge_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [17] qms_element_structured_evidence_smoke.php =====
+qms_element_structured_evidence_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [18] qms_equipment_deepening_smoke.php =====
+qms_equipment_deepening_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [19] qms_external_basis_structure_smoke.php =====
+qms_external_basis_structure_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [20] qms_external_change_event_smoke.php =====
+qms_external_change_event_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [21] qms_external_source_freshness_smoke.php =====
+qms_external_source_freshness_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [22] qms_external_source_processing_smoke.php =====
+qms_external_source_processing_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [23] qms_external_source_upload_smoke.php =====
+qms_external_source_upload_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [24] qms_field_audit_smoke.php =====
+qms_field_audit_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [25] qms_integration_print_smoke.php =====
+qms_integration_print_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [26] qms_knowledge_internal_export_smoke.php =====
+qms_knowledge_internal_export_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [27] qms_long_form_session_smoke.php =====
+qms_long_form_session_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [28] qms_manual_procedure_traceability_smoke.php =====
+qms_manual_procedure_traceability_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [29] qms_planning_schema_smoke.php =====
+qms_planning_schema_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [30] qms_planning_service_smoke.php =====
+qms_planning_service_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [31] qms_planning_ui_smoke.php =====
+qms_planning_ui_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [32] qms_procedure_element_mapping_smoke.php =====
+qms_procedure_element_mapping_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [33] qms_procedure_record_requirement_coverage_smoke.php =====
+qms_procedure_record_requirement_coverage_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [34] qms_procedure_record_requirement_suggestion_smoke.php =====
+qms_procedure_record_requirement_suggestion_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [35] qms_record_form_requirement_evidence_smoke.php =====
+qms_record_form_requirement_evidence_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [36] qms_record_form_schema_requirement_source_smoke.php =====
+qms_record_form_schema_requirement_source_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [37] qms_record_form_traceability_smoke.php =====
+qms_record_form_traceability_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [38] qms_record_form_variant_structure_smoke.php =====
+qms_record_form_variant_structure_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [39] qms_record_requirement_schema_coverage_smoke.php =====
+qms_record_requirement_schema_coverage_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [40] qms_record_schema_gap_suggestion_smoke.php =====
+qms_record_schema_gap_suggestion_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [41] qms_reference_procedure_block_gap_smoke.php =====
+qms_reference_procedure_block_gap_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [42] qms_reference_procedure_manual_match_smoke.php =====
+qms_reference_procedure_manual_match_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [43] qms_reference_procedure_structure_smoke.php =====
+qms_reference_procedure_structure_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [44] qms_reference_procedure_suggestion_smoke.php =====
+qms_reference_procedure_suggestion_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [45] qms_reminder_command_smoke.php =====
+qms_reminder_command_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [46] qms_runtime_evidence_traceability_smoke.php =====
+qms_runtime_evidence_traceability_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [47] qms_sites_smoke.php =====
+qms_sites_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [48] qms_structure_package_smoke.php =====
+qms_structure_package_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [49] qms_structured_block_edit_smoke.php =====
+qms_structured_block_edit_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [50] qms_structured_change_control_smoke.php =====
+qms_structured_change_control_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [51] qms_structured_document_archive_smoke.php =====
+qms_structured_document_archive_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [52] qms_structured_publish_smoke.php =====
+qms_structured_publish_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [53] qms_structured_source_refresh_smoke.php =====
+qms_structured_source_refresh_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [54] qms_structured_trace_review_smoke.php =====
+qms_structured_trace_review_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [55] qms_structured_traceability_matrix_smoke.php =====
+qms_structured_traceability_matrix_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [56] qms_supplement_clause_mapping_smoke.php =====
+qms_supplement_clause_mapping_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [57] qms_training_deepening_smoke.php =====
+qms_training_deepening_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [58] qms_ui_navigation_template_smoke.php =====
+qms_ui_navigation_template_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [59] qms_unmatched_clause_suggestions_smoke.php =====
+qms_unmatched_clause_suggestions_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [60] qms_validation_smoke.php =====
+qms_validation_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [61] qms_work_instruction_structure_smoke.php =====
+qms_work_instruction_structure_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [62] rbac_controller_normalization_smoke.php =====
+rbac_controller_normalization_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [63] record_form_fillability_readiness_smoke.php =====
+record_form_fillability_readiness_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [64] record_form_forward_chain_smoke.php =====
+record_form_forward_chain_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [65] record_form_instance_title_suggestion_smoke.php =====
+record_form_instance_title_suggestion_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [66] record_form_reconstruction_review_smoke.php =====
+Full reconstruction review has no identity conflicts after direct inclusion decisions
+Expected: 0
+Actual: 11
+EXIT_CODE=1
+RESULT=FAIL
+===== [67] record_forms_batch_smoke.php =====
+record_forms_batch_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [68] record_forms_equipment_fidelity_smoke.php =====
+record_forms_equipment_fidelity_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [69] record_forms_file_control_fidelity_smoke.php =====
+record_forms_file_control_fidelity_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [70] record_forms_fixture_smoke.php =====
+record_forms_fixture_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [71] record_forms_instance_smoke.php =====
+record_forms_instance_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [72] record_forms_personnel_fidelity_smoke.php =====
+record_forms_personnel_fidelity_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [73] record_forms_print_smoke.php =====
+record_forms_print_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [74] record_forms_schema_smoke.php =====
+record_forms_schema_smoke passed
+EXIT_CODE=0
+RESULT=PASS
+===== [75] record_forms_template_review_smoke.php =====
+record_forms_template_review_smoke passed
+EXIT_CODE=0
+RESULT=PASS

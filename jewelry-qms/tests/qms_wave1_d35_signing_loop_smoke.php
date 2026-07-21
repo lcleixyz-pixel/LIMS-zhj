@@ -31,8 +31,11 @@ function assert_true(bool $condition, string $message): void
 Config::set([
     'signing_enabled' => true,
     'base_url' => 'http://docuseal.mock',
+    'public_base_url' => 'http://127.0.0.1:3100',
     'api_key' => 'mock',
     'webhook_secret' => 'wave1-d35-secret',
+    'template_id' => 1,
+    'send_email' => false,
     'mock' => true,
 ], 'qms.docuseal');
 // 本 smoke 用单票闭环验证 D-5 链路（生产仍按 approvalRules）
@@ -89,8 +92,11 @@ assert_true($doc !== null, 'document inserted');
 $service = new DocuSealService([
     'signing_enabled' => true,
     'base_url' => 'http://docuseal.mock',
+    'public_base_url' => 'http://127.0.0.1:3100',
     'api_key' => 'mock',
     'webhook_secret' => 'wave1-d35-secret',
+    'template_id' => 1,
+    'send_email' => false,
     'mock' => true,
 ]);
 
@@ -98,12 +104,25 @@ $started = $service->startSigningForDocument($doc);
 assert_true(($started['ok'] ?? false) === true, 'D-3 mock createSubmission ok');
 assert_true(($started['submission_id'] ?? '') !== '', 'D-3 submission_id present');
 assert_true(($started['content_sha256'] ?? '') !== '', 'D-3 content sha present');
+assert_true(is_array($started['embeds'] ?? null) && count($started['embeds']) >= 1, 'D-3 embed links present');
+assert_true(str_contains((string)($started['embeds'][0]['embed_src'] ?? ''), '/s/'), 'D-3 embed_src path');
 
 $pendingRound = (int)Db::name('document_signing_rounds')
     ->where('document_id', $docId)
     ->where('decision', 'pending')
     ->count();
 assert_true($pendingRound >= 1, 'D-3 records pending signing round');
+
+$note = (string)Db::name('document_signing_rounds')
+    ->where('document_id', $docId)
+    ->where('decision', 'pending')
+    ->order('round_no', 'desc')
+    ->value('note');
+assert_true(str_contains($note, 'submission_created_embed') || str_contains($note, 'embed_src'), 'D-3 note stores embed payload');
+
+$embedsReload = $service->latestEmbedsForDocument($docId);
+assert_true(count($embedsReload) >= 1, 'latestEmbedsForDocument reads note JSON');
+
 
 $content = $service->resolveDocumentBytes($doc);
 $sha = hash('sha256', $content);

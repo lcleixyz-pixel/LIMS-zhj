@@ -31,18 +31,21 @@
     <div class="row align-items-center py-2">
         <div class="col-md-3">
             <h5 class="mb-0"><a href="/dashboard/index" class="text-decoration-none text-dark">{$systemTitle|default='JewelryQMS'}</a></h5>
-            <small class="text-muted">珠宝检测实验室 QMS</small>
+            <small class="text-muted">珠宝检测实验室质量管理系统</small>
         </div>
         <div class="col-md-6 text-center">
             <span class="badge bg-secondary">CMA/CNAS 质量管理体系</span>
         </div>
         <div class="col-md-3 text-end">
             <strong>{$user.name|default=''}</strong>
-            {if isset($notificationCount) && $notificationCount > 0}
-            <a href="/notification/index" class="badge bg-danger ms-1 text-decoration-none">{$notificationCount}</a>
-            {else}
-            <a href="/notification/index" class="badge bg-secondary ms-1 text-decoration-none" title="暂无未读通知">0</a>
-            {/if}
+            <a href="/notification/index" class="text-muted text-decoration-none ms-2" title="通知中心">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
+                    <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5.002 5.002 0 0 1 13 6c0 .88.32 4.2 1.22 6z"/>
+                </svg>
+                {if isset($notificationCount) && $notificationCount > 0}
+                <span class="badge bg-danger">{$notificationCount}</span>
+                {/if}
+            </a>
             <br>
             <a href="/login/changePassword" class="btn btn-sm btn-outline-secondary">修改密码</a>
             <a href="/login/logout" class="btn btn-sm btn-primary">退出</a>
@@ -66,7 +69,7 @@
                         {/if}
                         {if condition="qms_can('record_form_instance')"}
                         <li><a class="dropdown-item" href="/record_form_instance/index">填写记录</a></li>
-                        <li><a class="dropdown-item" href="/record_form_instance/reviewDashboard?year=2025">2025 运行确认</a></li>
+                        <li><a class="dropdown-item" href="/record_form_instance/reviewDashboard?year=2025">年度运行确认（2025）</a></li>
                         {/if}
                         {if condition="qms_can('record_form_template')"}
                         <li><hr class="dropdown-divider"></li>
@@ -139,7 +142,7 @@
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">质量改进</a>
                     <ul class="dropdown-menu">
                         {if condition="qms_can('capa')"}
-                        <li><a class="dropdown-item" href="/capa/index">CAPA</a></li>
+                        <li><a class="dropdown-item" href="/capa/index">纠正措施（CAPA）</a></li>
                         {/if}
                         {if condition="qms_can('nonconformity')"}
                         <li><a class="dropdown-item" href="/nonconformity/index">不符合工作</a></li>
@@ -173,7 +176,7 @@
                         <li><a class="dropdown-item" href="/calibration/index">校准记录</a></li>
                         {/if}
                         {if condition="qms_can('equipment')"}
-                        <li><a class="dropdown-item" href="/equipment_period_check/index">期间核查计划（机制入口）</a></li>
+                        <li><a class="dropdown-item" href="/equipment_period_check/index">期间核查计划</a></li>
                         {/if}
                         {if condition="qms_can('reference_material')"}
                         <li><a class="dropdown-item" href="/reference_material/index">标准物质台账</a></li>

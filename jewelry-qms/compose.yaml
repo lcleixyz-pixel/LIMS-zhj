@@ -6,6 +6,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - docker/.env.signing
     environment:
       APP_DEBUG: "false"
       TZ: Asia/Shanghai
@@ -62,9 +64,16 @@ services:
       retries: 30
       start_period: 20s
 
-  # 签批闸门：默认不启动。启用：docker compose --profile signing up -d docuseal
+  # 签批闸门：默认不启动。启用：docker compose --profile signing build docuseal && up -d docuseal
+  # 自建简体中文镜像（钉 3.1.5 + overlay），见 docker/docuseal-zh/
   docuseal:
-    image: docuseal/docuseal:latest
+    image: lims/docuseal-zh:3.1.5-zh
+    build:
+      context: ./docker/docuseal-zh
+      dockerfile: Dockerfile
+      args:
+        DOCUSEAL_VERSION: "3.1.5"
+        DOCUSEAL_GIT_SHA: "5fe75c84ffc71d1e879884f453a7532b4dee049a"
     profiles:
       - signing
     environment:

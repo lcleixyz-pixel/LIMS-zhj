@@ -8,7 +8,9 @@ use app\model\Department as DepartmentModel;
 use app\model\Employee as EmployeeModel;
 use app\model\RecordFormInstance as InstanceModel;
 use app\model\RecordFormTemplate as TemplateModel;
+use app\model\User;
 use app\service\FileService;
+use app\service\NotificationService;
 use app\service\PdfRenderService;
 use app\service\RecordFormBatchReviewService;
 use app\service\RecordFormLayoutConfirmationService;
@@ -143,7 +145,7 @@ class RecordFormInstance extends BaseController
             $note,
             (string)Session::get('user.name', Session::get('user.username', ''))
         );
-        Session::flash('success', '版式确认状态已更新');
+        Session::flash('success', '版式确认状态已更新，可在年度运行确认页面查看确认结果。');
 
         $returnUrl = trim((string)$this->request->post('return_url', ''));
         if ($returnUrl === '' || !str_starts_with($returnUrl, '/record_form_instance/reviewDashboard')) {
@@ -156,14 +158,14 @@ class RecordFormInstance extends BaseController
     public function create()
     {
         if (trim((string)$this->request->param('template_id', '')) === '') {
-            Session::flash('warning', '请先选择记录模板，再填写记录。');
+            Session::flash('warning', '请先选择记录模板，再填写记录。可进入「记录填报 → 记录模板」选择。');
 
             return redirect('/record_form_template/index');
         }
 
         $template = $this->findTemplate();
         if (!$this->isTemplateFillable($template)) {
-            Session::flash('warning', '只有已完成高保真复核的已发布记录表格模板可填写');
+            Session::flash('warning', '当前模板未发布或未完成复核，暂不可填写。请联系质量负责人处理。');
 
             return redirect('/record_form_template/view?id=' . $template->id);
         }
@@ -216,7 +218,7 @@ class RecordFormInstance extends BaseController
                 'is_simulation' => $isSimulation ? 1 : 0,
                 'trial_batch' => $isSimulation ? TrialModeService::trialBatch() : null,
             ]);
-            Session::flash('success', '记录草稿已保存');
+            Session::flash('success', '记录草稿已保存。请继续填写或确认无误后生成 PDF。');
 
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
@@ -281,7 +283,7 @@ class RecordFormInstance extends BaseController
     {
         $record = $this->findInstance();
         if (!$this->canEditRecord($record)) {
-            Session::flash('warning', '已形成 PDF、已归档或已作废记录不能直接编辑；如需更正，请先走作废/换版/更正流程。');
+            Session::flash('warning', '记录已锁定，不可直接编辑。如需更正，请点击「申请更正」按钮或联系质量负责人。');
 
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
@@ -306,7 +308,7 @@ class RecordFormInstance extends BaseController
                     'generated_pdf_path' => null,
                     'generated_pdf_name' => null,
                 ]);
-                Session::flash('success', '记录已保存');
+                Session::flash('success', '记录已保存，当前仍为草稿。确认无误后可生成 PDF。');
 
                 return redirect('/record_form_instance/view?id=' . $record->id);
             }
@@ -340,6 +342,38 @@ class RecordFormInstance extends BaseController
         return View::fetch('record_form_instance/view');
     }
 
+    public function requestCorrection()
+    {
+        $record = $this->findInstance();
+        $reason = trim((string)$this->request->post('reason', ''));
+        if ($reason === '') {
+            Session::flash('error', '请填写更正原因。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        $qualityManagerIds = User::where('role', 'quality_manager')
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->column('id');
+
+        if ($qualityManagerIds !== []) {
+            NotificationService::notifyUsers(
+                '记录更正申请',
+                "记录「{$record->record_title}」申请更正，原因：{$reason}",
+                'record_form_instance',
+                $qualityManagerIds,
+                'record_form_instance',
+                'view',
+                (string)$record->id
+            );
+        }
+
+        Session::flash('success', '更正申请已提交。质量负责人将收到通知并协助处理，请留意通知中心。');
+
+        return redirect('/record_form_instance/view?id=' . $record->id);
+    }
+
     public function print()
     {
         $record = $this->findInstance();
@@ -355,13 +389,13 @@ class RecordFormInstance extends BaseController
         }
 
         if (!$this->canExportPdf($record)) {
-            Session::flash('warning', '已归档或已作废记录不能重新生成 PDF。');
+            Session::flash('warning', '已归档或已作废记录不能重新生成 PDF。如需变更请发起更正或换版。');
 
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
 
         if (!class_exists(PdfRenderService::class)) {
-            Session::flash('warning', 'PDF 渲染服务尚未接入，请在 Task6 完成后再生成 PDF。');
+            Session::flash('warning', 'PDF 渲染服务尚未配置，暂不可用。请联系管理员确认服务状态。');
 
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
@@ -373,7 +407,7 @@ class RecordFormInstance extends BaseController
             'generated_pdf_name' => $pdf['file_name'],
             'status' => 'generated',
         ]);
-        Session::flash('success', 'PDF 已生成');
+        Session::flash('success', '记录 PDF 已生成，记录状态已锁定为「已生成PDF」。如需更正请走作废/换版/更正流程。');
 
         return redirect('/record_form_instance/view?id=' . $record->id);
     }
