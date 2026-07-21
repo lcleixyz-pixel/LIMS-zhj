@@ -91,6 +91,41 @@
     </div>
 </div>
 
+{if !empty($signingEmbeds)}
+<div class="card mb-3 border-warning">
+    <div class="card-header bg-warning-subtle"><h6 class="mb-0">DocuSeal 签批（embed，免 SMTP）</h6></div>
+    <div class="card-body">
+        <p class="text-muted small mb-2">提审后生成的内嵌签署链接。按角色打开签署；不依赖邮件。</p>
+        <div class="table-responsive">
+            <table class="table table-sm mb-3">
+                <thead><tr><th>角色</th><th>邮箱</th><th>签署入口</th></tr></thead>
+                <tbody>
+                    {volist name="signingEmbeds" id="embed"}
+                    <tr>
+                        <td>{$embed.role|default='-'}</td>
+                        <td>{$embed.email|default='-'}</td>
+                        <td>
+                            {if !empty($embed.embed_src)}
+                            <a class="btn btn-sm btn-outline-primary" href="{$embed.embed_src}" target="_blank" rel="noopener">打开签署页</a>
+                            {else}-{/if}
+                        </td>
+                    </tr>
+                    {/volist}
+                </tbody>
+            </table>
+        </div>
+        {volist name="signingEmbeds" id="embed"}
+        {if !empty($embed.embed_src)}
+        <div class="mb-3">
+            <div class="small text-muted mb-1">{$embed.role|default=''} · {$embed.email|default=''}</div>
+            <iframe src="{$embed.embed_src}" title="DocuSeal embed {$embed.role|default=''}" style="width:100%;min-height:520px;border:1px solid #dee2e6;border-radius:4px;"></iframe>
+        </div>
+        {/if}
+        {/volist}
+    </div>
+</div>
+{/if}
+
 <div class="card mb-3">
     <div class="card-header"><h6 class="mb-0">分发记录</h6></div>
     <div class="card-body">

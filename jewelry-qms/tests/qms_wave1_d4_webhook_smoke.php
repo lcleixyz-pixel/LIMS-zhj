@@ -57,6 +57,26 @@ assert_true(($store['ok'] ?? true) === false && ($store['error'] ?? '') === 'has
 foreach (glob($nonceDir . '/*') ?: [] as $file) {
     @unlink($file);
 }
+
+// 原生头：timestamp.hexdigest(secret, "timestamp.body")
+$nativeBody = json_encode(['event_type' => 'submission.completed', 'data' => ['id' => 9]], JSON_UNESCAPED_UNICODE);
+$nativeTs = (string)time();
+$nativeSig = hash_hmac('sha256', $nativeTs . '.' . $nativeBody, $secret);
+$nativeOk = $service->verifyNativeWebhookSignature($nativeBody, $nativeTs . '.' . $nativeSig);
+assert_true(($nativeOk['ok'] ?? false) === true && ($nativeOk['mode'] ?? '') === 'native', 'D-4 accepts native DocuSeal signature');
+$nativeReplay = $service->verifyNativeWebhookSignature($nativeBody, $nativeTs . '.' . $nativeSig);
+assert_true(($nativeReplay['ok'] ?? true) === false && ($nativeReplay['error'] ?? '') === 'replay', 'D-4 rejects native replay');
+
+$nativeTs2 = (string)(time() + 1);
+$viaUnified = $service->verifyWebhookSignature(
+    $nativeBody,
+    $nativeTs2 . '.' . hash_hmac('sha256', $nativeTs2 . '.' . $nativeBody, $secret)
+);
+assert_true(($viaUnified['ok'] ?? false) === true, 'D-4 unified verify accepts native header');
+
+foreach (glob($nonceDir . '/*') ?: [] as $file) {
+    @unlink($file);
+}
 @rmdir($nonceDir);
 
 echo "qms_wave1_d4_webhook_smoke passed\n";

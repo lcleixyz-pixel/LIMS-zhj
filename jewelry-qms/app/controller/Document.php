@@ -259,6 +259,16 @@ class Document extends BaseController
         View::assign('distributionUsers', User::where('soft_delete', 0)->where('publish', 1)->order('name', 'asc')->select());
         View::assign('structureSummary', QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id));
         View::assign('printLogs', ControlledPrintService::recentLogs((string)$doc->id, 5));
+        $signingEmbeds = [];
+        if (in_array((string)$doc->status, ['reviewing', 'draft'], true) && \app\service\DocuSealService::isSigningEnabled()) {
+            try {
+                $signingEmbeds = (new \app\service\DocuSealService())->latestEmbedsForDocument((string)$doc->id);
+            } catch (\Throwable $e) {
+                $signingEmbeds = [];
+            }
+        }
+        View::assign('signingEmbeds', $signingEmbeds);
+        View::assign('docusealSigningEnabled', \app\service\DocuSealService::isSigningEnabled());
 
         return View::fetch('document/view');
     }

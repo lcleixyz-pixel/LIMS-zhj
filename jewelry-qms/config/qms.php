@@ -191,9 +191,17 @@ return [
             env('DOCUSEAL_SIGNING_ENABLED', getenv('DOCUSEAL_SIGNING_ENABLED') ?: '0'),
             FILTER_VALIDATE_BOOLEAN
         ),
-        'base_url' => env('DOCUSEAL_BASE_URL', 'http://127.0.0.1:3100'),
-        'api_key' => env('DOCUSEAL_API_KEY', ''),
-        'webhook_secret' => env('DOCUSEAL_WEBHOOK_SECRET', ''),
+        // app 容器内访问 DocuSeal API（compose 服务名）；浏览器侧用 public_base_url
+        'base_url' => env('DOCUSEAL_BASE_URL', getenv('DOCUSEAL_BASE_URL') ?: 'http://127.0.0.1:3100'),
+        'public_base_url' => env('DOCUSEAL_PUBLIC_BASE_URL', getenv('DOCUSEAL_PUBLIC_BASE_URL') ?: 'http://127.0.0.1:3100'),
+        'api_key' => env('DOCUSEAL_API_KEY', getenv('DOCUSEAL_API_KEY') ?: ''),
+        'webhook_secret' => env('DOCUSEAL_WEBHOOK_SECRET', getenv('DOCUSEAL_WEBHOOK_SECRET') ?: ''),
+        // 开源版：走 template_id + send_email=false embed；PDF one-off 属 Pro
+        'template_id' => (int)(env('DOCUSEAL_TEMPLATE_ID', getenv('DOCUSEAL_TEMPLATE_ID') ?: '0') ?: 0),
+        'send_email' => filter_var(
+            env('DOCUSEAL_SEND_EMAIL', getenv('DOCUSEAL_SEND_EMAIL') ?: '0'),
+            FILTER_VALIDATE_BOOLEAN
+        ),
     ],
 
     'ai' => [

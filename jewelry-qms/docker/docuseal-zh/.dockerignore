@@ -1,0 +1,5 @@
+# 构建上下文忽略上游缓存与大体积脚本中间件（overlay 必须保留）
+scripts/upstream_*
+scripts/zh_cache.json
+.git
+*.md
