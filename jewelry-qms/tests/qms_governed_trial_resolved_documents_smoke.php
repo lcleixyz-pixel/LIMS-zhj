@@ -46,6 +46,13 @@ resolved_documents_assert(str_contains((string)($cx21['resolved_body'] ?? ''), '
 resolved_documents_assert(str_contains((string)($cx21['resolved_body'] ?? ''), 'XZTC/BG-21-04'), 'CX-21正确记录清单应进入连续稿');
 resolved_documents_assert(!str_contains((string)($cx21['resolved_body'] ?? ''), '《年度内审计划表》'), 'CX-21不应继续混挂内审记录');
 
+foreach ($preview['documents'] ?? [] as $document) {
+    resolved_documents_assert(
+        preg_match('/XZTC\\/CX-[0-9]+(?:-[0-9]+)?-2018/u', (string)$document['resolved_body']) !== 1,
+        (string)$document['doc_number'] . ' 不应继续保留已签认清扫范围内的2018程序引用'
+    );
+}
+
 $output = sys_get_temp_dir() . '/qms-governed-resolved-' . getmypid();
 $written = GovernedTrialResolvedDocumentService::writePackage($preview, $output);
 resolved_documents_assert(is_file($output . '/装配清单.json'), '应生成装配清单JSON');

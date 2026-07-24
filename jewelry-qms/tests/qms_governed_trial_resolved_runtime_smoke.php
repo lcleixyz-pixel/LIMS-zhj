@@ -51,4 +51,32 @@ resolved_runtime_assert(str_contains($view, '修订对照'), '结构化文件页
 resolved_runtime_assert(str_contains($view, '冲突审查'), '结构化文件页面应提供冲突审查入口');
 resolved_runtime_assert(str_contains($view, '存在阻断冲突，不能提交审核'), '阻断冲突应在页面明确禁用后续审核');
 
+if ($after === 38) {
+    $recordLinks = Db::name('qms_document_block_links')->alias('link')
+        ->join('qms_document_blocks block', 'block.id = link.block_id')
+        ->join('qms_structured_documents structure', 'structure.id = block.structured_document_id')
+        ->join('record_form_templates template', 'template.id = link.record_form_template_id')
+        ->where('structure.version', 'GOV-TRIAL/0.2')
+        ->where('structure.document_role', 'procedure')
+        ->where('structure.soft_delete', 0)
+        ->where('block.block_type', 'record_requirement')
+        ->where('block.soft_delete', 0)
+        ->where('link.soft_delete', 0)
+        ->field('block.markdown,template.doc_number,template.canonical_doc_number,template.name')
+        ->select()
+        ->toArray();
+    foreach ($recordLinks as $recordLink) {
+        $markdown = (string)$recordLink['markdown'];
+        $canonical = (string)($recordLink['canonical_doc_number'] ?? '');
+        $trialNumber = (string)($recordLink['doc_number'] ?? '');
+        $name = (string)($recordLink['name'] ?? '');
+        resolved_runtime_assert(
+            ($canonical !== '' && str_contains($markdown, $canonical))
+                || ($trialNumber !== '' && str_contains($markdown, $trialNumber))
+                || ($name !== '' && str_contains($markdown, $name)),
+            '程序记录块不得继承正文中未出现的记录表关系'
+        );
+    }
+}
+
 echo "qms_governed_trial_resolved_runtime_smoke passed\n";

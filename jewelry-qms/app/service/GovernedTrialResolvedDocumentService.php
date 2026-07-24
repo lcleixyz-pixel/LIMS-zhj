@@ -102,6 +102,10 @@ final class GovernedTrialResolvedDocumentService
         if ($blockCount <= 38) {
             $errors[] = '连续正文未按实际标题拆分为多个内容块';
         }
+        $recordLinkMismatches = $structureIds === [] ? 0 : self::recordLinkMismatchCount($structureIds);
+        if ($recordLinkMismatches !== 0) {
+            $errors[] = '存在' . $recordLinkMismatches . '条记录表关系未在对应记录块正文中出现';
+        }
         foreach ($structures as $structure) {
             if (($structure['render_status'] ?? '') !== 'rendered') {
                 $errors[] = (string)$structure['doc_number'] . ' 未标记为已渲染';
@@ -124,6 +128,7 @@ final class GovernedTrialResolvedDocumentService
             'errors' => $errors,
             'structured_documents' => count($structures),
             'document_blocks' => $blockCount,
+            'record_link_mismatches' => $recordLinkMismatches,
             'base_version_documents' => $v01Count,
         ];
     }
@@ -662,6 +667,7 @@ final class GovernedTrialResolvedDocumentService
 
         $blocks = self::splitResolvedMarkdown($markdown);
         $firstBlockId = '';
+        $recordBlocks = [];
         foreach ($blocks as $index => $block) {
             $stableKey = 'resolved_' . str_pad((string)($index + 1), 3, '0', STR_PAD_LEFT)
                 . '_' . substr(hash('sha256', (string)$block['heading']), 0, 12);
@@ -676,6 +682,10 @@ final class GovernedTrialResolvedDocumentService
             if ($firstBlockId === '') {
                 $firstBlockId = $blockId;
             }
+            $blockType = self::resolvedBlockType((string)$block['title']);
+            if ($blockType === 'record_requirement') {
+                $recordBlocks[$blockId] = (string)$block['markdown'];
+            }
             $row = [
                 'company_id' => $companyId,
                 'structured_document_id' => $structuredId,
@@ -684,7 +694,7 @@ final class GovernedTrialResolvedDocumentService
                 'stable_key' => $stableKey,
                 'section_number' => (string)$block['section_number'],
                 'title' => (string)$block['title'],
-                'block_type' => self::resolvedBlockType((string)$block['title']),
+                'block_type' => $blockType,
                 'markdown' => (string)$block['markdown'],
                 'sort_order' => ($index + 1) * 10,
                 'source_locator' => $sourcePath . '#' . (string)$block['heading'],
@@ -703,24 +713,29 @@ final class GovernedTrialResolvedDocumentService
         }
 
         if ($firstBlockId !== '' && $priorStructuredId !== '') {
-            self::copyPriorTraceLinks($priorStructuredId, $firstBlockId, $companyId);
+            self::copyPriorTraceLinks($priorStructuredId, $firstBlockId, $recordBlocks, $companyId);
         }
     }
 
     private static function copyPriorTraceLinks(
         string $priorStructuredId,
         string $newBlockId,
+        array $recordBlocks,
         string $companyId
     ): void {
         $rows = Db::name('qms_document_block_links')->alias('link')
             ->join('qms_document_blocks block', 'block.id = link.block_id')
+            ->leftJoin('record_form_templates template', 'template.id = link.record_form_template_id')
             ->where('block.structured_document_id', $priorStructuredId)
             ->where('block.soft_delete', 0)
             ->where('link.soft_delete', 0)
             ->field(
                 'link.element_id,link.clause_id,link.manual_section_id,link.procedure_document_id,'
                 . 'link.record_form_template_id,link.position_id,link.business_module_id,'
-                . 'link.relation_type,link.confidence,link.note'
+                . 'link.relation_type,link.confidence,link.note,'
+                . 'template.doc_number template_doc_number,'
+                . 'template.canonical_doc_number template_canonical_doc_number,'
+                . 'template.name template_name'
             )
             ->select()
             ->toArray();
@@ -731,20 +746,79 @@ final class GovernedTrialResolvedDocumentService
         }
         $insert = [];
         foreach ($deduplicated as $row) {
-            $insert[] = array_merge($row, [
-                'id' => qms_uuid(),
-                'company_id' => $companyId,
-                'block_id' => $newBlockId,
-                'note' => trim((string)($row['note'] ?? '') . '；由GOV-TRIAL/0.1追溯关系继承，待0.2逐块复核。', '；'),
-                'publish' => 1,
-                'soft_delete' => 0,
-                'created' => date('Y-m-d H:i:s'),
-                'modified' => date('Y-m-d H:i:s'),
-            ]);
+            $linkRow = $row;
+            unset(
+                $linkRow['template_doc_number'],
+                $linkRow['template_canonical_doc_number'],
+                $linkRow['template_name']
+            );
+            if (!empty($row['record_form_template_id'])) {
+                $destinations = [];
+                foreach ($recordBlocks as $blockId => $blockMarkdown) {
+                    if (self::recordTemplateMentioned($blockMarkdown, $row)) {
+                        $destinations[] = $blockId;
+                    }
+                }
+            } else {
+                $destinations = [$newBlockId];
+            }
+            foreach (array_values(array_unique($destinations)) as $destinationBlockId) {
+                $insert[] = array_merge($linkRow, [
+                    'id' => qms_uuid(),
+                    'company_id' => $companyId,
+                    'block_id' => $destinationBlockId,
+                    'note' => trim((string)($row['note'] ?? '') . '；由GOV-TRIAL/0.1追溯关系继承，待0.2逐块复核。', '；'),
+                    'publish' => 1,
+                    'soft_delete' => 0,
+                    'created' => date('Y-m-d H:i:s'),
+                    'modified' => date('Y-m-d H:i:s'),
+                ]);
+            }
         }
         if ($insert !== []) {
             Db::name('qms_document_block_links')->insertAll($insert);
         }
+    }
+
+    private static function recordTemplateMentioned(string $markdown, array $template): bool
+    {
+        foreach ([
+            (string)($template['template_canonical_doc_number'] ?? ''),
+            (string)($template['template_doc_number'] ?? ''),
+            (string)($template['template_name'] ?? ''),
+        ] as $needle) {
+            if ($needle !== '' && str_contains($markdown, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function recordLinkMismatchCount(array $structureIds): int
+    {
+        $rows = Db::name('qms_document_block_links')->alias('link')
+            ->join('qms_document_blocks block', 'block.id = link.block_id')
+            ->join('record_form_templates template', 'template.id = link.record_form_template_id')
+            ->whereIn('block.structured_document_id', $structureIds)
+            ->where('block.block_type', 'record_requirement')
+            ->where('block.soft_delete', 0)
+            ->where('link.soft_delete', 0)
+            ->field(
+                'block.markdown,template.doc_number template_doc_number,'
+                . 'template.canonical_doc_number template_canonical_doc_number,'
+                . 'template.name template_name'
+            )
+            ->select()
+            ->toArray();
+        $mismatches = 0;
+        foreach ($rows as $row) {
+            if (!self::recordTemplateMentioned((string)$row['markdown'], $row)) {
+                $mismatches++;
+            }
+        }
+
+        return $mismatches;
     }
 
     private static function splitResolvedMarkdown(string $markdown): array

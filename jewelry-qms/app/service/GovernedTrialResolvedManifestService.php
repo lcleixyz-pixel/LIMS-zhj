@@ -38,7 +38,7 @@ final class GovernedTrialResolvedManifestService
         }
 
         $patches = array_merge(
-            self::numberingPatches($baselineMarkdown['XZTC/SC'] ?? '', $sources),
+            self::numberingPatches($baselineMarkdown, $sources),
             self::managementReviewPatches($baselineMarkdown['XZTC/CX-21-2022'] ?? '', $sources)
         );
 
@@ -203,7 +203,40 @@ final class GovernedTrialResolvedManifestService
         return $sources;
     }
 
-    private static function numberingPatches(string $manual, array $sources): array
+    private static function numberingPatches(array $documents, array $sources): array
+    {
+        $patches = [];
+        $sequence = 0;
+        foreach ($documents as $docNumber => $manual) {
+            foreach (self::numberingPatchRanges((string)$manual) as $range) {
+                $anchor = substr((string)$manual, $range['start'], $range['end'] - $range['start']);
+                $replacement = preg_replace(
+                    '/XZTC\/CX-([0-9]+(?:-[0-9]+)?)-2018/u',
+                    'XZTC/CX-$1-2022',
+                    $anchor
+                );
+                if (!is_string($replacement) || $replacement === $anchor) {
+                    continue;
+                }
+                $sequence++;
+                $patches[] = self::patch(
+                    'G1-K2-' . str_pad((string)$sequence, 3, '0', STR_PAD_LEFT),
+                    (string)$docNumber,
+                    'replace_exact',
+                    $anchor,
+                    $replacement,
+                    $sources['numbering_final'],
+                    $sources['numbering_final'],
+                    ['8.3'],
+                    '批次③K1/K2已签认：程序交叉引用统一去年份化并校准到现用2022版。'
+                );
+            }
+        }
+
+        return $patches;
+    }
+
+    private static function numberingPatchRanges(string $manual): array
     {
         $lines = preg_split('/\n/u', $manual) ?: [];
         $ranges = [];
@@ -241,31 +274,7 @@ final class GovernedTrialResolvedManifestService
             $merged[] = $range;
         }
 
-        $patches = [];
-        foreach ($merged as $index => $range) {
-            $anchor = substr($manual, $range['start'], $range['end'] - $range['start']);
-            $replacement = preg_replace(
-                '/XZTC\/CX-([0-9]+(?:-[0-9]+)?)-2018/u',
-                'XZTC/CX-$1-2022',
-                $anchor
-            );
-            if (!is_string($replacement) || $replacement === $anchor) {
-                continue;
-            }
-            $patches[] = self::patch(
-                'G1-K2-' . str_pad((string)($index + 1), 3, '0', STR_PAD_LEFT),
-                'XZTC/SC',
-                'replace_exact',
-                $anchor,
-                $replacement,
-                $sources['numbering_final'],
-                $sources['numbering_final'],
-                ['8.3'],
-                '批次③K1/K2已签认：程序交叉引用统一去年份化并校准到现用2022版。'
-            );
-        }
-
-        return $patches;
+        return $merged;
     }
 
     private static function managementReviewPatches(string $baseline, array $sources): array
