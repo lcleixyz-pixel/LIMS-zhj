@@ -49,9 +49,69 @@ $view = file_get_contents(__DIR__ . '/../app/view/planning_structure/view.html')
 resolved_runtime_assert(str_contains($view, '连续正文'), '结构化文件页面应提供连续正文入口');
 resolved_runtime_assert(str_contains($view, '修订对照'), '结构化文件页面应提供修订对照入口');
 resolved_runtime_assert(str_contains($view, '冲突审查'), '结构化文件页面应提供冲突审查入口');
-resolved_runtime_assert(str_contains($view, '存在阻断冲突，不能提交审核'), '阻断冲突应在页面明确禁用后续审核');
+resolved_runtime_assert(str_contains($view, 'blocking_message'), '治理解析稿页面应按当前状态显示阻断或可提交说明');
+resolved_runtime_assert(str_contains($view, 'notice_class'), '治理解析稿页面应区分就绪与阻断提示样式');
+
+$activeLinks = GovernedTrialResolvedDocumentService::resolvedArtifactLinks([
+    'id' => 'active-test',
+    'version' => 'GOV-TRIAL/0.2',
+    'doc_number' => 'SIM-GOV02-XZTC/CX-01-2022',
+    'status' => 'draft',
+]);
+resolved_runtime_assert(($activeLinks['can_submit'] ?? false) === true, '无阻断的活动文件应可进入8021 SIM审核');
+$obsoleteLinks = GovernedTrialResolvedDocumentService::resolvedArtifactLinks([
+    'id' => 'obsolete-test',
+    'version' => 'GOV-TRIAL/0.2',
+    'doc_number' => 'SIM-GOV02-XZTC/CX-35-2022',
+    'status' => 'obsolete',
+]);
+resolved_runtime_assert(($obsoleteLinks['can_submit'] ?? true) === false, '作废保留的CX-35不得进入审核');
 
 if ($after === 38) {
+    $activeTrialReady = (int)Db::name('documents')
+        ->where('version', 'GOV-TRIAL/0.2')
+        ->where('status', 'trial_ready')
+        ->where('soft_delete', 0)
+        ->count();
+    resolved_runtime_assert($activeTrialReady === 37, '除CX-35外的37份解析稿应进入SIM试运行就绪状态');
+    $obsoleteCx35 = (int)Db::name('documents')
+        ->where('version', 'GOV-TRIAL/0.2')
+        ->where('doc_number', 'SIM-GOV02-XZTC/CX-35-2022')
+        ->where('status', 'obsolete')
+        ->where('soft_delete', 0)
+        ->count();
+    resolved_runtime_assert($obsoleteCx35 === 1, 'CX-35解析稿应在8021标为作废保留');
+    $appendixBlocks = (int)Db::name('qms_document_blocks')->alias('block')
+        ->join('qms_structured_documents structure', 'structure.id = block.structured_document_id')
+        ->where('structure.version', 'GOV-TRIAL/0.2')
+        ->where('structure.doc_number', 'SIM-GOV02-XZTC/SC')
+        ->whereIn('block.title', ['附录14：程序文件目录', '附录15：各岗位任职资格条件', '附录16：质量手册条款对照表'])
+        ->where('block.soft_delete', 0)
+        ->count();
+    resolved_runtime_assert($appendixBlocks === 3, '附录14至16应形成三个独立结构块');
+
+    $bg3503 = Db::name('record_form_templates')->alias('template')
+        ->leftJoin('documents procedure', 'procedure.id = template.procedure_doc_id')
+        ->where('template.trial_batch', 'GOV-TRIAL-20260724')
+        ->where('template.canonical_doc_number', 'XZTC/BG-35-03')
+        ->where('template.soft_delete', 0)
+        ->field('template.name,procedure.doc_number procedure_doc_number')
+        ->find();
+    resolved_runtime_assert(
+        is_array($bg3503) && ($bg3503['name'] ?? '') === '[治理试运行] 标准物质报废申请表',
+        'BG-35-03必须按记录总台账恢复为标准物质报废申请表'
+    );
+    resolved_runtime_assert(
+        ($bg3503['procedure_doc_number'] ?? '') === 'SIM-XZTC/CX-03-02-2022',
+        'BG-35-03必须关联标准物质管理程序'
+    );
+    $samplingTemplates = (int)Db::name('record_form_templates')
+        ->where('trial_batch', 'GOV-TRIAL-20260724')
+        ->where('soft_delete', 0)
+        ->whereLike('name', '%抽样%')
+        ->count();
+    resolved_runtime_assert($samplingTemplates === 0, '不开展抽样时不得生成活动抽样记录模板');
+
     $recordLinks = Db::name('qms_document_block_links')->alias('link')
         ->join('qms_document_blocks block', 'block.id = link.block_id')
         ->join('qms_structured_documents structure', 'structure.id = block.structured_document_id')

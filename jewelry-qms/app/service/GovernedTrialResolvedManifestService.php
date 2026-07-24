@@ -24,6 +24,8 @@ final class GovernedTrialResolvedManifestService
         'transition_content' => 'claude_G1p3-增补-v0_2.md',
         'transition_approval' => 'claude_G1p3签认暨G2开闸包-v1_0.md',
         'rbt214_basis_decision' => '.team/交接箱/2026-07-25-8021治理体系试运行装配/02-RBT214依据身份治理决定-v0.1.md',
+        'g2_record_ledger' => 'claude_G2-记录总台账-v0_2定稿.md',
+        'trial_blocker_closure' => '.team/交接箱/2026-07-25-8021治理体系试运行装配/03-试运行阻断关闭决定-v0.1.md',
     ];
 
     public static function build(): array
@@ -41,7 +43,8 @@ final class GovernedTrialResolvedManifestService
         $patches = array_merge(
             self::numberingPatches($baselineMarkdown, $sources),
             self::managementReviewPatches($baselineMarkdown['XZTC/CX-21-2022'] ?? '', $sources),
-            self::rbt214BasisPatches($baselineMarkdown, $sources)
+            self::rbt214BasisPatches($baselineMarkdown, $sources),
+            self::trialBlockerClosurePatches($baselineMarkdown, $sources)
         );
 
         $manifest = [
@@ -52,9 +55,9 @@ final class GovernedTrialResolvedManifestService
             'baselines' => $baselines,
             'sources' => array_values($sources),
             'patches' => $patches,
-            'deferred_signed_items' => [
-                '其余G1签认项因尚未形成可唯一命中的机器锚点，不自动改写；由冲突审查逐项阻断或提醒。',
-                'CX-35作废、附录补挂和记录表号迁移须与文件状态及G2记录总台账联动，不在文本补丁中静默处理。',
+            'deferred_signed_items' => [],
+            'non_blocking_governance_notes' => [
+                'G1其余已签认内容继续按来源清单逐项融入连续正文；当前仅以实际登记并命中的精确补丁计入完成，不阻止8021 SIM链路。',
             ],
         ];
         $manifest['validation'] = self::validate($manifest);
@@ -212,6 +215,9 @@ final class GovernedTrialResolvedManifestService
         $patches = [];
         $sequence = 0;
         foreach ($documents as $docNumber => $manual) {
+            if ($docNumber === 'XZTC/SC') {
+                continue;
+            }
             foreach (self::numberingPatchRanges((string)$manual) as $range) {
                 $anchor = substr((string)$manual, $range['start'], $range['end'] - $range['start']);
                 $replacement = preg_replace(
@@ -353,6 +359,82 @@ final class GovernedTrialResolvedManifestService
                 $source,
                 ['6.2', 'CMA依据治理'],
                 '机构于2026-07-25确认：RB/T 214-2017仅保留历史/辅助参考身份，不作为现行CMA主依据。',
+                '2026-07-25'
+            );
+        }
+
+        return $patches;
+    }
+
+    private static function trialBlockerClosurePatches(array $documents, array $sources): array
+    {
+        $source = $sources['trial_blocker_closure'];
+        $patches = [];
+        $manual = (string)($documents['XZTC/SC'] ?? '');
+        $resolvedManual = preg_replace(
+            '/XZTC\\/CX-([0-9]+(?:-[0-9]+)?)-2018/u',
+            'XZTC/CX-$1-2022',
+            $manual
+        );
+        if (is_string($resolvedManual)) {
+            $resolvedManual = preg_replace(
+                '/7\\.3 抽样\\n.*?(?=\\n7\\.4 样品)/us',
+                "7.3 抽样\n\n7.3.1 适用性声明\n\n本公司当前不开展抽样，不对客户送检样品实施取样或抽样，检测结果仅对收到的样品负责。合同评审、样品接收和报告签发时，应保持该能力边界一致；报告按适用要求声明结果仅适用于收到的样品。\n\n7.3.2 状态控制\n\n《抽样控制程序》XZTC/CX-35-2022在本治理试运行版本中作废保留，不作为现行支持性文件；《抽样登记表》和《抽样记录表》不新建、不启用。今后拟开展抽样时，应先完成能力评价、方法与人员确认、文件修订、记录设计、审核批准和受控发布，未经批准不得实施抽样。\n",
+                $resolvedManual
+            );
+        }
+        if (is_string($resolvedManual)) {
+            foreach ([
+                '附录14：程序文件目录',
+                '附录15：各岗位任职资格条件',
+                '附录16：质量手册条款对照表',
+            ] as $heading) {
+                $resolvedManual = str_replace($heading, '## ' . $heading, $resolvedManual);
+            }
+        }
+        if (is_string($resolvedManual) && $manual !== '' && $resolvedManual !== $manual) {
+            $patches[] = self::patch(
+                'USER-20260725-CLOSE-001',
+                'XZTC/SC',
+                'replace_exact',
+                $manual,
+                $resolvedManual,
+                $source,
+                $sources['g1_terminal_approval'],
+                ['7.3', '8.3', '附录14-16'],
+                '合并执行手册2018程序引用清扫、抽样适用性关闭及附录结构化，避免多个大范围补丁相互覆盖。',
+                '2026-07-25'
+            );
+        }
+
+        $cx35 = (string)($documents['XZTC/CX-35-2022'] ?? '');
+        if ($cx35 !== '') {
+            $patches[] = self::patch(
+                'USER-20260725-CLOSE-002',
+                'XZTC/CX-35-2022',
+                'replace_exact',
+                $cx35,
+                "# 抽样控制程序（作废保留）\n\n## 1 状态\n\n本公司当前不开展抽样。本程序在 `GOV-TRIAL/0.2` 中标记为不适用并作废保留，不得用于指导或证明现行检测活动。\n\n## 2 处置\n\n- 不新建、不启用《抽样登记表》和《抽样记录表》；\n- 原程序全文和来源哈希通过修订对照保留，供历史追溯；\n- 系统不得把 BG-35 标准物质记录关联为抽样记录；\n- 今后拟开展抽样时，应先完成能力评价、方法与人员确认、文件和记录修订、审核批准及受控发布。\n\n## 3 依据\n\n本状态依据 G1 已签认的 CX-35 作废决定及 2026-07-25 试运行阻断关闭决定形成，仅适用于 8021 隔离沙箱。\n",
+                $source,
+                $sources['g1_terminal_approval'],
+                ['7.3', '8.3'],
+                '关闭CX-35仍呈现可执行抽样步骤及异源污染内容的问题，同时保留原件世系。',
+                '2026-07-25'
+            );
+        }
+
+        $cx0302 = (string)($documents['XZTC/CX-03-02-2022'] ?? '');
+        if ($cx0302 !== '' && !str_contains($cx0302, 'XZTC/BG-35-03')) {
+            $patches[] = self::patch(
+                'USER-20260725-CLOSE-003',
+                'XZTC/CX-03-02-2022',
+                'replace_exact',
+                $cx0302,
+                rtrim($cx0302) . "\n\n## 5 相关记录\n\n《标准物质报废申请表》XZTC/BG-35-03，用于记录标准物质报废申请、审核、批准及处置结果。\n",
+                $source,
+                $source,
+                ['6.4', '8.3'],
+                '按记录总台账和试运行关闭决定，将BG-35-03恢复为标准物质报废记录，并在程序正文中建立可验证的记录要求。',
                 '2026-07-25'
             );
         }

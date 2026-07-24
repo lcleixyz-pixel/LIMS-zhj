@@ -57,6 +57,7 @@ final class GovernedTrialResolvedDocumentService
         $written = self::writePackage($preview, $outputPath);
         $companyId = (string)Config::get('qms.company_id');
         Db::transaction(function () use ($preview, $companyId): void {
+            self::alignTrialRecordGovernance($companyId);
             foreach ($preview['documents'] as $document) {
                 self::upsertResolvedDocument($document, $preview, $companyId);
             }
@@ -122,6 +123,41 @@ final class GovernedTrialResolvedDocumentService
         if ($v01Count !== 38) {
             $errors[] = '0.1世系应保留38份，当前为' . $v01Count;
         }
+        $bg3503 = Db::name('record_form_templates')->alias('template')
+            ->leftJoin('documents procedure', 'procedure.id = template.procedure_doc_id')
+            ->where('template.trial_batch', 'GOV-TRIAL-20260724')
+            ->where('template.canonical_doc_number', 'XZTC/BG-35-03')
+            ->where('template.soft_delete', 0)
+            ->field('template.name,procedure.doc_number procedure_doc_number')
+            ->find();
+        if (
+            !is_array($bg3503)
+            || ($bg3503['name'] ?? '') !== '[治理试运行] 标准物质报废申请表'
+            || ($bg3503['procedure_doc_number'] ?? '') !== 'SIM-XZTC/CX-03-02-2022'
+        ) {
+            $errors[] = 'BG-35-03未闭合到标准物质管理程序';
+        }
+        $bg3503ResolvedLinks = (int)Db::name('qms_document_block_links')->alias('link')
+            ->join('qms_document_blocks block', 'block.id = link.block_id')
+            ->join('qms_structured_documents structure', 'structure.id = block.structured_document_id')
+            ->join('record_form_templates template', 'template.id = link.record_form_template_id')
+            ->where('structure.version', GovernedTrialResolvedManifestService::VERSION)
+            ->where('structure.doc_number', 'SIM-GOV02-XZTC/CX-03-02-2022')
+            ->where('template.canonical_doc_number', 'XZTC/BG-35-03')
+            ->where('block.soft_delete', 0)
+            ->where('link.soft_delete', 0)
+            ->count();
+        if ($bg3503ResolvedLinks < 1) {
+            $errors[] = 'BG-35-03未在0.2标准物质管理程序中建立记录追溯关系';
+        }
+        $samplingTemplates = (int)Db::name('record_form_templates')
+            ->where('trial_batch', 'GOV-TRIAL-20260724')
+            ->where('soft_delete', 0)
+            ->whereLike('name', '%抽样%')
+            ->count();
+        if ($samplingTemplates !== 0) {
+            $errors[] = '不开展抽样时不得保留活动抽样记录模板';
+        }
 
         return [
             'ok' => $errors === [],
@@ -130,7 +166,96 @@ final class GovernedTrialResolvedDocumentService
             'document_blocks' => $blockCount,
             'record_link_mismatches' => $recordLinkMismatches,
             'base_version_documents' => $v01Count,
+            'bg3503_resolved_links' => $bg3503ResolvedLinks,
+            'sampling_templates' => $samplingTemplates,
         ];
+    }
+
+    private static function alignTrialRecordGovernance(string $companyId): void
+    {
+        $template = Db::name('record_form_templates')
+            ->where('trial_batch', 'GOV-TRIAL-20260724')
+            ->where('canonical_doc_number', 'XZTC/BG-35-03')
+            ->where('soft_delete', 0)
+            ->find();
+        $procedure = Db::name('documents')
+            ->where('doc_number', 'SIM-XZTC/CX-03-02-2022')
+            ->where('version', 'GOV-TRIAL/0.1')
+            ->where('soft_delete', 0)
+            ->find();
+        $structure = Db::name('qms_structured_documents')
+            ->where('doc_number', 'SIM-XZTC/CX-03-02-2022')
+            ->where('version', 'GOV-TRIAL/0.1')
+            ->where('soft_delete', 0)
+            ->find();
+        if (!is_array($template) || !is_array($procedure) || !is_array($structure)) {
+            throw new RuntimeException('BG-35-03治理纠正失败：0.1模板或标准物质管理程序不存在');
+        }
+
+        $templateId = (string)$template['id'];
+        $procedureId = (string)$procedure['id'];
+        $now = date('Y-m-d H:i:s');
+        Db::name('record_form_templates')->where('id', $templateId)->update([
+            'name' => '[治理试运行] 标准物质报废申请表',
+            'module' => '标准物质管理程序',
+            'procedure_doc_id' => $procedureId,
+            'review_note' => '按记录总台账v0.2和2026-07-25试运行阻断关闭决定纠正：BG-35-03属于标准物质管理记录。',
+            'modified' => $now,
+        ]);
+        Db::name('qms_document_block_links')
+            ->where('record_form_template_id', $templateId)
+            ->where('soft_delete', 0)
+            ->update([
+                'procedure_document_id' => $procedureId,
+                'modified' => $now,
+            ]);
+
+        $wrongProcedureLinkIds = Db::name('qms_document_block_links')->alias('link')
+            ->join('qms_document_blocks block', 'block.id = link.block_id')
+            ->join('qms_structured_documents structure', 'structure.id = block.structured_document_id')
+            ->where('link.record_form_template_id', $templateId)
+            ->where('structure.version', 'GOV-TRIAL/0.1')
+            ->where('structure.document_role', 'procedure')
+            ->where('structure.doc_number', '<>', 'SIM-XZTC/CX-03-02-2022')
+            ->where('block.soft_delete', 0)
+            ->where('link.soft_delete', 0)
+            ->column('link.id');
+        if ($wrongProcedureLinkIds !== []) {
+            Db::name('qms_document_block_links')->whereIn('id', $wrongProcedureLinkIds)->update([
+                'soft_delete' => 1,
+                'modified' => $now,
+            ]);
+        }
+
+        $correctBlock = Db::name('qms_document_blocks')
+            ->where('structured_document_id', (string)$structure['id'])
+            ->where('soft_delete', 0)
+            ->order('sort_order', 'asc')
+            ->find();
+        if (!is_array($correctBlock)) {
+            throw new RuntimeException('BG-35-03治理纠正失败：标准物质管理程序没有可追溯内容块');
+        }
+        $correctLink = Db::name('qms_document_block_links')
+            ->where('block_id', (string)$correctBlock['id'])
+            ->where('record_form_template_id', $templateId)
+            ->where('soft_delete', 0)
+            ->find();
+        if (!is_array($correctLink)) {
+            Db::name('qms_document_block_links')->insert([
+                'id' => qms_uuid(),
+                'company_id' => $companyId,
+                'block_id' => (string)$correctBlock['id'],
+                'procedure_document_id' => $procedureId,
+                'record_form_template_id' => $templateId,
+                'relation_type' => 'requires_record',
+                'confidence' => 'high',
+                'note' => '治理试运行纠正：BG-35-03由标准物质管理程序要求并提供运行证据。',
+                'publish' => 1,
+                'soft_delete' => 0,
+                'created' => $now,
+                'modified' => $now,
+            ]);
+        }
     }
 
     public static function resolvedArtifactLinks(array|object $structured): array
@@ -140,11 +265,20 @@ final class GovernedTrialResolvedDocumentService
             return [];
         }
         $id = rawurlencode((string)$data['id']);
+        $isObsolete = ($data['status'] ?? '') === 'obsolete'
+            || str_contains((string)($data['doc_number'] ?? ''), 'CX-35-2022');
+        $blockingCount = self::currentPackageBlockingCount();
+        $canSubmit = !$isObsolete && $blockingCount === 0 && ($data['status'] ?? '') === 'draft';
 
         return [
             'is_resolved_trial' => true,
-            'can_submit' => false,
-            'blocking_message' => '存在阻断冲突，不能提交审核；请先查看冲突审查并完成裁决。',
+            'can_submit' => $canSubmit,
+            'notice_class' => $canSubmit ? 'alert-success' : 'alert-warning',
+            'blocking_message' => $isObsolete
+                ? '本文件已在试运行版本中作废保留，不进入审核或发布链路。'
+                : ($blockingCount === 0
+                    ? '当前无阻断冲突，可在8021发起SIM审核；纸质体系仍为唯一正式体系。'
+                    : '存在阻断冲突，不能提交审核；请先查看冲突审查并完成裁决。'),
             'continuous_url' => '/planning/structures/resolved-artifact?id=' . $id . '&kind=continuous',
             'comparison_url' => '/planning/structures/resolved-artifact?id=' . $id . '&kind=comparison',
             'conflicts_url' => '/planning/structures/resolved-artifact?id=' . $id . '&kind=conflicts',
@@ -246,7 +380,9 @@ final class GovernedTrialResolvedDocumentService
             }
             $resolvedBody = (string)$result['content'];
             $resolvedBodies[$docNumber] = $resolvedBody;
-            $status = ($result['blocking_conflicts'] ?? []) === [] ? 'trial_ready' : 'draft';
+            $status = $docNumber === 'XZTC/CX-35-2022'
+                ? 'obsolete'
+                : (($result['blocking_conflicts'] ?? []) === [] ? 'trial_ready' : 'draft');
             $rendered = self::renderDocumentHeader(
                 $baseline,
                 $status,
@@ -294,6 +430,14 @@ final class GovernedTrialResolvedDocumentService
             $deferredConflicts
         );
         $warnings = $crossReview['warnings'] ?? [];
+        foreach ($manifest['non_blocking_governance_notes'] ?? [] as $message) {
+            $warnings[] = [
+                'type' => 'trial_governance_backlog',
+                'doc_number' => 'SYSTEM',
+                'message' => (string)$message,
+                'blocking' => false,
+            ];
+        }
         $manual = $resolvedBodies['XZTC/SC'] ?? '';
         $appendixChecks = [
             'appendix_14' => str_contains($manual, '附录14'),
@@ -566,6 +710,10 @@ final class GovernedTrialResolvedDocumentService
         $fileName = self::safeToken($canonical . '-' . (string)$document['title']) . '.md';
         $relativePath = self::DEFAULT_OUTPUT . '/连续正文/' . $fileName;
         $now = date('Y-m-d H:i:s');
+        $documentStatus = ($preview['summary']['batch_trial_ready'] ?? false)
+            ? (string)$document['status']
+            : 'draft';
+        $isObsolete = $documentStatus === 'obsolete';
         $documentRow = [
             'company_id' => $companyId,
             'level' => $document['document_role'] === 'quality_manual' ? 1 : 2,
@@ -574,13 +722,15 @@ final class GovernedTrialResolvedDocumentService
             'version' => GovernedTrialResolvedManifestService::VERSION,
             'revision' => 2,
             'effective_date' => null,
-            'status' => 'draft',
+            'status' => $documentStatus,
             'file_path' => $relativePath,
             'file_name' => $fileName,
             'file_type' => 'md',
             'approved_by' => null,
             'change_reason' => self::json([
-                'notice' => '现用全文叠加已签认精确补丁；存在批次级阻断冲突，不得提交审核。',
+                'notice' => ($preview['summary']['batch_trial_ready'] ?? false)
+                    ? '现用全文叠加已签认精确补丁；当前无SIM阻断，仍不得作为正式受控文件。'
+                    : '现用全文叠加已签认精确补丁；存在批次级阻断冲突，不得提交审核。',
                 'trial_batch' => GovernedTrialResolvedManifestService::TRIAL_BATCH,
                 'source_sha256' => (string)$document['source_sha256'],
                 'resolved_text_sha256' => (string)$document['resolved_text_sha256'],
@@ -619,8 +769,12 @@ final class GovernedTrialResolvedDocumentService
             'markdown_path' => $relativePath,
             'rendered_file_path' => $relativePath,
             'render_status' => 'rendered',
-            'status' => 'draft',
-            'review_note' => '由现用全文与已签认精确补丁生成；批次冲突未关闭前禁止提交审核。来源哈希：'
+            'status' => $isObsolete ? 'obsolete' : 'draft',
+            'review_note' => ($isObsolete
+                ? '本文件已按不开展抽样决定作废保留，不进入审核发布链路。来源哈希：'
+                : (($preview['summary']['batch_trial_ready'] ?? false)
+                    ? '由现用全文与已签认精确补丁生成；当前无SIM阻断，可用于试运行审核。来源哈希：'
+                    : '由现用全文与已签认精确补丁生成；批次冲突未关闭前禁止提交审核。来源哈希：'))
                 . (string)$document['source_sha256'],
             'publish' => 1,
             'soft_delete' => 0,
@@ -640,7 +794,8 @@ final class GovernedTrialResolvedDocumentService
             $companyId,
             (string)$document['resolved_body'],
             (string)$document['source_path'],
-            is_array($priorStructure) ? (string)$priorStructure['id'] : ''
+            is_array($priorStructure) ? (string)$priorStructure['id'] : '',
+            $isObsolete
         );
     }
 
@@ -650,7 +805,8 @@ final class GovernedTrialResolvedDocumentService
         string $companyId,
         string $markdown,
         string $sourcePath,
-        string $priorStructuredId
+        string $priorStructuredId,
+        bool $obsolete = false
     ): void {
         $existingBlocks = Db::name('qms_document_blocks')
             ->where('structured_document_id', $structuredId)
@@ -698,7 +854,7 @@ final class GovernedTrialResolvedDocumentService
                 'markdown' => (string)$block['markdown'],
                 'sort_order' => ($index + 1) * 10,
                 'source_locator' => $sourcePath . '#' . (string)$block['heading'],
-                'status' => 'draft',
+                'status' => $obsolete ? 'obsolete' : 'draft',
                 'publish' => 1,
                 'soft_delete' => 0,
                 'modified' => date('Y-m-d H:i:s'),
@@ -712,9 +868,20 @@ final class GovernedTrialResolvedDocumentService
             }
         }
 
-        if ($firstBlockId !== '' && $priorStructuredId !== '') {
+        if (!$obsolete && $firstBlockId !== '' && $priorStructuredId !== '') {
             self::copyPriorTraceLinks($priorStructuredId, $firstBlockId, $recordBlocks, $companyId);
         }
+    }
+
+    private static function currentPackageBlockingCount(): int
+    {
+        $path = self::workspaceRoot() . '/' . self::DEFAULT_OUTPUT . '/冲突审查/冲突总表.json';
+        if (!is_file($path)) {
+            return 1;
+        }
+        $decoded = json_decode((string)file_get_contents($path), true);
+
+        return is_array($decoded) ? count($decoded['blocking_conflicts'] ?? []) : 1;
     }
 
     private static function copyPriorTraceLinks(

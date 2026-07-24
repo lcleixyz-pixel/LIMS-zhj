@@ -62,7 +62,7 @@
 <div class="card mb-3 border-primary">
     <div class="card-header"><h5 class="mb-0">治理解析稿</h5></div>
     <div class="card-body">
-        <div class="alert alert-warning mb-3" role="alert">
+        <div class="alert {$resolvedArtifacts.notice_class|default='alert-warning'} mb-3" role="alert">
             {$resolvedArtifacts.blocking_message}
         </div>
         <div class="d-flex flex-wrap gap-2">
@@ -97,7 +97,7 @@
     <div class="card-body">
         {if !empty($resolvedArtifacts.is_resolved_trial) && empty($resolvedArtifacts.can_submit)}
         <div class="alert alert-warning mb-0" role="alert">
-            存在阻断冲突，不能提交审核。请先打开“冲突审查”，逐项形成明确裁决和可验证补丁。
+            {$resolvedArtifacts.blocking_message}
         </div>
         {elseif $detail.document.status == 'draft'}
         <form method="post" action="/planning/structures/publish">

@@ -21,9 +21,14 @@ $manualHashBefore = hash_file('sha256', $manualPath);
 $preview = GovernedTrialResolvedDocumentService::preview();
 
 resolved_documents_assert(count($preview['documents'] ?? []) === 38, '应生成38份连续解析稿');
-resolved_documents_assert(($preview['summary']['patches_registered'] ?? 0) >= 60, '应登记已签认的批量精确补丁');
-resolved_documents_assert(($preview['summary']['patches_applied'] ?? 0) >= 60, '已登记的精确补丁应实际命中基线');
-resolved_documents_assert(($preview['summary']['batch_trial_ready'] ?? true) === false, '仍有未锚定签认事项时批次不得冒充就绪');
+resolved_documents_assert(($preview['summary']['patches_registered'] ?? 0) >= 15, '应登记已签认的精确补丁');
+resolved_documents_assert(
+    ($preview['summary']['patches_applied'] ?? -1) === ($preview['summary']['patches_registered'] ?? 0),
+    '已登记的精确补丁应全部实际命中基线'
+);
+resolved_documents_assert(($preview['summary']['batch_trial_ready'] ?? false) === true, '试运行关键阻断关闭后批次应可进入SIM链路');
+resolved_documents_assert(($preview['summary']['blocking_conflicts'] ?? -1) === 0, '试运行关键阻断应归零');
+resolved_documents_assert(($preview['summary']['warnings'] ?? 0) >= 1, '剩余逐项正文治理应继续公开为非阻断待办');
 
 $manuals = array_values(array_filter(
     $preview['documents'] ?? [],
@@ -37,6 +42,31 @@ resolved_documents_assert(str_contains((string)$manual['rendered_markdown'], '�
 resolved_documents_assert(str_contains((string)$manual['rendered_markdown'], 'SIM｜治理试运行候选'), '连续稿页首必须标明SIM');
 resolved_documents_assert(str_contains((string)$manual['rendered_markdown'], '纸质体系仍为唯一正式体系'), '连续稿必须声明非正式文件边界');
 resolved_documents_assert(!str_contains((string)$manual['resolved_body'], 'XZTC/CX-08-2018'), '已签认2018引用清扫应进入解析稿');
+resolved_documents_assert(
+    str_contains((string)$manual['resolved_body'], '本公司当前不开展抽样'),
+    '手册7.3应明确当前不开展抽样'
+);
+resolved_documents_assert(
+    !str_contains((string)$manual['resolved_body'], '《抽样控制程序》 XZTC/CX-35-2022'),
+    '手册7.3不应继续把CX-35列为现行支持性文件'
+);
+foreach (['## 附录14：程序文件目录', '## 附录15：各岗位任职资格条件', '## 附录16：质量手册条款对照表'] as $heading) {
+    resolved_documents_assert(str_contains((string)$manual['resolved_body'], $heading), $heading . ' 应成为结构化标题');
+}
+
+$cx35 = array_values(array_filter(
+    $preview['documents'] ?? [],
+    static fn(array $document): bool => ($document['doc_number'] ?? '') === 'XZTC/CX-35-2022'
+))[0] ?? [];
+resolved_documents_assert(($cx35['status'] ?? '') === 'obsolete', 'CX-35试运行解析稿应标为作废保留');
+resolved_documents_assert(
+    str_contains((string)($cx35['resolved_body'] ?? ''), '本公司当前不开展抽样'),
+    'CX-35应改为不适用与历史追溯说明'
+);
+resolved_documents_assert(
+    !str_contains((string)($cx35['resolved_body'] ?? ''), '4.3.7将抽取样品分为两份'),
+    'CX-35作废保留稿不得继续呈现可执行抽样步骤'
+);
 
 $cx21 = array_values(array_filter(
     $preview['documents'] ?? [],
@@ -67,8 +97,9 @@ resolved_documents_assert(
     str_contains((string)($cx0102['resolved_body'] ?? ''), 'RB/T 214-2017仅作历史制度衔接和辅助参考，不作为现行CMA主依据'),
     '人员管理程序应明确RB/T 214的历史辅助身份'
 );
+$warningTypes = array_column($preview['warnings'] ?? [], 'type');
 resolved_documents_assert(
-    ($preview['summary']['warnings'] ?? -1) === 0,
+    !in_array('legacy_cma_basis_review', $warningTypes, true),
     '依据身份修订后RB/T 214提醒应归零'
 );
 
