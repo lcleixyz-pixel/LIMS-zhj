@@ -110,6 +110,7 @@ Route::group(function () {
     Route::rule('planning/clauses/view', 'PlanningClause/view');
     Route::rule('planning/clauses', 'PlanningClause/index');
     Route::rule('planning/structures/view', 'PlanningStructure/view');
+    Route::get('planning/structures/resolved-artifact', 'PlanningStructure/resolvedArtifact');
     Route::get('planning/structures/blocks/edit', 'PlanningStructure/editBlock');
     Route::post('planning/structures/blocks/update', 'PlanningStructure/updateBlock');
     Route::get('planning/structures/links/review', 'PlanningStructure/reviewLinks');

@@ -58,6 +58,23 @@
     </div>
 </div>
 
+{if !empty($resolvedArtifacts.is_resolved_trial)}
+<div class="card mb-3 border-primary">
+    <div class="card-header"><h5 class="mb-0">治理解析稿</h5></div>
+    <div class="card-body">
+        <div class="alert alert-warning mb-3" role="alert">
+            {$resolvedArtifacts.blocking_message}
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{$resolvedArtifacts.continuous_url}" class="btn btn-primary">连续正文</a>
+            <a href="{$resolvedArtifacts.comparison_url}" class="btn btn-outline-primary">修订对照</a>
+            <a href="{$resolvedArtifacts.conflicts_url}" class="btn btn-outline-danger">冲突审查</a>
+        </div>
+        <div class="text-muted small mt-3">本文件由现用全文与已签认精确补丁生成；未命中内容保持原文。</div>
+    </div>
+</div>
+{/if}
+
 {if $detail.document.document_role == 'quality_manual' || $detail.document.document_role == 'procedure' || $detail.document.document_role == 'work_instruction'}
 <div class="card mb-3">
     <div class="card-header"><h5 class="mb-0">从源文件重建结构</h5></div>
@@ -78,7 +95,11 @@
 <div class="card mb-3">
     <div class="card-header"><h5 class="mb-0">发布结构化文件</h5></div>
     <div class="card-body">
-        {if $detail.document.status == 'draft'}
+        {if !empty($resolvedArtifacts.is_resolved_trial) && empty($resolvedArtifacts.can_submit)}
+        <div class="alert alert-warning mb-0" role="alert">
+            存在阻断冲突，不能提交审核。请先打开“冲突审查”，逐项形成明确裁决和可验证补丁。
+        </div>
+        {elseif $detail.document.status == 'draft'}
         <form method="post" action="/planning/structures/publish">
             <input type="hidden" name="id" value="{$detail.document.id}">
             <label for="publish_note" class="form-label">发布说明</label>

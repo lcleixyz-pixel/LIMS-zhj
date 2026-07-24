@@ -3,11 +3,195 @@ declare(strict_types=1);
 
 namespace app\service;
 
+use DomainException;
 use RuntimeException;
+use think\facade\Config;
+use think\facade\Db;
 
 final class GovernedTrialResolvedDocumentService
 {
     public const DEFAULT_OUTPUT = '.team/交接箱/2026-07-25-8021治理体系试运行装配/GOV-TRIAL-0.2';
+
+    public static function inspect(): array
+    {
+        $preview = self::preview();
+
+        return [
+            'mode' => 'inspect_only',
+            'trial_mode_enabled' => TrialModeService::isEnabled(),
+            'configured_trial_batch' => TrialModeService::trialBatch(),
+            'summary' => $preview['summary'],
+            'output_path' => self::absoluteOutputPath(self::DEFAULT_OUTPUT),
+        ];
+    }
+
+    public static function writableEnvironmentErrors(bool $trialMode, string $trialBatch, string $databaseName): array
+    {
+        $errors = [];
+        if (!$trialMode) {
+            $errors[] = 'QMS_TRIAL_MODE 未启用';
+        }
+        if ($trialBatch !== 'GOV-TRIAL-20260724') {
+            $errors[] = 'QMS_TRIAL_BATCH 不是8021隔离栈批次 GOV-TRIAL-20260724';
+        }
+        if ($databaseName !== 'jewelry_qms') {
+            $errors[] = '数据库名称不是8021隔离栈预期的 jewelry_qms';
+        }
+
+        return $errors;
+    }
+
+    public static function apply(?string $outputPath = null): array
+    {
+        $databaseName = (string)Config::get('database.connections.mysql.database', '');
+        $environmentErrors = self::writableEnvironmentErrors(
+            TrialModeService::isEnabled(),
+            TrialModeService::trialBatch(),
+            $databaseName
+        );
+        if ($environmentErrors !== []) {
+            throw new DomainException('连续解析稿拒绝写入：' . implode('；', $environmentErrors));
+        }
+
+        $preview = self::preview();
+        $written = self::writePackage($preview, $outputPath);
+        $companyId = (string)Config::get('qms.company_id');
+        Db::transaction(function () use ($preview, $companyId): void {
+            foreach ($preview['documents'] as $document) {
+                self::upsertResolvedDocument($document, $preview, $companyId);
+            }
+        });
+
+        $verification = self::verifyDatabaseAssembly();
+        if (($verification['ok'] ?? false) !== true) {
+            throw new RuntimeException('GOV-TRIAL/0.2数据库装配验证失败：' . implode('；', $verification['errors'] ?? []));
+        }
+
+        return [
+            'mode' => 'trial_apply',
+            'trial_batch' => GovernedTrialResolvedManifestService::TRIAL_BATCH,
+            'version' => GovernedTrialResolvedManifestService::VERSION,
+            'package' => $written,
+            'verification' => $verification,
+            'summary' => $preview['summary'],
+            'formal_system_notice' => '仅限8021隔离环境治理试运行；纸质体系仍为唯一正式体系。',
+        ];
+    }
+
+    public static function verifyDatabaseAssembly(): array
+    {
+        $errors = [];
+        $structures = Db::name('qms_structured_documents')
+            ->where('version', GovernedTrialResolvedManifestService::VERSION)
+            ->where('soft_delete', 0)
+            ->select()
+            ->toArray();
+        if (count($structures) !== 38) {
+            $errors[] = '0.2结构化文件应为38份，当前为' . count($structures);
+        }
+        $structureIds = array_values(array_map(
+            static fn(array $row): string => (string)$row['id'],
+            $structures
+        ));
+        $blockCount = $structureIds === []
+            ? 0
+            : (int)Db::name('qms_document_blocks')
+                ->whereIn('structured_document_id', $structureIds)
+                ->where('soft_delete', 0)
+                ->count();
+        if ($blockCount <= 38) {
+            $errors[] = '连续正文未按实际标题拆分为多个内容块';
+        }
+        foreach ($structures as $structure) {
+            if (($structure['render_status'] ?? '') !== 'rendered') {
+                $errors[] = (string)$structure['doc_number'] . ' 未标记为已渲染';
+            }
+            $path = self::workspaceRoot() . '/' . ltrim((string)($structure['rendered_file_path'] ?? ''), '/');
+            if (!is_file($path)) {
+                $errors[] = (string)$structure['doc_number'] . ' 连续正文文件不存在';
+            }
+        }
+        $v01Count = (int)Db::name('qms_structured_documents')
+            ->where('version', 'GOV-TRIAL/0.1')
+            ->where('soft_delete', 0)
+            ->count();
+        if ($v01Count !== 38) {
+            $errors[] = '0.1世系应保留38份，当前为' . $v01Count;
+        }
+
+        return [
+            'ok' => $errors === [],
+            'errors' => $errors,
+            'structured_documents' => count($structures),
+            'document_blocks' => $blockCount,
+            'base_version_documents' => $v01Count,
+        ];
+    }
+
+    public static function resolvedArtifactLinks(array|object $structured): array
+    {
+        $data = is_array($structured) ? $structured : $structured->toArray();
+        if (($data['version'] ?? '') !== GovernedTrialResolvedManifestService::VERSION) {
+            return [];
+        }
+        $id = rawurlencode((string)$data['id']);
+
+        return [
+            'is_resolved_trial' => true,
+            'can_submit' => false,
+            'blocking_message' => '存在阻断冲突，不能提交审核；请先查看冲突审查并完成裁决。',
+            'continuous_url' => '/planning/structures/resolved-artifact?id=' . $id . '&kind=continuous',
+            'comparison_url' => '/planning/structures/resolved-artifact?id=' . $id . '&kind=comparison',
+            'conflicts_url' => '/planning/structures/resolved-artifact?id=' . $id . '&kind=conflicts',
+        ];
+    }
+
+    public static function resolvedArtifact(string $structuredId, string $kind): array
+    {
+        $structure = Db::name('qms_structured_documents')
+            ->where('id', $structuredId)
+            ->where('version', GovernedTrialResolvedManifestService::VERSION)
+            ->where('soft_delete', 0)
+            ->find();
+        if (!is_array($structure)) {
+            return [];
+        }
+        $continuousPath = (string)$structure['markdown_path'];
+        $root = dirname(dirname($continuousPath));
+        $fileName = basename($continuousPath);
+        $paths = [
+            'continuous' => $continuousPath,
+            'comparison' => $root . '/修订对照/' . $fileName,
+            'conflicts' => $root . '/冲突审查/冲突总表.md',
+        ];
+        if (!isset($paths[$kind])) {
+            return [];
+        }
+        $relativePath = $paths[$kind];
+        $absolutePath = self::workspaceRoot() . '/' . ltrim($relativePath, '/');
+        $allowedRoot = realpath(self::workspaceRoot() . '/' . ltrim(self::DEFAULT_OUTPUT, '/'));
+        $realPath = realpath($absolutePath);
+        if ($allowedRoot === false || $realPath === false || !str_starts_with($realPath, $allowedRoot . '/')) {
+            return [];
+        }
+        $content = file_get_contents($realPath);
+        if (!is_string($content)) {
+            return [];
+        }
+
+        return [
+            'title' => [
+                'continuous' => '连续正文',
+                'comparison' => '修订对照',
+                'conflicts' => '冲突审查',
+            ][$kind],
+            'doc_number' => (string)$structure['doc_number'],
+            'document_title' => (string)$structure['title'],
+            'content' => $content,
+            'relative_path' => $relativePath,
+            'back_url' => '/planning/structures/view?id=' . rawurlencode($structuredId),
+        ];
+    }
 
     public static function preview(): array
     {
@@ -354,6 +538,275 @@ final class GovernedTrialResolvedDocumentService
         ];
     }
 
+    private static function upsertResolvedDocument(array $document, array $preview, string $companyId): void
+    {
+        $canonical = (string)$document['doc_number'];
+        $trialNumber = 'SIM-GOV02-' . $canonical;
+        $priorStructure = Db::name('qms_structured_documents')
+            ->where('document_role', (string)$document['document_role'])
+            ->where('doc_number', 'SIM-' . $canonical)
+            ->where('version', 'GOV-TRIAL/0.1')
+            ->where('soft_delete', 0)
+            ->find();
+        $priorDocumentId = (string)($priorStructure['document_id'] ?? '');
+        $priorDocument = $priorDocumentId !== ''
+            ? Db::name('documents')->where('id', $priorDocumentId)->find()
+            : null;
+        $existing = Db::name('documents')
+            ->where('doc_number', $trialNumber)
+            ->where('version', GovernedTrialResolvedManifestService::VERSION)
+            ->where('soft_delete', 0)
+            ->find();
+        $documentId = (string)($existing['id'] ?? qms_uuid());
+        $fileName = self::safeToken($canonical . '-' . (string)$document['title']) . '.md';
+        $relativePath = self::DEFAULT_OUTPUT . '/连续正文/' . $fileName;
+        $now = date('Y-m-d H:i:s');
+        $documentRow = [
+            'company_id' => $companyId,
+            'level' => $document['document_role'] === 'quality_manual' ? 1 : 2,
+            'doc_number' => $trialNumber,
+            'title' => '[治理试运行解析稿] ' . (string)$document['title'],
+            'version' => GovernedTrialResolvedManifestService::VERSION,
+            'revision' => 2,
+            'effective_date' => null,
+            'status' => 'draft',
+            'file_path' => $relativePath,
+            'file_name' => $fileName,
+            'file_type' => 'md',
+            'approved_by' => null,
+            'change_reason' => self::json([
+                'notice' => '现用全文叠加已签认精确补丁；存在批次级阻断冲突，不得提交审核。',
+                'trial_batch' => GovernedTrialResolvedManifestService::TRIAL_BATCH,
+                'source_sha256' => (string)$document['source_sha256'],
+                'resolved_text_sha256' => (string)$document['resolved_text_sha256'],
+                'blocking_conflicts' => $preview['blocking_conflicts'] ?? [],
+            ]),
+            'supersedes_document_id' => $priorDocumentId !== '' ? $priorDocumentId : null,
+            'revision_root_id' => (string)($priorDocument['revision_root_id'] ?? $priorDocumentId ?: $documentId),
+            'publish' => 1,
+            'soft_delete' => 0,
+            'modified' => $now,
+        ];
+        if (is_array($existing)) {
+            Db::name('documents')->where('id', $documentId)->update($documentRow);
+        } else {
+            $documentRow['id'] = $documentId;
+            $documentRow['created'] = $now;
+            Db::name('documents')->insert($documentRow);
+        }
+
+        $existingStructure = Db::name('qms_structured_documents')
+            ->where('document_role', (string)$document['document_role'])
+            ->where('doc_number', $trialNumber)
+            ->where('version', GovernedTrialResolvedManifestService::VERSION)
+            ->where('soft_delete', 0)
+            ->find();
+        $structuredId = (string)($existingStructure['id'] ?? qms_uuid());
+        $structureRow = [
+            'company_id' => $companyId,
+            'source_asset_id' => null,
+            'document_id' => $documentId,
+            'document_role' => (string)$document['document_role'],
+            'doc_number' => $trialNumber,
+            'title' => '[治理试运行解析稿] ' . (string)$document['title'],
+            'version' => GovernedTrialResolvedManifestService::VERSION,
+            'source_status' => 'draft',
+            'markdown_path' => $relativePath,
+            'rendered_file_path' => $relativePath,
+            'render_status' => 'rendered',
+            'status' => 'draft',
+            'review_note' => '由现用全文与已签认精确补丁生成；批次冲突未关闭前禁止提交审核。来源哈希：'
+                . (string)$document['source_sha256'],
+            'publish' => 1,
+            'soft_delete' => 0,
+            'modified' => $now,
+        ];
+        if (is_array($existingStructure)) {
+            Db::name('qms_structured_documents')->where('id', $structuredId)->update($structureRow);
+        } else {
+            $structureRow['id'] = $structuredId;
+            $structureRow['created'] = $now;
+            Db::name('qms_structured_documents')->insert($structureRow);
+        }
+
+        self::upsertResolvedBlocks(
+            $structuredId,
+            $documentId,
+            $companyId,
+            (string)$document['resolved_body'],
+            (string)$document['source_path'],
+            is_array($priorStructure) ? (string)$priorStructure['id'] : ''
+        );
+    }
+
+    private static function upsertResolvedBlocks(
+        string $structuredId,
+        string $documentId,
+        string $companyId,
+        string $markdown,
+        string $sourcePath,
+        string $priorStructuredId
+    ): void {
+        $existingBlocks = Db::name('qms_document_blocks')
+            ->where('structured_document_id', $structuredId)
+            ->select()
+            ->toArray();
+        $existingIds = array_column($existingBlocks, 'id');
+        if ($existingIds !== []) {
+            Db::name('qms_document_block_links')->whereIn('block_id', $existingIds)->delete();
+            Db::name('qms_document_blocks')->whereIn('id', $existingIds)->update([
+                'soft_delete' => 1,
+                'modified' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
+        $blocks = self::splitResolvedMarkdown($markdown);
+        $firstBlockId = '';
+        foreach ($blocks as $index => $block) {
+            $stableKey = 'resolved_' . str_pad((string)($index + 1), 3, '0', STR_PAD_LEFT)
+                . '_' . substr(hash('sha256', (string)$block['heading']), 0, 12);
+            $existing = null;
+            foreach ($existingBlocks as $candidate) {
+                if (($candidate['stable_key'] ?? '') === $stableKey) {
+                    $existing = $candidate;
+                    break;
+                }
+            }
+            $blockId = (string)($existing['id'] ?? qms_uuid());
+            if ($firstBlockId === '') {
+                $firstBlockId = $blockId;
+            }
+            $row = [
+                'company_id' => $companyId,
+                'structured_document_id' => $structuredId,
+                'document_id' => $documentId,
+                'parent_id' => null,
+                'stable_key' => $stableKey,
+                'section_number' => (string)$block['section_number'],
+                'title' => (string)$block['title'],
+                'block_type' => self::resolvedBlockType((string)$block['title']),
+                'markdown' => (string)$block['markdown'],
+                'sort_order' => ($index + 1) * 10,
+                'source_locator' => $sourcePath . '#' . (string)$block['heading'],
+                'status' => 'draft',
+                'publish' => 1,
+                'soft_delete' => 0,
+                'modified' => date('Y-m-d H:i:s'),
+            ];
+            if (is_array($existing)) {
+                Db::name('qms_document_blocks')->where('id', $blockId)->update($row);
+            } else {
+                $row['id'] = $blockId;
+                $row['created'] = date('Y-m-d H:i:s');
+                Db::name('qms_document_blocks')->insert($row);
+            }
+        }
+
+        if ($firstBlockId !== '' && $priorStructuredId !== '') {
+            self::copyPriorTraceLinks($priorStructuredId, $firstBlockId, $companyId);
+        }
+    }
+
+    private static function copyPriorTraceLinks(
+        string $priorStructuredId,
+        string $newBlockId,
+        string $companyId
+    ): void {
+        $rows = Db::name('qms_document_block_links')->alias('link')
+            ->join('qms_document_blocks block', 'block.id = link.block_id')
+            ->where('block.structured_document_id', $priorStructuredId)
+            ->where('block.soft_delete', 0)
+            ->where('link.soft_delete', 0)
+            ->field(
+                'link.element_id,link.clause_id,link.manual_section_id,link.procedure_document_id,'
+                . 'link.record_form_template_id,link.position_id,link.business_module_id,'
+                . 'link.relation_type,link.confidence,link.note'
+            )
+            ->select()
+            ->toArray();
+        $deduplicated = [];
+        foreach ($rows as $row) {
+            $key = hash('sha256', json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $deduplicated[$key] = $row;
+        }
+        $insert = [];
+        foreach ($deduplicated as $row) {
+            $insert[] = array_merge($row, [
+                'id' => qms_uuid(),
+                'company_id' => $companyId,
+                'block_id' => $newBlockId,
+                'note' => trim((string)($row['note'] ?? '') . '；由GOV-TRIAL/0.1追溯关系继承，待0.2逐块复核。', '；'),
+                'publish' => 1,
+                'soft_delete' => 0,
+                'created' => date('Y-m-d H:i:s'),
+                'modified' => date('Y-m-d H:i:s'),
+            ]);
+        }
+        if ($insert !== []) {
+            Db::name('qms_document_block_links')->insertAll($insert);
+        }
+    }
+
+    private static function splitResolvedMarkdown(string $markdown): array
+    {
+        $lines = preg_split('/\n/u', $markdown) ?: [];
+        $blocks = [];
+        $current = [];
+        $heading = '正文';
+        foreach ($lines as $line) {
+            if (preg_match('/^(#{1,6})\s+(.+)$/u', $line, $matches)) {
+                if ($current !== []) {
+                    $blocks[] = self::resolvedBlock($heading, implode("\n", $current));
+                }
+                $heading = trim((string)$matches[2]);
+                $current = [$line];
+                continue;
+            }
+            $current[] = $line;
+        }
+        if ($current !== []) {
+            $blocks[] = self::resolvedBlock($heading, implode("\n", $current));
+        }
+
+        return array_values(array_filter(
+            $blocks,
+            static fn(array $block): bool => trim((string)$block['markdown']) !== ''
+        ));
+    }
+
+    private static function resolvedBlock(string $heading, string $markdown): array
+    {
+        preg_match('/^([0-9]+(?:\.[0-9]+)*)\s*(.*)$/u', $heading, $matches);
+
+        return [
+            'heading' => $heading,
+            'section_number' => (string)($matches[1] ?? ''),
+            'title' => trim((string)($matches[2] ?? $heading)) ?: $heading,
+            'markdown' => trim($markdown),
+        ];
+    }
+
+    private static function resolvedBlockType(string $title): string
+    {
+        if (str_contains($title, '目的')) {
+            return 'purpose';
+        }
+        if (str_contains($title, '范围')) {
+            return 'scope';
+        }
+        if (str_contains($title, '职责')) {
+            return 'responsibility';
+        }
+        if (str_contains($title, '记录')) {
+            return 'record_requirement';
+        }
+        if (str_contains($title, '程序') || str_contains($title, '流程')) {
+            return 'process_step';
+        }
+
+        return 'control_requirement';
+    }
+
     private static function renderHtml(array $document): string
     {
         $title = htmlspecialchars((string)$document['doc_number'] . ' ' . (string)$document['title'], ENT_QUOTES, 'UTF-8');
@@ -383,7 +836,12 @@ final class GovernedTrialResolvedDocumentService
             return rtrim($path, '/');
         }
 
-        return dirname(__DIR__, 3) . '/' . trim($path, '/');
+        return self::workspaceRoot() . '/' . trim($path, '/');
+    }
+
+    private static function workspaceRoot(): string
+    {
+        return dirname(__DIR__, 3);
     }
 
     private static function safeToken(string $value): string
