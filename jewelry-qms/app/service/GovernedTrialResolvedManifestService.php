@@ -205,29 +205,58 @@ final class GovernedTrialResolvedManifestService
 
     private static function numberingPatches(string $manual, array $sources): array
     {
-        $patches = [];
-        $sequence = 0;
-        foreach (preg_split('/\n/u', $manual) ?: [] as $line) {
+        $lines = preg_split('/\n/u', $manual) ?: [];
+        $ranges = [];
+        foreach ($lines as $index => $line) {
             if (!preg_match('/XZTC\/CX-[0-9]+(?:-[0-9]+)?-2018/u', $line)) {
                 continue;
             }
-            if (substr_count($manual, $line) !== 1) {
+            $startLine = $index;
+            $endLine = $index;
+            $anchor = $line;
+            while (substr_count($manual, $anchor) !== 1 && ($startLine > 0 || $endLine < count($lines) - 1)) {
+                if ($startLine > 0) {
+                    $startLine--;
+                }
+                if ($endLine < count($lines) - 1) {
+                    $endLine++;
+                }
+                $anchor = implode("\n", array_slice($lines, $startLine, $endLine - $startLine + 1));
+            }
+            if (substr_count($manual, $anchor) !== 1) {
                 continue;
             }
+            $start = (int)strpos($manual, $anchor);
+            $ranges[] = ['start' => $start, 'end' => $start + strlen($anchor)];
+        }
+
+        usort($ranges, static fn(array $left, array $right): int => $left['start'] <=> $right['start']);
+        $merged = [];
+        foreach ($ranges as $range) {
+            $last = count($merged) - 1;
+            if ($last >= 0 && $range['start'] < $merged[$last]['end']) {
+                $merged[$last]['end'] = max($merged[$last]['end'], $range['end']);
+                continue;
+            }
+            $merged[] = $range;
+        }
+
+        $patches = [];
+        foreach ($merged as $index => $range) {
+            $anchor = substr($manual, $range['start'], $range['end'] - $range['start']);
             $replacement = preg_replace(
                 '/XZTC\/CX-([0-9]+(?:-[0-9]+)?)-2018/u',
                 'XZTC/CX-$1-2022',
-                $line
+                $anchor
             );
-            if (!is_string($replacement) || $replacement === $line) {
+            if (!is_string($replacement) || $replacement === $anchor) {
                 continue;
             }
-            $sequence++;
             $patches[] = self::patch(
-                'G1-K2-' . str_pad((string)$sequence, 3, '0', STR_PAD_LEFT),
+                'G1-K2-' . str_pad((string)($index + 1), 3, '0', STR_PAD_LEFT),
                 'XZTC/SC',
                 'replace_exact',
-                $line,
+                $anchor,
                 $replacement,
                 $sources['numbering_final'],
                 $sources['numbering_final'],
