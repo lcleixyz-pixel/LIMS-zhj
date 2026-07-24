@@ -46,6 +46,32 @@ resolved_documents_assert(str_contains((string)($cx21['resolved_body'] ?? ''), '
 resolved_documents_assert(str_contains((string)($cx21['resolved_body'] ?? ''), 'XZTC/BG-21-04'), 'CX-21正确记录清单应进入连续稿');
 resolved_documents_assert(!str_contains((string)($cx21['resolved_body'] ?? ''), '《年度内审计划表》'), 'CX-21不应继续混挂内审记录');
 
+$cx01 = array_values(array_filter(
+    $preview['documents'] ?? [],
+    static fn(array $document): bool => ($document['doc_number'] ?? '') === 'XZTC/CX-01-2022'
+))[0] ?? [];
+resolved_documents_assert(
+    str_contains((string)($cx01['resolved_body'] ?? ''), '《检验检测机构资质认定评审准则》（市场监管总局公告2023年第21号）'),
+    '人员培训程序应改用现行CMA评审准则'
+);
+resolved_documents_assert(
+    str_contains((string)($cx01['resolved_body'] ?? ''), 'RB/T 214-2017仅作为历史制度衔接和辅助参考，不作为现行CMA主依据'),
+    '人员培训程序应明确RB/T 214的历史辅助身份'
+);
+
+$cx0102 = array_values(array_filter(
+    $preview['documents'] ?? [],
+    static fn(array $document): bool => ($document['doc_number'] ?? '') === 'XZTC/CX-01-02-2022'
+))[0] ?? [];
+resolved_documents_assert(
+    str_contains((string)($cx0102['resolved_body'] ?? ''), 'RB/T 214-2017仅作历史制度衔接和辅助参考，不作为现行CMA主依据'),
+    '人员管理程序应明确RB/T 214的历史辅助身份'
+);
+resolved_documents_assert(
+    ($preview['summary']['warnings'] ?? -1) === 0,
+    '依据身份修订后RB/T 214提醒应归零'
+);
+
 foreach ($preview['documents'] ?? [] as $document) {
     resolved_documents_assert(
         preg_match('/XZTC\\/CX-[0-9]+(?:-[0-9]+)?-2018/u', (string)$document['resolved_body']) !== 1,

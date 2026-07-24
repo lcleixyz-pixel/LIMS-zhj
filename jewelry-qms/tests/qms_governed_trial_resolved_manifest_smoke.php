@@ -51,6 +51,15 @@ foreach ($manifest['sources'] as $source) {
 }
 
 resolved_manifest_assert(($manifest['patches'] ?? []) !== [], '签认清单至少应形成一批可执行补丁');
+$patchIds = array_column($manifest['patches'] ?? [], 'patch_id');
+resolved_manifest_assert(
+    in_array('USER-20260725-RBT214-001', $patchIds, true),
+    '人员培训程序应登记RB/T 214依据身份修订补丁'
+);
+resolved_manifest_assert(
+    in_array('USER-20260725-RBT214-002', $patchIds, true),
+    '人员管理程序应登记RB/T 214依据身份修订补丁'
+);
 foreach ($manifest['patches'] as $patch) {
     foreach ([
         'patch_id',
@@ -91,5 +100,20 @@ resolved_manifest_assert(in_array('retired_2018_reference', $types, true), '2018
 resolved_manifest_assert(in_array('sampling_scope_conflict', $types, true), '不抽样与CX-35有效必须纳入专项审查');
 resolved_manifest_assert(in_array('management_review_approval_conflict', $types, true), '管评批准岗位冲突必须纳入专项审查');
 resolved_manifest_assert(in_array('retention_period_conflict', $types, true), '3年与不少于6年冲突必须纳入专项审查');
+
+$legacyReview = GovernedTrialConflictReviewService::review([
+    'XZTC/CX-01-2022' => '授权签字人应满足RB/T214-2017的要求。',
+]);
+resolved_manifest_assert(
+    count($legacyReview['warnings'] ?? []) === 1,
+    '把RB/T 214-2017表述为现行要求时必须提醒'
+);
+$contextualizedReview = GovernedTrialConflictReviewService::review([
+    'XZTC/CX-01-2022' => 'RB/T 214-2017仅作为历史制度衔接和辅助参考，不作为现行CMA主依据。',
+]);
+resolved_manifest_assert(
+    count($contextualizedReview['warnings'] ?? []) === 0,
+    '已明确历史辅助身份后不应继续产生RB/T 214提醒'
+);
 
 echo "qms_governed_trial_resolved_manifest_smoke passed\n";

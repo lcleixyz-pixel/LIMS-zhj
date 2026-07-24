@@ -69,13 +69,25 @@ final class GovernedTrialConflictReviewService
                 '不设常规留样与留样执行路径并存。'
             );
         }
-        if (preg_match('/RB\/T\s*214[-—]2017/u', $combined)) {
-            $warnings[] = [
-                'type' => 'legacy_cma_basis_review',
-                'doc_number' => 'SYSTEM',
-                'message' => '发现RB/T 214-2017，须核对其是否仍被表述为现行CMA主依据。',
-                'blocking' => false,
-            ];
+        foreach ($documents as $docNumber => $content) {
+            foreach (preg_split('/\n/u', (string)$content) ?: [] as $line) {
+                if (
+                    preg_match('/RB\/T\s*214(?:[-—]2017)?/u', $line) !== 1
+                    || (
+                        preg_match('/历史|辅助参考/u', $line) === 1
+                        && preg_match('/不作为现行\s*CMA\s*主依据/ui', $line) === 1
+                    )
+                ) {
+                    continue;
+                }
+                $warnings[] = [
+                    'type' => 'legacy_cma_basis_review',
+                    'doc_number' => (string)$docNumber,
+                    'message' => '发现RB/T 214-2017仍可能被表述为现行CMA依据，须完成身份治理。',
+                    'blocking' => false,
+                ];
+                break;
+            }
         }
 
         return [

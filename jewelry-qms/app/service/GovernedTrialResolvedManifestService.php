@@ -23,6 +23,7 @@ final class GovernedTrialResolvedManifestService
         'g1_terminal_approval' => 'claude_G1p-签认留痕暨G1终局-v1_0.md',
         'transition_content' => 'claude_G1p3-增补-v0_2.md',
         'transition_approval' => 'claude_G1p3签认暨G2开闸包-v1_0.md',
+        'rbt214_basis_decision' => '.team/交接箱/2026-07-25-8021治理体系试运行装配/02-RBT214依据身份治理决定-v0.1.md',
     ];
 
     public static function build(): array
@@ -39,7 +40,8 @@ final class GovernedTrialResolvedManifestService
 
         $patches = array_merge(
             self::numberingPatches($baselineMarkdown, $sources),
-            self::managementReviewPatches($baselineMarkdown['XZTC/CX-21-2022'] ?? '', $sources)
+            self::managementReviewPatches($baselineMarkdown['XZTC/CX-21-2022'] ?? '', $sources),
+            self::rbt214BasisPatches($baselineMarkdown, $sources)
         );
 
         $manifest = [
@@ -190,7 +192,9 @@ final class GovernedTrialResolvedManifestService
     {
         $sources = [];
         foreach (self::SOURCE_FILES as $key => $fileName) {
-            $relativePath = self::SOURCE_DIR . '/' . $fileName;
+            $relativePath = str_starts_with($fileName, '.team/')
+                ? $fileName
+                : self::SOURCE_DIR . '/' . $fileName;
             $absolutePath = self::workspaceRoot() . '/' . $relativePath;
             $sources[$key] = [
                 'source_key' => $key,
@@ -316,6 +320,46 @@ final class GovernedTrialResolvedManifestService
         return $patches;
     }
 
+    private static function rbt214BasisPatches(array $documents, array $sources): array
+    {
+        $source = $sources['rbt214_basis_decision'];
+        $definitions = [
+            [
+                'USER-20260725-RBT214-001',
+                'XZTC/CX-01-2022',
+                '4.1.2.5本公司的授权签字人应满足《检测和校准实验室能力认可准则》、CNAS-CL01-A015:2022和《检验检测机构资质认定能力评价 检验检测机构通用要求》RB/T214-2017的要求。',
+                '4.1.2.5 本公司的授权签字人应满足《检验检测机构资质认定管理办法》（2021年修正）和《检验检测机构资质认定评审准则》（市场监管总局公告2023年第21号）的现行适用要求；涉及CNAS申请及相关活动时，还应满足《检测和校准实验室能力认可准则》及CNAS-CL01-A015:2022的适用要求。RB/T 214-2017仅作为历史制度衔接和辅助参考，不作为现行CMA主依据。',
+            ],
+            [
+                'USER-20260725-RBT214-002',
+                'XZTC/CX-01-02-2022',
+                'b.理解并掌握RB/T 214和管理体系的要求，熟悉本公司的管理体系文件；',
+                'b.理解并掌握现行检验检测机构资质认定要求和本公司管理体系要求，熟悉本公司的管理体系文件；RB/T 214-2017仅作历史制度衔接和辅助参考，不作为现行CMA主依据；',
+            ],
+        ];
+
+        $patches = [];
+        foreach ($definitions as [$patchId, $docNumber, $anchor, $replacement]) {
+            if (!str_contains((string)($documents[$docNumber] ?? ''), $anchor)) {
+                continue;
+            }
+            $patches[] = self::patch(
+                $patchId,
+                $docNumber,
+                'replace_exact',
+                $anchor,
+                $replacement,
+                $source,
+                $source,
+                ['6.2', 'CMA依据治理'],
+                '机构于2026-07-25确认：RB/T 214-2017仅保留历史/辅助参考身份，不作为现行CMA主依据。',
+                '2026-07-25'
+            );
+        }
+
+        return $patches;
+    }
+
     private static function patch(
         string $patchId,
         string $target,
@@ -325,7 +369,8 @@ final class GovernedTrialResolvedManifestService
         array $contentSource,
         array $approvalSource,
         array $clauses,
-        string $reason
+        string $reason,
+        string $decisionDate = '2026-07-22'
     ): array {
         return [
             'patch_id' => $patchId,
@@ -339,7 +384,7 @@ final class GovernedTrialResolvedManifestService
             'approval_source_path' => (string)$approvalSource['relative_path'],
             'approval_source_sha256' => (string)$approvalSource['sha256'],
             'decision_status' => 'signed',
-            'decision_date' => '2026-07-22',
+            'decision_date' => $decisionDate,
             'supersedes_patch_id' => '',
             'clause_refs' => $clauses,
             'reason' => $reason,
