@@ -21,6 +21,7 @@ use app\service\DocumentControlService;
 use app\service\DocumentStatusGuardService;
 use app\service\FieldAuditService;
 use app\service\FileService;
+use app\service\GovernedTrialResolvedDocumentService;
 use app\service\QmsDocumentStructureService;
 use app\service\TrialModeService;
 use think\exception\ValidateException;
@@ -553,6 +554,12 @@ class Document extends BaseController
         $doc = DocumentModel::find($id);
         if (!$doc || empty($doc->file_path)) {
             throw new HttpException(404, '附件不存在');
+        }
+        if (TrialModeService::isEnabled() && TrialModeService::isSimulationNumber((string)$doc->doc_number)) {
+            $resolvedPath = GovernedTrialResolvedDocumentService::resolveDownloadPath((string)$doc->file_path);
+            if ($resolvedPath !== null) {
+                FileService::downloadAbsolute($resolvedPath, (string)$doc->file_name);
+            }
         }
         FileService::download($doc->file_path, $doc->file_name);
     }

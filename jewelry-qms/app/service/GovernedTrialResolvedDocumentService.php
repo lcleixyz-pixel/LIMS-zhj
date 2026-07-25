@@ -25,6 +25,27 @@ final class GovernedTrialResolvedDocumentService
         ];
     }
 
+    public static function resolveDownloadPath(string $relativePath): ?string
+    {
+        $relativePath = str_replace('\\', '/', trim($relativePath));
+        if (!str_starts_with($relativePath, self::DEFAULT_OUTPUT . '/')) {
+            return null;
+        }
+
+        $allowedRoot = realpath(self::workspaceRoot() . '/' . self::DEFAULT_OUTPUT);
+        $realPath = realpath(self::workspaceRoot() . '/' . $relativePath);
+        if (
+            $allowedRoot === false
+            || $realPath === false
+            || !is_file($realPath)
+            || !str_starts_with($realPath, $allowedRoot . '/')
+        ) {
+            return null;
+        }
+
+        return $realPath;
+    }
+
     public static function writableEnvironmentErrors(bool $trialMode, string $trialBatch, string $databaseName): array
     {
         $errors = [];
