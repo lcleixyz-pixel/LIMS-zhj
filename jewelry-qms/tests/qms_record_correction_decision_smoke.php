@@ -16,6 +16,7 @@ $controllerSource = file_get_contents($root . '/app/controller/RecordFormInstanc
 $viewSource = file_get_contents($root . '/app/view/record_form_instance/view.html') ?: '';
 $authorizationSource = file_get_contents($root . '/app/service/ActionAuthorizationService.php') ?: '';
 $migrationSource = file_get_contents($root . '/database/migrations/20260725_record_form_corrections.sql') ?: '';
+$fieldTargetMigrationSource = file_get_contents($root . '/database/migrations/20260726_record_form_correction_field_targets.sql') ?: '';
 
 qms_correction_decision_assert_contains(
     "Route::post('record_form_instance/decideCorrection'",
@@ -181,6 +182,31 @@ qms_correction_decision_assert_contains(
     '`registered_at` datetime',
     $migrationSource,
     'Correction table must record correction registration time'
+);
+qms_correction_decision_assert_contains(
+    'CREATE TABLE IF NOT EXISTS `record_form_correction_requests`',
+    $fieldTargetMigrationSource,
+    'Structured field correction requests must have a durable table'
+);
+qms_correction_decision_assert_contains(
+    '`target_kind` varchar(30)',
+    $fieldTargetMigrationSource,
+    'Correction requests and entries must distinguish field, cell, row and legacy targets'
+);
+qms_correction_decision_assert_contains(
+    '`field_path` varchar(255)',
+    $fieldTargetMigrationSource,
+    'Correction requests and entries must retain the stable field path'
+);
+qms_correction_decision_assert_contains(
+    '`field_label` varchar(255)',
+    $fieldTargetMigrationSource,
+    'Correction requests and entries must retain a human-readable field label snapshot'
+);
+qms_correction_decision_assert_contains(
+    '`row_payload_json` longtext',
+    $fieldTargetMigrationSource,
+    'Append-row corrections must retain structured row values'
 );
 
 echo "qms_record_correction_decision_smoke passed\n";
