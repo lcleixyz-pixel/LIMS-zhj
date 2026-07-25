@@ -19,10 +19,45 @@ class RecordFormPrintService
             throw new RuntimeException('打印模板不存在：' . $templateKey);
         }
 
+        $template = self::normalizeTemplate($template);
+        $bufferLevel = ob_get_level();
         ob_start();
-        include $path;
+        try {
+            include $path;
 
-        return (string)ob_get_clean();
+            return (string)ob_get_clean();
+        } catch (\Throwable $exception) {
+            while (ob_get_level() > $bufferLevel) {
+                ob_end_clean();
+            }
+
+            throw $exception;
+        }
+    }
+
+    private static function normalizeTemplate(array $template): array
+    {
+        $schema = $template['field_schema'] ?? [];
+        if (is_string($schema)) {
+            $schema = trim($schema);
+            if ($schema === '') {
+                $template['field_schema'] = [];
+
+                return $template;
+            }
+
+            $decoded = json_decode($schema, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new RuntimeException('打印模板字段配置错误：' . json_last_error_msg());
+            }
+            if (!is_array($decoded)) {
+                throw new RuntimeException('打印模板字段配置错误：字段配置根节点必须是数组');
+            }
+
+            $template['field_schema'] = $decoded;
+        }
+
+        return $template;
     }
 
     public static function tablePaginationCss(): string
