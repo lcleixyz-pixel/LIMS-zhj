@@ -202,6 +202,36 @@ qms_correction_decision_assert_contains(
     'Inline annotation must focus the correction panel after it opens'
 );
 qms_correction_decision_assert_contains(
+    'modal-dialog-scrollable',
+    $viewSource,
+    'The correction panel must keep its footer reachable on a 720px-high screen'
+);
+qms_correction_decision_assert_contains(
+    'recordAnnotationModeToggle',
+    $viewSource,
+    'Frozen records must default to a clean reading view with an explicit annotation-mode switch'
+);
+qms_correction_decision_assert_contains(
+    'annotation-mode-active',
+    $viewSource,
+    'Inline correction targets must only become active after annotation mode is enabled'
+);
+qms_correction_decision_assert_contains(
+    '原始 PDF 已冻结',
+    $viewSource,
+    'Generated records must explain that the original PDF is frozen instead of offering regeneration'
+);
+qms_correction_decision_assert_contains(
+    '更多',
+    $viewSource,
+    'Secondary record actions must be consolidated under a more-actions menu'
+);
+qms_correction_decision_assert_contains(
+    "typeSelect.value = String(target.original_value || '').trim() !== '' ? 'amendment' : 'supplement';",
+    $viewSource,
+    'Existing non-empty values must default to amendment while empty values default to supplement'
+);
+qms_correction_decision_assert_contains(
     '原始记录值',
     $viewSource,
     'Annotated fields must visibly preserve the original recorded value'

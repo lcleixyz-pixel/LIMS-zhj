@@ -1721,7 +1721,7 @@ class RecordFormInstance extends BaseController
 
     private function canExportPdf(InstanceModel $record): bool
     {
-        return !$this->isTerminalStatus((string)$record->status);
+        return (string)$record->status === 'draft';
     }
 
     private function canEditRecord(InstanceModel $record): bool

@@ -1,39 +1,46 @@
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">记录详情 - {$record.record_title}</h5>
-        <div class="d-flex flex-wrap justify-content-end gap-1">
-            <a href="/record_form_instance/print?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-info">打印预览</a>
-            {if $canExportPdf && qms_can_action('record_form_instance', 'exportPdf', $record)}
-            <form method="post" action="/record_form_instance/exportPdf?id={$record.id}" class="d-inline">
-                <input type="hidden" name="pdf_token" value="{$pdfToken}">
-                <button type="submit" class="btn btn-sm btn-outline-success">生成PDF</button>
-            </form>
-            {elseif $canExportPdf}
-            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="无生成 PDF 权限">生成PDF</button>
+        <div class="d-flex flex-wrap justify-content-end align-items-center gap-1">
+            {if $canEdit}
+                {if $canExportPdf && qms_can_action('record_form_instance', 'exportPdf', $record)}
+                <form method="post" action="/record_form_instance/exportPdf?id={$record.id}" class="d-inline">
+                    <input type="hidden" name="pdf_token" value="{$pdfToken}">
+                    <button type="submit" class="btn btn-sm btn-success">生成PDF</button>
+                </form>
+                {elseif $canExportPdf}
+                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="无生成 PDF 权限">生成PDF</button>
+                {/if}
+                {if qms_can_action('record_form_instance', 'edit', $record)}
+                <a href="/record_form_instance/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+                {/if}
             {else}
-            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已归档或已作废记录不能重新生成 PDF">生成PDF</button>
-            {/if}
-            {if $record.generated_pdf_path}
-                {if $recordCorrections}
-                <a href="/record_form_instance/downloadCurrentPdf?id={$record.id}" class="btn btn-sm btn-primary">下载当前状态 PDF</a>
-                <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-secondary">下载原始 PDF</a>
-                <a href="/record_form_instance/downloadCurrentPackage?id={$record.id}" class="btn btn-sm btn-outline-secondary">下载归档包</a>
-                {else}
-                <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-primary">下载 PDF</a>
+                {if $record.generated_pdf_path}
+                    {if $recordCorrections}
+                    <a href="/record_form_instance/downloadCurrentPdf?id={$record.id}" class="btn btn-sm btn-primary">下载当前状态 PDF</a>
+                    {else}
+                    <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-primary">下载 PDF</a>
+                    {/if}
+                {/if}
+                <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#requestCorrectionModal">{if $correctionRequests}补充更正申请{else}申请更正{/if}</button>
+                {if $record.generated_pdf_path}
+                <span class="badge text-bg-light border text-secondary">原始 PDF 已冻结</span>
                 {/if}
             {/if}
-            {if $recordCorrections}
-            <a href="/record_form_instance/printCorrections?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-dark">打印更正附页</a>
-            {/if}
-            {if $canEdit && qms_can_action('record_form_instance', 'edit', $record)}
-            <a href="/record_form_instance/edit?id={$record.id}" class="btn btn-sm btn-outline-secondary">编辑</a>
-            {elseif $canEdit}
-            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="无编辑权限">编辑</button>
-            {else}
-            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="记录已锁定。请联系质量负责人发起作废/换版/更正。">编辑</button>
-            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#requestCorrectionModal">{if $correctionRequests}补充更正申请{else}申请更正{/if}</button>
-            {/if}
-            <a href="/record_form_instance/index" class="btn btn-sm btn-outline-secondary">返回</a>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">更多</button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a href="/record_form_instance/print?id={$record.id}" target="_blank" class="dropdown-item">打印预览</a></li>
+                    {if $record.generated_pdf_path && $recordCorrections}
+                    <li><a href="/record_form_instance/downloadPdf?id={$record.id}" class="dropdown-item">下载原始 PDF</a></li>
+                    <li><a href="/record_form_instance/downloadCurrentPackage?id={$record.id}" class="dropdown-item">下载归档包</a></li>
+                    {/if}
+                    {if $recordCorrections}
+                    <li><a href="/record_form_instance/printCorrections?id={$record.id}" target="_blank" class="dropdown-item">打印更正附页</a></li>
+                    {/if}
+                </ul>
+            </div>
+            <a href="/record_form_instance/index" class="btn btn-sm btn-link text-secondary text-decoration-none">返回</a>
         </div>
     </div>
     <div class="card-body">
@@ -59,20 +66,19 @@
             </tr>
         </table>
         {if $recordCorrections}
-        <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2" role="status">
+        <div class="alert alert-warning" role="status">
             <div>
                 <strong>当前记录存在 {$recordCorrections|count} 条后续更正。</strong>
                 当前状态 PDF 正文展示最终值；原始 PDF 保持不变，具体前后差异见下方修订记录。
                 {if $latestCorrectionAt}<span class="text-muted small">最近更正：{$latestCorrectionAt}</span>{/if}
             </div>
-            <a href="/record_form_instance/downloadCurrentPdf?id={$record.id}" class="btn btn-sm btn-warning">
-                {if $currentPdf}下载当前状态 PDF{else}生成并下载当前状态 PDF{/if}
-            </a>
         </div>
         {/if}
         <style>
-            .record-annotation-card{border-color:#7aa7d9}
-            .record-annotation-card .card-header{background:#eef6ff}
+            .record-annotation-card{border-color:#dee2e6}
+            .record-annotation-card .card-header{background:#f8f9fa}
+            .record-annotation-card.annotation-mode-active{border-color:#7aa7d9}
+            .record-annotation-card.annotation-mode-active .card-header{background:#eef6ff}
             .record-original-label{font-size:.72rem;color:#6c757d;margin-bottom:.2rem}
             .record-original-value{white-space:pre-wrap;word-break:break-word}
             .record-original-superseded{text-decoration:line-through;text-decoration-thickness:2px;color:#6c757d}
@@ -84,23 +90,35 @@
             .record-appended-row>td{background:#f3fbf6}
             .record-appended-meta>td{background:#f8fffa;border-top:0}
             .record-annotated-table td{min-width:140px}
-            .record-correction-target{position:relative;cursor:pointer;background:#f7fbff;box-shadow:inset 0 0 0 1px #9ec5fe;transition:background-color .15s ease,box-shadow .15s ease}
-            .record-correction-target:hover,.record-correction-target:focus-visible{background:#eaf4ff;box-shadow:inset 0 0 0 2px #0d6efd;outline:0}
-            .record-correction-target.is-selected{background:#dcecff;box-shadow:inset 0 0 0 2px #0a58ca}
-            .record-correction-target-badge{display:inline-flex;align-items:center;gap:.2rem;color:#0a58ca;font-size:.72rem;white-space:nowrap}
+            .record-correction-target{position:relative;transition:background-color .15s ease,box-shadow .15s ease}
+            .annotation-mode-active .record-correction-target{cursor:pointer;background:#f7fbff;box-shadow:inset 0 0 0 1px #9ec5fe}
+            .annotation-mode-active .record-correction-target:hover,.annotation-mode-active .record-correction-target:focus-visible{background:#eaf4ff;box-shadow:inset 0 0 0 2px #0d6efd;outline:0}
+            .annotation-mode-active .record-correction-target.is-selected{background:#dcecff;box-shadow:inset 0 0 0 2px #0a58ca}
+            .record-correction-target-badge{display:none;align-items:center;gap:.2rem;color:#0a58ca;font-size:.72rem;white-space:nowrap}
+            .annotation-mode-active .record-correction-target-badge{display:inline-flex}
             .record-correction-target-badge::before{content:"✎";font-size:.82rem}
             .record-field-target{padding:.65rem .75rem;border-radius:.35rem}
-            .record-add-row-action{border-style:dashed}
+            .record-add-row-action{display:none;border-style:dashed}
+            .annotation-mode-active .record-add-row-action{display:inline-block}
+            .annotation-mode-help{display:none}
+            .annotation-mode-active .annotation-mode-help{display:inline}
         </style>
-        <div class="card record-annotation-card mb-3">
+        <div class="card record-annotation-card mb-3" id="recordAnnotationCard">
             <div class="card-header d-flex justify-content-between align-items-center gap-2">
                 <h6 class="mb-0">填写内容（原记录＋批注）</h6>
-                <span class="badge text-bg-primary">系统批注视图</span>
+                {if $canEdit == false}
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge text-bg-light border text-secondary" id="recordAnnotationModeLabel">阅读模式</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="recordAnnotationModeToggle" aria-pressed="false">进入批注模式</button>
+                </div>
+                {else}
+                <span class="badge text-bg-light border text-secondary">草稿填写视图</span>
+                {/if}
             </div>
             <div class="card-body">
                 <div class="alert alert-light border small">
-                    这里按纸质划改思路显示批注：原始记录值始终保留；修改值、作废标注和补充行叠加显示。底层原记录和原 PDF 未被修改。
-                    {if $canEdit == false}<br><strong class="text-primary">蓝色标记的位置可直接点击批注。</strong>{/if}
+                    <strong>系统批注视图：</strong>这里按纸质划改思路显示批注，原始记录值始终保留；修改值、作废标注和补充行叠加显示。底层原记录和原 PDF 未被修改。
+                    {if $canEdit == false}<br>需要更正时，请点击右上角“进入批注模式”。<strong class="text-primary annotation-mode-help">蓝色标记的位置可直接点击批注。</strong>{/if}
                 </div>
                 {volist name="annotatedSchema" id="field"}
                 <section class="mb-4">
@@ -115,7 +133,7 @@
                                 {volist name="field.display_rows" id="displayRow"}
                                 <tr{if $displayRow.is_appended} class="record-appended-row"{/if}>
                                     {volist name="displayRow.cells" id="displayCell"}
-                                    <td{if $displayRow.is_appended == false && $canEdit == false} class="record-correction-target" data-correction-path="{$displayCell.field_path}" tabindex="0" role="button" aria-label="批注：{$field.label}第{$displayRow.row_number}行{$displayCell.label}"{/if}>
+                                    <td{if $displayRow.is_appended == false && $canEdit == false} class="record-correction-target" data-correction-path="{$displayCell.field_path}" aria-label="批注：{$field.label}第{$displayRow.row_number}行{$displayCell.label}"{/if}>
                                         {if $displayRow.is_appended}
                                         <div class="record-original-value">{$displayCell.display_value|default='-'}</div>
                                         {else}
@@ -181,7 +199,7 @@
                     </div>
                     {/if}
                     {else}
-                    <div{if $canEdit == false} class="record-correction-target record-field-target" data-correction-path="{$field.field_path}" tabindex="0" role="button" aria-label="批注：{$field.label}"{/if}>
+                    <div{if $canEdit == false} class="record-correction-target record-field-target" data-correction-path="{$field.field_path}" aria-label="批注：{$field.label}"{/if}>
                         {if $canEdit == false}
                         <div class="d-flex justify-content-end mb-1">
                             <span class="record-correction-target-badge">点击批注</span>
@@ -436,9 +454,8 @@
     </div>
 </div>
 <div class="modal fade" id="requestCorrectionModal" tabindex="-1" aria-labelledby="requestCorrectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form method="post" action="/record_form_instance/requestCorrection?id={$record.id}">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <form method="post" action="/record_form_instance/requestCorrection?id={$record.id}" class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="requestCorrectionModalLabel">按字段申请更正记录</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
@@ -489,7 +506,6 @@
                     <button type="submit" class="btn btn-primary">提交申请</button>
                 </div>
             </form>
-        </div>
     </div>
 </div>
 <script type="application/json" id="correctionTargetsData">{$correctionTargetsJson|raw}</script>
@@ -506,6 +522,9 @@
     const modalElement = document.getElementById('requestCorrectionModal');
     const modalTitle = document.getElementById('requestCorrectionModalLabel');
     const selectionSummary = document.getElementById('correctionSelectionSummary');
+    const annotationCard = document.getElementById('recordAnnotationCard');
+    const annotationModeToggle = document.getElementById('recordAnnotationModeToggle');
+    const annotationModeLabel = document.getElementById('recordAnnotationModeLabel');
     if (!pathSelect || !typeSelect || !original || !scalarGroup || !scalarValue || !rowGroup || !rowFields || !dataNode || !modalElement) {
         return;
     }
@@ -574,6 +593,7 @@
             Array.from(typeSelect.options).forEach(function (option) {
                 option.disabled = false;
             });
+            typeSelect.value = String(target.original_value || '').trim() !== '' ? 'amendment' : 'supplement';
             scalarGroup.classList.remove('d-none');
             rowGroup.classList.add('d-none');
         }
@@ -603,6 +623,9 @@
 
     document.querySelectorAll('.record-correction-target').forEach(function (element) {
         function activate(event) {
+            if (!annotationCard || !annotationCard.classList.contains('annotation-mode-active')) {
+                return;
+            }
             if (event.target.closest('a,button,input,textarea,select,details,summary,.record-annotation')) {
                 return;
             }
@@ -620,9 +643,46 @@
 
     document.querySelectorAll('.record-add-row-action').forEach(function (button) {
         button.addEventListener('click', function () {
+            if (!annotationCard || !annotationCard.classList.contains('annotation-mode-active')) {
+                return;
+            }
             openCorrectionForPath(button.dataset.correctionPath || '', button);
         });
     });
+
+    function setAnnotationMode(active) {
+        if (!annotationCard || !annotationModeToggle) {
+            return;
+        }
+        annotationCard.classList.toggle('annotation-mode-active', active);
+        annotationModeToggle.setAttribute('aria-pressed', active ? 'true' : 'false');
+        annotationModeToggle.textContent = active ? '退出批注模式' : '进入批注模式';
+        annotationModeToggle.classList.toggle('btn-primary', active);
+        annotationModeToggle.classList.toggle('btn-outline-primary', !active);
+        if (annotationModeLabel) {
+            annotationModeLabel.textContent = active ? '批注模式' : '阅读模式';
+            annotationModeLabel.classList.toggle('text-bg-primary', active);
+            annotationModeLabel.classList.toggle('text-bg-light', !active);
+            annotationModeLabel.classList.toggle('text-secondary', !active);
+        }
+        document.querySelectorAll('.record-correction-target').forEach(function (element) {
+            if (active) {
+                element.setAttribute('tabindex', '0');
+                element.setAttribute('role', 'button');
+            } else {
+                element.removeAttribute('tabindex');
+                element.removeAttribute('role');
+                element.classList.remove('is-selected');
+            }
+        });
+    }
+
+    if (annotationModeToggle) {
+        annotationModeToggle.addEventListener('click', function () {
+            setAnnotationMode(!annotationCard.classList.contains('annotation-mode-active'));
+        });
+        setAnnotationMode(false);
+    }
 
     modalElement.addEventListener('shown.bs.modal', function () {
         const target = byPath[pathSelect.value];
