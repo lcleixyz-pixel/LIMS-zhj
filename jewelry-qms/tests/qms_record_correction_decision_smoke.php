@@ -32,6 +32,21 @@ qms_correction_decision_assert_contains(
     'Record detail must load correction decision history'
 );
 qms_correction_decision_assert_contains(
+    'correctionRequestForDecision',
+    $controllerSource,
+    'Record correction decision must bind to one selected correction request'
+);
+qms_correction_decision_assert_contains(
+    'correction_request_id',
+    $controllerSource,
+    'Record correction decision must require a selected correction request id'
+);
+qms_correction_decision_assert_contains(
+    '请选择要处理的更正申请',
+    $controllerSource,
+    'Record correction decision must explain missing selected correction request'
+);
+qms_correction_decision_assert_contains(
     'recordCorrectionApproverUserIds',
     $controllerSource,
     'Correction requests must notify configured SIM approvers as well as quality managers'
@@ -40,6 +55,16 @@ qms_correction_decision_assert_contains(
     '更正申请处理',
     $viewSource,
     'Record detail must show a correction decision panel'
+);
+qms_correction_decision_assert_contains(
+    '要处理的申请',
+    $viewSource,
+    'Record detail must let approvers pick the exact correction request'
+);
+qms_correction_decision_assert_contains(
+    'name="correction_request_id"',
+    $viewSource,
+    'Record correction decision form must submit the selected correction request id'
 );
 qms_correction_decision_assert_contains(
     '批准更正',
@@ -55,6 +80,11 @@ qms_correction_decision_assert_contains(
     '更正申请处理结果',
     $viewSource,
     'Record detail must keep a persistent correction decision result'
+);
+qms_correction_decision_assert_contains(
+    '对应申请',
+    $viewSource,
+    'Record detail must show which request a decision handled'
 );
 qms_correction_decision_assert_contains(
     "'recordforminstance.decidecorrection'",

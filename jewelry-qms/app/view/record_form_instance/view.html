@@ -63,6 +63,7 @@
                     <thead>
                         <tr>
                             <th width="170">提交时间</th>
+                            <th width="120">申请编号</th>
                             <th>更正原因</th>
                             <th width="120">通知人数</th>
                         </tr>
@@ -71,6 +72,7 @@
                         {volist name="correctionRequests" id="correctionRequest"}
                         <tr>
                             <td>{$correctionRequest.created|default='-'}</td>
+                            <td><code>{$correctionRequest.short_id|default='-'}</code></td>
                             <td>{$correctionRequest.reason|default='未记录原因'}</td>
                             <td>{$correctionRequest.recipient_count|default=0}</td>
                         </tr>
@@ -95,6 +97,7 @@
                         <tr>
                             <th width="170">处理时间</th>
                             <th width="120">处理结果</th>
+                            <th>对应申请</th>
                             <th>处理意见</th>
                             <th width="140">处理人</th>
                         </tr>
@@ -104,6 +107,12 @@
                         <tr>
                             <td>{$correctionDecision.created|default='-'}</td>
                             <td>{$correctionDecision.decision|default='已处理'}</td>
+                            <td>
+                                {$correctionDecision.request_label|default='未记录对应申请'}
+                                {if $correctionDecision.request_short_id}
+                                <div class="text-muted small">申请编号：{$correctionDecision.request_short_id}</div>
+                                {/if}
+                            </td>
                             <td>{$correctionDecision.comment|default='无补充意见'}</td>
                             <td>{$correctionDecision.handler|default='未记录处理人'}</td>
                         </tr>
@@ -119,8 +128,18 @@
                 <h6 class="mb-0">更正申请处理</h6>
             </div>
             <div class="card-body">
-                <p class="text-muted small mb-3">请先核对上方更正原因和记录内容，再选择批准更正或驳回申请；系统会把处理结果留存在本页。</p>
+                <p class="text-muted small mb-3">请先选择本次要处理的具体申请，再核对更正原因和记录内容；系统会把处理结果绑定到所选申请。</p>
                 <form method="post" action="/record_form_instance/decideCorrection?id={$record.id}">
+                    <div class="mb-3">
+                        <label for="correctionRequestId" class="form-label">要处理的申请</label>
+                        <select name="correction_request_id" id="correctionRequestId" class="form-select" required>
+                            <option value="">请选择要处理的更正申请</option>
+                            {volist name="correctionRequests" id="correctionRequest"}
+                            <option value="{$correctionRequest.id}">{$correctionRequest.option_label}</option>
+                            {/volist}
+                        </select>
+                        <div class="form-text">同一记录有多次补充申请时，请按提交时间和申请编号选择；处理结果会显示“对应申请”。</div>
+                    </div>
                     <div class="mb-3">
                         <label for="correctionDecisionComment" class="form-label">处理意见</label>
                         <textarea name="comment" id="correctionDecisionComment" class="form-control" rows="3" placeholder="例如：同意按纸质原始记录核对后更正；或说明驳回原因。"></textarea>

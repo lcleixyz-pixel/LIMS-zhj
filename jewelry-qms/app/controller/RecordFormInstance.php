@@ -415,6 +415,19 @@ class RecordFormInstance extends BaseController
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
 
+        $correctionRequestId = trim((string)$this->request->post('correction_request_id', ''));
+        if ($correctionRequestId === '') {
+            Session::flash('error', '请选择要处理的更正申请。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+        $correctionRequest = $this->correctionRequestForDecision((string)$record->id, $correctionRequestId);
+        if ($correctionRequest === []) {
+            Session::flash('error', '所选更正申请不存在或不属于当前记录，请刷新后重试。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
         $comment = trim((string)$this->request->post('comment', ''));
         if ($comment === '') {
             $comment = '无补充意见';
@@ -433,7 +446,7 @@ class RecordFormInstance extends BaseController
 
         NotificationService::notifyUsers(
             '记录更正申请处理结果',
-            "记录「{$record->record_title}」更正申请处理结果：{$decisionLabels[$decision]}；处理意见：{$comment}；处理人：{$handlerLabel}",
+            "记录「{$record->record_title}」更正申请处理结果：{$decisionLabels[$decision]}；对应申请：{$correctionRequest['label']}；申请ID：{$correctionRequest['id']}；处理意见：{$comment}；处理人：{$handlerLabel}",
             'record_form_instance',
             $recipientIds,
             'record_form_instance',
@@ -480,8 +493,57 @@ class RecordFormInstance extends BaseController
                 'reason' => $reason !== '' ? $reason : '未记录原因',
                 'created' => (string)($row['created'] ?? ''),
                 'recipient_count' => (int)($row['recipient_count'] ?? 0),
+                'short_id' => self::shortId((string)($row['id'] ?? '')),
+                'option_label' => self::correctionRequestLabel(
+                    (string)($row['created'] ?? ''),
+                    $reason !== '' ? $reason : '未记录原因',
+                    (string)($row['id'] ?? '')
+                ),
             ];
         }, $rows);
+    }
+
+    private function correctionRequestForDecision(string $recordId, string $requestId): array
+    {
+        if ($recordId === '' || $requestId === '') {
+            return [];
+        }
+
+        $row = Db::name('notifications')
+            ->field('id,message,created')
+            ->where('id', $requestId)
+            ->where('title', '记录更正申请')
+            ->where('link_controller', 'record_form_instance')
+            ->where('link_action', 'view')
+            ->where('link_id', $recordId)
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->find();
+        if (!$row) {
+            return [];
+        }
+
+        $message = trim((string)($row['message'] ?? ''));
+        $reason = $message;
+        $marker = '原因：';
+        $position = mb_strpos($message, $marker);
+        if ($position !== false) {
+            $reason = mb_substr($message, $position + mb_strlen($marker));
+        }
+        if (trim($reason) === '') {
+            $reason = '未记录原因';
+        }
+
+        return [
+            'id' => (string)($row['id'] ?? ''),
+            'created' => (string)($row['created'] ?? ''),
+            'reason' => $reason,
+            'label' => self::correctionRequestLabel(
+                (string)($row['created'] ?? ''),
+                $reason,
+                (string)($row['id'] ?? '')
+            ),
+        ];
     }
 
     private function correctionDecisionsFor(string $recordId): array
@@ -506,6 +568,8 @@ class RecordFormInstance extends BaseController
         return array_map(static function (array $row): array {
             $message = trim((string)($row['message'] ?? ''));
             $decision = self::messageSegment($message, '处理结果：', '；');
+            $requestLabel = self::messageSegment($message, '对应申请：', '；');
+            $requestId = self::messageSegment($message, '申请ID：', '；');
             $comment = self::messageSegment($message, '处理意见：', '；');
             $handler = trim((string)($row['handler_name'] ?? ''));
             if ($handler === '') {
@@ -518,6 +582,8 @@ class RecordFormInstance extends BaseController
             return [
                 'id' => (string)($row['id'] ?? ''),
                 'decision' => $decision !== '' ? $decision : '已处理',
+                'request_label' => $requestLabel !== '' ? $requestLabel : '未记录对应申请',
+                'request_short_id' => self::shortId($requestId),
                 'comment' => $comment !== '' ? $comment : '无补充意见',
                 'handler' => $handler !== '' ? $handler : '未记录处理人',
                 'created' => (string)($row['created'] ?? ''),
@@ -539,6 +605,30 @@ class RecordFormInstance extends BaseController
         }
 
         return trim($tail);
+    }
+
+    private static function correctionRequestLabel(string $created, string $reason, string $id): string
+    {
+        $created = trim($created) !== '' ? trim($created) : '未记录时间';
+        $reason = trim($reason) !== '' ? trim($reason) : '未记录原因';
+        if (mb_strlen($reason) > 60) {
+            $reason = mb_substr($reason, 0, 60) . '…';
+        }
+
+        $shortId = self::shortId($id);
+        $suffix = $shortId !== '' ? '（申请编号 ' . $shortId . '）' : '';
+
+        return $created . '｜' . $reason . $suffix;
+    }
+
+    private static function shortId(string $id): string
+    {
+        $id = trim($id);
+        if ($id === '') {
+            return '';
+        }
+
+        return substr($id, 0, 8);
     }
 
     /**
