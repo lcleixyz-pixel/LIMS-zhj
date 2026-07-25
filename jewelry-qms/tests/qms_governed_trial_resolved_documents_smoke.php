@@ -123,4 +123,12 @@ resolved_documents_assert(count(glob($output . '/修订对照/*.md') ?: []) === 
 resolved_documents_assert(($written['document_count'] ?? 0) === 38, '落盘结果应报告38份文件');
 resolved_documents_assert(hash_file('sha256', $manualPath) === $manualHashBefore, '生成解析稿不得改动现用质量手册原件');
 
+$acceptancePath = $output . '/实施验收记录.md';
+file_put_contents($acceptancePath, "验收记录应由装配保留\n");
+GovernedTrialResolvedDocumentService::writePackage($preview, $output);
+resolved_documents_assert(
+    is_file($acceptancePath) && file_get_contents($acceptancePath) === "验收记录应由装配保留\n",
+    '重复装配不得删除人工验收记录'
+);
+
 echo "qms_governed_trial_resolved_documents_smoke passed\n";

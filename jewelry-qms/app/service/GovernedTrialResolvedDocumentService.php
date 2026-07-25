@@ -478,6 +478,18 @@ final class GovernedTrialResolvedDocumentService
         $target = self::absoluteOutputPath($outputPath ?: self::DEFAULT_OUTPUT);
         $temporary = $target . '.tmp-' . getmypid() . '-' . bin2hex(random_bytes(4));
         $backup = $target . '.previous-' . getmypid();
+        $preservedFiles = [];
+        foreach (['实施验收记录.md'] as $fileName) {
+            $existingPath = $target . '/' . $fileName;
+            if (!is_file($existingPath)) {
+                continue;
+            }
+            $content = file_get_contents($existingPath);
+            if (!is_string($content)) {
+                throw new RuntimeException('无法读取需要保留的人工验收文件：' . $existingPath);
+            }
+            $preservedFiles[$fileName] = $content;
+        }
 
         self::mkdir($temporary . '/连续正文');
         self::mkdir($temporary . '/修订对照');
@@ -505,6 +517,9 @@ final class GovernedTrialResolvedDocumentService
         self::write($temporary . '/装配清单.json', self::json(self::packageManifest($preview)));
         self::write($temporary . '/验证报告.md', self::renderValidationReport($preview));
         self::write($temporary . '/版本台账.md', self::renderVersionLedger($preview));
+        foreach ($preservedFiles as $fileName => $content) {
+            self::write($temporary . '/' . $fileName, $content);
+        }
 
         if (is_dir($backup)) {
             self::removeTree($backup);
