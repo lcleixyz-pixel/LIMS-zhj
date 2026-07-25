@@ -158,6 +158,8 @@ Route::group(function () {
     Route::post('planning/responsibilities', 'PlanningResponsibility/createInitialDraft');
 
     Route::post('approval/approve', 'Approval/approve');
+    Route::post('governed_change/request', 'GovernedChange/request');
+    Route::post('governed_change/decide', 'GovernedChange/decide');
 
     Route::rule('user/changePassword', 'User/changePassword');
 

@@ -73,6 +73,9 @@ final class ActionAuthorizationService
                 => self::canDecideRecordCorrection($employeeId),
             'recordforminstance.registercorrection'
                 => self::canRegisterRecordCorrection($employeeId),
+            'governedchange.request' => true,
+            'governedchange.decide'
+                => self::canDecideRecordCorrection($employeeId),
 
             'auditplan.organize', 'auditplan.approve', 'auditplan.complete'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
@@ -651,6 +654,12 @@ final class ActionAuthorizationService
                 $record = self::recordFormInstanceRecord(self::requestId($request))
                     ?? self::authorizationDeniedRecord();
             }
+        } elseif ($controller === 'governedchange') {
+            $policyAction = match ($action) {
+                'request' => 'request',
+                'decide' => 'decide',
+                default => null,
+            };
         } elseif ($controller === 'auditplan') {
             $policyAction = match ($action) {
                 'add', 'edit', 'delete' => 'organize',
