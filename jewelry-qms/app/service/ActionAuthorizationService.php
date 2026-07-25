@@ -71,6 +71,8 @@ final class ActionAuthorizationService
                 || self::hasGlobalPosition($employeeId, ['quality_manager']),
             'recordforminstance.decidecorrection'
                 => self::canDecideRecordCorrection($employeeId),
+            'recordforminstance.registercorrection'
+                => self::canRegisterRecordCorrection($employeeId),
 
             'auditplan.organize', 'auditplan.approve', 'auditplan.complete'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
@@ -440,6 +442,18 @@ final class ActionAuthorizationService
             || self::hasGlobalPosition($employeeId, ['quality_manager', 'top_management']);
     }
 
+    private static function canRegisterRecordCorrection(string $employeeId): bool
+    {
+        return self::hasAnyPosition(
+            $employeeId,
+            ['quality_manager', 'document_controller', 'technical_manager', 'top_management']
+        )
+            || self::hasGlobalPosition(
+                $employeeId,
+                ['quality_manager', 'document_controller', 'technical_manager', 'top_management']
+            );
+    }
+
     private static function hasAnyPosition(string $employeeId, array $codes): bool
     {
         return array_intersect($codes, self::activePositionCodes($employeeId)) !== [];
@@ -630,9 +644,10 @@ final class ActionAuthorizationService
                 'edit' => 'edit',
                 'exportpdf' => 'export_pdf',
                 'decidecorrection' => 'decide_correction',
+                'registercorrection' => 'register_correction',
                 default => null,
             };
-            if (in_array($action, ['edit', 'exportpdf', 'decidecorrection'], true)) {
+            if (in_array($action, ['edit', 'exportpdf', 'decidecorrection', 'registercorrection'], true)) {
                 $record = self::recordFormInstanceRecord(self::requestId($request))
                     ?? self::authorizationDeniedRecord();
             }

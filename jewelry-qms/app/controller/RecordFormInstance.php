@@ -342,9 +342,16 @@ class RecordFormInstance extends BaseController
         View::assign('previewPdfFiles', $this->previewPdfFiles((string)$record->id));
         View::assign('correctionRequests', $this->correctionRequestsFor((string)$record->id));
         View::assign('correctionDecisions', $this->correctionDecisionsFor((string)$record->id));
+        View::assign('recordCorrections', $this->recordCorrectionsFor((string)$record->id));
+        View::assign('approvedCorrectionRequests', $this->approvedCorrectionRequestsFor((string)$record->id));
+        View::assign('correctionTypeLabels', self::correctionTypeLabels());
         View::assign(
             'canDecideCorrection',
             ActionAuthorizationService::allows('record_form_instance', 'decideCorrection', $record)
+        );
+        View::assign(
+            'canRegisterCorrection',
+            ActionAuthorizationService::allows('record_form_instance', 'registerCorrection', $record)
         );
 
         return View::fetch('record_form_instance/view');
@@ -385,6 +392,94 @@ class RecordFormInstance extends BaseController
         }
 
         Session::flash('success', '更正申请已提交。质量负责人和批准人将收到通知并协助处理，请留意通知中心。');
+
+        return redirect('/record_form_instance/view?id=' . $record->id);
+    }
+
+    public function registerCorrection()
+    {
+        $record = $this->findInstance();
+        if (!$this->request->isPost()) {
+            Session::flash('warning', '请在记录详情页登记更正内容。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        if (!$this->recordCorrectionTableExists()) {
+            Session::flash('error', '记录更正追加层尚未完成数据库初始化，请联系系统管理员。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        if (!ActionAuthorizationService::allows('record_form_instance', 'registerCorrection', $record)) {
+            Session::flash('error', '当前账号无权登记更正内容，请使用质量负责人、文控/技术负责人或批准人账号。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        $requestId = trim((string)$this->request->post('correction_request_id', ''));
+        if ($requestId === '') {
+            Session::flash('error', '请选择已批准的更正申请。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        $approvedRequest = $this->approvedCorrectionRequestForRegistration((string)$record->id, $requestId);
+        if ($approvedRequest === []) {
+            Session::flash('error', '所选更正申请尚未批准，不能登记更正内容。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        $type = trim((string)$this->request->post('correction_type', 'supplement'));
+        $typeLabels = self::correctionTypeLabels();
+        if (!isset($typeLabels[$type])) {
+            Session::flash('error', '请选择有效的更正类型。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        $originalContent = trim((string)$this->request->post('original_content', ''));
+        $correctedContent = trim((string)$this->request->post('corrected_content', ''));
+        $reason = trim((string)$this->request->post('correction_reason', ''));
+        if ($correctedContent === '') {
+            Session::flash('error', '请填写更正后内容或补充内容。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+        if ($type !== 'supplement' && $originalContent === '') {
+            Session::flash('error', '修改或作废标注需要填写原内容，确保原始数据保留可追溯。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+        if ($reason === '') {
+            $reason = (string)($approvedRequest['request_reason'] ?? '按已批准更正申请登记');
+        }
+
+        $now = date('Y-m-d H:i:s');
+        Db::name('record_form_corrections')->insert([
+            'id' => qms_uuid(),
+            'company_id' => (string)Config::get('qms.company_id'),
+            'record_id' => (string)$record->id,
+            'correction_request_id' => $requestId,
+            'decision_notification_id' => (string)($approvedRequest['decision_notification_id'] ?? ''),
+            'correction_type' => $type,
+            'original_content' => $originalContent,
+            'corrected_content' => $correctedContent,
+            'correction_reason' => $reason,
+            'registered_by' => (string)Session::get('user.id', ''),
+            'registered_at' => $now,
+            'approved_by' => (string)($approvedRequest['approved_by'] ?? ''),
+            'approved_at' => (string)($approvedRequest['approved_at'] ?? ''),
+            'publish' => 1,
+            'soft_delete' => 0,
+            'created' => $now,
+            'modified' => $now,
+            'created_by' => (string)Session::get('user.id', ''),
+            'modified_by' => (string)Session::get('user.id', ''),
+        ]);
+
+        Session::flash('success', '更正内容已追加登记。原记录和原 PDF 未被修改，可按需打印更正说明页随纸质记录保存。');
 
         return redirect('/record_form_instance/view?id=' . $record->id);
     }
@@ -582,13 +677,115 @@ class RecordFormInstance extends BaseController
             return [
                 'id' => (string)($row['id'] ?? ''),
                 'decision' => $decision !== '' ? $decision : '已处理',
+                'is_approved' => $decision === '批准更正',
+                'request_id' => $requestId,
+                'decision_notification_id' => (string)($row['id'] ?? ''),
                 'request_label' => $requestLabel !== '' ? $requestLabel : '未记录对应申请',
                 'request_short_id' => self::shortId($requestId),
                 'comment' => $comment !== '' ? $comment : '无补充意见',
                 'handler' => $handler !== '' ? $handler : '未记录处理人',
+                'approved_by' => (string)($row['created_by'] ?? ''),
+                'approved_at' => (string)($row['created'] ?? ''),
                 'created' => (string)($row['created'] ?? ''),
             ];
         }, $rows);
+    }
+
+    private function approvedCorrectionRequestsFor(string $recordId): array
+    {
+        $requests = [];
+        foreach ($this->correctionDecisionsFor($recordId) as $decision) {
+            if (!($decision['is_approved'] ?? false)) {
+                continue;
+            }
+            $requestId = trim((string)($decision['request_id'] ?? ''));
+            if ($requestId === '' || isset($requests[$requestId])) {
+                continue;
+            }
+            $request = $this->correctionRequestForDecision($recordId, $requestId);
+            if ($request === []) {
+                continue;
+            }
+
+            $requests[$requestId] = [
+                'id' => $requestId,
+                'label' => (string)$request['label'],
+                'request_reason' => (string)$request['reason'],
+                'decision_notification_id' => (string)($decision['decision_notification_id'] ?? ''),
+                'approved_by' => (string)($decision['approved_by'] ?? ''),
+                'approved_at' => (string)($decision['approved_at'] ?? ''),
+                'approved_label' => (string)($decision['handler'] ?? '未记录批准人') . '｜' . (string)($decision['approved_at'] ?? ''),
+            ];
+        }
+
+        return array_values($requests);
+    }
+
+    private function approvedCorrectionRequestForRegistration(string $recordId, string $requestId): array
+    {
+        foreach ($this->approvedCorrectionRequestsFor($recordId) as $request) {
+            if ((string)($request['id'] ?? '') === $requestId) {
+                return $request;
+            }
+        }
+
+        return [];
+    }
+
+    private function recordCorrectionsFor(string $recordId): array
+    {
+        if ($recordId === '' || !$this->recordCorrectionTableExists()) {
+            return [];
+        }
+
+        $rows = Db::name('record_form_corrections')
+            ->alias('c')
+            ->leftJoin('users ru', 'ru.id = c.registered_by')
+            ->leftJoin('users au', 'au.id = c.approved_by')
+            ->field('c.*,ru.name AS registered_name,ru.username AS registered_username,au.name AS approved_name,au.username AS approved_username')
+            ->where('c.record_id', $recordId)
+            ->where('c.publish', 1)
+            ->where('c.soft_delete', 0)
+            ->order('c.registered_at', 'asc')
+            ->select()
+            ->toArray();
+        $typeLabels = self::correctionTypeLabels();
+
+        return array_map(static function (array $row) use ($typeLabels): array {
+            $registeredBy = trim((string)($row['registered_name'] ?? ''));
+            if ($registeredBy === '') {
+                $registeredBy = trim((string)($row['registered_username'] ?? ''));
+            }
+            $approvedBy = trim((string)($row['approved_name'] ?? ''));
+            if ($approvedBy === '') {
+                $approvedBy = trim((string)($row['approved_username'] ?? ''));
+            }
+            $requestId = (string)($row['correction_request_id'] ?? '');
+
+            return [
+                'id' => (string)($row['id'] ?? ''),
+                'type' => (string)($row['correction_type'] ?? ''),
+                'type_label' => $typeLabels[(string)($row['correction_type'] ?? '')] ?? (string)($row['correction_type'] ?? '更正'),
+                'request_id' => $requestId,
+                'request_short_id' => self::shortId($requestId),
+                'original_content' => (string)($row['original_content'] ?? ''),
+                'corrected_content' => (string)($row['corrected_content'] ?? ''),
+                'correction_reason' => (string)($row['correction_reason'] ?? ''),
+                'registered_by' => $registeredBy !== '' ? $registeredBy : '未记录',
+                'registered_at' => (string)($row['registered_at'] ?? ''),
+                'approved_by' => $approvedBy !== '' ? $approvedBy : '未记录',
+                'approved_at' => (string)($row['approved_at'] ?? ''),
+            ];
+        }, $rows);
+    }
+
+    private static function correctionTypeLabels(): array
+    {
+        return [
+            'supplement' => '补充内容',
+            'amendment' => '修改内容（保留原值）',
+            'void_mark' => '作废标注（不删除原内容）',
+        ];
     }
 
     private static function messageSegment(string $message, string $startMarker, string $endMarker): string
@@ -629,6 +826,28 @@ class RecordFormInstance extends BaseController
         }
 
         return substr($id, 0, 8);
+    }
+
+    private function recordCorrectionTableExists(): bool
+    {
+        static $exists = null;
+        if ($exists !== null) {
+            return $exists;
+        }
+
+        try {
+            $rows = Db::query(
+                'SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
+                ['record_form_corrections']
+            );
+            $exists = (int)($rows[0]['c'] ?? 0) > 0;
+
+            return $exists;
+        } catch (\Throwable $exception) {
+            $exists = false;
+
+            return false;
+        }
     }
 
     /**
@@ -701,6 +920,23 @@ class RecordFormInstance extends BaseController
         $record = $this->findInstance();
 
         return $this->renderPrintHtml($record);
+    }
+
+    public function printCorrections()
+    {
+        $record = $this->findInstance();
+        $corrections = $this->recordCorrectionsFor((string)$record->id);
+        if ($corrections === []) {
+            Session::flash('warning', '当前记录尚无已登记的更正内容，暂无更正说明页可打印。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        View::assign('record', $record);
+        View::assign('corrections', $corrections);
+        View::assign('printedAt', date('Y-m-d H:i:s'));
+
+        return View::fetch('record_form_instance/correction_print');
     }
 
     public function exportPdf()

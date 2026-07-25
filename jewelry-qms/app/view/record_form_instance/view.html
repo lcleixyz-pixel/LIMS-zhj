@@ -16,6 +16,9 @@
             {if $record.generated_pdf_path}
             <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-primary">下载PDF</a>
             {/if}
+            {if $recordCorrections}
+            <a href="/record_form_instance/printCorrections?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-dark">打印更正说明页</a>
+            {/if}
             {if $canEdit && qms_can_action('record_form_instance', 'edit', $record)}
             <a href="/record_form_instance/edit?id={$record.id}" class="btn btn-sm btn-outline-secondary">编辑</a>
             {elseif $canEdit}
@@ -119,6 +122,97 @@
                         {/volist}
                     </tbody>
                 </table>
+            </div>
+        </div>
+        {/if}
+        {if $recordCorrections}
+        <div class="card border-success mt-3">
+            <div class="card-header bg-success-subtle d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">更正记录链</h6>
+                <a href="/record_form_instance/printCorrections?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-success">打印更正说明页</a>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light border small mb-3">原记录和原 PDF 保持冻结；以下内容为追加登记的更正附页信息，适合随已打印纸质记录一并保存。</div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th width="135">登记时间</th>
+                                <th width="120">类型</th>
+                                <th width="110">对应申请</th>
+                                <th>原内容</th>
+                                <th>更正/补充内容</th>
+                                <th>原因</th>
+                                <th width="120">登记人</th>
+                                <th width="150">批准信息</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {volist name="recordCorrections" id="recordCorrection"}
+                            <tr>
+                                <td>{$recordCorrection.registered_at|default='-'}</td>
+                                <td>{$recordCorrection.type_label|default='更正'}</td>
+                                <td><code>{$recordCorrection.request_short_id|default='-'}</code></td>
+                                <td><pre class="bg-light border rounded p-2 mb-0 small">{$recordCorrection.original_content|default='-'}</pre></td>
+                                <td><pre class="bg-light border rounded p-2 mb-0 small">{$recordCorrection.corrected_content|default='-'}</pre></td>
+                                <td><pre class="bg-light border rounded p-2 mb-0 small">{$recordCorrection.correction_reason|default='-'}</pre></td>
+                                <td>{$recordCorrection.registered_by|default='未记录'}</td>
+                                <td>
+                                    {$recordCorrection.approved_by|default='未记录'}
+                                    <div class="text-muted small">{$recordCorrection.approved_at|default='-'}</div>
+                                </td>
+                            </tr>
+                            {/volist}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {/if}
+        {if $approvedCorrectionRequests && $canRegisterCorrection}
+        <div class="card border-primary mt-3">
+            <div class="card-header bg-primary-subtle">
+                <h6 class="mb-0">登记更正内容</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">批准后不解冻原记录；这里只追加更正附页内容。若原 PDF 已打印，请登记后打印“更正说明页”随纸质原件保存。</p>
+                <form method="post" action="/record_form_instance/registerCorrection?id={$record.id}">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="approvedCorrectionRequestId" class="form-label">已批准的更正申请</label>
+                            <select name="correction_request_id" id="approvedCorrectionRequestId" class="form-select" required>
+                                <option value="">请选择已批准的更正申请</option>
+                                {volist name="approvedCorrectionRequests" id="approvedCorrectionRequest"}
+                                <option value="{$approvedCorrectionRequest.id}">{$approvedCorrectionRequest.label}｜批准：{$approvedCorrectionRequest.approved_label}</option>
+                                {/volist}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="recordCorrectionType" class="form-label">更正类型</label>
+                            <select name="correction_type" id="recordCorrectionType" class="form-select" required>
+                                <option value="supplement">补充内容</option>
+                                <option value="amendment">修改内容（保留原值）</option>
+                                <option value="void_mark">作废标注（不删除原内容）</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recordCorrectionOriginal" class="form-label">原内容</label>
+                        <textarea name="original_content" id="recordCorrectionOriginal" class="form-control" rows="3" placeholder="补充内容可留空；如为修改或作废标注，请摘录原记录中的原内容。"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recordCorrectionCorrected" class="form-label">更正后内容 / 补充内容</label>
+                        <textarea name="corrected_content" id="recordCorrectionCorrected" class="form-control" rows="4" required placeholder="请填写追加的补充内容、更正后的内容，或作废标注意见。"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recordCorrectionReason" class="form-label">更正原因</label>
+                        <textarea name="correction_reason" id="recordCorrectionReason" class="form-control" rows="2" placeholder="不填则沿用已批准更正申请的原因。"></textarea>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <button type="submit" class="btn btn-primary">追加登记</button>
+                        <span class="text-muted small">只新增更正记录，不修改原 PDF 和原字段值。</span>
+                    </div>
+                </form>
             </div>
         </div>
         {/if}

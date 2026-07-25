@@ -15,6 +15,7 @@ $routeSource = file_get_contents($root . '/route/app.php') ?: '';
 $controllerSource = file_get_contents($root . '/app/controller/RecordFormInstance.php') ?: '';
 $viewSource = file_get_contents($root . '/app/view/record_form_instance/view.html') ?: '';
 $authorizationSource = file_get_contents($root . '/app/service/ActionAuthorizationService.php') ?: '';
+$migrationSource = file_get_contents($root . '/database/migrations/20260725_record_form_corrections.sql') ?: '';
 
 qms_correction_decision_assert_contains(
     "Route::post('record_form_instance/decideCorrection'",
@@ -22,14 +23,44 @@ qms_correction_decision_assert_contains(
     'Record correction decision must be a POST action'
 );
 qms_correction_decision_assert_contains(
+    "Route::post('record_form_instance/registerCorrection'",
+    $routeSource,
+    'Approved record correction content registration must be a POST action'
+);
+qms_correction_decision_assert_contains(
+    "Route::get('record_form_instance/printCorrections'",
+    $routeSource,
+    'Record correction appendix must have a printable page'
+);
+qms_correction_decision_assert_contains(
     'decideCorrection',
     $controllerSource,
     'Record correction controller must expose a decision action'
 );
 qms_correction_decision_assert_contains(
+    'registerCorrection',
+    $controllerSource,
+    'Record correction controller must expose append-only correction registration'
+);
+qms_correction_decision_assert_contains(
+    'printCorrections',
+    $controllerSource,
+    'Record correction controller must expose correction appendix printing'
+);
+qms_correction_decision_assert_contains(
     'correctionDecisionsFor',
     $controllerSource,
     'Record detail must load correction decision history'
+);
+qms_correction_decision_assert_contains(
+    'recordCorrectionsFor',
+    $controllerSource,
+    'Record detail must load append-only correction entries'
+);
+qms_correction_decision_assert_contains(
+    'approvedCorrectionRequestsFor',
+    $controllerSource,
+    'Record detail must only allow registration against approved correction requests'
 );
 qms_correction_decision_assert_contains(
     'correctionRequestForDecision',
@@ -55,6 +86,21 @@ qms_correction_decision_assert_contains(
     '更正申请处理',
     $viewSource,
     'Record detail must show a correction decision panel'
+);
+qms_correction_decision_assert_contains(
+    '更正记录链',
+    $viewSource,
+    'Record detail must show append-only correction chain'
+);
+qms_correction_decision_assert_contains(
+    '登记更正内容',
+    $viewSource,
+    'Record detail must show a registration entry after correction approval'
+);
+qms_correction_decision_assert_contains(
+    '打印更正说明页',
+    $viewSource,
+    'Record detail must offer a printable correction appendix'
 );
 qms_correction_decision_assert_contains(
     '要处理的申请',
@@ -102,9 +148,39 @@ qms_correction_decision_assert_contains(
     'Record correction authorization must load record_form_instances without assuming soft_delete exists'
 );
 qms_correction_decision_assert_contains(
+    "'recordforminstance.registercorrection'",
+    $authorizationSource,
+    'Record correction registration must be wired into action authorization'
+);
+qms_correction_decision_assert_contains(
     'top_management',
     $authorizationSource,
     'SIM approver top-management position must be eligible for correction decisions'
+);
+qms_correction_decision_assert_contains(
+    'CREATE TABLE IF NOT EXISTS `record_form_corrections`',
+    $migrationSource,
+    'Record correction append-only table must be declared in migration'
+);
+qms_correction_decision_assert_contains(
+    '`id` varchar(40)',
+    $migrationSource,
+    'Correction table ids must fit SIM-prefixed UUIDs in trial mode'
+);
+qms_correction_decision_assert_contains(
+    '`original_content` text',
+    $migrationSource,
+    'Correction table must preserve original content'
+);
+qms_correction_decision_assert_contains(
+    '`corrected_content` text',
+    $migrationSource,
+    'Correction table must preserve corrected or supplemental content'
+);
+qms_correction_decision_assert_contains(
+    '`registered_at` datetime',
+    $migrationSource,
+    'Correction table must record correction registration time'
 );
 
 echo "qms_record_correction_decision_smoke passed\n";
