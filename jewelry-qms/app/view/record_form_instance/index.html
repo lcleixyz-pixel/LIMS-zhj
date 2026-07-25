@@ -50,8 +50,8 @@
                             {else}<span class="badge badge-status-draft">{$item.status}</span>{/if}
                             {if $item.has_corrections}
                             <div class="mt-1">
-                                <span class="badge text-bg-warning" title="最近更正：{$item.latest_correction_at|default='未记录'}">
-                                    有后续更正 · {$item.correction_count} 条
+                                <span class="badge {if $item.has_current_pdf}text-bg-success{else}text-bg-warning{/if}" title="最近更正：{$item.latest_correction_at|default='未记录'}">
+                                    {if $item.has_current_pdf}当前PDF已含 {$item.correction_count} 条更正{else}有 {$item.correction_count} 条更正 · 当前PDF待生成{/if}
                                 </span>
                             </div>
                             {/if}

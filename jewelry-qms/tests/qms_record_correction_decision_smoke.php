@@ -42,6 +42,11 @@ qms_correction_decision_assert_contains(
     'A corrected record must expose a current complete package download'
 );
 qms_correction_decision_assert_contains(
+    "Route::get('record_form_instance/downloadCurrentPdf'",
+    $routeSource,
+    'A corrected record must expose its clean current-state PDF'
+);
+qms_correction_decision_assert_contains(
     'decideCorrection',
     $controllerSource,
     'Record correction controller must expose a decision action'
@@ -80,6 +85,21 @@ qms_correction_decision_assert_contains(
     'public function downloadCurrentPackage()',
     $controllerSource,
     'Record correction controller must expose current package download'
+);
+qms_correction_decision_assert_contains(
+    'public function downloadCurrentPdf()',
+    $controllerSource,
+    'Record correction controller must expose current-state PDF download'
+);
+qms_correction_decision_assert_contains(
+    'refreshCurrentStatePdf',
+    $controllerSource,
+    'Approving a structured correction must refresh the current-state PDF after commit'
+);
+qms_correction_decision_assert_contains(
+    'RecordFormCurrentStateService::apply',
+    $controllerSource,
+    'Current-state PDF must project approved corrections onto frozen values'
 );
 qms_correction_decision_assert_contains(
     'RecordFormCurrentPackageService::build',
@@ -157,6 +177,31 @@ qms_correction_decision_assert_contains(
     'Record detail must explain that annotations are a display layer over frozen data'
 );
 qms_correction_decision_assert_contains(
+    'data-correction-path',
+    $viewSource,
+    'Frozen record fields and table cells must expose an inline annotation target'
+);
+qms_correction_decision_assert_contains(
+    '点击批注',
+    $viewSource,
+    'Inline annotation targets must explain their action in business language'
+);
+qms_correction_decision_assert_contains(
+    '批注新增一行',
+    $viewSource,
+    'Repeatable tables must expose whole-row annotation from the table surface'
+);
+qms_correction_decision_assert_contains(
+    'openCorrectionForPath',
+    $viewSource,
+    'Inline annotation must select the existing governed correction target'
+);
+qms_correction_decision_assert_contains(
+    'shown.bs.modal',
+    $viewSource,
+    'Inline annotation must focus the correction panel after it opens'
+);
+qms_correction_decision_assert_contains(
     '原始记录值',
     $viewSource,
     'Annotated fields must visibly preserve the original recorded value'
@@ -177,19 +222,34 @@ qms_correction_decision_assert_contains(
     'Record detail must keep a clearly labelled compatibility entry for pre-field-level approvals'
 );
 qms_correction_decision_assert_contains(
-    '有后续更正',
+    '当前PDF待生成',
     $indexViewSource,
-    'Record list must visibly flag records with approved later corrections'
+    'Record list must visibly flag corrected records whose current-state PDF is awaiting generation'
 );
 qms_correction_decision_assert_contains(
-    '下载当前完整记录包',
+    '下载归档包',
     $viewSource,
-    'Corrected record detail must prioritize the complete package'
+    'Corrected record detail must retain the complete package as an auxiliary archive'
+);
+qms_correction_decision_assert_contains(
+    '下载当前状态 PDF',
+    $viewSource,
+    'Corrected record detail must prioritize the clean current-state PDF'
 );
 qms_correction_decision_assert_contains(
     '下载原始 PDF',
     $viewSource,
     'Corrected record detail must retain a clearly secondary original PDF entry'
+);
+qms_correction_decision_assert_contains(
+    '正文展示最终值',
+    $viewSource,
+    'Record detail must explain that the current-state PDF body shows final values'
+);
+qms_correction_decision_assert_contains(
+    '当前PDF已含',
+    $indexViewSource,
+    'Record list must distinguish a generated current-state PDF from one awaiting generation'
 );
 qms_correction_decision_assert_contains(
     '打印更正附页',

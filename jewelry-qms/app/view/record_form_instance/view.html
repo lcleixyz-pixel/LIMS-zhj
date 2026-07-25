@@ -15,8 +15,9 @@
             {/if}
             {if $record.generated_pdf_path}
                 {if $recordCorrections}
-                <a href="/record_form_instance/downloadCurrentPackage?id={$record.id}" class="btn btn-sm btn-primary">下载当前完整记录包</a>
+                <a href="/record_form_instance/downloadCurrentPdf?id={$record.id}" class="btn btn-sm btn-primary">下载当前状态 PDF</a>
                 <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-secondary">下载原始 PDF</a>
+                <a href="/record_form_instance/downloadCurrentPackage?id={$record.id}" class="btn btn-sm btn-outline-secondary">下载归档包</a>
                 {else}
                 <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-primary">下载 PDF</a>
                 {/if}
@@ -61,10 +62,12 @@
         <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2" role="status">
             <div>
                 <strong>当前记录存在 {$recordCorrections|count} 条后续更正。</strong>
-                请优先下载当前完整记录包；纸质归档时须将更正附页与原记录一并保存。
+                当前状态 PDF 正文展示最终值；原始 PDF 保持不变，具体前后差异见下方修订记录。
                 {if $latestCorrectionAt}<span class="text-muted small">最近更正：{$latestCorrectionAt}</span>{/if}
             </div>
-            <a href="/record_form_instance/downloadCurrentPackage?id={$record.id}" class="btn btn-sm btn-warning">下载当前完整记录包</a>
+            <a href="/record_form_instance/downloadCurrentPdf?id={$record.id}" class="btn btn-sm btn-warning">
+                {if $currentPdf}下载当前状态 PDF{else}生成并下载当前状态 PDF{/if}
+            </a>
         </div>
         {/if}
         <style>
@@ -81,6 +84,13 @@
             .record-appended-row>td{background:#f3fbf6}
             .record-appended-meta>td{background:#f8fffa;border-top:0}
             .record-annotated-table td{min-width:140px}
+            .record-correction-target{position:relative;cursor:pointer;background:#f7fbff;box-shadow:inset 0 0 0 1px #9ec5fe;transition:background-color .15s ease,box-shadow .15s ease}
+            .record-correction-target:hover,.record-correction-target:focus-visible{background:#eaf4ff;box-shadow:inset 0 0 0 2px #0d6efd;outline:0}
+            .record-correction-target.is-selected{background:#dcecff;box-shadow:inset 0 0 0 2px #0a58ca}
+            .record-correction-target-badge{display:inline-flex;align-items:center;gap:.2rem;color:#0a58ca;font-size:.72rem;white-space:nowrap}
+            .record-correction-target-badge::before{content:"✎";font-size:.82rem}
+            .record-field-target{padding:.65rem .75rem;border-radius:.35rem}
+            .record-add-row-action{border-style:dashed}
         </style>
         <div class="card record-annotation-card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center gap-2">
@@ -90,6 +100,7 @@
             <div class="card-body">
                 <div class="alert alert-light border small">
                     这里按纸质划改思路显示批注：原始记录值始终保留；修改值、作废标注和补充行叠加显示。底层原记录和原 PDF 未被修改。
+                    {if $canEdit == false}<br><strong class="text-primary">蓝色标记的位置可直接点击批注。</strong>{/if}
                 </div>
                 {volist name="annotatedSchema" id="field"}
                 <section class="mb-4">
@@ -104,10 +115,15 @@
                                 {volist name="field.display_rows" id="displayRow"}
                                 <tr{if $displayRow.is_appended} class="record-appended-row"{/if}>
                                     {volist name="displayRow.cells" id="displayCell"}
-                                    <td>
+                                    <td{if $displayRow.is_appended == false && $canEdit == false} class="record-correction-target" data-correction-path="{$displayCell.field_path}" tabindex="0" role="button" aria-label="批注：{$field.label}第{$displayRow.row_number}行{$displayCell.label}"{/if}>
                                         {if $displayRow.is_appended}
                                         <div class="record-original-value">{$displayCell.display_value|default='-'}</div>
                                         {else}
+                                        {if $canEdit == false}
+                                        <div class="d-flex justify-content-end mb-1">
+                                            <span class="record-correction-target-badge">点击批注</span>
+                                        </div>
+                                        {/if}
                                         {if $displayCell.annotations}<div class="record-original-label">原始记录值</div>{/if}
                                         <div class="record-original-value{if $displayCell.has_superseding_annotation} record-original-superseded{/if}">{$displayCell.original_value|default='-'}</div>
                                         {volist name="displayCell.annotations" id="annotation"}
@@ -157,9 +173,23 @@
                             </tbody>
                         </table>
                     </div>
+                    {if $canEdit == false}
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary record-add-row-action" data-correction-path="append:{$field.key}">
+                            ＋ 批注新增一行
+                        </button>
+                    </div>
+                    {/if}
                     {else}
-                    {if $field.annotations}<div class="record-original-label">原始记录值</div>{/if}
-                    <div class="record-original-value{if $field.has_superseding_annotation} record-original-superseded{/if}">{$field.original_value|default='-'}</div>
+                    <div{if $canEdit == false} class="record-correction-target record-field-target" data-correction-path="{$field.field_path}" tabindex="0" role="button" aria-label="批注：{$field.label}"{/if}>
+                        {if $canEdit == false}
+                        <div class="d-flex justify-content-end mb-1">
+                            <span class="record-correction-target-badge">点击批注</span>
+                        </div>
+                        {/if}
+                        {if $field.annotations}<div class="record-original-label">原始记录值</div>{/if}
+                        <div class="record-original-value{if $field.has_superseding_annotation} record-original-superseded{/if}">{$field.original_value|default='-'}</div>
+                    </div>
                     {volist name="field.annotations" id="annotation"}
                     <div class="record-annotation mt-2{if $annotation.is_void} is-void{elseif $annotation.is_supplement} is-supplement{/if}">
                         <div class="small">
@@ -415,6 +445,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info small">原记录和原 PDF 保持冻结。请选择具体字段或表格位置；系统会自动读取原值，批准后系统会自动追加到更正记录链。</div>
+                    <div id="correctionSelectionSummary" class="alert alert-primary py-2 small d-none" role="status"></div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="correctionRequestType" class="form-label">更正类型</label>
@@ -472,7 +503,10 @@
     const rowGroup = document.getElementById('correctionRowValueGroup');
     const rowFields = document.getElementById('correctionRowFields');
     const dataNode = document.getElementById('correctionTargetsData');
-    if (!pathSelect || !typeSelect || !original || !scalarGroup || !scalarValue || !rowGroup || !rowFields || !dataNode) {
+    const modalElement = document.getElementById('requestCorrectionModal');
+    const modalTitle = document.getElementById('requestCorrectionModalLabel');
+    const selectionSummary = document.getElementById('correctionSelectionSummary');
+    if (!pathSelect || !typeSelect || !original || !scalarGroup || !scalarValue || !rowGroup || !rowFields || !dataNode || !modalElement) {
         return;
     }
 
@@ -511,11 +545,19 @@
         rowFields.innerHTML = '';
         if (!target) {
             original.value = '';
+            if (selectionSummary) {
+                selectionSummary.textContent = '';
+                selectionSummary.classList.add('d-none');
+            }
             scalarGroup.classList.remove('d-none');
             rowGroup.classList.add('d-none');
             return;
         }
 
+        if (selectionSummary) {
+            selectionSummary.textContent = '正在批注：' + target.label;
+            selectionSummary.classList.remove('d-none');
+        }
         original.value = target.original_value || '';
         if (target.target_kind === 'append_row') {
             typeSelect.value = 'supplement';
@@ -536,6 +578,73 @@
             rowGroup.classList.add('d-none');
         }
     }
+
+    let selectedTarget = null;
+
+    function openCorrectionForPath(path, source) {
+        const target = byPath[path];
+        if (!target) {
+            return;
+        }
+        pathSelect.value = path;
+        refreshTarget();
+        if (modalTitle) {
+            modalTitle.textContent = '批注更正：' + target.label;
+        }
+        if (selectedTarget) {
+            selectedTarget.classList.remove('is-selected');
+        }
+        selectedTarget = source || null;
+        if (selectedTarget) {
+            selectedTarget.classList.add('is-selected');
+        }
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+    }
+
+    document.querySelectorAll('.record-correction-target').forEach(function (element) {
+        function activate(event) {
+            if (event.target.closest('a,button,input,textarea,select,details,summary,.record-annotation')) {
+                return;
+            }
+            if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+            if (event.type === 'keydown') {
+                event.preventDefault();
+            }
+            openCorrectionForPath(element.dataset.correctionPath || '', element);
+        }
+        element.addEventListener('click', activate);
+        element.addEventListener('keydown', activate);
+    });
+
+    document.querySelectorAll('.record-add-row-action').forEach(function (button) {
+        button.addEventListener('click', function () {
+            openCorrectionForPath(button.dataset.correctionPath || '', button);
+        });
+    });
+
+    modalElement.addEventListener('shown.bs.modal', function () {
+        const target = byPath[pathSelect.value];
+        if (target && target.target_kind === 'append_row') {
+            const firstRowInput = rowFields.querySelector('input,textarea,select');
+            if (firstRowInput) {
+                firstRowInput.focus();
+            }
+            return;
+        }
+        scalarValue.focus();
+    });
+
+    modalElement.addEventListener('hidden.bs.modal', function () {
+        if (selectedTarget) {
+            selectedTarget.classList.remove('is-selected');
+            selectedTarget = null;
+        }
+        if (modalTitle) {
+            modalTitle.textContent = '按字段申请更正记录';
+        }
+    });
 
     pathSelect.addEventListener('change', refreshTarget);
     refreshTarget();

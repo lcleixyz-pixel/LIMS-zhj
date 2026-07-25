@@ -16,6 +16,7 @@ use app\service\PdfRenderService;
 use app\service\RecordFormBatchReviewService;
 use app\service\RecordFormCorrectionService;
 use app\service\RecordFormCurrentPackageService;
+use app\service\RecordFormCurrentStateService;
 use app\service\RecordFormLayoutConfirmationService;
 use app\service\RecordFormInstanceTitleService;
 use app\service\RecordFormPrintService;
@@ -121,6 +122,10 @@ class RecordFormInstance extends BaseController
             $item->setAttr('correction_count', $correctionCount);
             $item->setAttr('latest_correction_at', (string)$correctionSummary['latest_at']);
             $item->setAttr('has_corrections', $correctionCount > 0);
+            $currentPdf = $correctionCount > 0
+                ? RecordFormCurrentStateService::findLatest((string)$item->id, $correctionCount)
+                : null;
+            $item->setAttr('has_current_pdf', $currentPdf !== null);
             $item->setAttr(
                 'has_current_package',
                 $correctionCount > 0 && trim((string)$item->generated_pdf_path) !== ''
@@ -320,7 +325,7 @@ class RecordFormInstance extends BaseController
     {
         $record = $this->findInstance();
         if (!$this->canEditRecord($record)) {
-            Session::flash('warning', '记录已锁定，不可直接编辑。如需更正，请点击「申请更正」按钮或联系质量负责人。');
+            Session::flash('warning', '记录已锁定，不能直接编辑。如需更正，请点击「申请更正」按钮或联系质量负责人。');
 
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
@@ -394,6 +399,12 @@ class RecordFormInstance extends BaseController
         View::assign('correctionRequests', $this->correctionRequestsFor((string)$record->id));
         View::assign('correctionDecisions', $this->correctionDecisionsFor((string)$record->id));
         View::assign('recordCorrections', $recordCorrections);
+        View::assign(
+            'currentPdf',
+            $recordCorrections !== []
+                ? RecordFormCurrentStateService::findLatest((string)$record->id, count($recordCorrections))
+                : null
+        );
         View::assign('latestCorrectionAt', $recordCorrections !== []
             ? (string)($recordCorrections[array_key_last($recordCorrections)]['registered_at'] ?? '')
             : '');
@@ -591,7 +602,18 @@ class RecordFormInstance extends BaseController
             'modified_by' => (string)Session::get('user.id', ''),
         ]);
 
-        Session::flash('success', '更正内容已追加登记。原记录和原 PDF 未被修改，可按需打印更正说明页随纸质记录保存。');
+        $currentPdfReady = false;
+        try {
+            $this->refreshCurrentStatePdf($record);
+            $currentPdfReady = true;
+        } catch (\Throwable $exception) {
+            $currentPdfReady = false;
+        }
+        $success = '更正内容已追加登记。原记录和原 PDF 未被修改。';
+        $success .= $currentPdfReady
+            ? '当前状态 PDF 已同步生成。'
+            : '当前状态 PDF 暂未生成；下次下载时系统会自动补生成。';
+        Session::flash('success', $success);
 
         return redirect('/record_form_instance/view?id=' . $record->id);
     }
@@ -647,6 +669,7 @@ class RecordFormInstance extends BaseController
         $handlerId = (string)Session::get('user.id', '');
         $decidedAt = date('Y-m-d H:i:s');
 
+        $currentPdfReady = null;
         if ((bool)($correctionRequest['is_structured'] ?? false)) {
             $applied = Db::transaction(function () use (
                 $record,
@@ -690,6 +713,14 @@ class RecordFormInstance extends BaseController
 
                 return redirect('/record_form_instance/view?id=' . $record->id);
             }
+            if ($decision === 'approved') {
+                try {
+                    $this->refreshCurrentStatePdf($record);
+                    $currentPdfReady = true;
+                } catch (\Throwable $exception) {
+                    $currentPdfReady = false;
+                }
+            }
         }
 
         $recipientIds = array_values(array_unique(array_filter(array_merge(
@@ -711,6 +742,9 @@ class RecordFormInstance extends BaseController
         $success = '更正申请已处理：' . $decisionLabels[$decision] . '。';
         if ((bool)($correctionRequest['is_structured'] ?? false) && $decision === 'approved') {
             $success .= '批准后已自动追加到更正记录链，无需再次抄写登记。';
+            $success .= $currentPdfReady
+                ? '当前状态 PDF 已同步生成。'
+                : '当前状态 PDF 暂未生成；下次下载时系统会自动补生成。';
         } else {
             $success .= '处理结果已留存在记录详情页。';
         }
@@ -1365,6 +1399,23 @@ class RecordFormInstance extends BaseController
         FileService::downloadAbsolute((string)$package['file_path'], (string)$package['file_name']);
     }
 
+    public function downloadCurrentPdf()
+    {
+        $record = $this->findInstance();
+        $corrections = $this->recordCorrectionsFor((string)$record->id);
+        if ($corrections === []) {
+            throw new HttpException(404, '当前记录没有已批准更正，请直接下载原始 PDF');
+        }
+
+        try {
+            $pdf = $this->refreshCurrentStatePdf($record, $corrections);
+        } catch (RuntimeException $exception) {
+            throw new HttpException(500, '当前状态 PDF 暂时无法生成：' . $exception->getMessage());
+        }
+
+        FileService::download((string)$pdf['file_path'], (string)$pdf['file_name']);
+    }
+
     public function exportPdf()
     {
         $record = $this->findInstance();
@@ -1534,6 +1585,64 @@ class RecordFormInstance extends BaseController
             return TrialModeService::watermarkHtml($html, (bool)$record->is_simulation);
         } catch (RuntimeException $exception) {
             throw new HttpException(404, '打印预览不可用：' . $exception->getMessage());
+        }
+    }
+
+    /**
+     * @param array<int,array<string,mixed>>|null $corrections
+     * @return array{file_name:string,file_path:string,absolute_path:string}
+     */
+    private function refreshCurrentStatePdf(InstanceModel $record, ?array $corrections = null): array
+    {
+        if (trim((string)$record->generated_pdf_path) === '') {
+            throw new RuntimeException('原始 PDF 尚未生成');
+        }
+
+        $corrections ??= $this->recordCorrectionsFor((string)$record->id);
+        $correctionCount = count($corrections);
+        if ($correctionCount < 1) {
+            throw new RuntimeException('当前记录没有已批准更正');
+        }
+
+        $existing = RecordFormCurrentStateService::findLatest((string)$record->id, $correctionCount);
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        return PdfRenderService::renderCurrentHtml(
+            $this->renderCurrentStatePrintHtml($record, $corrections),
+            (string)$record->id,
+            (string)$record->record_title,
+            $correctionCount
+        );
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $corrections
+     */
+    private function renderCurrentStatePrintHtml(InstanceModel $record, array $corrections): string
+    {
+        $template = $this->templateForRecord($record);
+        $schema = $this->decodeSchema($template);
+        $originalValues = $this->decodeValues($record->field_values);
+        $currentValues = RecordFormCurrentStateService::apply($schema, $originalValues, $corrections);
+
+        try {
+            $html = RecordFormPrintService::render(
+                (string)$template['print_template_key'],
+                $template,
+                $currentValues
+            );
+            $latestCorrectionAt = (string)($corrections[array_key_last($corrections)]['registered_at'] ?? '');
+            $html = RecordFormCurrentStateService::decorateHtml(
+                $html,
+                count($corrections),
+                $latestCorrectionAt
+            );
+
+            return TrialModeService::watermarkHtml($html, (bool)$record->is_simulation);
+        } catch (RuntimeException $exception) {
+            throw new RuntimeException('当前状态 PDF 打印内容不可用：' . $exception->getMessage(), 0, $exception);
         }
     }
 

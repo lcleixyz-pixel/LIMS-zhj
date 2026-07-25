@@ -139,6 +139,18 @@ $projected = RecordFormCorrectionService::projectForDisplay($schema, $values, [
 $originalResultCell = $projected[1]['display_rows'][0]['cells'][1] ?? [];
 $appendedRow = $projected[1]['display_rows'][1] ?? [];
 correction_target_assert(
+    ($projected[0]['field_path'] ?? '') === 'field:record_date',
+    'Projected ordinary field must expose its stable correction path for inline annotation'
+);
+correction_target_assert(
+    ($projected[1]['display_rows'][0]['cells'][0]['field_path'] ?? '') === 'cell:record_items:0:item',
+    'Projected frozen table cell must expose its stable correction path for inline annotation'
+);
+correction_target_assert(
+    !isset($appendedRow['cells'][0]['field_path']),
+    'Projected appended correction row must not pretend to be part of the frozen table row indexes'
+);
+correction_target_assert(
     ($originalResultCell['original_value'] ?? '') === '已完成模拟流程'
         && ($originalResultCell['has_superseding_annotation'] ?? false) === true
         && ($originalResultCell['annotations'][0]['corrected_content'] ?? '') === '已完成字段级复核',

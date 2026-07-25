@@ -206,7 +206,9 @@ class RecordFormCorrectionService
             $fieldKey = (string)($field['key'] ?? '');
             $displayField = $field;
             if (($field['type'] ?? '') !== 'repeatable_table') {
-                $annotations = $byPath['field:' . $fieldKey] ?? [];
+                $fieldPath = 'field:' . $fieldKey;
+                $annotations = $byPath[$fieldPath] ?? [];
+                $displayField['field_path'] = $fieldPath;
                 $displayField['original_value'] = self::displayValue($values[$fieldKey] ?? '');
                 $displayField['annotations'] = $annotations;
                 $displayField['has_superseding_annotation'] = self::hasSupersedingAnnotation($annotations);
@@ -224,10 +226,12 @@ class RecordFormCorrectionService
                 $cells = [];
                 foreach ($columns as $column) {
                     $columnKey = (string)$column['key'];
-                    $annotations = $byPath['cell:' . $fieldKey . ':' . $rowIndex . ':' . $columnKey] ?? [];
+                    $fieldPath = 'cell:' . $fieldKey . ':' . $rowIndex . ':' . $columnKey;
+                    $annotations = $byPath[$fieldPath] ?? [];
                     $cells[] = [
                         'key' => $columnKey,
                         'label' => (string)$column['label'],
+                        'field_path' => $fieldPath,
                         'original_value' => self::displayValue($row[$columnKey] ?? ''),
                         'display_value' => self::displayValue($row[$columnKey] ?? ''),
                         'annotations' => $annotations,
