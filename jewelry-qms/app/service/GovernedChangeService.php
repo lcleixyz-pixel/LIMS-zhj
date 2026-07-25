@@ -24,6 +24,7 @@ final class GovernedChangeService
         'modified',
         'created_by',
         'modified_by',
+        'status',
     ];
 
     private const FIELD_LABELS = [
@@ -72,6 +73,10 @@ final class GovernedChangeService
             throw new InvalidArgumentException('所选字段不存在或不允许更正，请刷新后重试。');
         }
 
+        $changeKind = trim((string)($input['change_kind'] ?? 'correction'));
+        if (!in_array($changeKind, ['supplement', 'correction', 'void_mark'], true)) {
+            throw new InvalidArgumentException('请选择补充、更正或作废标注。');
+        }
         $proposedValue = self::scalar($input['proposed_value'] ?? '');
         $reason = trim((string)($input['reason'] ?? ''));
         if ($reason === '') {
@@ -84,6 +89,15 @@ final class GovernedChangeService
             ? self::approvedChanges($subjectType, $subjectId)
             : []);
         $originalValue = self::scalar($currentValues[$fieldName] ?? '');
+        if ($changeKind === 'void_mark' && trim($proposedValue) === '') {
+            $proposedValue = '【作废标注】原值保留，不再作为有效值';
+        }
+        if ($changeKind === 'supplement' && trim($originalValue) !== '') {
+            throw new InvalidArgumentException('该字段已有有效值，请选择“更正原值”；补充仅用于原字段为空的情况。');
+        }
+        if ($changeKind === 'correction' && trim($originalValue) === '') {
+            throw new InvalidArgumentException('该字段尚无原值，请选择“补充内容”。');
+        }
         if ($proposedValue === $originalValue) {
             throw new InvalidArgumentException('拟更正值与当前有效值相同，无需提交。');
         }
@@ -92,7 +106,7 @@ final class GovernedChangeService
             'subject_type' => $subjectType,
             'subject_id' => $subjectId,
             'subject_label' => self::subjectLabel($policy, $record),
-            'change_kind' => 'correction',
+            'change_kind' => $changeKind,
             'field_name' => $fieldName,
             'field_label' => (string)$allowedFields[$fieldName]['label'],
             'original_value' => $originalValue,
@@ -213,6 +227,11 @@ final class GovernedChangeService
             $names = array_keys($record->getData());
         }
 
+        $subjectId = trim((string)($record->getAttr('id') ?? ''));
+        $values = self::projectValues(
+            $record->getData(),
+            $subjectId !== '' ? self::approvedChanges($subjectType, $subjectId) : []
+        );
         $fields = [];
         foreach ($names as $name) {
             if (in_array($name, self::HIDDEN_FIELDS, true)) {
@@ -221,7 +240,7 @@ final class GovernedChangeService
             $fields[] = [
                 'name' => $name,
                 'label' => self::fieldLabel($name),
-                'value' => self::scalar($record->getAttr($name)),
+                'value' => self::scalar($values[$name] ?? ''),
             ];
         }
 
@@ -291,6 +310,57 @@ final class GovernedChangeService
         return $baseValues;
     }
 
+    public static function panelContextFromPage(array $page): array
+    {
+        $action = strtolower(trim((string)($page['action'] ?? '')));
+        $subjectId = trim((string)($page['record_id'] ?? ''));
+        $subjectType = GovernedChangePolicyService::normalizeSubjectType(
+            (string)($page['module'] ?? $page['controller'] ?? '')
+        );
+        if ($action !== 'view' || $subjectId === '' || !GovernedChangePolicyService::supports($subjectType)) {
+            return [];
+        }
+
+        $policy = GovernedChangePolicyService::policy($subjectType);
+        $strategy = (string)($policy['strategy'] ?? 'direct');
+        if (!in_array($strategy, ['correction', 'event'], true)) {
+            return [];
+        }
+        $record = GovernedChangePolicyService::findSubject($subjectType, $subjectId);
+        if (!$record) {
+            return [];
+        }
+
+        $requests = $strategy === 'correction' ? self::requests($subjectType, $subjectId) : [];
+        $changes = $strategy === 'correction' ? self::approvedChanges($subjectType, $subjectId) : [];
+        self::attachUserLabels($requests, ['requested_by', 'decided_by']);
+        self::attachUserLabels($changes, ['registered_by', 'approved_by']);
+
+        $pending = array_values(array_filter(
+            $requests,
+            static fn (array $row): bool => (string)($row['status'] ?? '') === 'pending'
+        ));
+
+        return [
+            'enabled' => true,
+            'subject_type' => $subjectType,
+            'subject_id' => $subjectId,
+            'subject_label' => self::subjectLabel($policy, $record),
+            'strategy' => $strategy,
+            'frozen' => $strategy === 'correction'
+                ? GovernedChangePolicyService::isFrozen($subjectType, $record)
+                : false,
+            'protected_fields' => array_values((array)($policy['protected_fields'] ?? [])),
+            'fields' => $strategy === 'correction' ? self::correctableFields($subjectType, $record) : [],
+            'requests' => $requests,
+            'pending_requests' => $pending,
+            'changes' => $changes,
+            'can_decide' => $pending !== []
+                && ActionAuthorizationService::allows('governedchange', 'decide'),
+            'return_url' => '/' . qms_controller_url($subjectType) . '/view?id=' . rawurlencode($subjectId),
+        ];
+    }
+
     public static function tablesReady(): bool
     {
         try {
@@ -343,5 +413,45 @@ final class GovernedChangeService
         $userId = trim((string)Session::get('user.id', ''));
 
         return $userId !== '' ? $userId : null;
+    }
+
+    private static function attachUserLabels(array &$rows, array $fields): void
+    {
+        $ids = [];
+        foreach ($rows as $row) {
+            foreach ($fields as $field) {
+                $id = trim((string)($row[$field] ?? ''));
+                if ($id !== '') {
+                    $ids[] = $id;
+                }
+            }
+        }
+        if ($ids === []) {
+            return;
+        }
+
+        try {
+            $users = Db::name('users')
+                ->whereIn('id', array_values(array_unique($ids)))
+                ->field('id,name,username')
+                ->select()
+                ->toArray();
+            $labels = [];
+            foreach ($users as $user) {
+                $label = trim((string)($user['name'] ?? ''));
+                $labels[(string)$user['id']] = $label !== ''
+                    ? $label
+                    : (string)($user['username'] ?? $user['id']);
+            }
+            foreach ($rows as &$row) {
+                foreach ($fields as $field) {
+                    $id = trim((string)($row[$field] ?? ''));
+                    $row[$field . '_label'] = $id !== '' ? ($labels[$id] ?? $id) : '未记录';
+                }
+            }
+            unset($row);
+        } catch (\Throwable) {
+            // User labels are display-only; the immutable user IDs remain available.
+        }
     }
 }

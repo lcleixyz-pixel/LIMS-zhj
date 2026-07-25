@@ -19,7 +19,15 @@ final class GovernedChangePolicyService
 
         $subjectType = preg_replace('/(?<!^)[A-Z]/', '_$0', $subjectType) ?? $subjectType;
 
-        return strtolower(str_replace(['-', '\\', '/'], '_', $subjectType));
+        $normalized = strtolower(str_replace(['-', '\\', '/'], '_', $subjectType));
+        $compact = str_replace('_', '', $normalized);
+        foreach (array_keys(self::subjects()) as $configured) {
+            if (str_replace('_', '', (string)$configured) === $compact) {
+                return (string)$configured;
+            }
+        }
+
+        return $normalized;
     }
 
     public static function subjects(): array

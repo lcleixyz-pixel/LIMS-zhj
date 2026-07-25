@@ -30,6 +30,7 @@ final class GovernedChange extends BaseController
         try {
             $request = GovernedChangeService::createRequest($subjectType, $record, [
                 'field_name' => $this->request->post('field_name', ''),
+                'change_kind' => $this->request->post('change_kind', 'correction'),
                 'proposed_value' => $this->request->post('proposed_value', ''),
                 'reason' => $this->request->post('reason', ''),
             ]);

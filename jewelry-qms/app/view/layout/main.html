@@ -312,6 +312,19 @@
     </div>
     {/if}
     {__CONTENT__}
+    {php}
+    $governedChangeContext = [];
+    if (isset($qmsPageContext) && is_array($qmsPageContext)) {
+        try {
+            $governedChangeContext = \app\service\GovernedChangeService::panelContextFromPage($qmsPageContext);
+        } catch (\Throwable $governedChangePanelError) {
+            $governedChangeContext = [];
+        }
+    }
+    {/php}
+    {if !empty($governedChangeContext.enabled)}
+    {include file="common/governed_change_panel"}
+    {/if}
 </div>
 {if isset($qmsCopilotEnabled) && $qmsCopilotEnabled}
 <button type="button" id="qmsCopilotFab" data-bs-toggle="offcanvas" data-bs-target="#qmsCopilotDrawer" aria-label="QMS Copilot">💬</button>

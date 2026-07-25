@@ -5,6 +5,8 @@ namespace app\controller;
 
 use app\BaseController;
 use app\service\FieldAuditService;
+use app\service\GovernedChangePolicyService;
+use app\service\GovernedChangeService;
 use think\exception\HttpException;
 use think\exception\ValidateException;
 use think\facade\Db;
@@ -305,9 +307,30 @@ class CrudBase extends BaseController
         if (!$record) {
             throw new HttpException(404, '记录不存在');
         }
+        $subjectType = GovernedChangePolicyService::normalizeSubjectType($this->request->controller());
+        if (!$this->request->isPost()
+            && GovernedChangePolicyService::strategy($subjectType) === 'correction'
+            && GovernedChangePolicyService::isFrozen($subjectType, $record)) {
+            Session::flash('warning', '该记录已冻结为受控证据，不能覆盖原值。请在详情页按字段提交更正申请。');
+
+            return redirect('/' . qms_controller_url($this->request->controller()) . '/view?id=' . rawurlencode((string)$id));
+        }
 
         if ($this->request->isPost()) {
             $data = $this->onlyWritable($this->request->post(), (string)$id);
+            $changedData = [];
+            foreach ($data as $field => $value) {
+                $oldValue = $record->{$field} ?? null;
+                if ((string)$oldValue !== (string)$value) {
+                    $changedData[$field] = $value;
+                }
+            }
+            $violation = GovernedChangePolicyService::directUpdateViolation($subjectType, $record, $changedData);
+            if ($violation !== null) {
+                Session::flash('warning', $violation);
+
+                return redirect('/' . qms_controller_url($this->request->controller()) . '/view?id=' . rawurlencode((string)$id));
+            }
             $errors = $this->validateFormData($data, (string)$id);
             if ($errors !== []) {
                 $this->flashValidationErrors($errors);
@@ -345,8 +368,17 @@ class CrudBase extends BaseController
         if (!$record) {
             throw new HttpException(404, '记录不存在');
         }
-        View::assign('record', $record);
-        View::assign('fields', $this->buildViewFields($record));
+        $subjectType = GovernedChangePolicyService::normalizeSubjectType($this->request->controller());
+        $displayRecord = $record;
+        if (GovernedChangePolicyService::strategy($subjectType) === 'correction') {
+            $displayRecord = clone $record;
+            $displayRecord->setAttrs(GovernedChangeService::projectValues(
+                $record->getData(),
+                GovernedChangeService::approvedChanges($subjectType, (string)$id)
+            ));
+        }
+        View::assign('record', $displayRecord);
+        View::assign('fields', $this->buildViewFields($displayRecord));
         if (FieldAuditService::shouldAuditModel($record)) {
             View::assign(
                 'fieldChangeLogs',
@@ -366,6 +398,13 @@ class CrudBase extends BaseController
         $record = $this->findActiveRecord((string)$id);
         if (!$record) {
             throw new HttpException(404, '记录不存在');
+        }
+        $subjectType = GovernedChangePolicyService::normalizeSubjectType($this->request->controller());
+        $violation = GovernedChangePolicyService::deleteViolation($subjectType, $record);
+        if ($violation !== null) {
+            Session::flash('warning', $violation);
+
+            return redirect('/' . qms_controller_url($this->request->controller()) . '/view?id=' . rawurlencode((string)$id));
         }
         if ($model->hasColumn('soft_delete')) {
             $record->soft_delete = 1;
