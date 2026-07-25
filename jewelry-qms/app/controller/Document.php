@@ -645,7 +645,19 @@ class Document extends BaseController
 
             $query = DocumentModel::where('doc_number', $value)->where('soft_delete', 0);
             if ($recordId !== null && $recordId !== '') {
-                $query->where('id', '<>', $recordId);
+                $excludedIds = [$recordId];
+                $current = DocumentModel::where('id', $recordId)->where('soft_delete', 0)->find();
+                if ($current) {
+                    $rootId = trim((string)$current->revision_root_id)
+                        ?: (trim((string)$current->supersedes_document_id) ?: (string)$current->id);
+                    $excludedIds[] = $rootId;
+                    $excludedIds = array_merge(
+                        $excludedIds,
+                        DocumentModel::where('revision_root_id', $rootId)->where('soft_delete', 0)->column('id'),
+                        DocumentModel::where('supersedes_document_id', $rootId)->where('soft_delete', 0)->column('id')
+                    );
+                }
+                $query->whereNotIn('id', array_values(array_unique(array_filter($excludedIds))));
             }
 
             return $query->count() === 0 ? true : '文件编号已存在';
