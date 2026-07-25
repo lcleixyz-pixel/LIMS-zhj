@@ -14,6 +14,7 @@ use app\service\ActionAuthorizationService;
 use app\service\NotificationService;
 use app\service\PdfRenderService;
 use app\service\RecordFormBatchReviewService;
+use app\service\RecordFormCorrectionService;
 use app\service\RecordFormLayoutConfirmationService;
 use app\service\RecordFormInstanceTitleService;
 use app\service\RecordFormPrintService;
@@ -332,10 +333,21 @@ class RecordFormInstance extends BaseController
     {
         $record = $this->findInstance();
         $template = $this->templateForRecord($record);
+        $schema = $this->decodeSchema($template);
+        $values = $this->decodeValues($record->field_values);
         View::assign('record', $record);
         View::assign('template', $template);
-        View::assign('schema', $this->decodeSchema($template));
-        View::assign('values', $this->decodeValues($record->field_values));
+        View::assign('schema', $schema);
+        View::assign('values', $values);
+        View::assign('correctionTargets', array_values(RecordFormCorrectionService::targets($schema, $values)));
+        View::assign(
+            'correctionTargetsJson',
+            json_encode(
+                array_values(RecordFormCorrectionService::targets($schema, $values)),
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                    | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+            )
+        );
         View::assign('canExportPdf', $this->canExportPdf($record));
         View::assign('canEdit', $this->canEditRecord($record));
         View::assign('pdfToken', $this->canExportPdf($record) ? $this->issuePdfActionToken((string)$record->id) : '');
@@ -366,9 +378,33 @@ class RecordFormInstance extends BaseController
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
 
+        if (!$this->recordCorrectionRequestTableExists()) {
+            Session::flash('error', '字段级更正申请表尚未完成数据库初始化，请联系系统管理员。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
         $reason = trim((string)$this->request->post('reason', ''));
         if ($reason === '') {
             Session::flash('error', '请填写更正原因。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        try {
+            $template = $this->templateForRecord($record);
+            $prepared = RecordFormCorrectionService::prepare(
+                $this->decodeSchema($template),
+                $this->decodeValues($record->field_values),
+                [
+                    'correction_type' => $this->request->post('correction_type', 'supplement'),
+                    'field_path' => $this->request->post('field_path', ''),
+                    'corrected_value' => $this->request->post('corrected_value', ''),
+                    'row_values' => $this->request->post('row_values', []),
+                ]
+            );
+        } catch (InvalidArgumentException $exception) {
+            Session::flash('error', $exception->getMessage());
 
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
@@ -378,20 +414,54 @@ class RecordFormInstance extends BaseController
             $qualityManagerIds,
             $this->recordCorrectionApproverUserIds()
         ))));
+        $requestId = qms_uuid();
+        $now = date('Y-m-d H:i:s');
+        $userId = (string)Session::get('user.id', '');
 
-        if ($recipientIds !== []) {
-            NotificationService::notifyUsers(
-                '记录更正申请',
-                "记录「{$record->record_title}」申请更正，原因：{$reason}",
-                'record_form_instance',
-                $recipientIds,
-                'record_form_instance',
-                'view',
-                (string)$record->id
-            );
-        }
+        Db::transaction(function () use ($record, $prepared, $reason, $recipientIds, $requestId, $now, $userId): void {
+            Db::name('record_form_correction_requests')->insert([
+                'id' => $requestId,
+                'company_id' => (string)Config::get('qms.company_id'),
+                'record_id' => (string)$record->id,
+                'status' => 'pending',
+                'correction_type' => (string)$prepared['correction_type'],
+                'target_kind' => (string)$prepared['target_kind'],
+                'field_path' => (string)$prepared['field_path'],
+                'field_key' => (string)$prepared['field_key'],
+                'field_label' => (string)$prepared['field_label'],
+                'row_index' => $prepared['row_index'],
+                'column_key' => (string)$prepared['column_key'],
+                'column_label' => (string)$prepared['column_label'],
+                'original_content' => (string)$prepared['original_content'],
+                'corrected_content' => (string)$prepared['corrected_content'],
+                'row_payload_json' => (string)$prepared['row_payload_json'],
+                'reason' => $reason,
+                'requested_by' => $userId,
+                'requested_at' => $now,
+                'publish' => 1,
+                'soft_delete' => 0,
+                'created' => $now,
+                'modified' => $now,
+                'created_by' => $userId,
+                'modified_by' => $userId,
+            ]);
 
-        Session::flash('success', '更正申请已提交。质量负责人和批准人将收到通知并协助处理，请留意通知中心。');
+            if ($recipientIds !== []) {
+                NotificationService::notifyUsers(
+                    '记录更正申请',
+                    "记录「{$record->record_title}」申请字段级更正；位置：{$prepared['field_label']}；原值：{$prepared['original_content']}；拟更正值：{$prepared['corrected_content']}；原因：{$reason}；申请ID：{$requestId}",
+                    'record_form_instance',
+                    $recipientIds,
+                    'record_form_instance',
+                    'view',
+                    (string)$record->id,
+                    null,
+                    'record_correction_request:' . $requestId
+                );
+            }
+        });
+
+        Session::flash('success', '字段级更正申请已提交。审核人将核对具体字段、原值和拟更正值；批准后系统会自动追加到更正记录链。');
 
         return redirect('/record_form_instance/view?id=' . $record->id);
     }
@@ -532,6 +602,53 @@ class RecordFormInstance extends BaseController
         if ($handlerLabel === '') {
             $handlerLabel = '当前处理人';
         }
+        $handlerId = (string)Session::get('user.id', '');
+        $decidedAt = date('Y-m-d H:i:s');
+
+        if ((bool)($correctionRequest['is_structured'] ?? false)) {
+            $applied = Db::transaction(function () use (
+                $record,
+                $correctionRequestId,
+                $decision,
+                $comment,
+                $handlerId,
+                $decidedAt
+            ): bool {
+                $requestRow = Db::name('record_form_correction_requests')
+                    ->where('id', $correctionRequestId)
+                    ->where('record_id', (string)$record->id)
+                    ->where('publish', 1)
+                    ->where('soft_delete', 0)
+                    ->lock(true)
+                    ->find();
+                if (!$requestRow || (string)($requestRow['status'] ?? '') !== 'pending') {
+                    return false;
+                }
+
+                Db::name('record_form_correction_requests')
+                    ->where('id', $correctionRequestId)
+                    ->where('status', 'pending')
+                    ->update([
+                        'status' => $decision,
+                        'decided_by' => $handlerId,
+                        'decided_at' => $decidedAt,
+                        'decision_comment' => $comment,
+                        'modified' => $decidedAt,
+                        'modified_by' => $handlerId,
+                    ]);
+
+                if ($decision === 'approved') {
+                    $this->appendApprovedCorrection($record, $requestRow, $handlerId, $decidedAt);
+                }
+
+                return true;
+            });
+            if (!$applied) {
+                Session::flash('error', '该更正申请已被处理，请刷新页面查看最新结果。');
+
+                return redirect('/record_form_instance/view?id=' . $record->id);
+            }
+        }
 
         $recipientIds = array_values(array_unique(array_filter(array_merge(
             $this->qualityManagerUserIds(),
@@ -549,15 +666,113 @@ class RecordFormInstance extends BaseController
             (string)$record->id
         );
 
-        Session::flash('success', '更正申请已处理：' . $decisionLabels[$decision] . '。处理结果已留存在记录详情页。');
+        $success = '更正申请已处理：' . $decisionLabels[$decision] . '。';
+        if ((bool)($correctionRequest['is_structured'] ?? false) && $decision === 'approved') {
+            $success .= '批准后已自动追加到更正记录链，无需再次抄写登记。';
+        } else {
+            $success .= '处理结果已留存在记录详情页。';
+        }
+        Session::flash('success', $success);
 
         return redirect('/record_form_instance/view?id=' . $record->id);
+    }
+
+    private function appendApprovedCorrection(
+        InstanceModel $record,
+        array $request,
+        string $approvedBy,
+        string $approvedAt
+    ): void {
+        $requestId = (string)($request['id'] ?? '');
+        if ($requestId === '') {
+            throw new RuntimeException('字段级更正申请缺少唯一标识');
+        }
+        if (Db::name('record_form_corrections')
+            ->where('record_id', (string)$record->id)
+            ->where('correction_request_id', $requestId)
+            ->where('soft_delete', 0)
+            ->count() > 0) {
+            return;
+        }
+
+        Db::name('record_form_corrections')->insert([
+            'id' => qms_uuid(),
+            'company_id' => (string)Config::get('qms.company_id'),
+            'record_id' => (string)$record->id,
+            'correction_request_id' => $requestId,
+            'correction_type' => (string)($request['correction_type'] ?? 'supplement'),
+            'target_kind' => (string)($request['target_kind'] ?? 'field_value'),
+            'field_path' => (string)($request['field_path'] ?? ''),
+            'field_key' => (string)($request['field_key'] ?? ''),
+            'field_label' => (string)($request['field_label'] ?? ''),
+            'row_index' => $request['row_index'] ?? null,
+            'column_key' => (string)($request['column_key'] ?? ''),
+            'column_label' => (string)($request['column_label'] ?? ''),
+            'row_payload_json' => (string)($request['row_payload_json'] ?? ''),
+            'original_content' => (string)($request['original_content'] ?? ''),
+            'corrected_content' => (string)($request['corrected_content'] ?? ''),
+            'correction_reason' => (string)($request['reason'] ?? ''),
+            'registered_by' => (string)($request['requested_by'] ?? ''),
+            'registered_at' => $approvedAt,
+            'approved_by' => $approvedBy,
+            'approved_at' => $approvedAt,
+            'publish' => 1,
+            'soft_delete' => 0,
+            'created' => $approvedAt,
+            'modified' => $approvedAt,
+            'created_by' => (string)($request['requested_by'] ?? ''),
+            'modified_by' => $approvedBy,
+        ]);
     }
 
     private function correctionRequestsFor(string $recordId): array
     {
         if ($recordId === '') {
             return [];
+        }
+        if ($this->recordCorrectionRequestTableExists()) {
+            $rows = Db::name('record_form_correction_requests')
+                ->alias('r')
+                ->leftJoin('users u', 'u.id = r.requested_by')
+                ->field('r.*,u.name AS requester_name,u.username AS requester_username')
+                ->where('r.record_id', $recordId)
+                ->where('r.status', 'pending')
+                ->where('r.publish', 1)
+                ->where('r.soft_delete', 0)
+                ->order('r.requested_at', 'desc')
+                ->limit(10)
+                ->select()
+                ->toArray();
+
+            return array_map(function (array $row): array {
+                $requester = trim((string)($row['requester_name'] ?? ''));
+                if ($requester === '') {
+                    $requester = trim((string)($row['requester_username'] ?? ''));
+                }
+                $id = (string)($row['id'] ?? '');
+                $created = (string)($row['requested_at'] ?? '');
+                $reason = trim((string)($row['reason'] ?? ''));
+                $fieldLabel = trim((string)($row['field_label'] ?? ''));
+
+                return [
+                    'id' => $id,
+                    'reason' => $reason !== '' ? $reason : '未记录原因',
+                    'created' => $created,
+                    'recipient_count' => count(array_unique(array_merge(
+                        $this->qualityManagerUserIds(),
+                        $this->recordCorrectionApproverUserIds()
+                    ))),
+                    'short_id' => self::shortId($id),
+                    'field_label' => $fieldLabel !== '' ? $fieldLabel : '未记录更正位置',
+                    'original_content' => (string)($row['original_content'] ?? ''),
+                    'corrected_content' => (string)($row['corrected_content'] ?? ''),
+                    'type_label' => self::correctionTypeLabels()[(string)($row['correction_type'] ?? '')] ?? '更正',
+                    'requester' => $requester !== '' ? $requester : '未记录申请人',
+                    'option_label' => $created . '｜' . ($fieldLabel !== '' ? $fieldLabel : '未记录更正位置')
+                        . '｜' . self::shortId($id),
+                    'is_structured' => true,
+                ];
+            }, $rows);
         }
 
         $rows = Db::name('notifications')
@@ -594,6 +809,12 @@ class RecordFormInstance extends BaseController
                     $reason !== '' ? $reason : '未记录原因',
                     (string)($row['id'] ?? '')
                 ),
+                'field_label' => '历史自由文本申请',
+                'original_content' => '',
+                'corrected_content' => '',
+                'type_label' => '历史流程',
+                'requester' => '未记录',
+                'is_structured' => false,
             ];
         }, $rows);
     }
@@ -602,6 +823,28 @@ class RecordFormInstance extends BaseController
     {
         if ($recordId === '' || $requestId === '') {
             return [];
+        }
+
+        if ($this->recordCorrectionRequestTableExists()) {
+            $structured = Db::name('record_form_correction_requests')
+                ->where('id', $requestId)
+                ->where('record_id', $recordId)
+                ->where('status', 'pending')
+                ->where('publish', 1)
+                ->where('soft_delete', 0)
+                ->find();
+            if ($structured) {
+                return [
+                    'id' => (string)($structured['id'] ?? ''),
+                    'created' => (string)($structured['requested_at'] ?? ''),
+                    'reason' => (string)($structured['reason'] ?? ''),
+                    'label' => (string)($structured['field_label'] ?? '未记录更正位置'),
+                    'field_label' => (string)($structured['field_label'] ?? '未记录更正位置'),
+                    'original_content' => (string)($structured['original_content'] ?? ''),
+                    'corrected_content' => (string)($structured['corrected_content'] ?? ''),
+                    'is_structured' => true,
+                ];
+            }
         }
 
         $row = Db::name('notifications')
@@ -638,6 +881,10 @@ class RecordFormInstance extends BaseController
                 $reason,
                 (string)($row['id'] ?? '')
             ),
+            'field_label' => '历史自由文本申请',
+            'original_content' => '',
+            'corrected_content' => '',
+            'is_structured' => false,
         ];
     }
 
@@ -645,6 +892,49 @@ class RecordFormInstance extends BaseController
     {
         if ($recordId === '') {
             return [];
+        }
+
+        $structuredDecisions = [];
+        if ($this->recordCorrectionRequestTableExists()) {
+            $structuredRows = Db::name('record_form_correction_requests')
+                ->alias('r')
+                ->leftJoin('users u', 'u.id = r.decided_by')
+                ->field('r.*,u.name AS handler_name,u.username AS handler_username')
+                ->where('r.record_id', $recordId)
+                ->whereIn('r.status', ['approved', 'rejected'])
+                ->where('r.publish', 1)
+                ->where('r.soft_delete', 0)
+                ->order('r.decided_at', 'desc')
+                ->limit(10)
+                ->select()
+                ->toArray();
+            $structuredDecisions = array_map(static function (array $row): array {
+                $handler = trim((string)($row['handler_name'] ?? ''));
+                if ($handler === '') {
+                    $handler = trim((string)($row['handler_username'] ?? ''));
+                }
+                $approved = (string)($row['status'] ?? '') === 'approved';
+                $requestId = (string)($row['id'] ?? '');
+
+                return [
+                    'id' => $requestId,
+                    'decision' => $approved ? '批准更正' : '驳回申请',
+                    'is_approved' => $approved,
+                    'is_structured' => true,
+                    'request_id' => $requestId,
+                    'decision_notification_id' => '',
+                    'request_label' => (string)($row['field_label'] ?? '未记录更正位置'),
+                    'request_short_id' => self::shortId($requestId),
+                    'field_label' => (string)($row['field_label'] ?? '未记录更正位置'),
+                    'original_content' => (string)($row['original_content'] ?? ''),
+                    'corrected_content' => (string)($row['corrected_content'] ?? ''),
+                    'comment' => (string)($row['decision_comment'] ?? '无补充意见'),
+                    'handler' => $handler !== '' ? $handler : '未记录处理人',
+                    'approved_by' => (string)($row['decided_by'] ?? ''),
+                    'approved_at' => (string)($row['decided_at'] ?? ''),
+                    'created' => (string)($row['decided_at'] ?? ''),
+                ];
+            }, $structuredRows);
         }
 
         $rows = Db::name('notifications')
@@ -660,7 +950,7 @@ class RecordFormInstance extends BaseController
             ->select()
             ->toArray();
 
-        return array_map(static function (array $row): array {
+        $legacyDecisions = array_map(static function (array $row): array {
             $message = trim((string)($row['message'] ?? ''));
             $decision = self::messageSegment($message, '处理结果：', '；');
             $requestLabel = self::messageSegment($message, '对应申请：', '；');
@@ -678,10 +968,14 @@ class RecordFormInstance extends BaseController
                 'id' => (string)($row['id'] ?? ''),
                 'decision' => $decision !== '' ? $decision : '已处理',
                 'is_approved' => $decision === '批准更正',
+                'is_structured' => false,
                 'request_id' => $requestId,
                 'decision_notification_id' => (string)($row['id'] ?? ''),
                 'request_label' => $requestLabel !== '' ? $requestLabel : '未记录对应申请',
                 'request_short_id' => self::shortId($requestId),
+                'field_label' => '历史自由文本申请',
+                'original_content' => '',
+                'corrected_content' => '',
                 'comment' => $comment !== '' ? $comment : '无补充意见',
                 'handler' => $handler !== '' ? $handler : '未记录处理人',
                 'approved_by' => (string)($row['created_by'] ?? ''),
@@ -689,6 +983,12 @@ class RecordFormInstance extends BaseController
                 'created' => (string)($row['created'] ?? ''),
             ];
         }, $rows);
+
+        return array_slice(
+            RecordFormCorrectionService::mergeDecisionRows($structuredDecisions, $legacyDecisions),
+            0,
+            15
+        );
     }
 
     private function approvedCorrectionRequestsFor(string $recordId): array
@@ -696,6 +996,9 @@ class RecordFormInstance extends BaseController
         $requests = [];
         foreach ($this->correctionDecisionsFor($recordId) as $decision) {
             if (!($decision['is_approved'] ?? false)) {
+                continue;
+            }
+            if ((bool)($decision['is_structured'] ?? false)) {
                 continue;
             }
             $requestId = trim((string)($decision['request_id'] ?? ''));
@@ -766,6 +1069,12 @@ class RecordFormInstance extends BaseController
                 'id' => (string)($row['id'] ?? ''),
                 'type' => (string)($row['correction_type'] ?? ''),
                 'type_label' => $typeLabels[(string)($row['correction_type'] ?? '')] ?? (string)($row['correction_type'] ?? '更正'),
+                'target_kind' => (string)($row['target_kind'] ?? 'legacy_note'),
+                'field_path' => (string)($row['field_path'] ?? ''),
+                'field_label' => trim((string)($row['field_label'] ?? '')) !== ''
+                    ? (string)$row['field_label']
+                    : '整表补充说明',
+                'row_payload_json' => (string)($row['row_payload_json'] ?? ''),
                 'request_id' => $requestId,
                 'request_short_id' => self::shortId($requestId),
                 'original_content' => (string)($row['original_content'] ?? ''),
@@ -850,6 +1159,28 @@ class RecordFormInstance extends BaseController
         }
     }
 
+    private function recordCorrectionRequestTableExists(): bool
+    {
+        static $exists = null;
+        if ($exists !== null) {
+            return $exists;
+        }
+
+        try {
+            $rows = Db::query(
+                'SELECT COUNT(*) AS c FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
+                ['record_form_correction_requests']
+            );
+            $exists = (int)($rows[0]['c'] ?? 0) > 0;
+
+            return $exists;
+        } catch (\Throwable $exception) {
+            $exists = false;
+
+            return false;
+        }
+    }
+
     /**
      * @return list<string>
      */
@@ -906,13 +1237,21 @@ class RecordFormInstance extends BaseController
             return [];
         }
 
-        return array_values(array_unique(array_map('strval', Db::name('notifications')
+        $ids = array_map('strval', Db::name('notifications')
             ->where('title', '记录更正申请')
             ->where('link_controller', 'record_form_instance')
             ->where('link_action', 'view')
             ->where('link_id', $recordId)
             ->whereNotNull('created_by')
-            ->column('created_by'))));
+            ->column('created_by'));
+        if ($this->recordCorrectionRequestTableExists()) {
+            $ids = array_merge($ids, array_map('strval', Db::name('record_form_correction_requests')
+                ->where('record_id', $recordId)
+                ->whereNotNull('requested_by')
+                ->column('requested_by')));
+        }
+
+        return array_values(array_unique(array_filter($ids)));
     }
 
     public function print()

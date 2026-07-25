@@ -57,7 +57,7 @@
             <div class="d-flex justify-content-between align-items-start gap-3">
                 <div>
                     <strong>更正申请记录：</strong>
-                    已提交，待质量负责人处理；如配置了批准人，也会同步进入批准人处理入口。可继续补充更正原因，系统会保留最近申请记录。
+                    已按具体字段保存原值和拟更正值，待质量负责人或批准人核对。批准后系统会自动追加到更正记录链。
                 </div>
                 <span class="badge text-bg-warning">{$correctionRequests|count} 条</span>
             </div>
@@ -67,8 +67,10 @@
                         <tr>
                             <th width="170">提交时间</th>
                             <th width="120">申请编号</th>
+                            <th>更正位置</th>
+                            <th>原值</th>
+                            <th>拟更正/补充值</th>
                             <th>更正原因</th>
-                            <th width="120">通知人数</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -76,8 +78,13 @@
                         <tr>
                             <td>{$correctionRequest.created|default='-'}</td>
                             <td><code>{$correctionRequest.short_id|default='-'}</code></td>
+                            <td>
+                                {$correctionRequest.field_label|default='未记录更正位置'}
+                                <div class="text-muted small">{$correctionRequest.type_label|default='更正'}</div>
+                            </td>
+                            <td><pre class="bg-light border rounded p-2 mb-0 small">{$correctionRequest.original_content|default='（无原值）'}</pre></td>
+                            <td><pre class="bg-light border rounded p-2 mb-0 small">{$correctionRequest.corrected_content|default='-'}</pre></td>
                             <td>{$correctionRequest.reason|default='未记录原因'}</td>
-                            <td>{$correctionRequest.recipient_count|default=0}</td>
                         </tr>
                         {/volist}
                     </tbody>
@@ -100,7 +107,8 @@
                         <tr>
                             <th width="170">处理时间</th>
                             <th width="120">处理结果</th>
-                            <th>对应申请</th>
+                            <th>对应申请/字段位置</th>
+                            <th>原值 → 拟更正值</th>
                             <th>处理意见</th>
                             <th width="140">处理人</th>
                         </tr>
@@ -114,6 +122,14 @@
                                 {$correctionDecision.request_label|default='未记录对应申请'}
                                 {if $correctionDecision.request_short_id}
                                 <div class="text-muted small">申请编号：{$correctionDecision.request_short_id}</div>
+                                {/if}
+                            </td>
+                            <td>
+                                {if $correctionDecision.is_structured}
+                                <div><span class="text-muted">原：</span>{$correctionDecision.original_content|default='（无原值）'}</div>
+                                <div class="mt-1"><span class="text-muted">新：</span>{$correctionDecision.corrected_content|default='-'}</div>
+                                {else}
+                                <span class="text-muted">历史自由文本流程</span>
                                 {/if}
                             </td>
                             <td>{$correctionDecision.comment|default='无补充意见'}</td>
@@ -140,6 +156,7 @@
                                 <th width="135">登记时间</th>
                                 <th width="120">类型</th>
                                 <th width="110">对应申请</th>
+                                <th>字段位置</th>
                                 <th>原内容</th>
                                 <th>更正/补充内容</th>
                                 <th>原因</th>
@@ -153,6 +170,12 @@
                                 <td>{$recordCorrection.registered_at|default='-'}</td>
                                 <td>{$recordCorrection.type_label|default='更正'}</td>
                                 <td><code>{$recordCorrection.request_short_id|default='-'}</code></td>
+                                <td>
+                                    {$recordCorrection.field_label|default='整表补充说明'}
+                                    {if $recordCorrection.target_kind == 'legacy_note'}
+                                    <div class="text-muted small">历史自由文本记录</div>
+                                    {/if}
+                                </td>
                                 <td><pre class="bg-light border rounded p-2 mb-0 small">{$recordCorrection.original_content|default='-'}</pre></td>
                                 <td><pre class="bg-light border rounded p-2 mb-0 small">{$recordCorrection.corrected_content|default='-'}</pre></td>
                                 <td><pre class="bg-light border rounded p-2 mb-0 small">{$recordCorrection.correction_reason|default='-'}</pre></td>
@@ -172,10 +195,10 @@
         {if $approvedCorrectionRequests && $canRegisterCorrection}
         <div class="card border-primary mt-3">
             <div class="card-header bg-primary-subtle">
-                <h6 class="mb-0">登记更正内容</h6>
+                <h6 class="mb-0">历史自由文本申请补录</h6>
             </div>
             <div class="card-body">
-                <p class="text-muted small mb-3">批准后不解冻原记录；这里只追加更正附页内容。若原 PDF 已打印，请登记后打印“更正说明页”随纸质原件保存。</p>
+                <p class="text-muted small mb-3">这里只用于字段级功能上线前已经批准的旧申请。新申请会在批准后自动追加，无需再次抄写登记。</p>
                 <form method="post" action="/record_form_instance/registerCorrection?id={$record.id}">
                     <div class="row">
                         <div class="col-md-8 mb-3">
@@ -222,7 +245,7 @@
                 <h6 class="mb-0">更正申请处理</h6>
             </div>
             <div class="card-body">
-                <p class="text-muted small mb-3">请先选择本次要处理的具体申请，再核对更正原因和记录内容；系统会把处理结果绑定到所选申请。</p>
+                <p class="text-muted small mb-3">请先在上方申请表核对字段位置、系统读取的原值和拟更正值，再选择本次申请。批准后系统会自动追加，不会修改原字段和原 PDF。</p>
                 <form method="post" action="/record_form_instance/decideCorrection?id={$record.id}">
                     <div class="mb-3">
                         <label for="correctionRequestId" class="form-label">要处理的申请</label>
@@ -288,15 +311,48 @@
 </div>
 
 <div class="modal fade" id="requestCorrectionModal" tabindex="-1" aria-labelledby="requestCorrectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form method="post" action="/record_form_instance/requestCorrection?id={$record.id}">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="requestCorrectionModalLabel">申请更正记录</h5>
+                    <h5 class="modal-title" id="requestCorrectionModalLabel">按字段申请更正记录</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info small">记录已生成 PDF 或已归档，不可直接编辑。提交更正申请后，质量负责人和批准人将收到通知并协助处理。</div>
+                    <div class="alert alert-info small">原记录和原 PDF 保持冻结。请选择具体字段或表格位置；系统会自动读取原值，批准后系统会自动追加到更正记录链。</div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="correctionRequestType" class="form-label">更正类型</label>
+                            <select name="correction_type" id="correctionRequestType" class="form-select" required>
+                                <option value="supplement">补充内容</option>
+                                <option value="amendment">修改内容（保留原值）</option>
+                                <option value="void_mark">作废标注（不删除原值）</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label for="correctionFieldPath" class="form-label">更正位置</label>
+                            <select name="field_path" id="correctionFieldPath" class="form-select" required>
+                                <option value="">请选择字段、表格单元格或新增一行</option>
+                                {volist name="correctionTargets" id="correctionTarget"}
+                                <option value="{$correctionTarget.field_path}">{$correctionTarget.label}</option>
+                                {/volist}
+                            </select>
+                            <div class="form-text">表格已有内容可精确到某一行某一列；需要补充明细时选择“新增一行”。</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="correctionOriginalValue" class="form-label">系统读取的原值</label>
+                        <textarea id="correctionOriginalValue" class="form-control bg-light" rows="2" readonly placeholder="选择更正位置后自动显示，不能手工修改"></textarea>
+                    </div>
+                    <div class="mb-3" id="correctionScalarValueGroup">
+                        <label for="correctionProposedValue" class="form-label">拟更正 / 补充值</label>
+                        <textarea name="corrected_value" id="correctionProposedValue" class="form-control" rows="3" placeholder="填写该字段更正后的值；作废标注可留空，由系统生成固定标注"></textarea>
+                    </div>
+                    <div class="mb-3 d-none" id="correctionRowValueGroup">
+                        <label class="form-label">新增一行的各字段</label>
+                        <div class="row" id="correctionRowFields"></div>
+                        <div class="form-text">只填写本次新增行；不会改动或删除已有行。</div>
+                    </div>
                     <div class="mb-3">
                         <label for="correctionReason" class="form-label">更正原因</label>
                         <textarea name="reason" id="correctionReason" class="form-control" rows="3" required placeholder="请说明需要更正的内容及原因"></textarea>
@@ -310,3 +366,83 @@
         </div>
     </div>
 </div>
+<script type="application/json" id="correctionTargetsData">{$correctionTargetsJson|raw}</script>
+<script>
+(function () {
+    const pathSelect = document.getElementById('correctionFieldPath');
+    const typeSelect = document.getElementById('correctionRequestType');
+    const original = document.getElementById('correctionOriginalValue');
+    const scalarGroup = document.getElementById('correctionScalarValueGroup');
+    const scalarValue = document.getElementById('correctionProposedValue');
+    const rowGroup = document.getElementById('correctionRowValueGroup');
+    const rowFields = document.getElementById('correctionRowFields');
+    const dataNode = document.getElementById('correctionTargetsData');
+    if (!pathSelect || !typeSelect || !original || !scalarGroup || !scalarValue || !rowGroup || !rowFields || !dataNode) {
+        return;
+    }
+
+    let targets = [];
+    try {
+        targets = JSON.parse(dataNode.textContent || '[]');
+    } catch (error) {
+        targets = [];
+    }
+    const byPath = {};
+    targets.forEach(function (target) {
+        byPath[target.field_path] = target;
+    });
+
+    function textInput(column) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'col-md-6 mb-3';
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.textContent = column.label;
+        const input = document.createElement(column.input_type === 'textarea' ? 'textarea' : 'input');
+        input.className = 'form-control';
+        input.name = 'row_values[' + column.key + ']';
+        if (input.tagName === 'INPUT') {
+            input.type = column.input_type === 'number' || column.input_type === 'date' ? column.input_type : 'text';
+        } else {
+            input.rows = 2;
+        }
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+        return wrapper;
+    }
+
+    function refreshTarget() {
+        const target = byPath[pathSelect.value];
+        rowFields.innerHTML = '';
+        if (!target) {
+            original.value = '';
+            scalarGroup.classList.remove('d-none');
+            rowGroup.classList.add('d-none');
+            return;
+        }
+
+        original.value = target.original_value || '';
+        if (target.target_kind === 'append_row') {
+            typeSelect.value = 'supplement';
+            Array.from(typeSelect.options).forEach(function (option) {
+                option.disabled = option.value !== 'supplement';
+            });
+            scalarGroup.classList.add('d-none');
+            rowGroup.classList.remove('d-none');
+            scalarValue.value = '';
+            (target.columns || []).forEach(function (column) {
+                rowFields.appendChild(textInput(column));
+            });
+        } else {
+            Array.from(typeSelect.options).forEach(function (option) {
+                option.disabled = false;
+            });
+            scalarGroup.classList.remove('d-none');
+            rowGroup.classList.add('d-none');
+        }
+    }
+
+    pathSelect.addEventListener('change', refreshTarget);
+    refreshTarget();
+})();
+</script>

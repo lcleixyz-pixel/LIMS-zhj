@@ -14,6 +14,7 @@ $root = dirname(__DIR__);
 $routeSource = file_get_contents($root . '/route/app.php') ?: '';
 $controllerSource = file_get_contents($root . '/app/controller/RecordFormInstance.php') ?: '';
 $viewSource = file_get_contents($root . '/app/view/record_form_instance/view.html') ?: '';
+$printViewSource = file_get_contents($root . '/app/view/record_form_instance/correction_print.html') ?: '';
 $authorizationSource = file_get_contents($root . '/app/service/ActionAuthorizationService.php') ?: '';
 $migrationSource = file_get_contents($root . '/database/migrations/20260725_record_form_corrections.sql') ?: '';
 $fieldTargetMigrationSource = file_get_contents($root . '/database/migrations/20260726_record_form_correction_field_targets.sql') ?: '';
@@ -42,6 +43,26 @@ qms_correction_decision_assert_contains(
     'registerCorrection',
     $controllerSource,
     'Record correction controller must expose append-only correction registration'
+);
+qms_correction_decision_assert_contains(
+    'RecordFormCorrectionService::prepare',
+    $controllerSource,
+    'New correction requests must be validated against the frozen field schema and values'
+);
+qms_correction_decision_assert_contains(
+    "Db::name('record_form_correction_requests')",
+    $controllerSource,
+    'Structured correction requests must be persisted outside transient notifications'
+);
+qms_correction_decision_assert_contains(
+    'appendApprovedCorrection',
+    $controllerSource,
+    'Approving a structured request must automatically append the correction entry'
+);
+qms_correction_decision_assert_contains(
+    'Db::transaction',
+    $controllerSource,
+    'Decision state and append-only correction entry must be committed atomically'
 );
 qms_correction_decision_assert_contains(
     'printCorrections',
@@ -94,14 +115,39 @@ qms_correction_decision_assert_contains(
     'Record detail must show append-only correction chain'
 );
 qms_correction_decision_assert_contains(
-    '登记更正内容',
+    '历史自由文本申请补录',
     $viewSource,
-    'Record detail must show a registration entry after correction approval'
+    'Record detail must keep a clearly labelled compatibility entry for pre-field-level approvals'
 );
 qms_correction_decision_assert_contains(
     '打印更正说明页',
     $viewSource,
     'Record detail must offer a printable correction appendix'
+);
+qms_correction_decision_assert_contains(
+    '更正位置',
+    $viewSource,
+    'New correction requests must select a concrete field or table location'
+);
+qms_correction_decision_assert_contains(
+    '系统读取的原值',
+    $viewSource,
+    'Original values must be read-only server-side values instead of user transcription'
+);
+qms_correction_decision_assert_contains(
+    '新增一行',
+    $viewSource,
+    'Repeatable tables must offer structured whole-row append'
+);
+qms_correction_decision_assert_contains(
+    '批准后系统会自动追加',
+    $viewSource,
+    'The UI must explain that structured approvals no longer require duplicate registration'
+);
+qms_correction_decision_assert_contains(
+    '字段位置',
+    $printViewSource,
+    'Printable correction appendix must identify the corrected field location'
 );
 qms_correction_decision_assert_contains(
     '要处理的申请',

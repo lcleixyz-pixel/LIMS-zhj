@@ -136,6 +136,34 @@ class RecordFormCorrectionService
     }
 
     /**
+     * Merge durable structured decisions with legacy notification-shaped decisions.
+     * A structured request also emits a notification, so the notification copy must not be rendered twice.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public static function mergeDecisionRows(array $structured, array $legacy): array
+    {
+        $structuredIds = [];
+        foreach ($structured as $row) {
+            $requestId = trim((string)($row['request_id'] ?? ''));
+            if ($requestId !== '') {
+                $structuredIds[$requestId] = true;
+            }
+        }
+
+        $legacy = array_values(array_filter($legacy, static function (array $row) use ($structuredIds): bool {
+            $requestId = trim((string)($row['request_id'] ?? ''));
+
+            return $requestId === '' || !isset($structuredIds[$requestId]);
+        }));
+        $rows = array_merge($structured, $legacy);
+        usort($rows, static fn (array $left, array $right): int =>
+            strcmp((string)($right['created'] ?? ''), (string)($left['created'] ?? '')));
+
+        return $rows;
+    }
+
+    /**
      * @return array<string,mixed>
      */
     private static function prepareRow(array $target, array $input): array

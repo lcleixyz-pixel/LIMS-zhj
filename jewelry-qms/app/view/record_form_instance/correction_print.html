@@ -54,7 +54,7 @@
         </tr>
     </table>
     <div class="note">
-        本说明页用于记录已生成 PDF 或已打印纸质记录后的追加更正。原记录和原 PDF 不作覆盖修改；以下更正内容保留原内容、更正/补充内容、更正原因、登记人、登记时间及批准信息。
+        本说明页用于记录已生成 PDF 或已打印纸质记录后的追加更正。原记录和原 PDF 不作覆盖修改；以下更正内容保留字段位置、原内容、更正/补充内容、更正原因、登记人、登记时间及批准信息。
     </div>
 
     <h2>更正记录链</h2>
@@ -64,6 +64,7 @@
                 <th width="105">登记时间</th>
                 <th width="100">类型</th>
                 <th width="90">对应申请</th>
+                <th>字段位置</th>
                 <th>原内容</th>
                 <th>更正/补充内容</th>
                 <th>原因</th>
@@ -77,6 +78,10 @@
                 <td>{$correction.registered_at|default='-'}</td>
                 <td>{$correction.type_label|default='更正'}</td>
                 <td>{$correction.request_short_id|default='-'}</td>
+                <td>
+                    {$correction.field_label|default='整表补充说明'}
+                    {if $correction.target_kind == 'legacy_note'}<br><span class="muted">历史自由文本记录</span>{/if}
+                </td>
                 <td><pre>{$correction.original_content|default='-'}</pre></td>
                 <td><pre>{$correction.corrected_content|default='-'}</pre></td>
                 <td><pre>{$correction.correction_reason|default='-'}</pre></td>

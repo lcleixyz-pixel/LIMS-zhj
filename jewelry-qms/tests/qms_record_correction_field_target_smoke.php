@@ -90,4 +90,20 @@ try {
 }
 correction_target_assert($rejected, 'Unknown or forged target path must be rejected');
 
+$mergedDecisions = RecordFormCorrectionService::mergeDecisionRows(
+    [
+        ['request_id' => 'structured-1', 'created' => '2026-07-26 10:00:00', 'is_structured' => true],
+    ],
+    [
+        ['request_id' => 'structured-1', 'created' => '2026-07-26 10:00:00', 'is_structured' => false],
+        ['request_id' => 'legacy-1', 'created' => '2026-07-25 10:00:00', 'is_structured' => false],
+    ]
+);
+correction_target_assert(
+    count($mergedDecisions) === 2
+        && ($mergedDecisions[0]['request_id'] ?? '') === 'structured-1'
+        && ($mergedDecisions[1]['request_id'] ?? '') === 'legacy-1',
+    'Structured decisions must suppress their notification-shaped compatibility duplicate'
+);
+
 echo "qms_record_correction_field_target_smoke passed\n";

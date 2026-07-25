@@ -50,9 +50,9 @@ qms_correction_assert_contains(
     'Record detail renders a persistent correction request section'
 );
 qms_correction_assert_contains(
-    '待质量负责人处理',
+    '待质量负责人或批准人核对',
     $viewSource,
-    'Record detail explains the next handler after correction request submission'
+    'Record detail explains who must verify the field-level request'
 );
 
 echo "qms_record_correction_route_smoke passed\n";
