@@ -84,6 +84,7 @@ Route::group(function () {
     Route::rule('record_form_instance/create', 'RecordFormInstance/create');
     Route::rule('record_form_instance/edit', 'RecordFormInstance/edit');
     Route::get('record_form_instance/view', 'RecordFormInstance/view');
+    Route::get('record_form_instance/requestCorrection', 'RecordFormInstance/requestCorrection');
     Route::post('record_form_instance/requestCorrection', 'RecordFormInstance/requestCorrection');
     Route::get('record_form_instance/print', 'RecordFormInstance/print');
     Route::post('record_form_instance/exportPdf', 'RecordFormInstance/exportPdf');

@@ -345,6 +345,12 @@ class RecordFormInstance extends BaseController
     public function requestCorrection()
     {
         $record = $this->findInstance();
+        if (!$this->request->isPost()) {
+            Session::flash('warning', '请在记录详情页填写更正原因后提交申请。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
         $reason = trim((string)$this->request->post('reason', ''));
         if ($reason === '') {
             Session::flash('error', '请填写更正原因。');
