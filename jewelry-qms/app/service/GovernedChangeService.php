@@ -35,7 +35,7 @@ final class GovernedChangeService
         'training_type' => '培训类型',
         'trainer' => '培训人',
         'training_date' => '培训日期',
-        'duration_hours' => '培训学时',
+        'duration_hours' => '学时',
         'content' => '内容',
         'department_id' => '所属部门',
         'employee_id' => '人员',
@@ -293,6 +293,122 @@ final class GovernedChangeService
             ->toArray();
     }
 
+    public static function pendingRequestsForDisplay(): array
+    {
+        $rows = self::pendingRequests();
+        self::attachUserLabels($rows, ['requested_by']);
+
+        return $rows;
+    }
+
+    public static function eventFields(string $subjectType, Model $record): array
+    {
+        $policy = GovernedChangePolicyService::policy($subjectType);
+        if (($policy['strategy'] ?? '') !== 'event') {
+            return [];
+        }
+        try {
+            $available = array_keys($record->db()->getFields());
+        } catch (\Throwable) {
+            $available = array_keys($record->getData());
+        }
+
+        $fields = [];
+        foreach ((array)($policy['protected_fields'] ?? []) as $field) {
+            if (!in_array($field, $available, true)) {
+                continue;
+            }
+            $options = $field === 'status'
+                ? (array)Config::get('qms.statusLabels.' . $subjectType, [])
+                : [];
+            if ($options === []) {
+                continue;
+            }
+            $fields[] = [
+                'name' => $field,
+                'label' => self::fieldLabel($field),
+                'value' => self::scalar($record->getAttr($field)),
+                'options' => $options,
+            ];
+        }
+
+        return $fields;
+    }
+
+    public static function recordEvent(string $subjectType, Model $record, array $input): QmsGovernedChange
+    {
+        $subjectType = GovernedChangePolicyService::normalizeSubjectType($subjectType);
+        $policy = GovernedChangePolicyService::policy($subjectType);
+        if (($policy['strategy'] ?? '') !== 'event') {
+            throw new InvalidArgumentException('当前对象不使用生命周期事件流程。');
+        }
+
+        $fieldName = trim((string)($input['field_name'] ?? ''));
+        $allowed = [];
+        foreach (self::eventFields($subjectType, $record) as $field) {
+            $allowed[(string)$field['name']] = $field;
+        }
+        if ($fieldName === '' || !isset($allowed[$fieldName])) {
+            throw new InvalidArgumentException('所选字段不允许通过此事件变更。');
+        }
+        $newValue = self::scalar($input['new_value'] ?? '');
+        $oldValue = self::scalar($record->getAttr($fieldName));
+        $reason = trim((string)($input['reason'] ?? ''));
+        if ($reason === '') {
+            throw new InvalidArgumentException('请填写办理依据或原因。');
+        }
+        if ($newValue === '' || $newValue === $oldValue) {
+            throw new InvalidArgumentException('请选择与当前状态不同的新值。');
+        }
+        $options = (array)($allowed[$fieldName]['options'] ?? []);
+        if ($options !== [] && !array_key_exists($newValue, $options)) {
+            throw new InvalidArgumentException('所选状态不在允许范围内。');
+        }
+
+        $subjectId = trim((string)$record->getAttr('id'));
+        $now = date('Y-m-d H:i:s');
+        $userId = self::userId();
+
+        return Db::transaction(function () use (
+            $subjectType,
+            $subjectId,
+            $policy,
+            $record,
+            $fieldName,
+            $oldValue,
+            $newValue,
+            $reason,
+            $now,
+            $userId
+        ): QmsGovernedChange {
+            $record->save([$fieldName => $newValue]);
+            $eventId = qms_uuid();
+
+            return QmsGovernedChange::create([
+                'id' => $eventId,
+                'company_id' => Config::get('qms.company_id'),
+                'request_id' => $eventId,
+                'subject_type' => $subjectType,
+                'subject_id' => $subjectId,
+                'subject_label' => self::subjectLabel($policy, $record),
+                'change_kind' => 'event',
+                'field_name' => $fieldName,
+                'field_label' => self::fieldLabel($fieldName),
+                'old_value' => $oldValue,
+                'new_value' => $newValue,
+                'reason' => $reason,
+                'registered_by' => $userId,
+                'registered_at' => $now,
+                'approved_by' => $userId,
+                'approved_at' => $now,
+                'publish' => 1,
+                'soft_delete' => 0,
+                'created' => $now,
+                'modified' => $now,
+            ]);
+        });
+    }
+
     public static function projectValues(array $baseValues, array $changes): array
     {
         usort($changes, static fn (array $left, array $right): int =>
@@ -332,7 +448,7 @@ final class GovernedChangeService
         }
 
         $requests = $strategy === 'correction' ? self::requests($subjectType, $subjectId) : [];
-        $changes = $strategy === 'correction' ? self::approvedChanges($subjectType, $subjectId) : [];
+        $changes = self::approvedChanges($subjectType, $subjectId);
         self::attachUserLabels($requests, ['requested_by', 'decided_by']);
         self::attachUserLabels($changes, ['registered_by', 'approved_by']);
 
@@ -340,6 +456,8 @@ final class GovernedChangeService
             $requests,
             static fn (array $row): bool => (string)($row['status'] ?? '') === 'pending'
         ));
+
+        $eventFields = $strategy === 'event' ? self::eventFields($subjectType, $record) : [];
 
         return [
             'enabled' => true,
@@ -351,6 +469,12 @@ final class GovernedChangeService
                 ? GovernedChangePolicyService::isFrozen($subjectType, $record)
                 : false,
             'protected_fields' => array_values((array)($policy['protected_fields'] ?? [])),
+            'protected_field_labels' => array_map(
+                static fn (string $field): string => self::fieldLabel($field),
+                array_values((array)($policy['protected_fields'] ?? []))
+            ),
+            'event_fields' => $eventFields,
+            'event_field' => $eventFields[0] ?? null,
             'fields' => $strategy === 'correction' ? self::correctableFields($subjectType, $record) : [],
             'requests' => $requests,
             'pending_requests' => $pending,

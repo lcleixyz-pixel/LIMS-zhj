@@ -159,6 +159,8 @@ Route::group(function () {
 
     Route::post('approval/approve', 'Approval/approve');
     Route::post('governed_change/request', 'GovernedChange/request');
+    Route::post('governed_change/event', 'GovernedChange/event');
+    Route::get('governed_change/inbox', 'GovernedChange/inbox');
     Route::post('governed_change/decide', 'GovernedChange/decide');
 
     Route::rule('user/changePassword', 'User/changePassword');

@@ -84,10 +84,10 @@ return [
             'always_frozen' => true,
         ],
         'reference_material' => [
-            'strategy' => 'correction',
-            'label' => '标准物质记录',
+            'strategy' => 'event',
+            'label' => '标准物质台账',
             'model' => \app\model\ReferenceMaterial::class,
-            'always_frozen' => true,
+            'protected_fields' => ['status'],
         ],
         'supplier_evaluation' => [
             'strategy' => 'correction',

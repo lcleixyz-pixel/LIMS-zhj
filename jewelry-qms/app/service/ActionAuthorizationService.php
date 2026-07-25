@@ -74,7 +74,8 @@ final class ActionAuthorizationService
             'recordforminstance.registercorrection'
                 => self::canRegisterRecordCorrection($employeeId),
             'governedchange.request' => true,
-            'governedchange.decide'
+            'governedchange.event' => true,
+            'governedchange.decide', 'governedchange.inbox'
                 => self::canDecideRecordCorrection($employeeId),
 
             'auditplan.organize', 'auditplan.approve', 'auditplan.complete'
@@ -657,6 +658,8 @@ final class ActionAuthorizationService
         } elseif ($controller === 'governedchange') {
             $policyAction = match ($action) {
                 'request' => 'request',
+                'event' => 'event',
+                'inbox' => 'inbox',
                 'decide' => 'decide',
                 default => null,
             };

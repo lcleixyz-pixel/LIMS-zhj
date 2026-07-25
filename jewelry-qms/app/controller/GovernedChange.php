@@ -7,9 +7,11 @@ use app\BaseController;
 use app\service\GovernedChangePolicyService;
 use app\service\GovernedChangeService;
 use app\service\NotificationService;
+use app\service\RbacService;
 use InvalidArgumentException;
 use think\facade\Db;
 use think\facade\Session;
+use think\facade\View;
 
 final class GovernedChange extends BaseController
 {
@@ -59,9 +61,9 @@ final class GovernedChange extends BaseController
                 ),
                 'general',
                 $recipientIds,
-                qms_controller_url($subjectType),
-                'view',
-                $subjectId,
+                'governed_change',
+                'inbox',
+                null,
                 null,
                 'governed_change_request:' . $request->id
             );
@@ -120,7 +122,57 @@ final class GovernedChange extends BaseController
                 : '更正申请已驳回，处理意见已留存。'
         );
 
-        return redirect($this->returnUrl((string)$request->subject_type, (string)$request->subject_id));
+        return redirect($fallbackUrl !== '/dashboard/index'
+            ? $fallbackUrl
+            : $this->returnUrl((string)$request->subject_type, (string)$request->subject_id));
+    }
+
+    public function inbox()
+    {
+        View::assign('pendingRequests', GovernedChangeService::pendingRequestsForDisplay());
+        View::assign('pageTitle', '更正审批待办');
+
+        return View::fetch('governed_change/inbox');
+    }
+
+    public function event()
+    {
+        $subjectType = GovernedChangePolicyService::normalizeSubjectType(
+            (string)$this->request->post('subject_type', '')
+        );
+        $subjectId = trim((string)$this->request->post('subject_id', ''));
+        $returnUrl = $this->returnUrl($subjectType, $subjectId);
+        if (!RbacService::canWrite(qms_controller_url($subjectType))) {
+            Session::flash('error', '当前账号无权办理该台账的状态事件。');
+
+            return redirect($returnUrl);
+        }
+        $record = GovernedChangePolicyService::findSubject($subjectType, $subjectId);
+        if (!$record) {
+            Session::flash('error', '要办理的台账记录不存在或已被移除。');
+
+            return redirect($returnUrl);
+        }
+
+        try {
+            GovernedChangeService::recordEvent($subjectType, $record, [
+                'field_name' => $this->request->post('field_name', ''),
+                'new_value' => $this->request->post('new_value', ''),
+                'reason' => $this->request->post('reason', ''),
+            ]);
+        } catch (InvalidArgumentException $exception) {
+            Session::flash('error', $exception->getMessage());
+
+            return redirect($returnUrl);
+        } catch (\Throwable $exception) {
+            Session::flash('error', '状态事件未能完成，请核对新状态和办理依据后重试。');
+
+            return redirect($returnUrl);
+        }
+
+        Session::flash('success', '状态事件已办理。台账当前状态已更新，原状态、办理人、时间和依据已写入事件记录。');
+
+        return redirect($returnUrl);
     }
 
     /**

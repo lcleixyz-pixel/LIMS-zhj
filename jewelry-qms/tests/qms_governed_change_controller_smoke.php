@@ -28,6 +28,16 @@ governed_controller_assert_contains(
     'Controller must decide requests through the append-only service'
 );
 governed_controller_assert_contains(
+    'GovernedChangeService::recordEvent',
+    $controller,
+    'Controlled master-data state changes must use the shared event ledger'
+);
+governed_controller_assert_contains(
+    'GovernedChangeService::pendingRequestsForDisplay',
+    $controller,
+    'Approvers must have a cross-module inbox without requiring business-module access'
+);
+governed_controller_assert_contains(
     "Route::post('governed_change/request'",
     $routes,
     'Request route must be POST-only'
@@ -36,6 +46,16 @@ governed_controller_assert_contains(
     "Route::post('governed_change/decide'",
     $routes,
     'Decision route must be POST-only'
+);
+governed_controller_assert_contains(
+    "Route::post('governed_change/event'",
+    $routes,
+    'Lifecycle event route must be POST-only'
+);
+governed_controller_assert_contains(
+    "Route::get('governed_change/inbox'",
+    $routes,
+    'Approver inbox must have an authenticated GET route'
 );
 governed_controller_assert_contains(
     "'governedchange.request' => true",

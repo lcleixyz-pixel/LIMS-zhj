@@ -5,14 +5,82 @@
         <div>
             <h6 class="mb-1">该台账按生命周期事件管理</h6>
             <p class="mb-1 text-secondary">普通资料可在编辑页更新；状态、归属、校准日期等受控字段须通过对应业务动作办理，系统不允许直接覆盖或删除历史。</p>
-            {if !empty($governedChangeContext.protected_fields)}
-            <div class="small text-muted">受控字段：{$governedChangeContext.protected_fields|implode='、'}</div>
+            {if !empty($governedChangeContext.protected_field_labels)}
+            <div class="small text-muted">受控字段：{:implode('、', $governedChangeContext.protected_field_labels)}</div>
             {/if}
         </div>
     </div>
+    {if !empty($governedChangeContext.event_fields)}
+    <div class="card-body border-top">
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <h6>办理状态事件</h6>
+                <form method="post" action="/governed_change/event" id="governedEventForm">
+                    <input type="hidden" name="subject_type" value="{$governedChangeContext.subject_type}">
+                    <input type="hidden" name="subject_id" value="{$governedChangeContext.subject_id}">
+                    <input type="hidden" name="return_url" value="{$governedChangeContext.return_url}">
+                    <div class="mb-3">
+                        <label class="form-label" for="governedEventField">受控字段</label>
+                        <select class="form-select" id="governedEventField" name="field_name" required>
+                            {foreach $governedChangeContext.event_fields as $eventField}
+                            <option value="{$eventField.name}">{$eventField.label}（当前：{$eventField.value}）</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="governedEventValue">新状态</label>
+                        {if !empty($governedChangeContext.event_field.options)}
+                        <select class="form-select" id="governedEventValue" name="new_value" required>
+                            <option value="">请选择</option>
+                            {foreach $governedChangeContext.event_field.options as $optionValue => $optionLabel}
+                            <option value="{$optionValue}">{$optionLabel}</option>
+                            {/foreach}
+                        </select>
+                        {else}
+                        <input class="form-control" id="governedEventValue" name="new_value" required>
+                        {/if}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="governedEventReason">办理依据或原因</label>
+                        <textarea class="form-control" id="governedEventReason" name="reason" rows="2" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-info">确认办理并留痕</button>
+                </form>
+            </div>
+            <div class="col-lg-7">
+                <h6>历史状态事件</h6>
+                {if empty($governedChangeContext.changes)}
+                <div class="text-muted border rounded p-3">暂无状态事件。</div>
+                {else}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead><tr><th>字段</th><th>原状态 → 新状态</th><th>办理人 / 时间</th><th>依据</th></tr></thead>
+                        <tbody>
+                        {foreach $governedChangeContext.changes as $eventRow}
+                        <tr>
+                            <td>{$eventRow.field_label}</td>
+                            <td>{$eventRow.old_value} → <strong>{$eventRow.new_value}</strong></td>
+                            <td>{$eventRow.registered_by_label|default='未记录'}<br><small>{$eventRow.registered_at}</small></td>
+                            <td>{$eventRow.reason}</td>
+                        </tr>
+                        {/foreach}
+                        </tbody>
+                    </table>
+                </div>
+                {/if}
+            </div>
+        </div>
+    </div>
+    {/if}
 </section>
 {else}
-<section class="card border-primary mt-3 mb-3" id="governedChangePanel">
+<section
+    class="card border-primary mt-3 mb-3"
+    id="governedChangePanel"
+    data-subject-type="{$governedChangeContext.subject_type}"
+    data-subject-id="{$governedChangeContext.subject_id}"
+    data-frozen="{if $governedChangeContext.frozen}1{else}0{/if}"
+>
     <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
         <div>
             <h6 class="mb-0">当前有效状态与更正链</h6>
@@ -80,7 +148,11 @@
                         <thead><tr><th>字段</th><th>原值</th><th>当前有效值</th><th>更正人 / 时间</th><th>批准人 / 时间</th></tr></thead>
                         <tbody>
                         {foreach $governedChangeContext.changes as $change}
-                        <tr>
+                        <tr
+                            data-governed-field="{$change.field_label|htmlentities}"
+                            data-governed-old="{$change.old_value|default=''|htmlentities}"
+                            data-governed-new="{$change.new_value|default=''|htmlentities}"
+                        >
                             <td>{$change.field_label}</td>
                             <td class="text-decoration-line-through text-secondary">{$change.old_value|default='（空）'}</td>
                             <td><strong>{$change.new_value|default='（空）'}</strong></td>
@@ -165,15 +237,57 @@
 </section>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    var panel = document.getElementById('governedChangePanel');
     var select = document.getElementById('governedChangeField');
     var current = document.getElementById('governedChangeCurrent');
-    if (!select || !current) return;
-    var syncCurrentValue = function () {
-        var option = select.options[select.selectedIndex];
-        current.value = option ? (option.getAttribute('data-current') || '') : '';
+    if (select && current) {
+        var syncCurrentValue = function () {
+            var option = select.options[select.selectedIndex];
+            current.value = option ? (option.getAttribute('data-current') || '') : '';
+        };
+        select.addEventListener('change', syncCurrentValue);
+        syncCurrentValue();
+    }
+
+    if (!panel) return;
+    var normalize = function (value) {
+        return (value || '').replace(/\s+/g, '').replace(/[：:]/g, '');
     };
-    select.addEventListener('change', syncCurrentValue);
-    syncCurrentValue();
+    panel.querySelectorAll('[data-governed-field]').forEach(function (row) {
+        var fieldLabel = normalize(row.getAttribute('data-governed-field'));
+        var oldValue = row.getAttribute('data-governed-old') || '';
+        var newValue = row.getAttribute('data-governed-new') || '';
+        document.querySelectorAll('.container > .card table tr > th').forEach(function (heading) {
+            if (normalize(heading.textContent) !== fieldLabel) return;
+            var cell = heading.nextElementSibling;
+            if (!cell || cell.closest('#governedChangePanel')) return;
+            var currentText = (cell.textContent || '').trim();
+            if (normalize(currentText) === normalize(newValue)) {
+                if (!cell.querySelector('.qms-annotated-current')) {
+                    cell.insertAdjacentHTML('beforeend', ' <span class="badge text-bg-primary qms-annotated-current">已应用更正</span>');
+                }
+                return;
+            }
+            cell.innerHTML = '<div class="text-decoration-line-through text-secondary small"></div>'
+                + '<div class="fw-semibold text-primary qms-annotated-current"></div>';
+            cell.children[0].textContent = oldValue || currentText || '（空）';
+            cell.children[1].textContent = newValue || '（空）';
+        });
+    });
+
+    if (panel.getAttribute('data-frozen') === '1') {
+        var subjectType = panel.getAttribute('data-subject-type') || '';
+        var subjectId = panel.getAttribute('data-subject-id') || '';
+        document.querySelectorAll('a[href]').forEach(function (link) {
+            var href = link.getAttribute('href') || '';
+            if (href.indexOf('/' + subjectType + '/edit?id=' + subjectId) !== 0) return;
+            link.classList.add('disabled');
+            link.setAttribute('aria-disabled', 'true');
+            link.setAttribute('title', '记录已冻结，请在下方按字段申请更正');
+            link.removeAttribute('href');
+            link.textContent = '已冻结';
+        });
+    }
 });
 </script>
 {/if}

@@ -91,23 +91,11 @@ class AuditChecklist extends BusinessBase
 
     public function edit()
     {
-        $record = $this->findActiveRecord((string)$this->request->param('id', ''));
-        if (!$record) {
-            throw new HttpException(404, '审核检查记录不存在');
-        }
-        $this->assertScheduleWritable((string)$record->audit_schedule_id);
-
         return parent::edit();
     }
 
     public function delete()
     {
-        $record = $this->findActiveRecord((string)$this->request->param('id', ''));
-        if (!$record) {
-            throw new HttpException(404, '审核检查记录不存在');
-        }
-        $this->assertScheduleWritable((string)$record->audit_schedule_id);
-
         return parent::delete();
     }
 

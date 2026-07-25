@@ -1,0 +1,48 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0">更正审批待办</h5>
+            <small class="text-secondary">只显示申请时冻结的记录、字段、原值、拟更正值和原因，不扩大业务模块访问权限。</small>
+        </div>
+        <a href="/dashboard/index" class="btn btn-sm btn-outline-secondary">返回工作台</a>
+    </div>
+    <div class="card-body">
+        {if empty($pendingRequests)}
+        <div class="text-center text-muted py-5">
+            <div class="fs-2 mb-2">✓</div>
+            当前没有待处理的更正申请
+        </div>
+        {else}
+        <div class="row g-3">
+            {foreach $pendingRequests as $changeRequest}
+            <div class="col-12">
+                <article class="border rounded p-3 bg-warning-subtle">
+                    <div class="d-flex justify-content-between gap-3 flex-wrap">
+                        <div>
+                            <strong>{$changeRequest.subject_label}</strong>
+                            <span class="badge text-bg-warning ms-2">待处理</span>
+                        </div>
+                        <small>申请人：{$changeRequest.requested_by_label|default='未记录'} · {$changeRequest.requested_at}</small>
+                    </div>
+                    <div class="small text-muted mt-1">申请编号：{$changeRequest.id}</div>
+                    <dl class="row mt-3 mb-2">
+                        <dt class="col-sm-2">更正字段</dt><dd class="col-sm-10">{$changeRequest.field_label}</dd>
+                        <dt class="col-sm-2">原值</dt><dd class="col-sm-10">{$changeRequest.original_value|default='（空）'}</dd>
+                        <dt class="col-sm-2">拟更正值</dt><dd class="col-sm-10"><strong>{$changeRequest.proposed_value|default='（空）'}</strong></dd>
+                        <dt class="col-sm-2">更正原因</dt><dd class="col-sm-10">{$changeRequest.reason}</dd>
+                    </dl>
+                    <form method="post" action="/governed_change/decide" class="border-top pt-3">
+                        <input type="hidden" name="request_id" value="{$changeRequest.id}">
+                        <input type="hidden" name="return_url" value="/governed_change/inbox">
+                        <label class="form-label" for="inboxDecision{$changeRequest.id}">处理这条申请</label>
+                        <textarea class="form-control mb-2" id="inboxDecision{$changeRequest.id}" name="comment" rows="2" placeholder="批准可填写核对依据；驳回必须说明原因"></textarea>
+                        <button type="submit" name="decision" value="approved" class="btn btn-success btn-sm">批准并追加更正</button>
+                        <button type="submit" name="decision" value="rejected" class="btn btn-outline-danger btn-sm">驳回申请</button>
+                    </form>
+                </article>
+            </div>
+            {/foreach}
+        </div>
+        {/if}
+    </div>
+</div>
