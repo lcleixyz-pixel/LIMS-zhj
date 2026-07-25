@@ -22,7 +22,7 @@
             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="无编辑权限">编辑</button>
             {else}
             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="记录已锁定。请联系质量负责人发起作废/换版/更正。">编辑</button>
-            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#requestCorrectionModal">申请更正</button>
+            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#requestCorrectionModal">{if $correctionRequests}补充更正申请{else}申请更正{/if}</button>
             {/if}
             <a href="/record_form_instance/index" class="btn btn-sm btn-outline-secondary">返回</a>
         </div>
@@ -49,6 +49,37 @@
                 </td>
             </tr>
         </table>
+        {if $correctionRequests}
+        <div class="alert alert-warning mb-0">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+                <div>
+                    <strong>更正申请记录：</strong>
+                    已提交，待质量负责人处理。可继续补充更正原因，系统会保留最近申请记录。
+                </div>
+                <span class="badge text-bg-warning">{$correctionRequests|count} 条</span>
+            </div>
+            <div class="table-responsive mt-2">
+                <table class="table table-sm table-bordered bg-white mb-0">
+                    <thead>
+                        <tr>
+                            <th width="170">提交时间</th>
+                            <th>更正原因</th>
+                            <th width="120">通知人数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {volist name="correctionRequests" id="correctionRequest"}
+                        <tr>
+                            <td>{$correctionRequest.created|default='-'}</td>
+                            <td>{$correctionRequest.reason|default='未记录原因'}</td>
+                            <td>{$correctionRequest.recipient_count|default=0}</td>
+                        </tr>
+                        {/volist}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {/if}
     </div>
 </div>
 <div class="card">

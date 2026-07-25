@@ -338,6 +338,7 @@ class RecordFormInstance extends BaseController
         View::assign('canEdit', $this->canEditRecord($record));
         View::assign('pdfToken', $this->canExportPdf($record) ? $this->issuePdfActionToken((string)$record->id) : '');
         View::assign('previewPdfFiles', $this->previewPdfFiles((string)$record->id));
+        View::assign('correctionRequests', $this->correctionRequestsFor((string)$record->id));
 
         return View::fetch('record_form_instance/view');
     }
@@ -378,6 +379,44 @@ class RecordFormInstance extends BaseController
         Session::flash('success', '更正申请已提交。质量负责人将收到通知并协助处理，请留意通知中心。');
 
         return redirect('/record_form_instance/view?id=' . $record->id);
+    }
+
+    private function correctionRequestsFor(string $recordId): array
+    {
+        if ($recordId === '') {
+            return [];
+        }
+
+        $rows = Db::name('notifications')
+            ->alias('n')
+            ->leftJoin('notification_users nu', 'nu.notification_id = n.id')
+            ->field('n.id,n.message,n.created,COUNT(nu.user_id) AS recipient_count')
+            ->where('n.title', '记录更正申请')
+            ->where('n.link_controller', 'record_form_instance')
+            ->where('n.link_action', 'view')
+            ->where('n.link_id', $recordId)
+            ->group('n.id,n.message,n.created')
+            ->order('n.created', 'desc')
+            ->limit(5)
+            ->select()
+            ->toArray();
+
+        return array_map(static function (array $row): array {
+            $message = trim((string)($row['message'] ?? ''));
+            $reason = $message;
+            $marker = '原因：';
+            $position = mb_strpos($message, $marker);
+            if ($position !== false) {
+                $reason = mb_substr($message, $position + mb_strlen($marker));
+            }
+
+            return [
+                'id' => (string)($row['id'] ?? ''),
+                'reason' => $reason !== '' ? $reason : '未记录原因',
+                'created' => (string)($row['created'] ?? ''),
+                'recipient_count' => (int)($row['recipient_count'] ?? 0),
+            ];
+        }, $rows);
     }
 
     public function print()
