@@ -13,8 +13,10 @@ function qms_correction_decision_assert_contains(string $needle, string $haystac
 $root = dirname(__DIR__);
 $routeSource = file_get_contents($root . '/route/app.php') ?: '';
 $controllerSource = file_get_contents($root . '/app/controller/RecordFormInstance.php') ?: '';
+$indexViewSource = file_get_contents($root . '/app/view/record_form_instance/index.html') ?: '';
 $viewSource = file_get_contents($root . '/app/view/record_form_instance/view.html') ?: '';
 $printViewSource = file_get_contents($root . '/app/view/record_form_instance/correction_print.html') ?: '';
+$pdfServiceSource = file_get_contents($root . '/app/service/PdfRenderService.php') ?: '';
 $authorizationSource = file_get_contents($root . '/app/service/ActionAuthorizationService.php') ?: '';
 $migrationSource = file_get_contents($root . '/database/migrations/20260725_record_form_corrections.sql') ?: '';
 $fieldTargetMigrationSource = file_get_contents($root . '/database/migrations/20260726_record_form_correction_field_targets.sql') ?: '';
@@ -33,6 +35,11 @@ qms_correction_decision_assert_contains(
     "Route::get('record_form_instance/printCorrections'",
     $routeSource,
     'Record correction appendix must have a printable page'
+);
+qms_correction_decision_assert_contains(
+    "Route::get('record_form_instance/downloadCurrentPackage'",
+    $routeSource,
+    'A corrected record must expose a current complete package download'
 );
 qms_correction_decision_assert_contains(
     'decideCorrection',
@@ -68,6 +75,26 @@ qms_correction_decision_assert_contains(
     'printCorrections',
     $controllerSource,
     'Record correction controller must expose correction appendix printing'
+);
+qms_correction_decision_assert_contains(
+    'public function downloadCurrentPackage()',
+    $controllerSource,
+    'Record correction controller must expose current package download'
+);
+qms_correction_decision_assert_contains(
+    'RecordFormCurrentPackageService::build',
+    $controllerSource,
+    'Current package download must use the governed package builder'
+);
+qms_correction_decision_assert_contains(
+    'PdfRenderService::renderHtmlTemporary',
+    $controllerSource,
+    'Current package download must render a correction appendix PDF without replacing the original PDF'
+);
+qms_correction_decision_assert_contains(
+    'public static function renderHtmlTemporary',
+    $pdfServiceSource,
+    'PDF rendering must support a runtime-only correction appendix'
 );
 qms_correction_decision_assert_contains(
     'correctionDecisionsFor',
@@ -150,7 +177,22 @@ qms_correction_decision_assert_contains(
     'Record detail must keep a clearly labelled compatibility entry for pre-field-level approvals'
 );
 qms_correction_decision_assert_contains(
-    '打印更正说明页',
+    '有后续更正',
+    $indexViewSource,
+    'Record list must visibly flag records with approved later corrections'
+);
+qms_correction_decision_assert_contains(
+    '下载当前完整记录包',
+    $viewSource,
+    'Corrected record detail must prioritize the complete package'
+);
+qms_correction_decision_assert_contains(
+    '下载原始 PDF',
+    $viewSource,
+    'Corrected record detail must retain a clearly secondary original PDF entry'
+);
+qms_correction_decision_assert_contains(
+    '打印更正附页',
     $viewSource,
     'Record detail must offer a printable correction appendix'
 );

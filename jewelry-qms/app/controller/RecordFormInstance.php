@@ -15,6 +15,7 @@ use app\service\NotificationService;
 use app\service\PdfRenderService;
 use app\service\RecordFormBatchReviewService;
 use app\service\RecordFormCorrectionService;
+use app\service\RecordFormCurrentPackageService;
 use app\service\RecordFormLayoutConfirmationService;
 use app\service\RecordFormInstanceTitleService;
 use app\service\RecordFormPrintService;
@@ -54,7 +55,9 @@ class RecordFormInstance extends BaseController
     private function decorateInstanceRows(iterable $items): void
     {
         $userIds = [];
+        $recordIds = [];
         foreach ($items as $item) {
+            $recordIds[] = (string)$item->id;
             foreach (['created_by', 'modified_by'] as $field) {
                 $userId = trim((string)$item->{$field});
                 if ($userId !== '') {
@@ -82,8 +85,32 @@ class RecordFormInstance extends BaseController
             }
         }
 
+        $correctionSummaries = [];
+        if ($recordIds !== [] && $this->recordCorrectionTableExists()) {
+            try {
+                $rows = Db::name('record_form_corrections')
+                    ->field('record_id,COUNT(*) AS correction_count,MAX(registered_at) AS latest_correction_at')
+                    ->whereIn('record_id', array_values(array_unique($recordIds)))
+                    ->where('publish', 1)
+                    ->where('soft_delete', 0)
+                    ->group('record_id')
+                    ->select()
+                    ->toArray();
+                foreach ($rows as $row) {
+                    $correctionSummaries[(string)$row['record_id']] = [
+                        'count' => (int)($row['correction_count'] ?? 0),
+                        'latest_at' => (string)($row['latest_correction_at'] ?? ''),
+                    ];
+                }
+            } catch (\Throwable $exception) {
+                $correctionSummaries = [];
+            }
+        }
+
         foreach ($items as $item) {
             $status = (string)$item->status;
+            $correctionSummary = $correctionSummaries[(string)$item->id] ?? ['count' => 0, 'latest_at' => ''];
+            $correctionCount = (int)$correctionSummary['count'];
             $item->setAttr('pdf_token', $this->canExportPdf($item) ? $this->issuePdfActionToken((string)$item->id) : '');
             $item->setAttr('can_edit', $this->canEditRecord($item));
             $item->setAttr('status_label', self::recordStatusLabels()[$status] ?? $status);
@@ -91,6 +118,13 @@ class RecordFormInstance extends BaseController
             $item->setAttr('reviewer_label', in_array($status, ['locked', 'voided'], true)
                 ? ($userLabels[(string)$item->modified_by] ?? ((string)$item->modified_by !== '' ? (string)$item->modified_by : '未记录'))
                 : '待审核');
+            $item->setAttr('correction_count', $correctionCount);
+            $item->setAttr('latest_correction_at', (string)$correctionSummary['latest_at']);
+            $item->setAttr('has_corrections', $correctionCount > 0);
+            $item->setAttr(
+                'has_current_package',
+                $correctionCount > 0 && trim((string)$item->generated_pdf_path) !== ''
+            );
         }
     }
 
@@ -360,6 +394,9 @@ class RecordFormInstance extends BaseController
         View::assign('correctionRequests', $this->correctionRequestsFor((string)$record->id));
         View::assign('correctionDecisions', $this->correctionDecisionsFor((string)$record->id));
         View::assign('recordCorrections', $recordCorrections);
+        View::assign('latestCorrectionAt', $recordCorrections !== []
+            ? (string)($recordCorrections[array_key_last($recordCorrections)]['registered_at'] ?? '')
+            : '');
         View::assign('approvedCorrectionRequests', $this->approvedCorrectionRequestsFor((string)$record->id));
         View::assign('correctionTypeLabels', self::correctionTypeLabels());
         View::assign(
@@ -1276,11 +1313,56 @@ class RecordFormInstance extends BaseController
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
 
-        View::assign('record', $record);
-        View::assign('corrections', $corrections);
-        View::assign('printedAt', date('Y-m-d H:i:s'));
+        return $this->renderCorrectionPrintHtml($record, $corrections);
+    }
 
-        return View::fetch('record_form_instance/correction_print');
+    public function downloadCurrentPackage()
+    {
+        $record = $this->findInstance();
+        $corrections = $this->recordCorrectionsFor((string)$record->id);
+        if ($corrections === []) {
+            throw new HttpException(404, '当前记录没有已批准更正，请直接下载原始 PDF');
+        }
+
+        $relativeOriginalPath = trim((string)$record->generated_pdf_path);
+        if ($relativeOriginalPath === '') {
+            throw new HttpException(409, '原始 PDF 尚未生成，不能制作当前完整记录包');
+        }
+        $publicRoot = realpath(public_path());
+        $originalPdfPath = realpath(public_path() . ltrim($relativeOriginalPath, '/\\'));
+        if (
+            $publicRoot === false
+            || $originalPdfPath === false
+            || !str_starts_with($originalPdfPath, $publicRoot . DIRECTORY_SEPARATOR)
+            || !is_file($originalPdfPath)
+        ) {
+            throw new HttpException(404, '原始 PDF 文件不存在，不能制作当前完整记录包');
+        }
+
+        $appendix = PdfRenderService::renderHtmlTemporary(
+            $this->renderCorrectionPrintHtml($record, $corrections),
+            (string)$record->id,
+            '更正附页'
+        );
+        try {
+            $latestCorrectionAt = (string)($corrections[array_key_last($corrections)]['registered_at'] ?? '');
+            $package = RecordFormCurrentPackageService::build(
+                (string)$record->id,
+                (string)$record->record_title,
+                $originalPdfPath,
+                (string)($record->generated_pdf_name ?: basename($originalPdfPath)),
+                (string)$appendix['absolute_path'],
+                count($corrections),
+                $latestCorrectionAt
+            );
+        } finally {
+            $appendixPath = (string)($appendix['absolute_path'] ?? '');
+            if ($appendixPath !== '' && is_file($appendixPath)) {
+                @unlink($appendixPath);
+            }
+        }
+
+        FileService::downloadAbsolute((string)$package['file_path'], (string)$package['file_name']);
     }
 
     public function exportPdf()
@@ -1453,6 +1535,15 @@ class RecordFormInstance extends BaseController
         } catch (RuntimeException $exception) {
             throw new HttpException(404, '打印预览不可用：' . $exception->getMessage());
         }
+    }
+
+    private function renderCorrectionPrintHtml(InstanceModel $record, array $corrections): string
+    {
+        View::assign('record', $record);
+        View::assign('corrections', $corrections);
+        View::assign('printedAt', date('Y-m-d H:i:s'));
+
+        return View::fetch('record_form_instance/correction_print');
     }
 
     private function templateForRecord(InstanceModel $record): array

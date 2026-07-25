@@ -1,7 +1,7 @@
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">记录详情 - {$record.record_title}</h5>
-        <div class="d-flex gap-1">
+        <div class="d-flex flex-wrap justify-content-end gap-1">
             <a href="/record_form_instance/print?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-info">打印预览</a>
             {if $canExportPdf && qms_can_action('record_form_instance', 'exportPdf', $record)}
             <form method="post" action="/record_form_instance/exportPdf?id={$record.id}" class="d-inline">
@@ -14,10 +14,15 @@
             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已归档或已作废记录不能重新生成 PDF">生成PDF</button>
             {/if}
             {if $record.generated_pdf_path}
-            <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-primary">下载PDF</a>
+                {if $recordCorrections}
+                <a href="/record_form_instance/downloadCurrentPackage?id={$record.id}" class="btn btn-sm btn-primary">下载当前完整记录包</a>
+                <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-secondary">下载原始 PDF</a>
+                {else}
+                <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-outline-primary">下载 PDF</a>
+                {/if}
             {/if}
             {if $recordCorrections}
-            <a href="/record_form_instance/printCorrections?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-dark">打印更正说明页</a>
+            <a href="/record_form_instance/printCorrections?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-dark">打印更正附页</a>
             {/if}
             {if $canEdit && qms_can_action('record_form_instance', 'edit', $record)}
             <a href="/record_form_instance/edit?id={$record.id}" class="btn btn-sm btn-outline-secondary">编辑</a>
@@ -52,6 +57,16 @@
                 </td>
             </tr>
         </table>
+        {if $recordCorrections}
+        <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2" role="status">
+            <div>
+                <strong>当前记录存在 {$recordCorrections|count} 条后续更正。</strong>
+                请优先下载当前完整记录包；纸质归档时须将更正附页与原记录一并保存。
+                {if $latestCorrectionAt}<span class="text-muted small">最近更正：{$latestCorrectionAt}</span>{/if}
+            </div>
+            <a href="/record_form_instance/downloadCurrentPackage?id={$record.id}" class="btn btn-sm btn-warning">下载当前完整记录包</a>
+        </div>
+        {/if}
         <style>
             .record-annotation-card{border-color:#7aa7d9}
             .record-annotation-card .card-header{background:#eef6ff}
@@ -264,7 +279,7 @@
         <div class="card border-success mt-3">
             <div class="card-header bg-success-subtle d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">更正记录链</h6>
-                <a href="/record_form_instance/printCorrections?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-success">打印更正说明页</a>
+                <a href="/record_form_instance/printCorrections?id={$record.id}" target="_blank" class="btn btn-sm btn-outline-success">打印更正附页</a>
             </div>
             <div class="card-body">
                 <div class="alert alert-light border small mb-3">原记录和原 PDF 保持冻结；以下内容为追加登记的更正附页信息，适合随已打印纸质记录一并保存。</div>

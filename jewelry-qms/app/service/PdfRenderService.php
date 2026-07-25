@@ -81,6 +81,65 @@ class PdfRenderService
         ];
     }
 
+    /**
+     * Render a runtime-only PDF component for a governed download package.
+     *
+     * @return array{file_name:string,absolute_path:string}
+     */
+    public static function renderHtmlTemporary(string $html, string $recordId, string $title): array
+    {
+        $recordId = self::normalizeRecordId($recordId);
+        $safeTitle = self::safeFileTitle($title);
+        $root = root_path();
+        $outputDir = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR
+            . 'runtime' . DIRECTORY_SEPARATOR . 'current-record-package-components'
+            . DIRECTORY_SEPARATOR . $recordId . DIRECTORY_SEPARATOR;
+        if (!is_dir($outputDir) && !mkdir($outputDir, 0755, true) && !is_dir($outputDir)) {
+            throw new RuntimeException('临时更正附页目录创建失败');
+        }
+
+        $suffix = date('YmdHis') . '-' . bin2hex(random_bytes(4));
+        $htmlPath = $outputDir . 'appendix-' . $suffix . '.html';
+        $pdfName = $safeTitle . '-' . $suffix . '.pdf';
+        $pdfPath = $outputDir . $pdfName;
+        if (file_put_contents($htmlPath, $html, LOCK_EX) === false) {
+            throw new RuntimeException('临时更正附页 HTML 写入失败');
+        }
+
+        $script = $root . 'scripts' . DIRECTORY_SEPARATOR . 'render-record-pdf.mjs';
+        if (!is_file($script)) {
+            @unlink($htmlPath);
+            throw new RuntimeException('PDF 渲染脚本不存在');
+        }
+
+        $command = sprintf(
+            'cd %s && node %s %s %s 2>&1',
+            escapeshellarg($root),
+            escapeshellarg($script),
+            escapeshellarg($htmlPath),
+            escapeshellarg($pdfPath)
+        );
+
+        try {
+            exec($command, $output, $code);
+        } finally {
+            if (is_file($htmlPath)) {
+                @unlink($htmlPath);
+            }
+        }
+        if ($code !== 0 || !is_file($pdfPath)) {
+            $message = self::summarizeRenderError(implode("\n", $output));
+
+            throw new RuntimeException('临时更正附页 PDF 生成失败，退出码 ' . $code
+                . ($message === '' ? '' : '：' . $message));
+        }
+
+        return [
+            'file_name' => $pdfName,
+            'absolute_path' => $pdfPath,
+        ];
+    }
+
     private static function renderInput(string $input, string $recordId, string $title): array
     {
         $recordId = self::normalizeRecordId($recordId);
