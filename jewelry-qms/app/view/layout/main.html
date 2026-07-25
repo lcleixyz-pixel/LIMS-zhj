@@ -289,14 +289,15 @@
     </div>
 </nav>
 <div class="container mt-3">
-    {if session('success')}
-    <div class="alert alert-success alert-dismissible fade show">{$Think.session.success}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {php}$successMessage = session('success'); $warningMessage = session('warning'); $errorMessage = session('error');{/php}
+    {if !empty($successMessage)}
+    <div class="alert alert-success alert-dismissible fade show">{$successMessage}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭提示"></button></div>
     {/if}
-    {if session('warning')}
-    <div class="alert alert-warning alert-dismissible fade show">{$Think.session.warning}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {if !empty($warningMessage)}
+    <div class="alert alert-warning alert-dismissible fade show">{$warningMessage}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭提示"></button></div>
     {/if}
-    {if session('error')}
-    <div class="alert alert-danger alert-dismissible fade show">{$Think.session.error}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {if !empty($errorMessage)}
+    <div class="alert alert-danger alert-dismissible fade show">{$errorMessage}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭提示"></button></div>
     {/if}
     {php}$validationErrors = session('validation_errors') ?: [];{/php}
     {if !empty($validationErrors)}
