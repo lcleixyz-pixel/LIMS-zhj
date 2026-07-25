@@ -52,6 +52,125 @@
                 </td>
             </tr>
         </table>
+        <style>
+            .record-annotation-card{border-color:#7aa7d9}
+            .record-annotation-card .card-header{background:#eef6ff}
+            .record-original-label{font-size:.72rem;color:#6c757d;margin-bottom:.2rem}
+            .record-original-value{white-space:pre-wrap;word-break:break-word}
+            .record-original-superseded{text-decoration:line-through;text-decoration-thickness:2px;color:#6c757d}
+            .record-annotation{border-left:3px solid #0d6efd;background:#f4f8ff;padding:.55rem .65rem;border-radius:.25rem}
+            .record-annotation.is-void{border-left-color:#dc3545;background:#fff5f5}
+            .record-annotation.is-supplement{border-left-color:#198754;background:#f3fbf6}
+            .record-annotation details summary{cursor:pointer;color:#495057;font-size:.78rem}
+            .record-annotation-meta{font-size:.76rem;color:#6c757d;line-height:1.55}
+            .record-appended-row>td{background:#f3fbf6}
+            .record-appended-meta>td{background:#f8fffa;border-top:0}
+            .record-annotated-table td{min-width:140px}
+        </style>
+        <div class="card record-annotation-card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center gap-2">
+                <h6 class="mb-0">填写内容（原记录＋批注）</h6>
+                <span class="badge text-bg-primary">系统批注视图</span>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light border small">
+                    这里按纸质划改思路显示批注：原始记录值始终保留；修改值、作废标注和补充行叠加显示。底层原记录和原 PDF 未被修改。
+                </div>
+                {volist name="annotatedSchema" id="field"}
+                <section class="mb-4">
+                    <h6>{$field.label}</h6>
+                    {if $field.type == 'repeatable_table'}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle record-annotated-table mb-0">
+                            <thead>
+                                <tr>{volist name="field.columns" id="column"}<th>{$column.label}</th>{/volist}</tr>
+                            </thead>
+                            <tbody>
+                                {volist name="field.display_rows" id="displayRow"}
+                                <tr{if $displayRow.is_appended} class="record-appended-row"{/if}>
+                                    {volist name="displayRow.cells" id="displayCell"}
+                                    <td>
+                                        {if $displayRow.is_appended}
+                                        <div class="record-original-value">{$displayCell.display_value|default='-'}</div>
+                                        {else}
+                                        {if $displayCell.annotations}<div class="record-original-label">原始记录值</div>{/if}
+                                        <div class="record-original-value{if $displayCell.has_superseding_annotation} record-original-superseded{/if}">{$displayCell.original_value|default='-'}</div>
+                                        {volist name="displayCell.annotations" id="annotation"}
+                                        <div class="record-annotation mt-2{if $annotation.is_void} is-void{elseif $annotation.is_supplement} is-supplement{/if}">
+                                            <div class="small">
+                                                <span class="badge {if $annotation.is_void}text-bg-danger{elseif $annotation.is_supplement}text-bg-success{else}text-bg-primary{/if}">{$annotation.type_label}</span>
+                                                {if $annotation.is_amendment}<strong class="ms-1">批注更正为：</strong>{elseif $annotation.is_void}<strong class="ms-1">批注作废：</strong>{else}<strong class="ms-1">批注补充：</strong>{/if}
+                                            </div>
+                                            <div class="mt-1 record-original-value">{$annotation.corrected_content|default='-'}</div>
+                                            <details class="mt-1">
+                                                <summary>查看批注依据</summary>
+                                                <div class="record-annotation-meta mt-1">
+                                                    原因：{$annotation.correction_reason|default='未记录'}<br>
+                                                    登记：{$annotation.registered_by|default='未记录'}，{$annotation.registered_at|default='-'}<br>
+                                                    批准：{$annotation.approved_by|default='未记录'}，{$annotation.approved_at|default='-'}
+                                                    {if $annotation.request_short_id}<br>申请编号：{$annotation.request_short_id}{/if}
+                                                </div>
+                                            </details>
+                                        </div>
+                                        {/volist}
+                                        {/if}
+                                    </td>
+                                    {/volist}
+                                </tr>
+                                {if $displayRow.is_appended}
+                                <tr class="record-appended-meta">
+                                    <td colspan="{:count($field['columns'])}">
+                                        <span class="badge text-bg-success">补充新增行</span>
+                                        <span class="small ms-1">
+                                            {$displayRow.annotation.registered_by|default='未记录'} 于 {$displayRow.annotation.registered_at|default='-'} 登记，
+                                            {$displayRow.annotation.approved_by|default='未记录'} 于 {$displayRow.annotation.approved_at|default='-'} 批准
+                                        </span>
+                                        <details class="mt-1">
+                                            <summary class="small">查看补充依据</summary>
+                                            <div class="record-annotation-meta mt-1">
+                                                原因：{$displayRow.annotation.correction_reason|default='未记录'}
+                                                {if $displayRow.annotation.request_short_id}<br>申请编号：{$displayRow.annotation.request_short_id}{/if}
+                                            </div>
+                                        </details>
+                                    </td>
+                                </tr>
+                                {/if}
+                                {/volist}
+                                {empty name="field.display_rows"}
+                                <tr><td colspan="{:count($field['columns'])}" class="text-center text-muted">未填写</td></tr>
+                                {/empty}
+                            </tbody>
+                        </table>
+                    </div>
+                    {else}
+                    {if $field.annotations}<div class="record-original-label">原始记录值</div>{/if}
+                    <div class="record-original-value{if $field.has_superseding_annotation} record-original-superseded{/if}">{$field.original_value|default='-'}</div>
+                    {volist name="field.annotations" id="annotation"}
+                    <div class="record-annotation mt-2{if $annotation.is_void} is-void{elseif $annotation.is_supplement} is-supplement{/if}">
+                        <div class="small">
+                            <span class="badge {if $annotation.is_void}text-bg-danger{elseif $annotation.is_supplement}text-bg-success{else}text-bg-primary{/if}">{$annotation.type_label}</span>
+                            {if $annotation.is_amendment}<strong class="ms-1">批注更正为：</strong>{elseif $annotation.is_void}<strong class="ms-1">批注作废：</strong>{else}<strong class="ms-1">批注补充：</strong>{/if}
+                        </div>
+                        <div class="mt-1 record-original-value">{$annotation.corrected_content|default='-'}</div>
+                        <details class="mt-1">
+                            <summary>查看批注依据</summary>
+                            <div class="record-annotation-meta mt-1">
+                                原因：{$annotation.correction_reason|default='未记录'}<br>
+                                登记：{$annotation.registered_by|default='未记录'}，{$annotation.registered_at|default='-'}<br>
+                                批准：{$annotation.approved_by|default='未记录'}，{$annotation.approved_at|default='-'}
+                                {if $annotation.request_short_id}<br>申请编号：{$annotation.request_short_id}{/if}
+                            </div>
+                        </details>
+                    </div>
+                    {/volist}
+                    {/if}
+                </section>
+                {/volist}
+                {empty name="annotatedSchema"}
+                <p class="text-muted mb-0">暂无字段配置</p>
+                {/empty}
+            </div>
+        </div>
         {if $correctionRequests}
         <div class="alert alert-warning mb-0">
             <div class="d-flex justify-content-between align-items-start gap-3">
@@ -271,45 +390,6 @@
         {/if}
     </div>
 </div>
-<div class="card">
-    <div class="card-header"><h6 class="mb-0">填写内容</h6></div>
-    <div class="card-body">
-        {volist name="schema" id="field"}
-        <div class="mb-4">
-            <h6>{$field.label}</h6>
-            {if $field.type == 'repeatable_table'}
-            <div class="table-responsive">
-                <table class="table table-sm table-bordered">
-                    <thead><tr>{volist name="field.columns" id="column"}<th>{$column.label}</th>{/volist}</tr></thead>
-                    <tbody>
-                        {volist name="values[$field.key]" id="row"}
-                        <tr>
-                            {volist name="field.columns" id="column"}
-                            <td>{$row[$column.key]|default='-'}</td>
-                            {/volist}
-                        </tr>
-                        {/volist}
-                        {empty name="values[$field.key]"}
-                        <tr><td colspan="{:count($field['columns'])}" class="text-center text-muted">未填写</td></tr>
-                        {/empty}
-                    </tbody>
-                </table>
-            </div>
-            {elseif $field.type == 'checkbox'}
-            <div>{if isset($values[$field.key]) && ($values[$field.key] == '1' || $values[$field.key] == 1)}是{else}否{/if}</div>
-            {elseif $field.type == 'textarea'}
-            <pre class="bg-light border rounded p-2 mb-0">{$values[$field.key]|default='-'}</pre>
-            {else}
-            <div>{$values[$field.key]|default='-'}</div>
-            {/if}
-        </div>
-        {/volist}
-        {empty name="schema"}
-        <p class="text-muted mb-0">暂无字段配置</p>
-        {/empty}
-    </div>
-</div>
-
 <div class="modal fade" id="requestCorrectionModal" tabindex="-1" aria-labelledby="requestCorrectionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">

@@ -106,4 +106,49 @@ correction_target_assert(
     'Structured decisions must suppress their notification-shaped compatibility duplicate'
 );
 
+$projected = RecordFormCorrectionService::projectForDisplay($schema, $values, [
+    [
+        'target_kind' => 'table_cell',
+        'field_path' => 'cell:record_items:0:result',
+        'correction_type' => 'amendment',
+        'type_label' => '修改内容（保留原值）',
+        'original_content' => '已完成模拟流程',
+        'corrected_content' => '已完成字段级复核',
+        'correction_reason' => '修正处理结果',
+        'registered_by' => 'SIM 编制人',
+        'registered_at' => '2026-07-26 10:10:00',
+        'approved_by' => 'SIM 批准人',
+        'approved_at' => '2026-07-26 10:12:00',
+        'request_short_id' => 'request1',
+    ],
+    [
+        'target_kind' => 'append_row',
+        'field_path' => 'append:record_items',
+        'correction_type' => 'supplement',
+        'type_label' => '补充内容',
+        'corrected_content' => "事项：新增复核\n处理结果：已补充",
+        'row_payload_json' => '{"item":"新增复核","result":"已补充"}',
+        'correction_reason' => '补充遗漏明细',
+        'registered_by' => 'SIM 编制人',
+        'registered_at' => '2026-07-26 10:20:00',
+        'approved_by' => 'SIM 批准人',
+        'approved_at' => '2026-07-26 10:22:00',
+        'request_short_id' => 'request2',
+    ],
+]);
+$originalResultCell = $projected[1]['display_rows'][0]['cells'][1] ?? [];
+$appendedRow = $projected[1]['display_rows'][1] ?? [];
+correction_target_assert(
+    ($originalResultCell['original_value'] ?? '') === '已完成模拟流程'
+        && ($originalResultCell['has_superseding_annotation'] ?? false) === true
+        && ($originalResultCell['annotations'][0]['corrected_content'] ?? '') === '已完成字段级复核',
+    'Projected table cell must retain the frozen original value and attach its amendment annotation'
+);
+correction_target_assert(
+    ($appendedRow['is_appended'] ?? false) === true
+        && ($appendedRow['cells'][0]['display_value'] ?? '') === '新增复核'
+        && ($appendedRow['annotation']['approved_by'] ?? '') === 'SIM 批准人',
+    'Projected repeatable table must append a labelled correction row without changing original rows'
+);
+
 echo "qms_record_correction_field_target_smoke passed\n";

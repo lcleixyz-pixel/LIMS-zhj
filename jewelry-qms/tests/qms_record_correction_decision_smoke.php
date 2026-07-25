@@ -80,6 +80,16 @@ qms_correction_decision_assert_contains(
     'Record detail must load append-only correction entries'
 );
 qms_correction_decision_assert_contains(
+    'RecordFormCorrectionService::projectForDisplay',
+    $controllerSource,
+    'Record detail must project correction entries back onto the frozen record fields'
+);
+qms_correction_decision_assert_contains(
+    "'annotatedSchema'",
+    $controllerSource,
+    'Record detail must assign an annotation-ready schema to the view'
+);
+qms_correction_decision_assert_contains(
     'approvedCorrectionRequestsFor',
     $controllerSource,
     'Record detail must only allow registration against approved correction requests'
@@ -113,6 +123,26 @@ qms_correction_decision_assert_contains(
     '更正记录链',
     $viewSource,
     'Record detail must show append-only correction chain'
+);
+qms_correction_decision_assert_contains(
+    '系统批注视图',
+    $viewSource,
+    'Record detail must explain that annotations are a display layer over frozen data'
+);
+qms_correction_decision_assert_contains(
+    '原始记录值',
+    $viewSource,
+    'Annotated fields must visibly preserve the original recorded value'
+);
+qms_correction_decision_assert_contains(
+    '批注更正为',
+    $viewSource,
+    'Amended fields must show the corrected value beside the original value'
+);
+qms_correction_decision_assert_contains(
+    '补充新增行',
+    $viewSource,
+    'Append-row corrections must appear inside the original repeatable table'
 );
 qms_correction_decision_assert_contains(
     '历史自由文本申请补录',

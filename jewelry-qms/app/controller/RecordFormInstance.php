@@ -335,10 +335,15 @@ class RecordFormInstance extends BaseController
         $template = $this->templateForRecord($record);
         $schema = $this->decodeSchema($template);
         $values = $this->decodeValues($record->field_values);
+        $recordCorrections = $this->recordCorrectionsFor((string)$record->id);
         View::assign('record', $record);
         View::assign('template', $template);
         View::assign('schema', $schema);
         View::assign('values', $values);
+        View::assign(
+            'annotatedSchema',
+            RecordFormCorrectionService::projectForDisplay($schema, $values, $recordCorrections)
+        );
         View::assign('correctionTargets', array_values(RecordFormCorrectionService::targets($schema, $values)));
         View::assign(
             'correctionTargetsJson',
@@ -354,7 +359,7 @@ class RecordFormInstance extends BaseController
         View::assign('previewPdfFiles', $this->previewPdfFiles((string)$record->id));
         View::assign('correctionRequests', $this->correctionRequestsFor((string)$record->id));
         View::assign('correctionDecisions', $this->correctionDecisionsFor((string)$record->id));
-        View::assign('recordCorrections', $this->recordCorrectionsFor((string)$record->id));
+        View::assign('recordCorrections', $recordCorrections);
         View::assign('approvedCorrectionRequests', $this->approvedCorrectionRequestsFor((string)$record->id));
         View::assign('correctionTypeLabels', self::correctionTypeLabels());
         View::assign(

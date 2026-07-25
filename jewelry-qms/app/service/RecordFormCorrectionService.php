@@ -164,6 +164,147 @@ class RecordFormCorrectionService
     }
 
     /**
+     * Project append-only corrections onto a frozen record for an annotation-style view.
+     * The returned structure is display-only and never mutates the supplied values.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public static function projectForDisplay(array $schema, array $values, array $corrections): array
+    {
+        $byPath = [];
+        $appendedRows = [];
+        foreach ($corrections as $correction) {
+            if (!is_array($correction)) {
+                continue;
+            }
+            $annotation = self::displayAnnotation($correction);
+            $fieldPath = trim((string)($correction['field_path'] ?? ''));
+            if (($correction['target_kind'] ?? '') === 'append_row') {
+                $fieldKey = trim((string)($correction['field_key'] ?? ''));
+                if ($fieldKey === '' && str_starts_with($fieldPath, 'append:')) {
+                    $fieldKey = substr($fieldPath, strlen('append:'));
+                }
+                if ($fieldKey !== '') {
+                    $payload = json_decode((string)($correction['row_payload_json'] ?? ''), true);
+                    $appendedRows[$fieldKey][] = [
+                        'payload' => is_array($payload) ? $payload : [],
+                        'annotation' => $annotation,
+                    ];
+                }
+                continue;
+            }
+            if ($fieldPath !== '') {
+                $byPath[$fieldPath][] = $annotation;
+            }
+        }
+
+        $projected = [];
+        foreach ($schema as $field) {
+            if (!is_array($field)) {
+                continue;
+            }
+            $fieldKey = (string)($field['key'] ?? '');
+            $displayField = $field;
+            if (($field['type'] ?? '') !== 'repeatable_table') {
+                $annotations = $byPath['field:' . $fieldKey] ?? [];
+                $displayField['original_value'] = self::displayValue($values[$fieldKey] ?? '');
+                $displayField['annotations'] = $annotations;
+                $displayField['has_superseding_annotation'] = self::hasSupersedingAnnotation($annotations);
+                $projected[] = $displayField;
+                continue;
+            }
+
+            $columns = self::columns($field);
+            $displayRows = [];
+            $rows = is_array($values[$fieldKey] ?? null) ? array_values($values[$fieldKey]) : [];
+            foreach ($rows as $rowIndex => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $cells = [];
+                foreach ($columns as $column) {
+                    $columnKey = (string)$column['key'];
+                    $annotations = $byPath['cell:' . $fieldKey . ':' . $rowIndex . ':' . $columnKey] ?? [];
+                    $cells[] = [
+                        'key' => $columnKey,
+                        'label' => (string)$column['label'],
+                        'original_value' => self::displayValue($row[$columnKey] ?? ''),
+                        'display_value' => self::displayValue($row[$columnKey] ?? ''),
+                        'annotations' => $annotations,
+                        'has_superseding_annotation' => self::hasSupersedingAnnotation($annotations),
+                    ];
+                }
+                $displayRows[] = [
+                    'is_appended' => false,
+                    'row_number' => $rowIndex + 1,
+                    'cells' => $cells,
+                ];
+            }
+
+            foreach (($appendedRows[$fieldKey] ?? []) as $append) {
+                $cells = [];
+                foreach ($columns as $column) {
+                    $columnKey = (string)$column['key'];
+                    $cells[] = [
+                        'key' => $columnKey,
+                        'label' => (string)$column['label'],
+                        'original_value' => '',
+                        'display_value' => self::displayValue($append['payload'][$columnKey] ?? ''),
+                        'annotations' => [],
+                        'has_superseding_annotation' => false,
+                    ];
+                }
+                $displayRows[] = [
+                    'is_appended' => true,
+                    'row_number' => null,
+                    'cells' => $cells,
+                    'annotation' => $append['annotation'],
+                ];
+            }
+
+            $displayField['columns'] = $columns;
+            $displayField['display_rows'] = $displayRows;
+            $projected[] = $displayField;
+        }
+
+        return $projected;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private static function displayAnnotation(array $correction): array
+    {
+        $type = (string)($correction['correction_type'] ?? $correction['type'] ?? 'supplement');
+
+        return [
+            'type' => $type,
+            'type_label' => (string)($correction['type_label'] ?? $type),
+            'corrected_content' => (string)($correction['corrected_content'] ?? ''),
+            'correction_reason' => (string)($correction['correction_reason'] ?? ''),
+            'registered_by' => (string)($correction['registered_by'] ?? '未记录'),
+            'registered_at' => (string)($correction['registered_at'] ?? ''),
+            'approved_by' => (string)($correction['approved_by'] ?? '未记录'),
+            'approved_at' => (string)($correction['approved_at'] ?? ''),
+            'request_short_id' => (string)($correction['request_short_id'] ?? ''),
+            'is_amendment' => $type === 'amendment',
+            'is_void' => $type === 'void_mark',
+            'is_supplement' => $type === 'supplement',
+        ];
+    }
+
+    private static function hasSupersedingAnnotation(array $annotations): bool
+    {
+        foreach ($annotations as $annotation) {
+            if (($annotation['is_amendment'] ?? false) || ($annotation['is_void'] ?? false)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @return array<string,mixed>
      */
     private static function prepareRow(array $target, array $input): array
