@@ -10,6 +10,7 @@ use app\model\RecordFormInstance as InstanceModel;
 use app\model\RecordFormTemplate as TemplateModel;
 use app\model\User;
 use app\service\FileService;
+use app\service\ActionAuthorizationService;
 use app\service\NotificationService;
 use app\service\PdfRenderService;
 use app\service\RecordFormBatchReviewService;
@@ -21,6 +22,7 @@ use app\service\TrialModeService;
 use InvalidArgumentException;
 use RuntimeException;
 use think\exception\HttpException;
+use think\facade\Config;
 use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
@@ -339,6 +341,11 @@ class RecordFormInstance extends BaseController
         View::assign('pdfToken', $this->canExportPdf($record) ? $this->issuePdfActionToken((string)$record->id) : '');
         View::assign('previewPdfFiles', $this->previewPdfFiles((string)$record->id));
         View::assign('correctionRequests', $this->correctionRequestsFor((string)$record->id));
+        View::assign('correctionDecisions', $this->correctionDecisionsFor((string)$record->id));
+        View::assign(
+            'canDecideCorrection',
+            ActionAuthorizationService::allows('record_form_instance', 'decideCorrection', $record)
+        );
 
         return View::fetch('record_form_instance/view');
     }
@@ -359,24 +366,82 @@ class RecordFormInstance extends BaseController
             return redirect('/record_form_instance/view?id=' . $record->id);
         }
 
-        $qualityManagerIds = User::where('role', 'quality_manager')
-            ->where('publish', 1)
-            ->where('soft_delete', 0)
-            ->column('id');
+        $qualityManagerIds = $this->qualityManagerUserIds();
+        $recipientIds = array_values(array_unique(array_filter(array_merge(
+            $qualityManagerIds,
+            $this->recordCorrectionApproverUserIds()
+        ))));
 
-        if ($qualityManagerIds !== []) {
+        if ($recipientIds !== []) {
             NotificationService::notifyUsers(
                 '记录更正申请',
                 "记录「{$record->record_title}」申请更正，原因：{$reason}",
                 'record_form_instance',
-                $qualityManagerIds,
+                $recipientIds,
                 'record_form_instance',
                 'view',
                 (string)$record->id
             );
         }
 
-        Session::flash('success', '更正申请已提交。质量负责人将收到通知并协助处理，请留意通知中心。');
+        Session::flash('success', '更正申请已提交。质量负责人和批准人将收到通知并协助处理，请留意通知中心。');
+
+        return redirect('/record_form_instance/view?id=' . $record->id);
+    }
+
+    public function decideCorrection()
+    {
+        $record = $this->findInstance();
+        if (!$this->request->isPost()) {
+            Session::flash('warning', '请在记录详情页处理更正申请。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        if (!ActionAuthorizationService::allows('record_form_instance', 'decideCorrection', $record)) {
+            Session::flash('error', '当前账号无权处理更正申请，请使用质量负责人或批准人账号。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        $decision = trim((string)$this->request->post('decision', ''));
+        $decisionLabels = [
+            'approved' => '批准更正',
+            'rejected' => '驳回申请',
+        ];
+        if (!isset($decisionLabels[$decision])) {
+            Session::flash('error', '请选择批准更正或驳回申请。');
+
+            return redirect('/record_form_instance/view?id=' . $record->id);
+        }
+
+        $comment = trim((string)$this->request->post('comment', ''));
+        if ($comment === '') {
+            $comment = '无补充意见';
+        }
+
+        $handlerLabel = trim((string)Session::get('user.name', Session::get('user.username', '')));
+        if ($handlerLabel === '') {
+            $handlerLabel = '当前处理人';
+        }
+
+        $recipientIds = array_values(array_unique(array_filter(array_merge(
+            $this->qualityManagerUserIds(),
+            $this->recordCorrectionRequesterUserIds((string)$record->id),
+            [(string)Session::get('user.id', '')]
+        ))));
+
+        NotificationService::notifyUsers(
+            '记录更正申请处理结果',
+            "记录「{$record->record_title}」更正申请处理结果：{$decisionLabels[$decision]}；处理意见：{$comment}；处理人：{$handlerLabel}",
+            'record_form_instance',
+            $recipientIds,
+            'record_form_instance',
+            'view',
+            (string)$record->id
+        );
+
+        Session::flash('success', '更正申请已处理：' . $decisionLabels[$decision] . '。处理结果已留存在记录详情页。');
 
         return redirect('/record_form_instance/view?id=' . $record->id);
     }
@@ -417,6 +482,128 @@ class RecordFormInstance extends BaseController
                 'recipient_count' => (int)($row['recipient_count'] ?? 0),
             ];
         }, $rows);
+    }
+
+    private function correctionDecisionsFor(string $recordId): array
+    {
+        if ($recordId === '') {
+            return [];
+        }
+
+        $rows = Db::name('notifications')
+            ->alias('n')
+            ->leftJoin('users u', 'u.id = n.created_by')
+            ->field('n.id,n.message,n.created,u.name AS handler_name,u.username AS handler_username,n.created_by')
+            ->where('n.title', '记录更正申请处理结果')
+            ->where('n.link_controller', 'record_form_instance')
+            ->where('n.link_action', 'view')
+            ->where('n.link_id', $recordId)
+            ->order('n.created', 'desc')
+            ->limit(5)
+            ->select()
+            ->toArray();
+
+        return array_map(static function (array $row): array {
+            $message = trim((string)($row['message'] ?? ''));
+            $decision = self::messageSegment($message, '处理结果：', '；');
+            $comment = self::messageSegment($message, '处理意见：', '；');
+            $handler = trim((string)($row['handler_name'] ?? ''));
+            if ($handler === '') {
+                $handler = trim((string)($row['handler_username'] ?? ''));
+            }
+            if ($handler === '') {
+                $handler = self::messageSegment($message, '处理人：', '；');
+            }
+
+            return [
+                'id' => (string)($row['id'] ?? ''),
+                'decision' => $decision !== '' ? $decision : '已处理',
+                'comment' => $comment !== '' ? $comment : '无补充意见',
+                'handler' => $handler !== '' ? $handler : '未记录处理人',
+                'created' => (string)($row['created'] ?? ''),
+            ];
+        }, $rows);
+    }
+
+    private static function messageSegment(string $message, string $startMarker, string $endMarker): string
+    {
+        $start = mb_strpos($message, $startMarker);
+        if ($start === false) {
+            return '';
+        }
+
+        $tail = mb_substr($message, $start + mb_strlen($startMarker));
+        $end = mb_strpos($tail, $endMarker);
+        if ($end !== false) {
+            $tail = mb_substr($tail, 0, $end);
+        }
+
+        return trim($tail);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function qualityManagerUserIds(): array
+    {
+        return array_map('strval', User::where('role', 'quality_manager')
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->column('id'));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function recordCorrectionApproverUserIds(): array
+    {
+        $companyId = (string)Config::get('qms.company_id');
+        $query = Db::name('users')
+            ->alias('u')
+            ->leftJoin('employee_appointments ea', 'ea.employee_id = u.employee_id')
+            ->leftJoin('qms_positions p', 'p.id = ea.position_id')
+            ->where('u.company_id', $companyId)
+            ->where('u.publish', 1)
+            ->where('u.soft_delete', 0)
+            ->where(function ($query) {
+                $query->where('u.is_approver', 1)
+                    ->whereOr(function ($query) {
+                        $query->where('p.company_id', (string)Config::get('qms.company_id'))
+                            ->where('p.code', 'top_management')
+                            ->where('p.review_status', 'published')
+                            ->where('p.publish', 1)
+                            ->where('p.soft_delete', 0)
+                            ->where('ea.status', 'active')
+                            ->where('ea.publish', 1)
+                            ->where('ea.soft_delete', 0)
+                            ->where(function ($query) {
+                                $query->whereNull('ea.appointed_at')->whereOr('ea.appointed_at', '<=', date('Y-m-d'));
+                            })
+                            ->where(function ($query) {
+                                $query->whereNull('ea.valid_until')->whereOr('ea.valid_until', '>=', date('Y-m-d'));
+                            });
+                    });
+            });
+
+        return array_values(array_unique(array_map('strval', $query->column('u.id'))));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function recordCorrectionRequesterUserIds(string $recordId): array
+    {
+        if ($recordId === '') {
+            return [];
+        }
+
+        return array_values(array_unique(array_map('strval', Db::name('notifications')
+            ->where('title', '记录更正申请')
+            ->where('link_controller', 'record_form_instance')
+            ->where('link_action', 'view')
+            ->where('link_id', $recordId)
+            ->whereNotNull('created_by')
+            ->column('created_by'))));
     }
 
     public function print()

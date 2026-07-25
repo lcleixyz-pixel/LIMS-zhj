@@ -69,6 +69,8 @@ final class ActionAuthorizationService
                     ['quality_manager', 'document_controller', 'technical_manager', 'testing_room_manager', 'internal_auditor']
                 )
                 || self::hasGlobalPosition($employeeId, ['quality_manager']),
+            'recordforminstance.decidecorrection'
+                => self::canDecideRecordCorrection($employeeId),
 
             'auditplan.organize', 'auditplan.approve', 'auditplan.complete'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
@@ -432,6 +434,12 @@ final class ActionAuthorizationService
         return self::hasGlobalPosition($employeeId, ['quality_manager']);
     }
 
+    private static function canDecideRecordCorrection(string $employeeId): bool
+    {
+        return self::hasAnyPosition($employeeId, ['quality_manager', 'top_management'])
+            || self::hasGlobalPosition($employeeId, ['quality_manager', 'top_management']);
+    }
+
     private static function hasAnyPosition(string $employeeId, array $codes): bool
     {
         return array_intersect($codes, self::activePositionCodes($employeeId)) !== [];
@@ -615,6 +623,18 @@ final class ActionAuthorizationService
             };
             if ($action === 'approvetrial') {
                 $record = self::tableRecord('record_form_templates', self::requestId($request));
+            }
+        } elseif ($controller === 'recordforminstance') {
+            $policyAction = match ($action) {
+                'create' => 'create',
+                'edit' => 'edit',
+                'exportpdf' => 'export_pdf',
+                'decidecorrection' => 'decide_correction',
+                default => null,
+            };
+            if (in_array($action, ['edit', 'exportpdf', 'decidecorrection'], true)) {
+                $record = self::recordFormInstanceRecord(self::requestId($request))
+                    ?? self::authorizationDeniedRecord();
             }
         } elseif ($controller === 'auditplan') {
             $policyAction = match ($action) {
@@ -811,6 +831,20 @@ final class ActionAuthorizationService
             $query->where('company_id', (string)Config::get('qms.company_id'));
         }
         $row = $query->find();
+
+        return $row ? (object)$row : null;
+    }
+
+    private static function recordFormInstanceRecord(string $id): ?object
+    {
+        if ($id === '') {
+            return null;
+        }
+
+        $row = Db::name('record_form_instances')
+            ->where('id', $id)
+            ->where('company_id', (string)Config::get('qms.company_id'))
+            ->find();
 
         return $row ? (object)$row : null;
     }

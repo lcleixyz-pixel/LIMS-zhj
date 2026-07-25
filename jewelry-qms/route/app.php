@@ -86,6 +86,7 @@ Route::group(function () {
     Route::get('record_form_instance/view', 'RecordFormInstance/view');
     Route::get('record_form_instance/requestCorrection', 'RecordFormInstance/requestCorrection');
     Route::post('record_form_instance/requestCorrection', 'RecordFormInstance/requestCorrection');
+    Route::post('record_form_instance/decideCorrection', 'RecordFormInstance/decideCorrection');
     Route::get('record_form_instance/print', 'RecordFormInstance/print');
     Route::post('record_form_instance/exportPdf', 'RecordFormInstance/exportPdf');
     Route::get('record_form_instance/downloadPdf', 'RecordFormInstance/downloadPdf');
