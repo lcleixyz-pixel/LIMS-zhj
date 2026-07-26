@@ -65,5 +65,5 @@ git ls-files | grep -iE "CNAS|GB.*T.*27025|CL01|评审准则"
 
 - 拆仓 spec：`docs/superpowers/specs/2026-07-09-repo-split-archive-design.md`
 - 变更台账：`docs/变更台账.md`
-- 规划第七条红线：`整合/项目总体规划-v1.2.md`（v1.1 原件保留于同目录）
+- 规划第七条红线：`整合/项目总体规划-v1.3.md`（v1.1、v1.2 原件保留于同目录）
 - 受影响服务：`jewelry-qms/app/service/QmsPlanningImportService.php`
