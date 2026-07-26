@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
+use app\model\Training;
 use app\service\GovernedChangeService;
 use think\facade\Db;
 
@@ -21,6 +22,17 @@ governed_runtime_assert(GovernedChangeService::tablesReady(), 'Governed change t
 $trainingId = '8c7d2600-0000-4000-8000-000000000001';
 $training = Db::name('trainings')->where('id', $trainingId)->find();
 governed_runtime_assert(is_array($training), 'Governed correction acceptance training is missing');
+$trainingModel = Training::find($trainingId);
+governed_runtime_assert($trainingModel instanceof Training, 'Governed correction training model is missing');
+$correctableFields = GovernedChangeService::correctableFields('training', $trainingModel);
+$trainingDateField = array_values(array_filter(
+    $correctableFields,
+    static fn (array $field): bool => (string)($field['name'] ?? '') === 'training_date'
+))[0] ?? null;
+governed_runtime_assert(
+    is_array($trainingDateField) && (string)($trainingDateField['value'] ?? '') === '2026-07-26',
+    'Date fields must be formatted as their business value instead of an empty JSON object'
+);
 
 $changes = GovernedChangeService::approvedChanges('training', $trainingId);
 governed_runtime_assert($changes !== [], 'Approved append-only correction is missing');

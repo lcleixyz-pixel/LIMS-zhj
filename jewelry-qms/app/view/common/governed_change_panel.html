@@ -106,7 +106,7 @@
                     <input type="hidden" name="subject_id" value="{$governedChangeContext.subject_id}">
                     <input type="hidden" name="return_url" value="{$governedChangeContext.return_url}">
                     <div class="mb-3">
-                        <label class="form-label" for="governedChangeField">要批注的字段</label>
+                        <label class="form-label" for="governedChangeField">要更正的字段</label>
                         <select class="form-select" id="governedChangeField" name="field_name" required>
                             <option value="">请选择字段</option>
                             {foreach $governedChangeContext.fields as $field}
@@ -115,7 +115,7 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" for="governedChangeCurrent">原值（冻结保留）</label>
+                        <label class="form-label" for="governedChangeCurrent">原记录（不可修改）</label>
                         <textarea class="form-control bg-light" id="governedChangeCurrent" rows="2" readonly placeholder="选择字段后显示"></textarea>
                     </div>
                     <div class="mb-3">
@@ -257,8 +257,25 @@ document.addEventListener('DOMContentLoaded', function () {
         var fieldLabel = normalize(row.getAttribute('data-governed-field'));
         var oldValue = row.getAttribute('data-governed-old') || '';
         var newValue = row.getAttribute('data-governed-new') || '';
-        document.querySelectorAll('.container > .card table tr > th').forEach(function (heading) {
-            if (normalize(heading.textContent) !== fieldLabel) return;
+        var headings = Array.from(document.querySelectorAll('.container > .card table tr > th'));
+        var matchedHeadings = headings.filter(function (heading) {
+            return normalize(heading.textContent) === fieldLabel;
+        });
+        if (matchedHeadings.length === 0 && normalize(oldValue) !== '') {
+            var valueMatches = headings.filter(function (heading) {
+                var cell = heading.nextElementSibling;
+                if (!cell || cell.closest('#governedChangePanel')) return false;
+                var annotatedCurrent = cell.querySelector('.qms-annotated-current');
+                var displayedValue = annotatedCurrent
+                    ? (annotatedCurrent.textContent || '')
+                    : (cell.textContent || '');
+                return normalize(displayedValue) === normalize(oldValue);
+            });
+            if (valueMatches.length === 1) {
+                matchedHeadings = valueMatches;
+            }
+        }
+        matchedHeadings.forEach(function (heading) {
             var cell = heading.nextElementSibling;
             if (!cell || cell.closest('#governedChangePanel')) return;
             var currentText = (cell.textContent || '').trim();

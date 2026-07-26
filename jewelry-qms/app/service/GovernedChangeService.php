@@ -37,6 +37,7 @@ final class GovernedChangeService
         'training_date' => '培训日期',
         'duration_hours' => '学时',
         'content' => '内容',
+        'training_plan_id' => '所属培训计划',
         'department_id' => '所属部门',
         'employee_id' => '人员',
         'equipment_id' => '设备',
@@ -227,9 +228,18 @@ final class GovernedChangeService
             $names = array_keys($record->getData());
         }
 
+        $baseValues = [];
+        foreach ($names as $name) {
+            try {
+                $baseValues[$name] = $record->getAttr($name);
+            } catch (\Throwable) {
+                $baseValues[$name] = $record->getData($name) ?? '';
+            }
+        }
+
         $subjectId = trim((string)($record->getAttr('id') ?? ''));
         $values = self::projectValues(
-            $record->getData(),
+            $baseValues,
             $subjectId !== '' ? self::approvedChanges($subjectType, $subjectId) : []
         );
         $fields = [];

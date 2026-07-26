@@ -50,5 +50,11 @@ $fieldNames = array_column($fields, 'name');
 governed_change_assert_same(true, in_array('duration_hours', $fieldNames, true), 'Business field must be correctable');
 governed_change_assert_same(false, in_array('id', $fieldNames, true), 'Primary key must never be correctable');
 governed_change_assert_same(false, in_array('soft_delete', $fieldNames, true), 'Deletion marker must never be correctable');
+$fieldsByName = array_column($fields, null, 'name');
+governed_change_assert_same(
+    '所属培训计划',
+    $fieldsByName['training_plan_id']['label'] ?? null,
+    'Technical relation fields must use a clear business label'
+);
 
 fwrite(STDOUT, "qms_governed_change_service_smoke passed\n");
