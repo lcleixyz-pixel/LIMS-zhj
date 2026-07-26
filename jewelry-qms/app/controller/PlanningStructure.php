@@ -4,8 +4,9 @@ declare(strict_types=1);
 namespace app\controller;
 
 use app\BaseController;
-use app\service\QmsDocumentStructureService;
 use app\service\GovernedTrialResolvedDocumentService;
+use app\service\QmsDocumentStructureService;
+use app\service\QmsFileGovernanceWorkbenchService;
 use think\exception\HttpException;
 use think\facade\Session;
 use think\facade\View;
@@ -41,6 +42,21 @@ class PlanningStructure extends BaseController
         );
 
         return View::fetch('planning_structure/view');
+    }
+
+    public function workbench()
+    {
+        $workbench = QmsFileGovernanceWorkbenchService::detail(
+            (string)$this->request->param('id', ''),
+            (string)Session::get('user.id', '')
+        );
+        if ($workbench === []) {
+            throw new HttpException(404, '结构化文件不存在');
+        }
+
+        View::assign('workbench', $workbench);
+
+        return View::fetch('planning_structure/workbench');
     }
 
     public function resolvedArtifact()

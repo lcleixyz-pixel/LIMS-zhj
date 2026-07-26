@@ -3,8 +3,62 @@ declare(strict_types=1);
 
 namespace app\service;
 
+use app\model\Document;
+
 final class QmsFileGovernanceWorkbenchService
 {
+    public static function detail(string $structuredId, string $currentUserId = ''): array
+    {
+        $detail = QmsDocumentStructureService::structuredDocumentDetail($structuredId);
+        if ($detail === []) {
+            return [];
+        }
+
+        $structured = self::row($detail['document'] ?? []);
+        $schemaCoverage = QmsDocumentStructureService::recordRequirementSchemaCoverage();
+        $schemaRows = array_values(array_filter(
+            (array)($schemaCoverage['rows'] ?? []),
+            static fn(array $row): bool =>
+                (string)($row['structured_document_id'] ?? '') === $structuredId
+        ));
+        $artifacts = GovernedTrialResolvedDocumentService::resolvedArtifactLinks($structured);
+        $conflicts = GovernedTrialResolvedDocumentService::currentConflictSummary(
+            (string)($structured['doc_number'] ?? '')
+        );
+
+        $controlledDocument = [];
+        $workflow = [
+            'stage' => 'unlinked',
+            'stage_label' => '尚未关联受控文件，暂不能进入签批。',
+        ];
+        $documentId = trim((string)($structured['document_id'] ?? ''));
+        if ($documentId !== '') {
+            $document = Document::where('id', $documentId)
+                ->where('soft_delete', 0)
+                ->find();
+            if ($document) {
+                $controlledDocument = $document->toArray();
+                try {
+                    $workflow = ApprovalService::documentWorkflowStatus($document, $currentUserId);
+                } catch (\Throwable) {
+                    $workflow = [
+                        'stage' => 'unavailable',
+                        'stage_label' => '签批状态暂时无法读取。',
+                    ];
+                }
+            }
+        }
+
+        return self::fromSnapshot(
+            $detail,
+            $schemaRows,
+            $artifacts,
+            $conflicts,
+            $controlledDocument,
+            $workflow
+        );
+    }
+
     public static function fromSnapshot(
         array $detail,
         array $schemaRows,
