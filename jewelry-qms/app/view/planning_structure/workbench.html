@@ -1,0 +1,296 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">{$workbench.document.doc_number} {$workbench.document.title}</h4>
+        <div class="text-muted small">
+            {$workbench.document.version|default='版本待确认'} · 文件治理工作台
+        </div>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/planning/structures" class="btn btn-sm btn-outline-secondary">返回文件列表</a>
+        <a href="{$workbench.document.structure_url}" class="btn btn-sm btn-outline-primary">查看结构化文件</a>
+    </div>
+</div>
+
+<div class="alert alert-info mb-3" role="status">
+    <span class="fw-semibold">试运行边界：</span>纸质体系仍为唯一正式体系；{$workbench.boundary_notice}
+</div>
+
+{if $workbench.summary.level == 'blocked'}
+<div class="alert alert-danger mb-3" role="alert">
+{elseif $workbench.summary.level == 'warning'}
+<div class="alert alert-warning mb-3" role="alert">
+{else}
+<div class="alert alert-success mb-3" role="status">
+{/if}
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+        <div>
+            <div class="fw-semibold">当前结论：{$workbench.summary.message}</div>
+            <div class="mt-1">下一步：{$workbench.summary.next_step}</div>
+        </div>
+        <div class="text-nowrap">
+            已有明确证据 {$workbench.summary.completed_checks} / {$workbench.summary.total_checks} 项
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex flex-column flex-md-row justify-content-between gap-1">
+        <h5 class="mb-0">系统设计链条</h5>
+        <div class="text-muted small">外部依据 → 手册条款 → 程序落实方法 → 运行证据</div>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="border rounded h-100 p-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0">外部依据</h6>
+                        {if empty($workbench.chain.external_sources)}
+                        <span class="badge bg-danger">待补链</span>
+                        {else}
+                        <span class="badge bg-success">{$workbench.chain.external_sources|count} 项</span>
+                        {/if}
+                    </div>
+                    {volist name="workbench.chain.external_sources" id="source"}
+                    <div class="small mt-2">
+                        <span class="fw-semibold">{$source.source_code} {$source.clause_number}</span>
+                        <div class="text-muted">{$source.title|default='条款标题待确认'}</div>
+                    </div>
+                    {/volist}
+                    {empty name="workbench.chain.external_sources"}
+                    <div class="text-muted small mt-2">尚未找到适用外部条款。下一步应复核内容块追溯。</div>
+                    {/empty}
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="border rounded h-100 p-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0">手册条款</h6>
+                        {if empty($workbench.chain.manual_sections)}
+                        <span class="badge bg-danger">待补链</span>
+                        {else}
+                        <span class="badge bg-success">{$workbench.chain.manual_sections|count} 项</span>
+                        {/if}
+                    </div>
+                    {volist name="workbench.chain.manual_sections" id="section"}
+                    <div class="small mt-2">
+                        <span class="fw-semibold">{$section.section_number}</span>
+                        <div class="text-muted">{$section.title|default='章节标题待确认'}</div>
+                    </div>
+                    {/volist}
+                    {empty name="workbench.chain.manual_sections"}
+                    <div class="text-muted small mt-2">尚未找到落实本程序的手册章节。</div>
+                    {/empty}
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="border rounded h-100 p-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0">程序落实方法</h6>
+                        {if empty($workbench.chain.procedure_blocks)}
+                        <span class="badge bg-danger">内容缺失</span>
+                        {else}
+                        <span class="badge bg-success">{$workbench.chain.procedure_blocks|count} 块</span>
+                        {/if}
+                    </div>
+                    <div class="small mt-2">
+                        当前程序按内容块保存职责、流程、控制要求和记录要求。
+                    </div>
+                    <a href="{$workbench.document.structure_url}" class="btn btn-sm btn-outline-primary mt-3">查看程序内容块</a>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="border rounded h-100 p-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h6 class="mb-0">运行证据</h6>
+                        {if empty($workbench.chain.record_evidence)}
+                        <span class="badge bg-danger">待补链</span>
+                        {elseif $workbench.record_coverage.missing > 0 || $workbench.record_coverage.needs_review > 0}
+                        <span class="badge bg-warning text-dark">需复核</span>
+                        {else}
+                        <span class="badge bg-success">{$workbench.chain.record_evidence|count} 项</span>
+                        {/if}
+                    </div>
+                    {volist name="workbench.chain.record_evidence" id="record"}
+                    <div class="small mt-2">
+                        <span class="fw-semibold">{$record.doc_number}</span>
+                        <div class="text-muted">{$record.name}</div>
+                    </div>
+                    {/volist}
+                    {empty name="workbench.chain.record_evidence"}
+                    <div class="text-muted small mt-2">尚未找到能证明程序运行的记录表格或系统记录。</div>
+                    {/empty}
+                    {notempty name="workbench.chain.business_modules"}
+                    <div class="text-muted small mt-2">已关联运行模块 {$workbench.chain.business_modules|count} 个。</div>
+                    {/notempty}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-lg-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">文件内容与审查材料</h5>
+            </div>
+            <div class="card-body">
+                {if !empty($workbench.artifacts.is_resolved_trial)}
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    {if !empty($workbench.artifacts.continuous_url)}
+                    <a href="{$workbench.artifacts.continuous_url}" class="btn btn-sm btn-primary">连续正文</a>
+                    {/if}
+                    {if !empty($workbench.artifacts.comparison_url)}
+                    <a href="{$workbench.artifacts.comparison_url}" class="btn btn-sm btn-outline-primary">修订对照</a>
+                    {/if}
+                    {if !empty($workbench.artifacts.conflicts_url)}
+                    <a href="{$workbench.artifacts.conflicts_url}" class="btn btn-sm btn-outline-danger">冲突审查</a>
+                    {/if}
+                    <a href="{$workbench.document.structure_url}" class="btn btn-sm btn-outline-secondary">变更记录</a>
+                </div>
+                <div class="text-muted small">材料仅供 8021 治理试运行；修改仍需进入现有受控页面办理。</div>
+                {else}
+                <div class="qms-empty-state">
+                    当前文件尚未生成连续正文、修订对照和冲突审查材料。可先查看结构化文件及其变更记录。
+                </div>
+                <div class="mt-3">
+                    <a href="{$workbench.document.structure_url}" class="btn btn-sm btn-outline-primary">查看结构化文件</a>
+                </div>
+                {/if}
+
+                <hr>
+                <h6>记录字段支撑</h6>
+                {if $workbench.record_coverage.total > 0}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>记录要求</th>
+                                <th>关联表格</th>
+                                <th>字段数</th>
+                                <th>状态</th>
+                                <th class="qms-action-cell">复核</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {volist name="workbench.record_coverage.rows" id="coverage"}
+                            <tr>
+                                <td>
+                                    <span class="fw-semibold">{$coverage.block_section_number|default='-'}</span>
+                                    {$coverage.block_title|default='记录要求'}
+                                </td>
+                                <td>{$coverage.record_form_labels|default='-'}</td>
+                                <td>{$coverage.schema_field_count|default=0}</td>
+                                <td>
+                                    {if $coverage.workbench_status == 'covered'}
+                                    <span class="badge bg-success">字段已覆盖</span>
+                                    {elseif $coverage.workbench_status == 'needs_review'}
+                                    <span class="badge bg-warning text-dark">字段待复核</span>
+                                    {else}
+                                    <span class="badge bg-danger">记录缺失</span>
+                                    {/if}
+                                </td>
+                                <td class="qms-action-cell">
+                                    {if !empty($coverage.trace_review_url)}
+                                    <a href="{$coverage.trace_review_url}" class="btn btn-sm btn-outline-secondary">复核追溯</a>
+                                    {else}
+                                    <span class="text-muted small">无可用入口</span>
+                                    {/if}
+                                </td>
+                            </tr>
+                            {/volist}
+                        </tbody>
+                    </table>
+                </div>
+                {else}
+                <div class="qms-empty-state">
+                    当前程序没有可识别的记录要求块。请核对程序正文是否确实不要求形成记录。
+                </div>
+                {/if}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">下一步动作</h5>
+            </div>
+            <div class="card-body">
+                {volist name="workbench.actions" id="action" key="actionIndex"}
+                <div class="{if $actionIndex > 1}border-top pt-3 mt-3{/if}">
+                    <div class="fw-semibold">{$actionIndex}. {$action.label}</div>
+                    <div class="text-muted small my-2">{$action.description}</div>
+                    {if $action.enabled && $action.url != ''}
+                    <a href="{$action.url}" class="btn btn-sm {if $actionIndex == 1}btn-success{else}btn-outline-secondary{/if} w-100">
+                        {$action.label}
+                    </a>
+                    {else}
+                    <button type="button" class="btn btn-sm btn-secondary w-100" disabled>{$action.label}</button>
+                    <div class="text-danger small mt-1">{$action.disabled_reason}</div>
+                    {/if}
+                </div>
+                {/volist}
+                {empty name="workbench.actions"}
+                <div class="qms-empty-state">当前没有可执行动作。</div>
+                {/empty}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">冲突与治理提醒</h5>
+            </div>
+            <div class="card-body">
+                {notempty name="workbench.conflicts.document_blockers"}
+                <h6 class="text-danger">本文件阻断</h6>
+                <ul class="mb-3">
+                    {volist name="workbench.conflicts.document_blockers" id="conflict"}
+                    <li>{$conflict.message}</li>
+                    {/volist}
+                </ul>
+                {/notempty}
+
+                {notempty name="workbench.conflicts.system_notices"}
+                <h6>体系级提醒</h6>
+                <ul class="mb-0">
+                    {volist name="workbench.conflicts.system_notices" id="notice"}
+                    <li>
+                        {$notice.message}
+                        {if !empty($notice.doc_number) && $notice.doc_number != 'SYSTEM'}
+                        <span class="text-muted">（{$notice.doc_number}）</span>
+                        {/if}
+                    </li>
+                    {/volist}
+                </ul>
+                {/notempty}
+
+                {if empty($workbench.conflicts.document_blockers) && empty($workbench.conflicts.system_notices)}
+                <div class="qms-empty-state">当前没有本文件阻断或体系级提醒。</div>
+                {/if}
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">试运行签批</h5>
+            </div>
+            <div class="card-body">
+                <div class="fw-semibold">{$workbench.signing.stage_label|default='签批状态待确认'}</div>
+                {if !empty($workbench.signing.reject_reason)}
+                <div class="alert alert-danger py-2 mt-3 mb-0">驳回原因：{$workbench.signing.reject_reason}</div>
+                {/if}
+                {if $workbench.document.document_url != ''}
+                <a href="{$workbench.document.document_url}" class="btn btn-sm btn-outline-primary w-100 mt-3">查看文件与签批证据</a>
+                {else}
+                <div class="text-muted small mt-3">尚未关联受控文件，暂不能进入签批。</div>
+                {/if}
+            </div>
+        </div>
+    </div>
+</div>

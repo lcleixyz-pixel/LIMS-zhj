@@ -4,6 +4,9 @@
         <div class="text-muted small">内容块级追溯：每个 Markdown 块可连接条款、要素、手册章节、程序文件、记录表格和岗位。</div>
     </div>
     <div class="qms-page-actions">
+        {if $detail.document.document_role == 'quality_manual' || $detail.document.document_role == 'procedure' || $detail.document.document_role == 'work_instruction'}
+        <a href="/planning/structures/workbench?id={$detail.document.id}" class="btn btn-sm btn-success">治理工作台</a>
+        {/if}
         <a href="/planning/structures" class="btn btn-sm btn-outline-secondary">返回列表</a>
     </div>
 </div>
