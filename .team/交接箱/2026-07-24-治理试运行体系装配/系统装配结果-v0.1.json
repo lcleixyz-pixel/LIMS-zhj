@@ -1,0 +1,12 @@
+{
+    "ok": true,
+    "errors": [],
+    "counts": {
+        "trial_documents": 38,
+        "trial_templates": 104,
+        "simulation_instances": 10
+    },
+    "mode": "trial_apply",
+    "trial_batch": "GOV-TRIAL-20260724",
+    "formal_system_notice": "仅限隔离环境治理试运行；纸质体系仍为唯一正式体系。"
+}

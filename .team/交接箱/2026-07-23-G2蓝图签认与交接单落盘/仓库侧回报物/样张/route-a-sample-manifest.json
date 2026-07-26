@@ -1,0 +1,38 @@
+[
+    {
+        "case": "BG-01-02-wulumuqi",
+        "doc_number": "XZTC\/BG-01-02",
+        "display_doc_number": "XZTC\/BG-01-02",
+        "print_template_key": "training_record",
+        "field_count": 17,
+        "html_file": "BG-01-02-wulumuqi.html",
+        "sha256": "1625e8bc8671edfb889cd4742b19e79ebd2c36e0ee67c59dfa225570fd49eae0"
+    },
+    {
+        "case": "BG-01-02-hetian",
+        "doc_number": "XZTC\/BG-01-02",
+        "display_doc_number": "XZTCH-BG-01-02",
+        "print_template_key": "training_record",
+        "field_count": 17,
+        "html_file": "BG-01-02-hetian.html",
+        "sha256": "73664d3780b88ac80f846e20ba3c11eab315e8614760378cf82e9e2617317010"
+    },
+    {
+        "case": "BG-01-06-wulumuqi",
+        "doc_number": "XZTC\/BG-01-06",
+        "display_doc_number": "XZTC\/BG-01-06",
+        "print_template_key": "rf_xztc_bg_01_06_f268e9aaf1",
+        "field_count": 19,
+        "html_file": "BG-01-06-wulumuqi.html",
+        "sha256": "c4d28fa61e297ebaed5ec0e9b83ec60a2480c842d6830d01a4a6bf98c9e5ec9d"
+    },
+    {
+        "case": "BG-01-06-hetian",
+        "doc_number": "XZTC\/BG-01-06",
+        "display_doc_number": "XZTCH-BG-01-06",
+        "print_template_key": "rf_xztc_bg_01_06_f268e9aaf1",
+        "field_count": 19,
+        "html_file": "BG-01-06-hetian.html",
+        "sha256": "7438991fbbd6ef660627f46348be9194dc9ec3e4e2efd9c31507cb82abc4a712"
+    }
+]

@@ -1,0 +1,16 @@
+4a93c554a41253d31023ee8c306412609122aa4fd6cc6c56d0d7125f89a3cc4f  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1-候选稿34合册-手册批次②修订对照-v0_1.md
+d7d180a58a8146b2e629d7a574788c8fd90bf35c38f754cc6976f602611b2614  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1-候选稿34合册-手册批次②修订对照-v0_2.md
+46cbad534b2f2e53f2178f6e13b23c045925344eaee9105c3999034d70adc0f4  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1-候选稿5-程序层改写点清单-v0_1.md
+4d07509b1fffa457de49984d21deb37ea7b33c7b13049c738ebba9faf6cb18d1  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1-批次2-人审签认留痕-v1_0.md
+451beab7b3c3dec16444dd567ccbc784b6873ee309dcba1980ee3f081f03f867  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1-批次2b-CX28专项与小补-v0_2.md
+5869446de1117542a2d94cea66b714b57bb8a066d51d3797101bf3b0f14deec2  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1-批次2b-人审签认留痕-v1_0.md
+b88ca005f3eb4f3ba8249513b55c8944d96ca8ffa92b0ba169599af4ac3c2d22  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1-批次3签认暨G1收官纪要-v1_0.md
+0bfedf0beb00ab6d0eb3e471d145026c2a33eb6d3fe4007104adb227db5b2be5  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1p-签认留痕暨G1终局-v1_0.md
+e9c195b6cb2b63a0e4bd78db4a40c89b463b3f861cc67a111843b5dc41de6fd4  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1p1-CX21管评专项修订对照-v0_1.md
+129fd40b4650ce656ce1b295a7049148920651f420afa6d055408e0c64d182eb  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1p2-能力边界与标志分流专项-v0_2.md
+20b16d52267d8973415900d7dff8e816959e691049cb01e9f2ee46a9e7209ee7  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1p3-增补-v0_2.md
+ff72b521ec678c0dc403636d8f10503cb74a91e948d6630f77d7214c41729cdf  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G1p3签认暨G2开闸包-v1_0.md
+2d54ab6c32b7223b5d7272b2ad586e9d255206ee2fbd481835d606c123f20076  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G2-RouteA试点蓝图-v0_1.md
+0afeed6c4eab32011cd03e721d6bca5892e5053185f54562c370e8e43f3cfb4d  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G2-记录总台账-v0_2定稿.md
+e7e150f5db27ced8b1f58b4f6c78be1edfd17eb4d6c0c95049329c812e906d4e  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G2-记录总台账-v0_2骨架.md
+941c254d631d71ecec98c13004d93e6531abaf2d8872e8c5c336ee27ba485d41  .team/交接箱/2026-07-23-G2蓝图签认与交接单落盘/原件/claude_G2-试点蓝图签认与交接单-v1_0.md
