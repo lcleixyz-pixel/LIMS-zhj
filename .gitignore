@@ -78,4 +78,6 @@ jewelry-qms-legacy/
 .team/交接箱/**/样张/*.html
 .team/交接箱/**/系统样例/*.html
 .team/交接箱/**/连续正文/*.html
+.team/交接箱/**/验收证据/*.html
+.team/交接箱/**/*验收证据/*.html
 jewelry-qms/.team/
