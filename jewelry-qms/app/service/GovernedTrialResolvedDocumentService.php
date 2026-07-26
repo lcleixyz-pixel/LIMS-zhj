@@ -353,6 +353,58 @@ final class GovernedTrialResolvedDocumentService
         ];
     }
 
+    public static function currentConflictSummary(string $docNumber): array
+    {
+        $path = self::workspaceRoot() . '/' . self::DEFAULT_OUTPUT . '/冲突审查/冲突总表.json';
+        if (!is_file($path)) {
+            return [
+                'available' => false,
+                'document_blockers' => [],
+                'system_notices' => [[
+                    'doc_number' => 'SYSTEM',
+                    'message' => '冲突审查材料尚未生成。',
+                    'blocking' => false,
+                ]],
+            ];
+        }
+
+        $decoded = json_decode((string)file_get_contents($path), true);
+        if (!is_array($decoded)) {
+            return [
+                'available' => false,
+                'document_blockers' => [],
+                'system_notices' => [[
+                    'doc_number' => 'SYSTEM',
+                    'message' => '冲突审查材料无法读取。',
+                    'blocking' => false,
+                ]],
+            ];
+        }
+
+        return ['available' => true] + self::splitConflictSummary($decoded, $docNumber);
+    }
+
+    public static function splitConflictSummary(array $report, string $docNumber): array
+    {
+        $documentBlockers = [];
+        $systemNotices = [];
+        foreach ((array)($report['blocking_conflicts'] ?? []) as $row) {
+            if ((string)($row['doc_number'] ?? '') === $docNumber) {
+                $documentBlockers[] = $row;
+            } else {
+                $systemNotices[] = $row;
+            }
+        }
+        foreach ((array)($report['warnings'] ?? []) as $row) {
+            $systemNotices[] = $row;
+        }
+
+        return [
+            'document_blockers' => array_values($documentBlockers),
+            'system_notices' => array_values($systemNotices),
+        ];
+    }
+
     public static function preview(): array
     {
         $manifest = GovernedTrialResolvedManifestService::build();
