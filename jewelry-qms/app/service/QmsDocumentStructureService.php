@@ -3760,7 +3760,6 @@ class QmsDocumentStructureService
         if ($template) {
             $asset = QmsDocumentAsset::where('source_kind', $sourceKind)
                 ->where('record_form_template_id', (string)$template->id)
-                ->where('soft_delete', 0)
                 ->find();
         } elseif ($document) {
             $asset = QmsDocumentAsset::where('source_kind', $sourceKind)
@@ -3837,7 +3836,6 @@ class QmsDocumentStructureService
         $structured = $assetId !== ''
             ? QmsStructuredDocument::where('document_role', $role)
                 ->where('source_asset_id', $assetId)
-                ->where('soft_delete', 0)
                 ->find()
             : null;
         if (!$structured && $role !== 'record_form') {

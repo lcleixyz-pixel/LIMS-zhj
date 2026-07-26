@@ -5,6 +5,7 @@ require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../app/common.php';
 
 use app\service\QmsCx0302GovernanceClosureService;
+use app\service\GovernedTrialResolvedDocumentService;
 use think\facade\Db;
 
 (new think\App())->initialize();
@@ -30,6 +31,12 @@ cx0302_runtime_assert(
 cx0302_runtime_assert(
     count($preview['planned_links'] ?? []) === 5,
     'CX-03-02 应定向落实2条手册关系和3条外部依据关系'
+);
+$resolvedVerification = GovernedTrialResolvedDocumentService::verifyDatabaseAssembly();
+cx0302_runtime_assert(
+    ($resolvedVerification['ok'] ?? false) === true,
+    '记录表 schema 不得被误计入0.1手册/程序世系数量：'
+        . implode('；', $resolvedVerification['errors'] ?? [])
 );
 
 if (getenv('QMS_CX0302_APPLY') === '1') {

@@ -105,6 +105,7 @@ final class GovernedTrialResolvedDocumentService
         $errors = [];
         $structures = Db::name('qms_structured_documents')
             ->where('version', GovernedTrialResolvedManifestService::VERSION)
+            ->whereIn('document_role', ['quality_manual', 'procedure'])
             ->where('soft_delete', 0)
             ->select()
             ->toArray();
@@ -139,10 +140,11 @@ final class GovernedTrialResolvedDocumentService
         }
         $v01Count = (int)Db::name('qms_structured_documents')
             ->where('version', 'GOV-TRIAL/0.1')
+            ->whereIn('document_role', ['quality_manual', 'procedure'])
             ->where('soft_delete', 0)
             ->count();
         if ($v01Count !== 38) {
-            $errors[] = '0.1世系应保留38份，当前为' . $v01Count;
+            $errors[] = '0.1手册/程序世系应保留38份，当前为' . $v01Count;
         }
         $bg3503 = Db::name('record_form_templates')->alias('template')
             ->leftJoin('documents procedure', 'procedure.id = template.procedure_doc_id')
