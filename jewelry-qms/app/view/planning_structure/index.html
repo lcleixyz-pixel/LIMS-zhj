@@ -326,6 +326,9 @@
                             {/if}
                         </td>
                         <td class="qms-action-cell">
+                            {if $row.document.document_role == 'quality_manual' || $row.document.document_role == 'procedure' || $row.document.document_role == 'work_instruction'}
+                            <a href="/planning/structures/workbench?id={$row.document.id}" class="btn btn-sm btn-outline-success">治理工作台</a>
+                            {/if}
                             <a href="/planning/structures/view?id={$row.document.id}" class="btn btn-sm btn-outline-primary">查看详情</a>
                         </td>
                     </tr>

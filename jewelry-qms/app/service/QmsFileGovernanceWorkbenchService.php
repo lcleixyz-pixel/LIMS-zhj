@@ -217,7 +217,7 @@ final class QmsFileGovernanceWorkbenchService
 
         return [
             'document' => $document,
-            'boundary_notice' => '仅限8021治理试运行；纸质体系仍为唯一正式体系。',
+            'boundary_notice' => '本页面仅用于8021治理试运行，不构成正式发布或评审证据。',
             'summary' => [
                 'level' => $level,
                 'message' => self::summaryMessage($level, $missingChain, $recordCoverage, $documentBlockers),
