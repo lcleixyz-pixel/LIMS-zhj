@@ -71,3 +71,11 @@ jewelry-qms-legacy/
 
 # 演练备份dump含真实机构数据，不入仓（2026-07-11）
 **/backup-*.sql
+
+# QMS治理试运行证据包边界（2026-07-26）
+# 代码、Markdown交接、JSON清单、SHA256可入仓；生成样张/PDF/重复交接目录默认只留本地。
+.team/交接箱/**/*.pdf
+.team/交接箱/**/样张/*.html
+.team/交接箱/**/系统样例/*.html
+.team/交接箱/**/连续正文/*.html
+jewelry-qms/.team/
