@@ -68,12 +68,31 @@ $obsoleteLinks = GovernedTrialResolvedDocumentService::resolvedArtifactLinks([
 resolved_runtime_assert(($obsoleteLinks['can_submit'] ?? true) === false, '作废保留的CX-35不得进入审核');
 
 if ($after === 38) {
-    $activeTrialReady = (int)Db::name('documents')
+    $resolvedRows = Db::name('documents')
         ->where('version', 'GOV-TRIAL/0.2')
-        ->where('status', 'trial_ready')
+        ->where('doc_number', '<>', 'SIM-GOV02-XZTC/CX-35-2022')
         ->where('soft_delete', 0)
-        ->count();
-    resolved_runtime_assert($activeTrialReady === 37, '除CX-35外的37份解析稿应进入SIM试运行就绪状态');
+        ->field('id,doc_number,status')
+        ->select()
+        ->toArray();
+    $currentTrialReadyChains = 0;
+    foreach ($resolvedRows as $resolvedRow) {
+        if ((string)$resolvedRow['status'] === 'trial_ready') {
+            $currentTrialReadyChains++;
+            continue;
+        }
+        $successorReady = (int)Db::name('documents')
+            ->where('supersedes_document_id', (string)$resolvedRow['id'])
+            ->where('doc_number', (string)$resolvedRow['doc_number'])
+            ->where('status', 'trial_ready')
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->count();
+        if ($successorReady > 0) {
+            $currentTrialReadyChains++;
+        }
+    }
+    resolved_runtime_assert($currentTrialReadyChains === 37, '除CX-35外的37条解析稿链应保持SIM当前有效，允许已签批换版后旧解析稿作废且后继试运行就绪');
     $obsoleteCx35 = (int)Db::name('documents')
         ->where('version', 'GOV-TRIAL/0.2')
         ->where('doc_number', 'SIM-GOV02-XZTC/CX-35-2022')

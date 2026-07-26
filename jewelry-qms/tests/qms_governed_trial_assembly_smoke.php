@@ -60,6 +60,15 @@ governed_trial_assert(count(array_unique($canonicalNumbers)) === 104, '电子母
 governed_trial_assert(count(array_unique($trialNumbers)) === 104, 'SIM模板编号不得重复');
 governed_trial_assert(!in_array('XZTC/BG-10-01', $canonicalNumbers, true), '已作废BG-10-01不得进入活动模板');
 governed_trial_assert(!in_array('XZTC/BG-10-02', $canonicalNumbers, true), '已作废BG-10-02不得进入活动模板');
+$templatesByCanonical = array_column($templates, null, 'canonical_doc_number');
+governed_trial_assert(
+    ($templatesByCanonical['XZTC/BG-35-03']['name'] ?? '') === '[治理试运行] 标准物质报废申请表',
+    'BG-35-03必须按治理裁决恢复为标准物质报废申请表'
+);
+governed_trial_assert(
+    ($templatesByCanonical['XZTC/BG-35-03']['procedure_doc_number'] ?? '') === 'XZTC/CX-03-02-2022',
+    'BG-35-03必须归入标准物质管理程序'
+);
 
 foreach ($procedures as $procedure) {
     governed_trial_assert(($procedure['doc_number'] ?? '') !== '', '程序文件必须有编号');
