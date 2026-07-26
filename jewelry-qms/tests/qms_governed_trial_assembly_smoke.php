@@ -5,6 +5,7 @@ require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../app/common.php';
 
 use app\service\GovernedTrialAssemblyBlueprintService;
+use app\service\GovernedTrialAssemblyService;
 use app\service\RecordFormPrintService;
 use app\service\TrialModeService;
 
@@ -75,6 +76,53 @@ foreach ($procedures as $procedure) {
     governed_trial_assert(($procedure['manual_sections'] ?? []) !== [], ($procedure['doc_number'] ?? '程序') . ' 必须由手册落实');
     governed_trial_assert(($procedure['record_templates'] ?? []) !== [], ($procedure['doc_number'] ?? '程序') . ' 必须有运行证明模板');
     governed_trial_assert(($procedure['source_evidence'] ?? []) !== [], ($procedure['doc_number'] ?? '程序') . ' 必须有来源依据');
+}
+$proceduresByNumber = array_column($procedures, null, 'doc_number');
+governed_trial_assert(
+    ($proceduresByNumber['XZTC/CX-08-2022']['primary_manual_section_key'] ?? '')
+        === 'manual_v5_candidate_8_3',
+    'CX-08 主手册关系应明确选择 8.3，不能按排序误取 4.2'
+);
+
+$procedureLinkSpecs = GovernedTrialAssemblyService::procedureLinkSpecifications(
+    $proceduresByNumber['XZTC/CX-08-2022'],
+    'manual-83',
+    'element-document-control',
+    'document-cx08',
+    ['XZTC/BG-08-02' => 'template-bg0802'],
+    'position-document-controller',
+    ['clause-cnas-83', 'clause-cma-2121']
+);
+$manualSpecs = array_values(array_filter(
+    $procedureLinkSpecs,
+    static fn(array $spec): bool => ($spec['relation_type'] ?? '') === 'implements'
+));
+$recordSpecs = array_values(array_filter(
+    $procedureLinkSpecs,
+    static fn(array $spec): bool => ($spec['relation_type'] ?? '') === 'requires_record'
+));
+$positionSpecs = array_values(array_filter(
+    $procedureLinkSpecs,
+    static fn(array $spec): bool => ($spec['relation_type'] ?? '') === 'responsible'
+));
+$basisSpecs = array_values(array_filter(
+    $procedureLinkSpecs,
+    static fn(array $spec): bool => ($spec['relation_type'] ?? '') === 'basis'
+));
+governed_trial_assert(count($manualSpecs) === 1, '程序块应有一条独立手册主链');
+governed_trial_assert(($manualSpecs[0]['manual_section_id'] ?? '') === 'manual-83', '程序块手册主链应指向 8.3');
+governed_trial_assert(count($recordSpecs) === 1, '程序块应有一条独立运行记录关系');
+governed_trial_assert(
+    empty($recordSpecs[0]['manual_section_id']) && empty($recordSpecs[0]['position_id']),
+    '运行记录关系不得夹带手册章节或岗位'
+);
+governed_trial_assert(count($positionSpecs) === 1, '责任岗位应拆成独立关系');
+governed_trial_assert(count($basisSpecs) === 2, '程序块应独立回链适用外部依据');
+foreach ($basisSpecs as $basisSpec) {
+    governed_trial_assert(
+        empty($basisSpec['manual_section_id']) && empty($basisSpec['record_form_template_id']),
+        '外部依据关系不得夹带手册章节或记录模板'
+    );
 }
 
 foreach ($manualSections as $section) {

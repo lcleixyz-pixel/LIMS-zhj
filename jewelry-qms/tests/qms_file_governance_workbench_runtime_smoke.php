@@ -85,8 +85,23 @@ foreach (['6.4', '6.5'] as $expectedManual) {
     );
 }
 
+$cx08 = Db::name('qms_structured_documents')
+    ->whereLike('doc_number', 'SIM-GOV02-XZTC/CX-08%')
+    ->where('version', 'GOV-TRIAL/0.2')
+    ->where('soft_delete', 0)
+    ->find();
+workbench_runtime_assert(is_array($cx08), '8021 缺少 CX-08 GOV-TRIAL/0.2');
+$cx08ViewModel = QmsFileGovernanceWorkbenchService::detail((string)$cx08['id']);
+workbench_runtime_assert(
+    (string)($cx08ViewModel['semantic_guard']['status'] ?? '') === 'aligned',
+    'CX-08 定向治理后应以手册 8.3 形成语义一致主链'
+);
+workbench_runtime_assert(
+    ($cx08ViewModel['chain']['missing'] ?? []) === [],
+    'CX-08 定向治理后不应缺少外部依据、手册或运行证据主链'
+);
+
 foreach ([
-    'CX-08' => ['文件控制', '8.3'],
     'CX-19' => ['记录控制', '8.4'],
     'CX-26' => ['数据和信息管理', '7.11'],
 ] as $procedureCode => [$profileLabel, $expectedSection]) {

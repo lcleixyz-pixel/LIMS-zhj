@@ -126,7 +126,9 @@ final class GovernedTrialAssemblyBlueprintService
         }
 
         $manualKeysByProcedure = [];
+        $manualSectionNumberByKey = [];
         foreach ($manualSections as &$section) {
+            $manualSectionNumberByKey[(string)$section['section_key']] = (string)$section['section_number'];
             $sectionTemplates = array_values(array_unique($templatesBySection[(string)$section['section_key']] ?? []));
             sort($sectionTemplates);
             $section['record_templates'] = $sectionTemplates;
@@ -149,6 +151,11 @@ final class GovernedTrialAssemblyBlueprintService
             $supportingTemplates = array_values(array_unique($supportingTemplates));
             sort($supportingTemplates);
             $procedure['manual_sections'] = $manualKeys;
+            $procedure['primary_manual_section_key'] = self::primaryManualSectionKey(
+                $procedure,
+                $manualKeys,
+                $manualSectionNumberByKey
+            );
             $procedure['direct_record_templates'] = $directTemplates;
             $procedure['record_templates'] = $supportingTemplates;
         }
@@ -231,6 +238,16 @@ final class GovernedTrialAssemblyBlueprintService
             if (($procedure['manual_sections'] ?? []) === []) {
                 $errors[] = ($procedure['doc_number'] ?? '程序') . ' 无手册落实章节';
             }
+            if (
+                trim((string)($procedure['primary_manual_section_key'] ?? '')) === ''
+                || !in_array(
+                    (string)($procedure['primary_manual_section_key'] ?? ''),
+                    (array)($procedure['manual_sections'] ?? []),
+                    true
+                )
+            ) {
+                $errors[] = ($procedure['doc_number'] ?? '程序') . ' 无有效主手册章节';
+            }
             if (($procedure['record_templates'] ?? []) === []) {
                 $errors[] = ($procedure['doc_number'] ?? '程序') . ' 无运行证明模板';
             }
@@ -264,6 +281,32 @@ final class GovernedTrialAssemblyBlueprintService
                 'record_templates' => count($templates),
             ],
         ];
+    }
+
+    private static function primaryManualSectionKey(
+        array $procedure,
+        array $manualKeys,
+        array $manualSectionNumberByKey
+    ): string {
+        $assessment = QmsTraceSemanticGuardService::assess([
+            'doc_number' => (string)($procedure['doc_number'] ?? ''),
+            'title' => (string)($procedure['title'] ?? ''),
+        ], []);
+        $expectedSections = (array)(
+            $assessment['profile']['expected_manual_sections'] ?? []
+        );
+        foreach ($expectedSections as $expectedSection) {
+            foreach ($manualKeys as $manualKey) {
+                if (
+                    (string)($manualSectionNumberByKey[(string)$manualKey] ?? '')
+                    === (string)$expectedSection
+                ) {
+                    return (string)$manualKey;
+                }
+            }
+        }
+
+        return (string)($manualKeys[0] ?? '');
     }
 
     private static function baseSources(): array

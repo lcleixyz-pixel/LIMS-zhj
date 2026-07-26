@@ -73,6 +73,62 @@ final class GovernedTrialAssemblyService
         ];
     }
 
+    public static function procedureLinkSpecifications(
+        array $procedure,
+        string $manualSectionId,
+        string $elementId,
+        string $procedureDocumentId,
+        array $recordTemplateIds,
+        string $positionId,
+        array $basisClauseIds = []
+    ): array {
+        $specifications = [];
+        if ($manualSectionId !== '') {
+            $specifications[] = [
+                'element_id' => $elementId !== '' ? $elementId : null,
+                'manual_section_id' => $manualSectionId,
+                'relation_type' => 'implements',
+                'confidence' => 'high',
+                'note' => '治理试运行：程序主链落实对应手册章节。',
+            ];
+        }
+        if ($positionId !== '') {
+            $specifications[] = [
+                'position_id' => $positionId,
+                'relation_type' => 'responsible',
+                'confidence' => 'high',
+                'note' => '治理试运行：程序责任岗位独立记录。',
+            ];
+        }
+        foreach (array_values(array_unique($basisClauseIds)) as $clauseId) {
+            if ((string)$clauseId === '') {
+                continue;
+            }
+            $specifications[] = [
+                'element_id' => $elementId !== '' ? $elementId : null,
+                'clause_id' => (string)$clauseId,
+                'relation_type' => 'basis',
+                'confidence' => 'high',
+                'note' => '治理试运行：程序主链回溯适用外部依据。',
+            ];
+        }
+        foreach ((array)($procedure['record_templates'] ?? []) as $recordNumber) {
+            $templateId = (string)($recordTemplateIds[(string)$recordNumber] ?? '');
+            if ($templateId === '') {
+                continue;
+            }
+            $specifications[] = [
+                'procedure_document_id' => $procedureDocumentId,
+                'record_form_template_id' => $templateId,
+                'relation_type' => 'requires_record',
+                'confidence' => 'high',
+                'note' => '治理试运行：程序运行由该SIM记录模板提供证据。',
+            ];
+        }
+
+        return $specifications;
+    }
+
     public static function verify(): array
     {
         self::assertSchema();
@@ -640,24 +696,24 @@ final class GovernedTrialAssemblyService
         foreach ($blueprint['procedures'] as $procedure) {
             $canonical = (string)$procedure['doc_number'];
             $blockId = $procedureBlockIds[$canonical];
-            $manualKey = (string)($procedure['manual_sections'][0] ?? '');
+            $manualKey = (string)(
+                $procedure['primary_manual_section_key']
+                ?? $procedure['manual_sections'][0]
+                ?? ''
+            );
             $sectionNumber = (string)($manualSectionNumberByKey[$manualKey] ?? '');
             $elementId = (string)($elementIds[$sectionNumber] ?? '');
             $positionId = self::positionIdForProcedure($procedure, $templateByNumber);
-            foreach ($procedure['record_templates'] as $recordNumber) {
-                if (!isset($templateIds[$recordNumber])) {
-                    continue;
-                }
-                $links[] = self::linkRow($companyId, $blockId, [
-                    'element_id' => $elementId,
-                    'manual_section_id' => (string)($manualSectionIds[$sectionNumber] ?? ''),
-                    'procedure_document_id' => (string)$documentIds[$canonical],
-                    'record_form_template_id' => (string)$templateIds[$recordNumber],
-                    'position_id' => $positionId,
-                    'relation_type' => 'requires_record',
-                    'confidence' => 'high',
-                    'note' => '治理试运行：程序运行由该SIM记录模板提供证据。',
-                ]);
+            foreach (self::procedureLinkSpecifications(
+                $procedure,
+                (string)($manualSectionIds[$sectionNumber] ?? ''),
+                $elementId,
+                (string)$documentIds[$canonical],
+                $templateIds,
+                $positionId,
+                self::basisClauseIds($elementId)
+            ) as $specification) {
+                $links[] = self::linkRow($companyId, $blockId, $specification);
             }
         }
 
