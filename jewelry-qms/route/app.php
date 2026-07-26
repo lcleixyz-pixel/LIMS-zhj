@@ -60,6 +60,7 @@ Route::group(function () {
     Route::rule('record_form_template/index', 'RecordFormTemplate/index');
     Route::rule('record_form_template/add', 'RecordFormTemplate/add');
     Route::rule('record_form_template/edit', 'RecordFormTemplate/edit');
+    Route::post('record_form_template/createRevision', 'RecordFormTemplate/createRevision');
     Route::post('record_form_template/reviewSchemaDraftFields', 'RecordFormTemplate/reviewSchemaDraftFields');
     Route::rule('record_form_template/view', 'RecordFormTemplate/view');
     Route::rule('record_form_template/delete', 'RecordFormTemplate/delete');

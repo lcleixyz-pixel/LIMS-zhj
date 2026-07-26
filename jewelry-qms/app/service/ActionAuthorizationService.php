@@ -634,7 +634,7 @@ final class ActionAuthorizationService
         } elseif ($controller === 'recordformtemplate') {
             $policyAction = match ($action) {
                 'review' => 'review_list',
-                'add', 'edit', 'delete', 'reviewschemadraftfields', 'preparecoretrialtemplates' => 'draft',
+                'add', 'edit', 'delete', 'createrevision', 'reviewschemadraftfields', 'preparecoretrialtemplates' => 'draft',
                 'updatereview', 'obsolete' => 'publish',
                 'approvetrial' => 'approve_trial',
                 default => null,

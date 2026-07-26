@@ -14,7 +14,7 @@
             {elseif $record.source_file_path}
             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="数据库有附件记录，但物理文件不存在">原始附件缺失</button>
             {/if}
-            {if qms_can_action('record_form_template', 'draft', $record)}<a href="/record_form_template/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>{/if}
+            {if $record.status == 'draft' && qms_can_action('record_form_template', 'draft', $record)}<a href="/record_form_template/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑草稿</a>{/if}
             {if $trialModeEnabled && $record.status == 'draft' && qms_can_action('record_form_template', 'approve_trial', $record)}
             <form method="post" action="/record_form_template/approveTrial?id={$record.id}" class="d-inline">
                 <input type="hidden" name="trial_note" value="G-R14 第一批核心模板人工批准">
@@ -25,11 +25,11 @@
             <form method="post" action="/record_form_template/delete?id={$record.id}" class="d-inline">
                 <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除草稿？')">删除草稿</button>
             </form>
-            {elseif $record.status != 'draft' && qms_can_action('record_form_template', 'publish', $record)}
+            {elseif in_array($record.status, ['trial_ready', 'published']) && qms_can_action('record_form_template', 'publish', $record)}
             <form method="post" action="/record_form_template/obsolete?id={$record.id}" class="d-inline">
-                <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('确认作废该已发布模板？历史记录将保留。')">作废</button>
+                <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('确认停止使用当前模板？历史记录和版本链将保留。')">停止使用</button>
             </form>
-            <span class="text-muted small">已发布模板请走作废/换版流程，不做物理删除。</span>
+            <span class="text-muted small">受控模板不做物理删除。</span>
             {/if}
             <a href="/record_form_template/index" class="btn btn-sm btn-outline-secondary">返回</a>
         </div>
@@ -71,6 +71,63 @@
         {/notempty}
     </div>
 </div>
+
+{if $versioningAvailable && (!empty($previousTemplate) || !empty($openRevisionDraft) || !empty($canCreateRevision) || count($revisionHistory) > 1)}
+<div class="card mb-3" id="template-revision">
+    <div class="card-header"><h6 class="mb-0">修订与换版</h6></div>
+    <div class="card-body">
+        {if !empty($previousTemplate)}
+        <div class="alert alert-info py-2" role="status">
+            当前为修订草稿，上一版本
+            <a href="/record_form_template/view?id={$previousTemplate.id}" class="alert-link">{$previousTemplate.version}</a>
+            保持不变。完成编辑后请按现有复核和批准流程放行。
+        </div>
+        {/if}
+
+        {if !empty($openRevisionDraft) && $record.status != 'draft'}
+        <div class="alert alert-info py-2 mb-3" role="status">
+            此版本已有修订草稿
+            <a href="/record_form_template/view?id={$openRevisionDraft.id}" class="alert-link">{$openRevisionDraft.version}</a>。
+            请继续处理现有草稿，系统不会重复建立版本。
+        </div>
+        {elseif $canCreateRevision && qms_can_action('record_form_template', 'draft', $record)}
+        <p class="mb-3">复制当前内容和追溯关系建立新草稿。旧版本保持不变，既有记录仍关联原版本。</p>
+        <form method="post" action="/record_form_template/createRevision?id={$record.id}" class="row g-2 align-items-end" onsubmit="return confirm('确认复制当前模板并建立修订草稿？旧版本不会被修改。');">
+            <div class="col-lg-9">
+                <label for="revision_note" class="form-label">修订说明 <span class="text-danger" aria-hidden="true">*</span></label>
+                <textarea id="revision_note" name="revision_note" class="form-control" rows="2" required aria-describedby="revision_note_help" placeholder="例如：补充处置结果字段并调整责任人签字栏"></textarea>
+                <div id="revision_note_help" class="form-text">说明为什么换版以及准备修改什么，建立后仍可继续完善草稿。</div>
+            </div>
+            <div class="col-lg-3">
+                <button type="submit" class="btn btn-primary w-100">复制为修订草稿</button>
+            </div>
+        </form>
+        {/if}
+
+        {if count($revisionHistory) > 1}
+        <div class="mt-4">
+            <h6>版本记录</h6>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>版本</th><th>状态</th><th>修订说明</th><th>建立时间</th><th class="text-end">查看</th></tr></thead>
+                    <tbody>
+                    {volist name="revisionHistory" id="versionItem"}
+                    <tr>
+                        <td>{$versionItem.version}</td>
+                        <td>{$versionItem.status}</td>
+                        <td>{$versionItem.revision_note|default='首版'}</td>
+                        <td>{$versionItem.created|default='-'}</td>
+                        <td class="text-end"><a href="/record_form_template/view?id={$versionItem.id}" class="btn btn-sm btn-outline-secondary">查看</a></td>
+                    </tr>
+                    {/volist}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {/if}
+    </div>
+</div>
+{/if}
 
 <div class="card mb-3">
     <div class="card-header"><h6 class="mb-0">程序要求追溯</h6></div>

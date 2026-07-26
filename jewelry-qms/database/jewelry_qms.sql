@@ -373,6 +373,9 @@ CREATE TABLE `record_form_templates` (
   `element_id` varchar(36) DEFAULT NULL COMMENT '关联体系要素',
   `procedure_doc_id` varchar(36) DEFAULT NULL COMMENT '关联程序文件 documents.id',
   `doc_number` varchar(50) NOT NULL COMMENT '记录表格编号',
+  `supersedes_template_id` varchar(36) DEFAULT NULL COMMENT '本修订版直接替代的上一模板版本',
+  `revision_root_id` varchar(36) DEFAULT NULL COMMENT '模板版本链首版 ID',
+  `revision_note` text COMMENT '建立本修订草稿时填写的修订说明',
   `name` varchar(300) NOT NULL,
   `module` varchar(200) DEFAULT NULL,
   `source_file_path` varchar(500) DEFAULT NULL,
@@ -395,6 +398,8 @@ CREATE TABLE `record_form_templates` (
   KEY `element_id` (`element_id`),
   KEY `procedure_doc_id` (`procedure_doc_id`),
   KEY `doc_number` (`doc_number`),
+  KEY `supersedes_template_id` (`supersedes_template_id`),
+  KEY `revision_root_id` (`revision_root_id`),
   KEY `status` (`status`),
   KEY `review_status` (`review_status`),
   KEY `source_file_sha1` (`source_file_sha1`)

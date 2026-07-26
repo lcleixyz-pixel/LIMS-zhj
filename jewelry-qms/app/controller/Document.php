@@ -151,7 +151,7 @@ class Document extends BaseController
             throw new HttpException(404, '文件不存在');
         }
         if ((string)$document->status !== 'draft') {
-            Session::flash('warning', '当前状态不可直接编辑。如需修改，请先发起修订或走作废/换版流程。');
+            Session::flash('warning', '只有草稿文件可直接编辑。如需修改，请先发起修订或走作废/换版流程。');
 
             return redirect('/document/view?id=' . $id);
         }
