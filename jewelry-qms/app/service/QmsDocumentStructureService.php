@@ -1906,11 +1906,31 @@ class QmsDocumentStructureService
             return [];
         }
 
+        $links = self::linksForBlock((string)$block->id);
+        $semanticGuard = QmsTraceSemanticGuardService::assess(
+            $structured->toArray(),
+            [[
+                'block' => $block->toArray(),
+                'links' => $links,
+            ]]
+        );
+        $expectedManualSections = (array)(
+            $semanticGuard['profile']['expected_manual_sections'] ?? []
+        );
+        foreach ($links as &$link) {
+            $link['governance_state'] = QmsTraceSemanticGuardService::combinedLinkState(
+                $link,
+                $expectedManualSections
+            );
+        }
+        unset($link);
+
         return [
             'document' => $structured->toArray(),
             'block' => $block->toArray(),
-            'links' => self::linksForBlock((string)$block->id),
+            'links' => $links,
             'options' => self::traceReviewOptions(),
+            'semantic_guard' => $semanticGuard,
             'change_logs' => self::changeLogsForStructuredDocument((string)$structured->id),
         ];
     }
@@ -4514,7 +4534,7 @@ class QmsDocumentStructureService
             ->leftJoin('qms_business_modules m', 'm.id = l.business_module_id')
             ->where('l.block_id', $blockId)
             ->where('l.soft_delete', 0)
-            ->field('l.id,l.clause_id,l.manual_section_id,l.procedure_document_id,l.record_form_template_id,l.position_id,l.business_module_id,l.relation_type,l.confidence,l.note,e.name element_name,s.source_code,c.clause_number,c.title clause_title,ms.section_number,ms.title manual_title,pd.doc_number procedure_number,pd.title procedure_title,rft.doc_number record_number,rft.name record_name,p.name position_name,m.code module_code,m.name module_name,m.url module_url')
+            ->field('l.id,l.element_id,l.clause_id,l.manual_section_id,l.procedure_document_id,l.record_form_template_id,l.position_id,l.business_module_id,l.relation_type,l.confidence,l.note,e.name element_name,s.source_code,c.clause_number,c.title clause_title,ms.section_number,ms.title manual_title,pd.doc_number procedure_number,pd.title procedure_title,rft.doc_number record_number,rft.name record_name,p.name position_name,m.code module_code,m.name module_name,m.url module_url')
             ->select()
             ->toArray();
     }

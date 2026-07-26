@@ -73,11 +73,27 @@ final class QmsFileGovernanceWorkbenchService
         }
 
         $externalSources = [];
+        $confirmedExternalSources = [];
         $manualSections = [];
+        $confirmedManualSections = [];
         $procedureBlocks = [];
         $recordEvidence = [];
+        $confirmedRecordEvidence = [];
         $businessModules = [];
         $firstReviewUrl = '';
+        $pendingReviewUrl = '';
+        $mismatchReviewUrl = '';
+        $semanticGuard = QmsTraceSemanticGuardService::assess(
+            $document,
+            (array)($detail['blocks'] ?? [])
+        );
+        $expectedManualSections = (array)($semanticGuard['profile']['expected_manual_sections'] ?? []);
+        $reviewStates = [
+            'confirmed_primary' => [],
+            'supporting' => [],
+            'pending_review' => [],
+            'suspected_mismatch' => [],
+        ];
 
         foreach ((array)($detail['blocks'] ?? []) as $blockRow) {
             $block = self::row(is_array($blockRow) ? ($blockRow['block'] ?? []) : []);
@@ -106,41 +122,80 @@ final class QmsFileGovernanceWorkbenchService
                 }
 
                 if (trim((string)($link['clause_number'] ?? '')) !== '') {
-                    self::pushUnique($externalSources, [
-                        'id' => (string)($link['clause_id'] ?? ''),
-                        'source_code' => (string)($link['source_code'] ?? ''),
-                        'clause_number' => (string)($link['clause_number'] ?? ''),
-                        'title' => (string)($link['clause_title'] ?? ''),
-                    ], self::targetKey(
+                    $externalKey = self::targetKey(
                         (string)($link['clause_id'] ?? ''),
                         (string)($link['source_code'] ?? '') . '|'
                             . (string)($link['clause_number'] ?? '') . '|'
                             . (string)($link['clause_title'] ?? '')
-                    ));
+                    );
+                    $externalState = QmsTraceSemanticGuardService::linkState($link, 'external');
+                    $externalRow = [
+                        'id' => (string)($link['clause_id'] ?? ''),
+                        'source_code' => (string)($link['source_code'] ?? ''),
+                        'clause_number' => (string)($link['clause_number'] ?? ''),
+                        'title' => (string)($link['clause_title'] ?? ''),
+                        'governance_state' => $externalState,
+                    ];
+                    self::pushUniquePreferState($externalSources, $externalRow, $externalKey);
+                    self::pushReviewState($reviewStates, $externalState, 'external|' . $externalKey);
+                    if ($externalState === 'pending_review' && $pendingReviewUrl === '') {
+                        $pendingReviewUrl = $reviewUrl;
+                    }
+                    if ($externalState === 'confirmed_primary') {
+                        self::pushUnique($confirmedExternalSources, $externalRow, $externalKey);
+                    }
                 }
 
                 if (trim((string)($link['section_number'] ?? '')) !== '') {
-                    self::pushUnique($manualSections, [
-                        'id' => (string)($link['manual_section_id'] ?? ''),
-                        'section_number' => (string)($link['section_number'] ?? ''),
-                        'title' => (string)($link['manual_title'] ?? ''),
-                    ], self::targetKey(
+                    $manualKey = self::targetKey(
                         (string)($link['manual_section_id'] ?? ''),
                         (string)($link['section_number'] ?? '') . '|'
                             . (string)($link['manual_title'] ?? '')
-                    ));
+                    );
+                    $manualState = QmsTraceSemanticGuardService::linkState(
+                        $link,
+                        'manual',
+                        $expectedManualSections
+                    );
+                    $manualRow = [
+                        'id' => (string)($link['manual_section_id'] ?? ''),
+                        'section_number' => (string)($link['section_number'] ?? ''),
+                        'title' => (string)($link['manual_title'] ?? ''),
+                        'governance_state' => $manualState,
+                    ];
+                    self::pushUniquePreferState($manualSections, $manualRow, $manualKey);
+                    self::pushReviewState($reviewStates, $manualState, 'manual|' . $manualKey);
+                    if ($manualState === 'suspected_mismatch' && $mismatchReviewUrl === '') {
+                        $mismatchReviewUrl = $reviewUrl;
+                    } elseif ($manualState === 'pending_review' && $pendingReviewUrl === '') {
+                        $pendingReviewUrl = $reviewUrl;
+                    }
+                    if ($manualState === 'confirmed_primary') {
+                        self::pushUnique($confirmedManualSections, $manualRow, $manualKey);
+                    }
                 }
 
                 if (trim((string)($link['record_number'] ?? '')) !== '') {
-                    self::pushUnique($recordEvidence, [
-                        'id' => (string)($link['record_form_template_id'] ?? ''),
-                        'doc_number' => (string)($link['record_number'] ?? ''),
-                        'name' => (string)($link['record_name'] ?? ''),
-                    ], self::targetKey(
+                    $recordKey = self::targetKey(
                         (string)($link['record_form_template_id'] ?? ''),
                         (string)($link['record_number'] ?? '') . '|'
                             . (string)($link['record_name'] ?? '')
-                    ));
+                    );
+                    $recordState = QmsTraceSemanticGuardService::linkState($link, 'record');
+                    $recordRow = [
+                        'id' => (string)($link['record_form_template_id'] ?? ''),
+                        'doc_number' => (string)($link['record_number'] ?? ''),
+                        'name' => (string)($link['record_name'] ?? ''),
+                        'governance_state' => $recordState,
+                    ];
+                    self::pushUniquePreferState($recordEvidence, $recordRow, $recordKey);
+                    self::pushReviewState($reviewStates, $recordState, 'record|' . $recordKey);
+                    if ($recordState === 'pending_review' && $pendingReviewUrl === '') {
+                        $pendingReviewUrl = $reviewUrl;
+                    }
+                    if ($recordState === 'confirmed_primary') {
+                        self::pushUnique($confirmedRecordEvidence, $recordRow, $recordKey);
+                    }
                 }
 
                 if (trim((string)($link['module_code'] ?? '')) !== '') {
@@ -159,22 +214,25 @@ final class QmsFileGovernanceWorkbenchService
         }
 
         $recordCoverage = self::recordCoverage($schemaRows);
+        $traceReviewUrl = $mismatchReviewUrl !== ''
+            ? $mismatchReviewUrl
+            : ($pendingReviewUrl !== '' ? $pendingReviewUrl : $firstReviewUrl);
         $documentBlockers = array_values((array)($conflicts['document_blockers'] ?? []));
         $systemNotices = array_values((array)($conflicts['system_notices'] ?? []));
         $workflowStage = (string)($workflow['stage'] ?? '');
 
         $missingChain = [];
-        if ($externalSources === []) {
-            $missingChain[] = '外部依据';
+        if ($confirmedExternalSources === []) {
+            $missingChain[] = '外部依据主链';
         }
-        if ($manualSections === []) {
-            $missingChain[] = '手册条款';
+        if ($confirmedManualSections === []) {
+            $missingChain[] = '手册主链';
         }
         if ($procedureBlocks === []) {
             $missingChain[] = '程序落实方法';
         }
-        if ($recordEvidence === [] && ($recordCoverage['total'] > 0 || $schemaRows === [])) {
-            $missingChain[] = '运行证据';
+        if ($confirmedRecordEvidence === [] && ($recordCoverage['total'] > 0 || $schemaRows === [])) {
+            $missingChain[] = '运行证据主链';
         }
 
         $actions = self::actions(
@@ -185,19 +243,21 @@ final class QmsFileGovernanceWorkbenchService
             $documentBlockers,
             $artifacts,
             $missingChain,
-            $firstReviewUrl
+            $traceReviewUrl,
+            $semanticGuard
         );
         $level = self::summaryLevel(
             $missingChain,
             $recordCoverage,
             $documentBlockers,
-            $workflowStage
+            $workflowStage,
+            $semanticGuard
         );
         $checks = self::checkCounts(
-            $externalSources,
-            $manualSections,
+            $confirmedExternalSources,
+            $confirmedManualSections,
             $procedureBlocks,
-            $recordEvidence,
+            $confirmedRecordEvidence,
             $recordCoverage,
             $documentBlockers,
             $workflowStage
@@ -220,19 +280,30 @@ final class QmsFileGovernanceWorkbenchService
             'boundary_notice' => '本页面仅用于8021治理试运行，不构成正式发布或评审证据。',
             'summary' => [
                 'level' => $level,
-                'message' => self::summaryMessage($level, $missingChain, $recordCoverage, $documentBlockers),
+                'message' => self::summaryMessage(
+                    $level,
+                    $missingChain,
+                    $recordCoverage,
+                    $documentBlockers,
+                    $semanticGuard
+                ),
                 'next_step' => (string)($actions[0]['description'] ?? '当前没有待办理事项。'),
                 'completed_checks' => $checks['completed'],
                 'total_checks' => $checks['total'],
             ],
             'chain' => [
                 'external_sources' => array_values($externalSources),
+                'confirmed_external_sources' => array_values($confirmedExternalSources),
                 'manual_sections' => array_values($manualSections),
+                'confirmed_manual_sections' => array_values($confirmedManualSections),
                 'procedure_blocks' => array_values($procedureBlocks),
                 'record_evidence' => array_values($recordEvidence),
+                'confirmed_record_evidence' => array_values($confirmedRecordEvidence),
                 'business_modules' => array_values($businessModules),
+                'review_summary' => array_map('count', $reviewStates),
                 'missing' => $missingChain,
             ],
+            'semantic_guard' => $semanticGuard,
             'record_coverage' => $recordCoverage,
             'artifacts' => $artifacts,
             'conflicts' => [
@@ -284,14 +355,32 @@ final class QmsFileGovernanceWorkbenchService
         array $documentBlockers,
         array $artifacts,
         array $missingChain,
-        string $firstReviewUrl
+        string $firstReviewUrl,
+        array $semanticGuard
     ): array {
         $actions = [];
         if ($missingChain !== []) {
+            $semanticIssue = (string)($semanticGuard['issues'][0]['message'] ?? '');
+            $semanticStatus = (string)($semanticGuard['status'] ?? '');
+            $expectedManualSections = (string)(
+                $semanticGuard['profile']['expected_manual_sections_text'] ?? ''
+            );
+            if ($semanticStatus === 'suspected_mismatch') {
+                $traceDescription = '进入对应内容块移除错挂关系'
+                    . ($expectedManualSections !== ''
+                        ? '，再单独建立 ' . $expectedManualSections . ' 手册主链。'
+                        : '，再单独建立正确的手册主链。');
+            } elseif ($semanticStatus === 'review_required') {
+                $traceDescription = '进入对应内容块逐条确认继承关系；仅确认后的主链计入闭环。';
+            } else {
+                $traceDescription = $semanticIssue !== ''
+                    ? $semanticIssue
+                    : '缺少' . implode('、', $missingChain) . '，请先复核内容块追溯。';
+            }
             $actions[] = [
                 'type' => 'trace',
                 'label' => '补齐追溯链',
-                'description' => '缺少' . implode('、', $missingChain) . '，请先复核内容块追溯。',
+                'description' => $traceDescription,
                 'url' => $firstReviewUrl,
                 'enabled' => $firstReviewUrl !== '',
                 'disabled_reason' => $firstReviewUrl === '' ? '尚无可进入的内容块。' : '',
@@ -369,7 +458,8 @@ final class QmsFileGovernanceWorkbenchService
         array $missingChain,
         array $recordCoverage,
         array $documentBlockers,
-        string $workflowStage
+        string $workflowStage,
+        array $semanticGuard
     ): string {
         if ($missingChain !== []) {
             return 'blocked';
@@ -392,9 +482,15 @@ final class QmsFileGovernanceWorkbenchService
         string $level,
         array $missingChain,
         array $recordCoverage,
-        array $documentBlockers
+        array $documentBlockers,
+        array $semanticGuard
     ): string {
         if ($level === 'blocked') {
+            $semanticIssue = (string)($semanticGuard['issues'][0]['message'] ?? '');
+            if ($semanticIssue !== '') {
+                return $semanticIssue;
+            }
+
             return '证据链尚未闭合：缺少' . implode('、', $missingChain) . '。';
         }
         if ($documentBlockers !== []) {
@@ -452,6 +548,40 @@ final class QmsFileGovernanceWorkbenchService
             return;
         }
         $target[$key] = $row;
+    }
+
+    private static function pushUniquePreferState(array &$target, array $row, string $key): void
+    {
+        if ($key === '') {
+            return;
+        }
+        if (!array_key_exists($key, $target)) {
+            $target[$key] = $row;
+
+            return;
+        }
+        $rank = [
+            'confirmed_primary' => 4,
+            'suspected_mismatch' => 3,
+            'pending_review' => 2,
+            'supporting' => 1,
+        ];
+        $existingState = (string)($target[$key]['governance_state'] ?? '');
+        $newState = (string)($row['governance_state'] ?? '');
+        if (($rank[$newState] ?? 0) > ($rank[$existingState] ?? 0)) {
+            $target[$key] = $row;
+        }
+    }
+
+    private static function pushReviewState(
+        array &$reviewStates,
+        string $state,
+        string $key
+    ): void {
+        if (!isset($reviewStates[$state]) || $key === '') {
+            return;
+        }
+        $reviewStates[$state][$key] = true;
     }
 
     private static function targetKey(string $id, string $fallback): string

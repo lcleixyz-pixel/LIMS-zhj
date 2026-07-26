@@ -56,8 +56,12 @@ workbench_runtime_assert(
     'CX-03-02 应回链文件详情和签批状态'
 );
 workbench_runtime_assert(
-    ($viewModel['chain']['missing'] ?? []) === [],
-    'CX-03-02 完成定向治理后不得再有外部依据、手册或记录schema断链'
+    ($viewModel['chain']['missing'] ?? []) === ['运行证据主链'],
+    'CX-03-02 继承的记录证据关系在逐块复核前不得误报闭环'
+);
+workbench_runtime_assert(
+    (int)($viewModel['chain']['review_summary']['pending_review'] ?? 0) === 1,
+    'CX-03-02 应明确显示一条继承关系等待复核'
 );
 $externalLabels = array_map(
     static fn(array $row): string => (string)($row['source_code'] ?? '') . ' ' . (string)($row['clause_number'] ?? ''),
@@ -78,6 +82,29 @@ foreach (['6.4', '6.5'] as $expectedManual) {
     workbench_runtime_assert(
         in_array($expectedManual, $manualNumbers, true),
         'CX-03-02 缺少质量手册落实章节：' . $expectedManual
+    );
+}
+
+foreach ([
+    'CX-08' => ['文件控制', '8.3'],
+    'CX-19' => ['记录控制', '8.4'],
+    'CX-26' => ['数据和信息管理', '7.11'],
+] as $procedureCode => [$profileLabel, $expectedSection]) {
+    $candidate = Db::name('qms_structured_documents')
+        ->whereLike('doc_number', 'SIM-GOV02-XZTC/' . $procedureCode . '%')
+        ->where('version', 'GOV-TRIAL/0.2')
+        ->where('soft_delete', 0)
+        ->find();
+    workbench_runtime_assert(is_array($candidate), '8021 缺少 ' . $procedureCode . ' GOV-TRIAL/0.2');
+    $candidateViewModel = QmsFileGovernanceWorkbenchService::detail((string)$candidate['id']);
+    workbench_runtime_assert(
+        (string)($candidateViewModel['semantic_guard']['status'] ?? '') === 'suspected_mismatch',
+        $procedureCode . ' 应识别现有 4.2 关系为疑似错挂'
+    );
+    $issue = (string)($candidateViewModel['semantic_guard']['issues'][0]['message'] ?? '');
+    workbench_runtime_assert(
+        str_contains($issue, $profileLabel) && str_contains($issue, $expectedSection),
+        $procedureCode . ' 应提示对应主题和建议手册章节 ' . $expectedSection
     );
 }
 

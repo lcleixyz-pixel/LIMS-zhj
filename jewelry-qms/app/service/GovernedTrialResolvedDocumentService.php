@@ -1024,6 +1024,7 @@ final class GovernedTrialResolvedDocumentService
                     'id' => qms_uuid(),
                     'company_id' => $companyId,
                     'block_id' => $destinationBlockId,
+                    'confidence' => 'review_required',
                     'note' => trim((string)($row['note'] ?? '') . '；由GOV-TRIAL/0.1追溯关系继承，待0.2逐块复核。', '；'),
                     'publish' => 1,
                     'soft_delete' => 0,

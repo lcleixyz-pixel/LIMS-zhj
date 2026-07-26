@@ -80,24 +80,34 @@ $viewModel = QmsFileGovernanceWorkbenchService::fromSnapshot(
                         'source_code' => 'CNAS-CL01',
                         'clause_number' => '6.4',
                         'clause_title' => '设备',
+                        'relation_type' => 'basis',
+                        'confidence' => 'high',
+                        'note' => '外部依据人工复核确认。',
+                    ],
+                    [
                         'manual_section_id' => 'manual-64',
                         'section_number' => '6.4',
                         'manual_title' => '标准物质',
+                        'relation_type' => 'implements',
+                        'confidence' => 'high',
+                        'note' => '手册落实关系人工复核确认。',
+                    ],
+                    [
                         'record_form_template_id' => 'form-bg3503',
                         'record_number' => 'XZTC/BG-35-03',
                         'record_name' => '标准物质报废申请表',
+                        'relation_type' => 'requires_record',
+                        'confidence' => 'high',
+                        'note' => '记录要求人工复核确认。',
                     ],
                     [
                         'clause_id' => 'clause-64',
                         'source_code' => 'CNAS-CL01',
                         'clause_number' => '6.4',
                         'clause_title' => '设备',
-                        'manual_section_id' => 'manual-64',
-                        'section_number' => '6.4',
-                        'manual_title' => '标准物质',
-                        'record_form_template_id' => 'form-bg3503',
-                        'record_number' => 'XZTC/BG-35-03',
-                        'record_name' => '标准物质报废申请表',
+                        'relation_type' => 'basis',
+                        'confidence' => 'high',
+                        'note' => '重复外部依据用于去重测试。',
                     ],
                 ],
             ],
@@ -138,6 +148,9 @@ $viewModel = QmsFileGovernanceWorkbenchService::fromSnapshot(
 workbench_service_assert(count($viewModel['chain']['external_sources']) === 1, '外部依据应按 ID 去重');
 workbench_service_assert(count($viewModel['chain']['manual_sections']) === 1, '手册条款应按 ID 去重');
 workbench_service_assert(count($viewModel['chain']['record_evidence']) === 1, '记录表格应按 ID 去重');
+workbench_service_assert(count($viewModel['chain']['confirmed_external_sources']) === 1, '已确认外部依据主链应单独计数');
+workbench_service_assert(count($viewModel['chain']['confirmed_manual_sections']) === 1, '已确认手册主链应单独计数');
+workbench_service_assert(count($viewModel['chain']['confirmed_record_evidence']) === 1, '已确认运行证据应单独计数');
 workbench_service_assert(
     !array_key_exists('_key', $viewModel['chain']['external_sources'][0]),
     '内部去重键不得暴露给页面'
@@ -147,6 +160,98 @@ workbench_service_assert($viewModel['summary']['level'] === 'ready', '无断链�
 workbench_service_assert(
     $viewModel['actions'][0]['url'] === '/document/view?id=document-cx0302',
     '下一步应进入现有文件页提交'
+);
+
+$wrongManual = QmsFileGovernanceWorkbenchService::fromSnapshot(
+    [
+        'document' => [
+            'id' => 'structured-cx08',
+            'document_id' => 'document-cx08',
+            'document_role' => 'procedure',
+            'doc_number' => 'XZTC/CX-08-2022',
+            'title' => '文件控制程序',
+            'status' => 'draft',
+        ],
+        'blocks' => [
+            [
+                'block' => [
+                    'id' => 'block-cx08-purpose',
+                    'title' => '目的',
+                    'block_type' => 'purpose',
+                    'markdown' => '明确文件控制要求。',
+                ],
+                'links' => [],
+            ],
+            [
+                'block' => [
+                    'id' => 'block-cx08',
+                    'title' => '控制要求',
+                    'block_type' => 'section',
+                    'markdown' => '文件应经过批准、修订、分发、回收和作废控制。',
+                ],
+                'links' => [
+                    [
+                        'clause_id' => 'clause-cx08',
+                        'source_code' => 'CNAS-CL01',
+                        'clause_number' => '8.3',
+                        'clause_title' => '管理体系文件的控制',
+                        'relation_type' => 'basis',
+                        'confidence' => 'high',
+                        'note' => '外部依据人工确认。',
+                    ],
+                    [
+                        'manual_section_id' => 'manual-42',
+                        'section_number' => '4.2',
+                        'manual_title' => '保密性',
+                        'relation_type' => 'implements',
+                        'confidence' => 'high',
+                        'note' => '历史错挂。',
+                    ],
+                    [
+                        'record_form_template_id' => 'form-cx08',
+                        'record_number' => 'XZTC/BG-08-02',
+                        'record_name' => '文件修订记录',
+                        'relation_type' => 'requires_record',
+                        'confidence' => 'high',
+                        'note' => '记录要求人工确认。',
+                    ],
+                ],
+            ],
+        ],
+    ],
+    [[
+        'block_id' => 'block-cx08',
+        'coverage_status' => 'covered',
+        'linked_record_forms' => 1,
+        'schema_field_count' => 4,
+        'trace_review_url' => '/planning/structures/links/review?block_id=block-cx08',
+    ]],
+    [],
+    ['document_blockers' => [], 'system_notices' => []],
+    ['id' => 'document-cx08', 'status' => 'draft'],
+    ['stage' => 'draft', 'stage_label' => '草稿，等待提交']
+);
+workbench_service_assert($wrongManual['summary']['level'] === 'blocked', '疑似错挂不得显示证据链闭合');
+workbench_service_assert(
+    in_array('手册主链', $wrongManual['chain']['missing'], true),
+    'CX-08 只有 4.2 时应明确缺少手册主链'
+);
+workbench_service_assert(
+    ($wrongManual['semantic_guard']['status'] ?? '') === 'suspected_mismatch',
+    '工作台应暴露 CX-08 疑似错挂结论'
+);
+workbench_service_assert(
+    str_contains((string)$wrongManual['summary']['message'], '疑似错挂'),
+    '工作台结论文案应明确说明疑似错挂'
+);
+workbench_service_assert(
+    $wrongManual['actions'][0]['url'] === '/planning/structures/links/review?block_id=block-cx08',
+    '疑似错挂下一步应直接进入实际含错挂关系的内容块'
+);
+workbench_service_assert(
+    str_contains((string)$wrongManual['actions'][0]['description'], '移除错挂关系')
+    && str_contains((string)$wrongManual['actions'][0]['description'], '8.3'),
+    '疑似错挂下一步应说明如何拆分并补建正确手册主链'
 );
 
 $missingManual = QmsFileGovernanceWorkbenchService::fromSnapshot(
@@ -165,6 +270,9 @@ $missingManual = QmsFileGovernanceWorkbenchService::fromSnapshot(
                 'clause_id' => 'clause-test',
                 'source_code' => 'CNAS-CL01',
                 'clause_number' => '7.1',
+                'relation_type' => 'basis',
+                'confidence' => 'high',
+                'note' => '外部依据人工确认。',
                 'record_form_template_id' => 'form-test',
                 'record_number' => 'XZTC/BG-TEST',
                 'record_name' => '测试记录表',
@@ -205,12 +313,23 @@ $schemaGap = QmsFileGovernanceWorkbenchService::fromSnapshot(
                 'clause_id' => 'clause-gap',
                 'source_code' => 'CNAS-CL01',
                 'clause_number' => '7.5',
+                'relation_type' => 'basis',
+                'confidence' => 'high',
+                'note' => '外部依据人工确认。',
+            ], [
                 'manual_section_id' => 'manual-gap',
                 'section_number' => '7.5',
                 'manual_title' => '技术记录',
+                'relation_type' => 'implements',
+                'confidence' => 'high',
+                'note' => '手册落实关系人工确认。',
+            ], [
                 'record_form_template_id' => 'form-gap',
                 'record_number' => 'XZTC/BG-GAP',
                 'record_name' => '字段缺口记录表',
+                'relation_type' => 'requires_record',
+                'confidence' => 'high',
+                'note' => '记录要求人工确认。',
             ]],
         ]],
     ],
@@ -240,12 +359,23 @@ $obsolete = QmsFileGovernanceWorkbenchService::fromSnapshot(
                 'clause_id' => 'obsolete-clause',
                 'source_code' => 'CNAS-CL01',
                 'clause_number' => '6.4',
+                'relation_type' => 'basis',
+                'confidence' => 'high',
+                'note' => '外部依据人工确认。',
+            ], [
                 'manual_section_id' => 'obsolete-manual',
                 'section_number' => '6.4',
                 'manual_title' => '标准物质',
+                'relation_type' => 'implements',
+                'confidence' => 'high',
+                'note' => '手册落实关系人工确认。',
+            ], [
                 'record_form_template_id' => 'obsolete-form',
                 'record_number' => 'XZTC/BG-OLD',
                 'record_name' => '历史记录',
+                'relation_type' => 'requires_record',
+                'confidence' => 'high',
+                'note' => '记录要求人工确认。',
             ]],
         ]],
     ],

@@ -33,6 +33,16 @@
     </div>
 </div>
 
+{notempty name="workbench.semantic_guard.issues"}
+<div class="small text-muted mb-3 px-1">
+    <span class="fw-semibold">自动识别依据：</span>
+    {$workbench.semantic_guard.profile.matched_terms_text|default='当前文件标题和正文'}
+    {notempty name="workbench.semantic_guard.profile.expected_manual_sections"}
+    · 建议主手册章节：{$workbench.semantic_guard.profile.expected_manual_sections_text}
+    {/notempty}
+</div>
+{/notempty}
+
 <div class="card mb-3">
     <div class="card-header d-flex flex-column flex-md-row justify-content-between gap-1">
         <h5 class="mb-0">系统设计链条</h5>
@@ -44,15 +54,26 @@
                 <div class="border rounded h-100 p-3">
                     <div class="d-flex justify-content-between align-items-center gap-2">
                         <h6 class="mb-0">外部依据</h6>
-                        {if empty($workbench.chain.external_sources)}
-                        <span class="badge bg-danger">待补链</span>
+                        {if empty($workbench.chain.confirmed_external_sources)}
+                        <span class="badge bg-danger">主链未确认</span>
                         {else}
-                        <span class="badge bg-success">{$workbench.chain.external_sources|count} 项</span>
+                        <span class="badge bg-success">已确认主链 {$workbench.chain.confirmed_external_sources|count} 项</span>
                         {/if}
                     </div>
                     {volist name="workbench.chain.external_sources" id="source"}
                     <div class="small mt-2">
-                        <span class="fw-semibold">{$source.source_code} {$source.clause_number}</span>
+                        <div class="d-flex flex-wrap align-items-center gap-1">
+                            <span class="fw-semibold">{$source.source_code} {$source.clause_number}</span>
+                            {if $source.governance_state == 'confirmed_primary'}
+                            <span class="badge bg-success">已确认主链</span>
+                            {elseif $source.governance_state == 'supporting'}
+                            <span class="badge bg-secondary">辅助关系</span>
+                            {elseif $source.governance_state == 'suspected_mismatch'}
+                            <span class="badge bg-danger">疑似错挂</span>
+                            {else}
+                            <span class="badge bg-warning text-dark">等待复核</span>
+                            {/if}
+                        </div>
                         <div class="text-muted">{$source.title|default='条款标题待确认'}</div>
                     </div>
                     {/volist}
@@ -65,15 +86,26 @@
                 <div class="border rounded h-100 p-3">
                     <div class="d-flex justify-content-between align-items-center gap-2">
                         <h6 class="mb-0">手册条款</h6>
-                        {if empty($workbench.chain.manual_sections)}
-                        <span class="badge bg-danger">待补链</span>
+                        {if empty($workbench.chain.confirmed_manual_sections)}
+                        <span class="badge bg-danger">主链未确认</span>
                         {else}
-                        <span class="badge bg-success">{$workbench.chain.manual_sections|count} 项</span>
+                        <span class="badge bg-success">已确认主链 {$workbench.chain.confirmed_manual_sections|count} 项</span>
                         {/if}
                     </div>
                     {volist name="workbench.chain.manual_sections" id="section"}
                     <div class="small mt-2">
-                        <span class="fw-semibold">{$section.section_number}</span>
+                        <div class="d-flex flex-wrap align-items-center gap-1">
+                            <span class="fw-semibold">{$section.section_number}</span>
+                            {if $section.governance_state == 'confirmed_primary'}
+                            <span class="badge bg-success">已确认主链</span>
+                            {elseif $section.governance_state == 'supporting'}
+                            <span class="badge bg-secondary">辅助关系</span>
+                            {elseif $section.governance_state == 'suspected_mismatch'}
+                            <span class="badge bg-danger">疑似错挂</span>
+                            {else}
+                            <span class="badge bg-warning text-dark">等待复核</span>
+                            {/if}
+                        </div>
                         <div class="text-muted">{$section.title|default='章节标题待确认'}</div>
                     </div>
                     {/volist}
@@ -102,17 +134,28 @@
                 <div class="border rounded h-100 p-3">
                     <div class="d-flex justify-content-between align-items-center gap-2">
                         <h6 class="mb-0">运行证据</h6>
-                        {if empty($workbench.chain.record_evidence)}
-                        <span class="badge bg-danger">待补链</span>
+                        {if empty($workbench.chain.confirmed_record_evidence)}
+                        <span class="badge bg-danger">主链未确认</span>
                         {elseif $workbench.record_coverage.missing > 0 || $workbench.record_coverage.needs_review > 0}
                         <span class="badge bg-warning text-dark">需复核</span>
                         {else}
-                        <span class="badge bg-success">{$workbench.chain.record_evidence|count} 项</span>
+                        <span class="badge bg-success">已确认主链 {$workbench.chain.confirmed_record_evidence|count} 项</span>
                         {/if}
                     </div>
                     {volist name="workbench.chain.record_evidence" id="record"}
                     <div class="small mt-2">
-                        <span class="fw-semibold">{$record.doc_number}</span>
+                        <div class="d-flex flex-wrap align-items-center gap-1">
+                            <span class="fw-semibold">{$record.doc_number}</span>
+                            {if $record.governance_state == 'confirmed_primary'}
+                            <span class="badge bg-success">已确认主链</span>
+                            {elseif $record.governance_state == 'supporting'}
+                            <span class="badge bg-secondary">辅助关系</span>
+                            {elseif $record.governance_state == 'suspected_mismatch'}
+                            <span class="badge bg-danger">疑似错挂</span>
+                            {else}
+                            <span class="badge bg-warning text-dark">等待复核</span>
+                            {/if}
+                        </div>
                         <div class="text-muted">{$record.name}</div>
                     </div>
                     {/volist}

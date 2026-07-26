@@ -4,6 +4,7 @@
         <div class="text-muted small">{$detail.document.doc_number} {$detail.document.title} · {$detail.block.title}</div>
     </div>
     <div class="qms-page-actions">
+        <a href="/planning/structures/workbench?id={$detail.document.id}" class="btn btn-sm btn-outline-primary">返回治理工作台</a>
         <a href="/planning/structures/view?id={$detail.document.id}" class="btn btn-sm btn-outline-secondary">返回文件</a>
     </div>
 </div>
@@ -168,6 +169,17 @@
                             {elseif $link.relation_type == 'responsible'}职责
                             {elseif $link.relation_type == 'requires_record'}要求记录
                             {else}{$link.relation_type|default='待确认'}{/if}
+                            <div class="small mt-1">
+                                {if $link.governance_state == 'suspected_mismatch'}
+                                <span class="badge bg-danger">疑似错挂</span>
+                                {elseif $link.governance_state == 'pending_review'}
+                                <span class="badge bg-warning text-dark">等待复核</span>
+                                {elseif $link.governance_state == 'confirmed_primary'}
+                                <span class="badge bg-success">已确认主链</span>
+                                {else}
+                                <span class="badge bg-secondary">辅助关系</span>
+                                {/if}
+                            </div>
                         </td>
                         <td>{$link.element_name|default='-'}</td>
                         <td>{if $link.clause_number}{$link.source_code} {$link.clause_number}{else}-{/if}</td>
@@ -178,6 +190,51 @@
                         <td>{$link.position_name|default='-'}</td>
                         <td>{$link.note|default='-'}</td>
                         <td class="qms-action-cell">
+                            <details class="mb-2">
+                                <summary class="btn btn-sm btn-outline-primary">确认或调整关系</summary>
+                                <form method="post" action="/planning/structures/links/save" class="border rounded p-2 mt-2 text-start">
+                                    <input type="hidden" name="block_id" value="{$detail.block.id}">
+                                    <input type="hidden" name="link_id" value="{$link.id}">
+                                    <input type="hidden" name="element_id" value="{$link.element_id|default=''}">
+                                    <input type="hidden" name="clause_id" value="{$link.clause_id|default=''}">
+                                    {if $link.manual_section_id}
+                                    <label class="form-label small" for="manual_section_{$link.id}">手册章节处理</label>
+                                    <select id="manual_section_{$link.id}" name="manual_section_id" class="form-select form-select-sm mb-1">
+                                        <option value="">{if $link.governance_state == 'suspected_mismatch'}移除此错误手册挂接{else}移除本行手册挂接{/if}</option>
+                                        {volist name="detail.options.manual_sections" id="option"}
+                                        <option value="{$option.id}" {if $option.id == $link.manual_section_id}selected{/if}>{$option.section_number} {$option.title}</option>
+                                        {/volist}
+                                    </select>
+                                    <div class="form-text mb-2">若该行同时包含记录表格，请先移除错挂章节并保存，再在上方单独新增正确的手册主链。</div>
+                                    {else}
+                                    <input type="hidden" name="manual_section_id" value="{$link.manual_section_id|default=''}">
+                                    {/if}
+                                    <input type="hidden" name="procedure_document_id" value="{$link.procedure_document_id|default=''}">
+                                    <input type="hidden" name="record_form_template_id" value="{$link.record_form_template_id|default=''}">
+                                    <input type="hidden" name="position_id" value="{$link.position_id|default=''}">
+                                    <input type="hidden" name="business_module_id" value="{$link.business_module_id|default=''}">
+                                    <label class="form-label small" for="relation_type_{$link.id}">关系用途</label>
+                                    <select id="relation_type_{$link.id}" name="relation_type" class="form-select form-select-sm mb-2">
+                                        <option value="implements" {if $link.relation_type == 'implements'}selected{/if}>主链：落实手册</option>
+                                        <option value="basis" {if $link.relation_type == 'basis'}selected{/if}>主链：外部依据</option>
+                                        <option value="requires_record" {if $link.relation_type == 'requires_record'}selected{/if}>主链：运行记录</option>
+                                        <option value="supporting" {if $link.relation_type == 'supporting'}selected{/if}>辅助关系</option>
+                                        <option value="mentions" {if $link.relation_type == 'mentions'}selected{/if}>仅提及</option>
+                                        <option value="responsible" {if $link.relation_type == 'responsible'}selected{/if}>职责</option>
+                                        <option value="renders_to" {if $link.relation_type == 'renders_to'}selected{/if}>渲染到</option>
+                                    </select>
+                                    <label class="form-label small" for="confidence_{$link.id}">复核状态</label>
+                                    <select id="confidence_{$link.id}" name="confidence" class="form-select form-select-sm mb-2">
+                                        <option value="high" {if $link.governance_state == 'confirmed_primary' && $link.confidence == 'high'}selected{/if}>已人工确认</option>
+                                        <option value="review_required" {if $link.governance_state == 'pending_review' || $link.governance_state == 'suspected_mismatch' || $link.confidence == 'review_required'}selected{/if}>等待复核</option>
+                                        <option value="medium" {if $link.confidence == 'medium'}selected{/if}>中置信候选</option>
+                                        <option value="low" {if $link.confidence == 'low'}selected{/if}>低置信候选</option>
+                                    </select>
+                                    <label class="form-label small" for="review_note_{$link.id}">复核依据</label>
+                                    <input id="review_note_{$link.id}" type="text" name="note" class="form-control form-control-sm mb-2" required placeholder="说明为何确认为主链、辅助关系或继续待复核">
+                                    <button type="submit" class="btn btn-sm btn-primary w-100">保存复核结论</button>
+                                </form>
+                            </details>
                             <form method="post" action="/planning/structures/links/delete" class="qms-suggestion-form justify-content-end" onsubmit="return confirm('确认删除该追溯关系？');">
                                 <input type="hidden" name="block_id" value="{$detail.block.id}">
                                 <input type="hidden" name="link_id" value="{$link.id}">
