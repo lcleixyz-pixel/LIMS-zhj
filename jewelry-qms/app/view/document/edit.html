@@ -99,8 +99,9 @@
                 </div>
             </div>
             <div class="mb-3">
-                <label for="description" class="form-label">文件说明</label>
-                <textarea class="form-control" id="description" name="description" rows="3">{$record.description|default=''}</textarea>
+                <label for="change_reason" class="form-label">修订说明（本轮修改说明）</label>
+                <textarea class="form-control" id="change_reason" name="change_reason" rows="3" aria-describedby="change-reason-help">{$record.change_reason|default=''}</textarea>
+                <div id="change-reason-help" class="form-text">如本轮曾被驳回，请在此说明已按哪些审核意见完成修改。</div>
             </div>
             <div class="text-end">
                 <a href="/document/view?id={$record.id}" class="btn btn-secondary">取消</a>

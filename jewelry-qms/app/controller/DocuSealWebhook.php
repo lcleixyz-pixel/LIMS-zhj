@@ -51,7 +51,19 @@ class DocuSealWebhook extends BaseController
         }
 
         if ($event === 'rejected') {
-            $round = $service->recordSigningRound($documentId, 'rejected', $submissionId !== '' ? $submissionId : null, (string)($payload['note'] ?? $event));
+            $data = isset($payload['data']) && is_array($payload['data']) ? $payload['data'] : [];
+            $reason = trim((string)(
+                $payload['note']
+                ?? $payload['decline_reason']
+                ?? $data['decline_reason']
+                ?? '签批人已驳回'
+            ));
+            $round = $service->rejectDocumentWorkflow(
+                $documentId,
+                $submissionId !== '' ? $submissionId : null,
+                $normalized['emails'],
+                $reason
+            );
             if (!$round['ok']) {
                 return json(['ok' => false, 'error' => $round['error'] ?? 'reject_failed'], 409);
             }
@@ -83,11 +95,57 @@ class DocuSealWebhook extends BaseController
             }
 
             $approvalResult = $this->advanceApprovalsFromWebhook($documentId, $normalized['emails'], $payload);
+            $documentStatus = (string)Db::name('documents')->where('id', $documentId)->value('status');
+            $workflowComplete = (bool)($approvalResult['finalized'] ?? false)
+                || in_array($documentStatus, ['trial_ready', 'published'], true);
+            $archiveError = null;
+            if ($workflowComplete && $submissionId !== '') {
+                $existingAssetId = (string)(Db::name('qms_document_assets')
+                    ->where('document_id', $documentId)
+                    ->where('source_kind', 'signed_document')
+                    ->where('soft_delete', 0)
+                    ->value('id') ?? '');
+                if ($assetId === null && $existingAssetId !== '') {
+                    $assetId = $existingAssetId;
+                }
+
+                if ($assetId === null) {
+                    $downloaded = $service->fetchCompletedSubmissionDocument($submissionId);
+                    if ($downloaded['ok'] ?? false) {
+                        $stored = $service->storeSignedAsset([
+                            'document_id' => $documentId,
+                            'company_id' => $companyId,
+                            'original_name' => (string)($downloaded['filename'] ?? 'signed.pdf'),
+                            'content' => (string)($downloaded['content'] ?? ''),
+                            'expected_sha256' => (string)($downloaded['content_sha256'] ?? ''),
+                            'submission_id' => $submissionId,
+                            'metadata' => ['event' => $event, 'mode' => $verify['mode'] ?? ''],
+                        ]);
+                        if ($stored['ok'] ?? false) {
+                            $assetId = $stored['asset_id'] ?? null;
+                        } else {
+                            $archiveError = (string)($stored['error'] ?? 'store_failed');
+                        }
+                    } else {
+                        $archiveError = (string)($downloaded['error'] ?? 'download_failed');
+                    }
+                }
+
+                $approvedRoundExists = Db::name('document_signing_rounds')
+                    ->where('document_id', $documentId)
+                    ->where('submission_id', $submissionId)
+                    ->where('decision', 'approved')
+                    ->count() > 0;
+                if ($assetId !== null && !$approvedRoundExists) {
+                    $service->recordSigningRound($documentId, 'approved', $submissionId, 'signed_document_archived');
+                }
+            }
 
             return json([
                 'ok' => true,
                 'decision' => 'approved',
                 'asset_id' => $assetId,
+                'archive_error' => $archiveError,
                 'approval' => $approvalResult,
             ]);
         }
@@ -129,15 +187,25 @@ class DocuSealWebhook extends BaseController
             $approval = ApprovalModel::where('model_name', 'Document')
                 ->where('record', $documentId)
                 ->where('user_id', $user->id)
+                ->where('record_status', 1)
                 ->where('status', 'pending')
                 ->where('soft_delete', 0)
                 ->order('created', 'asc')
                 ->find();
             if (!$approval) {
-                $errors[] = 'pending_approval_missing:' . $email;
+                $alreadyProcessed = ApprovalModel::where('model_name', 'Document')
+                    ->where('record', $documentId)
+                    ->where('user_id', $user->id)
+                    ->where('record_status', 1)
+                    ->where('status', 'approved')
+                    ->where('soft_delete', 0)
+                    ->find();
+                if (!$alreadyProcessed) {
+                    $errors[] = 'pending_approval_missing:' . $email;
+                }
                 continue;
             }
-            if (!ApprovalService::processApproval((string)$approval->id, 'approved', 'DocuSeal webhook completed', (string)$user->id)) {
+            if (!ApprovalService::processApproval((string)$approval->id, 'approved', '在线签字已完成（系统自动回填）', (string)$user->id)) {
                 $errors[] = 'process_approval_failed:' . $email;
                 continue;
             }

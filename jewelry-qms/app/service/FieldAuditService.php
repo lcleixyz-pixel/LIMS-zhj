@@ -189,9 +189,15 @@ class FieldAuditService
             $row['field_label'] = self::fieldLabel($modelName, $field);
             $row['old_value_display'] = self::displayValue($modelName, $field, $row['old_value'] ?? null);
             $row['new_value_display'] = self::displayValue($modelName, $field, $row['new_value'] ?? null);
-            $row['changed_by_name'] = $name !== '' ? $name : '未知用户';
-            $row['changed_by_position'] = $position !== '' ? $position : '岗位未登记';
-            $row['changed_by_display'] = $row['changed_by_name'] . '（' . $row['changed_by_position'] . '）';
+            if ($userId === '') {
+                $row['changed_by_name'] = '系统自动处理';
+                $row['changed_by_position'] = '';
+                $row['changed_by_display'] = '系统自动处理';
+            } else {
+                $row['changed_by_name'] = $name !== '' ? $name : '未知用户';
+                $row['changed_by_position'] = $position !== '' ? $position : '岗位未登记';
+                $row['changed_by_display'] = $row['changed_by_name'] . '（' . $row['changed_by_position'] . '）';
+            }
         }
         unset($row);
 
@@ -293,6 +299,7 @@ class FieldAuditService
             'result' => '评价结果',
             'authorization_scope' => '授权范围',
             'valid_until' => '有效期至',
+            'effective_date' => '生效日期',
             'review_status' => '人工确认状态',
             'reviewed_by' => '确认人',
             'reviewed_at' => '确认时间',

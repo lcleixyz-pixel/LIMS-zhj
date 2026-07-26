@@ -41,6 +41,7 @@ class AuditLog
                 'changepassword',
                 'complete',
                 'create',
+                'createrevision',
                 'createcapa',
                 'delete',
                 'edit',

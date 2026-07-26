@@ -585,7 +585,7 @@ final class PlanningResponsibility extends BaseController
         }
 
         Log::error($context, ['exception' => $e]);
-        Session::flash('error', '操作失败：' . ($e->getMessage() ?: '请检查输入后重试，或联系管理员。'));
+        Session::flash('error', '操作失败，请联系管理员');
     }
 
     private function markAudit(

@@ -123,16 +123,18 @@ assert_true(str_contains($note, 'submission_created_embed') || str_contains($not
 $embedsReload = $service->latestEmbedsForDocument($docId);
 assert_true(count($embedsReload) >= 1, 'latestEmbedsForDocument reads note JSON');
 
-
-$content = $service->resolveDocumentBytes($doc);
-$sha = hash('sha256', $content);
+$downloaded = $service->fetchCompletedSubmissionDocument((string)$started['submission_id']);
+assert_true(($downloaded['ok'] ?? false) === true, 'D-5 fetches the completed signed document');
+$content = (string)($downloaded['content'] ?? '');
+$sha = (string)($downloaded['content_sha256'] ?? '');
+assert_true($content !== '' && hash('sha256', $content) === $sha, 'D-5 completed document hash matches');
 $stored = $service->storeSignedAsset([
     'document_id' => $docId,
     'company_id' => $companyId,
     'content' => $content,
     'expected_sha256' => $sha,
     'submission_id' => (string)$started['submission_id'],
-    'original_name' => 'signed-d35.pdf',
+    'original_name' => (string)($downloaded['filename'] ?? 'signed-d35.pdf'),
 ]);
 assert_true(($stored['ok'] ?? false) === true, 'D-5 storeSignedAsset ok');
 

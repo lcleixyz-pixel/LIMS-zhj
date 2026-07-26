@@ -3,8 +3,10 @@ use app\service\RecordFormPrintService as P;
 
 $attendees = P::rows($values, 'attendees');
 if ($attendees === []) {
-    $attendees = [['name' => '', 'department' => '', 'signature' => '']];
+    $attendees = [['name' => '', 'position' => '', 'signature' => '']];
 }
+$displayDocNumber = htmlspecialchars(P::displayDocNumber($template, $values), ENT_QUOTES, 'UTF-8');
+$masterDocNumber = htmlspecialchars((string)($template['doc_number'] ?? 'XZTC/BG-01-02'), ENT_QUOTES, 'UTF-8');
 ?>
 <!doctype html>
 <html lang="zh-CN">
@@ -28,22 +30,38 @@ if ($attendees === []) {
 <body>
     <div class="title"><?= htmlspecialchars($template['name'] ?? '人员培训记录表', ENT_QUOTES, 'UTF-8') ?></div>
     <div class="meta">
-        <div>编号：<?= htmlspecialchars($template['doc_number'] ?? 'XZTC/BG-01-02', ENT_QUOTES, 'UTF-8') ?></div>
-        <div style="text-align:right">版本：<?= htmlspecialchars($template['version'] ?? 'A/0', ENT_QUOTES, 'UTF-8') ?></div>
+        <div>编号：<?= $displayDocNumber ?><?php if ($displayDocNumber !== $masterDocNumber): ?>（母版：<?= $masterDocNumber ?>）<?php endif; ?></div>
+        <div style="text-align:right">版次：<?= htmlspecialchars($template['version'] ?? 'A/0', ENT_QUOTES, 'UTF-8') ?>　保存期限：不少于6年</div>
     </div>
     <table>
         <tr>
-            <th class="label">培训日期</th>
-            <td><?= P::value($values, 'training_date') ?></td>
-            <th class="label">培训讲师</th>
-            <td><?= P::value($values, 'trainer') ?></td>
-        </tr>
-        <tr>
-            <th>培训主题</th>
+            <th class="label">培训主题</th>
             <td colspan="3"><?= P::value($values, 'training_topic') ?></td>
         </tr>
         <tr>
-            <th>培训内容</th>
+            <th class="label">培训类别</th>
+            <td><?= P::value($values, 'training_category') ?></td>
+            <th class="label">培训日期</th>
+            <td><?= P::value($values, 'training_date') ?></td>
+        </tr>
+        <tr>
+            <th class="label">地点</th>
+            <td><?= P::value($values, 'training_place') ?></td>
+            <th class="label">讲师/培训单位</th>
+            <td><?= P::value($values, 'trainer', P::value($values, 'training_provider')) ?></td>
+        </tr>
+        <tr>
+            <th class="label">教材/资料</th>
+            <td><?= nl2br(P::value($values, 'training_materials')) ?></td>
+            <th class="label">培训对象范围</th>
+            <td><?= P::value($values, 'training_target_scope') ?></td>
+        </tr>
+        <tr>
+            <th class="label">考核方式</th>
+            <td colspan="3"><?= P::value($values, 'assessment_method') ?></td>
+        </tr>
+        <tr>
+            <th class="label">培训内容摘要</th>
             <td colspan="3" style="height:80px"><?= nl2br(P::value($values, 'training_content')) ?></td>
         </tr>
     </table>
@@ -52,22 +70,34 @@ if ($attendees === []) {
         <tr>
             <th style="width:10%">序号</th>
             <th>姓名</th>
-            <th>部门</th>
+            <th>岗位</th>
             <th>签名</th>
         </tr>
         <?php foreach ($attendees as $index => $row): ?>
         <tr>
             <td style="text-align:center"><?= $index + 1 ?></td>
             <td><?= P::cell($row, 'name') ?></td>
-            <td><?= P::cell($row, 'department') ?></td>
+            <td><?= P::cell($row, 'position') ?></td>
             <td class="signature"><?= P::cell($row, 'signature') ?></td>
         </tr>
         <?php endforeach; ?>
     </table>
     <table style="margin-top:10px">
         <tr>
-            <th class="label">效果评价</th>
-            <td style="height:70px"><?= nl2br(P::value($values, 'effect_evaluation')) ?></td>
+            <th class="label">考核结果</th>
+            <td style="height:52px"><?= nl2br(P::value($values, 'assessment_result')) ?></td>
+        </tr>
+        <tr>
+            <th class="label">效果评价衔接注</th>
+            <td><?= nl2br(P::value($values, 'effect_evaluation_note')) ?></td>
+        </tr>
+        <tr>
+            <th class="label">归档标识</th>
+            <td><?= nl2br(P::value($values, 'archive_note')) ?></td>
+        </tr>
+        <tr>
+            <th class="label">记录人/日期</th>
+            <td><?= P::value($values, 'recorder') ?>　<?= P::value($values, 'record_date') ?></td>
         </tr>
     </table>
     <div class="footer">

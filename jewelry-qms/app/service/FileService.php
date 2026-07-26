@@ -93,6 +93,7 @@ class FileService
         $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
         return match ($ext) {
             'pdf' => 'application/pdf',
+            'zip' => 'application/zip',
             'png' => 'image/png',
             'jpg', 'jpeg' => 'image/jpeg',
             'gif' => 'image/gif',

@@ -1,0 +1,96 @@
+{__NOLAYOUT__}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>记录更正附页 - {$record.record_title}</title>
+    <style>
+        body{font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif;color:#111827;margin:0;background:#f3f4f6;}
+        .toolbar{max-width:960px;margin:18px auto 10px;display:flex;justify-content:space-between;align-items:center;}
+        .page{max-width:960px;margin:0 auto 24px;background:#fff;padding:32px;border:1px solid #d1d5db;}
+        h1{font-size:22px;text-align:center;margin:0 0 22px;}
+        h2{font-size:16px;margin:24px 0 10px;border-bottom:1px solid #d1d5db;padding-bottom:6px;}
+        table{width:100%;border-collapse:collapse;font-size:13px;}
+        th,td{border:1px solid #9ca3af;padding:8px;vertical-align:top;}
+        th{background:#f9fafb;text-align:left;white-space:nowrap;}
+        .muted{color:#6b7280;font-size:12px;}
+        .note{border:1px solid #d1d5db;background:#f9fafb;padding:10px;margin:12px 0;font-size:13px;line-height:1.7;}
+        pre{white-space:pre-wrap;font-family:inherit;margin:0;line-height:1.6;}
+        .btn{display:inline-block;border:1px solid #1f2937;background:#1f2937;color:#fff;border-radius:4px;padding:7px 12px;text-decoration:none;font-size:13px;}
+        @media print{
+            body{background:#fff;}
+            .toolbar{display:none;}
+            .page{border:0;margin:0;max-width:none;padding:0;}
+        }
+    </style>
+</head>
+<body>
+<div class="toolbar">
+    <a href="/record_form_instance/view?id={$record.id}" class="btn" style="background:#fff;color:#1f2937;">返回记录</a>
+    <button type="button" class="btn" onclick="window.print()">打印</button>
+</div>
+<main class="page">
+    <h1>记录更正附页</h1>
+    <table>
+        <tr>
+            <th width="120">原记录编号</th>
+            <td>{$record.doc_number}</td>
+            <th width="120">原记录状态</th>
+            <td>{:qms_status_label('record_form_instance', $record.status)}</td>
+        </tr>
+        <tr>
+            <th>记录标题</th>
+            <td colspan="3">{$record.record_title}</td>
+        </tr>
+        <tr>
+            <th>正式 PDF</th>
+            <td colspan="3">{$record.generated_pdf_name|default='未生成'}</td>
+        </tr>
+        <tr>
+            <th>说明页生成时间</th>
+            <td>{$printedAt}</td>
+            <th>保存提示</th>
+            <td>随原纸质记录一并保存</td>
+        </tr>
+    </table>
+    <div class="note">
+        本说明页用于记录已生成 PDF 或已打印纸质记录后的追加更正。原记录和原 PDF 不作覆盖修改；以下更正内容保留字段位置、原内容、更正/补充内容、更正原因、登记人、登记时间及批准信息。
+    </div>
+
+    <h2>更正记录链</h2>
+    <table>
+        <thead>
+            <tr>
+                <th width="105">登记时间</th>
+                <th width="100">类型</th>
+                <th width="90">对应申请</th>
+                <th>字段位置</th>
+                <th>原内容</th>
+                <th>更正/补充内容</th>
+                <th>原因</th>
+                <th width="90">登记人</th>
+                <th width="120">批准信息</th>
+            </tr>
+        </thead>
+        <tbody>
+            {volist name="corrections" id="correction"}
+            <tr>
+                <td>{$correction.registered_at|default='-'}</td>
+                <td>{$correction.type_label|default='更正'}</td>
+                <td>{$correction.request_short_id|default='-'}</td>
+                <td>
+                    {$correction.field_label|default='整表补充说明'}
+                    {if $correction.target_kind == 'legacy_note'}<br><span class="muted">历史自由文本记录</span>{/if}
+                </td>
+                <td><pre>{$correction.original_content|default='-'}</pre></td>
+                <td><pre>{$correction.corrected_content|default='-'}</pre></td>
+                <td><pre>{$correction.correction_reason|default='-'}</pre></td>
+                <td>{$correction.registered_by|default='未记录'}</td>
+                <td>{$correction.approved_by|default='未记录'}<br><span class="muted">{$correction.approved_at|default='-'}</span></td>
+            </tr>
+            {/volist}
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

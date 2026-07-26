@@ -1,0 +1,23 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">{$artifact.title}</h4>
+        <div class="text-muted small">{$artifact.doc_number} {$artifact.document_title}</div>
+    </div>
+    <div class="qms-page-actions">
+        <a href="{$artifact.back_url}" class="btn btn-sm btn-outline-secondary">返回结构化文件</a>
+    </div>
+</div>
+
+<div class="alert alert-warning" role="alert">
+    SIM 治理试运行材料；纸质体系仍为唯一正式体系，不得作为正式受控文件或评审证据。
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">{$artifact.title}</span>
+        <span class="text-muted small font-monospace">{$artifact.relative_path}</span>
+    </div>
+    <div class="card-body">
+        <pre class="mb-0 p-3 bg-light border rounded" style="white-space: pre-wrap; word-break: break-word; font: 14px/1.75 ui-monospace, SFMono-Regular, Menlo, monospace;">{$artifact.content|htmlspecialchars}</pre>
+    </div>
+</div>

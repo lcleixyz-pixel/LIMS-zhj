@@ -79,7 +79,7 @@ foreach ([
     '2. 配置人员',
     '3. 校验并签批',
     '4. 查看已生效责任链',
-    '文件对齐（辅助）',
+    '文件一致性检查（辅助）',
     '活动总数',
     '职责总数',
     '查看技术信息',
@@ -99,7 +99,7 @@ responsibility_ui_assert(
     'Raw step code is not a primary structure column'
 );
 foreach ([
-    '保存后仍是草案，不构成任命',
+    '初始模板只建立内审、管理评审和风险管理的职责结构，不会生成真实任命。',
     '适用场所',
     '生效日期',
     '能力证据',
@@ -124,7 +124,7 @@ responsibility_ui_assert(
     !str_contains($view, '<th>来源版本</th>'),
     'Raw source version is not a primary effective-appointment column'
 );
-foreach (['文件对齐（辅助核验）', '只读辅助工具', '核验对象', '核验依据', '应承担职责的岗位', '文件中写明的岗位'] as $label) {
+foreach (['文件一致性检查（辅助核验）', '只读辅助工具', '核验对象', '核验依据', '应承担职责的岗位', '文件中写明的岗位'] as $label) {
     responsibility_ui_contains($label, $view, 'Alignment helper renders ' . $label);
 }
 responsibility_ui_contains('alignmentData.version.status_label', $view, 'Alignment version renders a Chinese status label');

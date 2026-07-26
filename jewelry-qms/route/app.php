@@ -60,6 +60,7 @@ Route::group(function () {
     Route::rule('record_form_template/index', 'RecordFormTemplate/index');
     Route::rule('record_form_template/add', 'RecordFormTemplate/add');
     Route::rule('record_form_template/edit', 'RecordFormTemplate/edit');
+    Route::post('record_form_template/createRevision', 'RecordFormTemplate/createRevision');
     Route::post('record_form_template/reviewSchemaDraftFields', 'RecordFormTemplate/reviewSchemaDraftFields');
     Route::rule('record_form_template/view', 'RecordFormTemplate/view');
     Route::rule('record_form_template/delete', 'RecordFormTemplate/delete');
@@ -84,7 +85,13 @@ Route::group(function () {
     Route::rule('record_form_instance/create', 'RecordFormInstance/create');
     Route::rule('record_form_instance/edit', 'RecordFormInstance/edit');
     Route::get('record_form_instance/view', 'RecordFormInstance/view');
+    Route::get('record_form_instance/requestCorrection', 'RecordFormInstance/requestCorrection');
     Route::post('record_form_instance/requestCorrection', 'RecordFormInstance/requestCorrection');
+    Route::post('record_form_instance/decideCorrection', 'RecordFormInstance/decideCorrection');
+    Route::post('record_form_instance/registerCorrection', 'RecordFormInstance/registerCorrection');
+    Route::get('record_form_instance/printCorrections', 'RecordFormInstance/printCorrections');
+    Route::get('record_form_instance/downloadCurrentPdf', 'RecordFormInstance/downloadCurrentPdf');
+    Route::get('record_form_instance/downloadCurrentPackage', 'RecordFormInstance/downloadCurrentPackage');
     Route::get('record_form_instance/print', 'RecordFormInstance/print');
     Route::post('record_form_instance/exportPdf', 'RecordFormInstance/exportPdf');
     Route::get('record_form_instance/downloadPdf', 'RecordFormInstance/downloadPdf');
@@ -110,6 +117,7 @@ Route::group(function () {
     Route::rule('planning/clauses/view', 'PlanningClause/view');
     Route::rule('planning/clauses', 'PlanningClause/index');
     Route::rule('planning/structures/view', 'PlanningStructure/view');
+    Route::get('planning/structures/resolved-artifact', 'PlanningStructure/resolvedArtifact');
     Route::get('planning/structures/blocks/edit', 'PlanningStructure/editBlock');
     Route::post('planning/structures/blocks/update', 'PlanningStructure/updateBlock');
     Route::get('planning/structures/links/review', 'PlanningStructure/reviewLinks');
@@ -151,6 +159,10 @@ Route::group(function () {
     Route::post('planning/responsibilities', 'PlanningResponsibility/createInitialDraft');
 
     Route::post('approval/approve', 'Approval/approve');
+    Route::post('governed_change/request', 'GovernedChange/request');
+    Route::post('governed_change/event', 'GovernedChange/event');
+    Route::get('governed_change/inbox', 'GovernedChange/inbox');
+    Route::post('governed_change/decide', 'GovernedChange/decide');
 
     Route::rule('user/changePassword', 'User/changePassword');
 

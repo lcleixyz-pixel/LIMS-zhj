@@ -1,0 +1,310 @@
+{if $governedChangeContext.strategy == 'event'}
+<section class="card border-info mt-3 mb-3" id="governedChangePanel">
+    <div class="card-body d-flex gap-3 align-items-start">
+        <div class="fs-4" aria-hidden="true">↻</div>
+        <div>
+            <h6 class="mb-1">该台账按生命周期事件管理</h6>
+            <p class="mb-1 text-secondary">普通资料可在编辑页更新；状态、归属、校准日期等受控字段须通过对应业务动作办理，系统不允许直接覆盖或删除历史。</p>
+            {if !empty($governedChangeContext.protected_field_labels)}
+            <div class="small text-muted">受控字段：{:implode('、', $governedChangeContext.protected_field_labels)}</div>
+            {/if}
+        </div>
+    </div>
+    {if !empty($governedChangeContext.event_fields)}
+    <div class="card-body border-top">
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <h6>办理状态事件</h6>
+                <form method="post" action="/governed_change/event" id="governedEventForm">
+                    <input type="hidden" name="subject_type" value="{$governedChangeContext.subject_type}">
+                    <input type="hidden" name="subject_id" value="{$governedChangeContext.subject_id}">
+                    <input type="hidden" name="return_url" value="{$governedChangeContext.return_url}">
+                    <div class="mb-3">
+                        <label class="form-label" for="governedEventField">受控字段</label>
+                        <select class="form-select" id="governedEventField" name="field_name" required>
+                            {foreach $governedChangeContext.event_fields as $eventField}
+                            <option value="{$eventField.name}">{$eventField.label}（当前：{$eventField.value}）</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="governedEventValue">新状态</label>
+                        {if !empty($governedChangeContext.event_field.options)}
+                        <select class="form-select" id="governedEventValue" name="new_value" required>
+                            <option value="">请选择</option>
+                            {foreach $governedChangeContext.event_field.options as $optionValue => $optionLabel}
+                            <option value="{$optionValue}">{$optionLabel}</option>
+                            {/foreach}
+                        </select>
+                        {else}
+                        <input class="form-control" id="governedEventValue" name="new_value" required>
+                        {/if}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="governedEventReason">办理依据或原因</label>
+                        <textarea class="form-control" id="governedEventReason" name="reason" rows="2" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-info">确认办理并留痕</button>
+                </form>
+            </div>
+            <div class="col-lg-7">
+                <h6>历史状态事件</h6>
+                {if empty($governedChangeContext.changes)}
+                <div class="text-muted border rounded p-3">暂无状态事件。</div>
+                {else}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead><tr><th>字段</th><th>原状态 → 新状态</th><th>办理人 / 时间</th><th>依据</th></tr></thead>
+                        <tbody>
+                        {foreach $governedChangeContext.changes as $eventRow}
+                        <tr>
+                            <td>{$eventRow.field_label}</td>
+                            <td>{$eventRow.old_value} → <strong>{$eventRow.new_value}</strong></td>
+                            <td>{$eventRow.registered_by_label|default='未记录'}<br><small>{$eventRow.registered_at}</small></td>
+                            <td>{$eventRow.reason}</td>
+                        </tr>
+                        {/foreach}
+                        </tbody>
+                    </table>
+                </div>
+                {/if}
+            </div>
+        </div>
+    </div>
+    {/if}
+</section>
+{else}
+<section
+    class="card border-primary mt-3 mb-3"
+    id="governedChangePanel"
+    data-subject-type="{$governedChangeContext.subject_type}"
+    data-subject-id="{$governedChangeContext.subject_id}"
+    data-frozen="{if $governedChangeContext.frozen}1{else}0{/if}"
+>
+    <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-0">当前有效状态与更正链</h6>
+            <small class="text-secondary">原记录冻结保留；批准的更正只追加，不覆盖、不删除。</small>
+        </div>
+        {if $governedChangeContext.frozen}
+        <span class="badge text-bg-secondary">已冻结</span>
+        {else}
+        <span class="badge text-bg-success">可直接编辑</span>
+        {/if}
+    </div>
+    <div class="card-body">
+        {if !$governedChangeContext.frozen}
+        <div class="alert alert-success mb-0">
+            当前记录尚未形成最终证据。如发现录入错误，请直接点击页面上的“编辑”；完成、关闭或批准后，系统才会切换为更正留痕模式。
+        </div>
+        {else}
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <h6>按字段申请批注式更正</h6>
+                <form method="post" action="/governed_change/request" id="governedChangeRequestForm">
+                    <input type="hidden" name="subject_type" value="{$governedChangeContext.subject_type}">
+                    <input type="hidden" name="subject_id" value="{$governedChangeContext.subject_id}">
+                    <input type="hidden" name="return_url" value="{$governedChangeContext.return_url}">
+                    <div class="mb-3">
+                        <label class="form-label" for="governedChangeField">要更正的字段</label>
+                        <select class="form-select" id="governedChangeField" name="field_name" required>
+                            <option value="">请选择字段</option>
+                            {foreach $governedChangeContext.fields as $field}
+                            <option value="{$field.name}" data-current="{$field.value|htmlentities}">{$field.label}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="governedChangeCurrent">原记录（不可修改）</label>
+                        <textarea class="form-control bg-light" id="governedChangeCurrent" rows="2" readonly placeholder="选择字段后显示"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="governedChangeKind">处理方式</label>
+                        <select class="form-select" id="governedChangeKind" name="change_kind" required>
+                            <option value="correction">更正原值</option>
+                            <option value="supplement">补充空白字段</option>
+                            <option value="void_mark">标注原值作废</option>
+                        </select>
+                        <div class="form-text">无论选择哪种方式，原值均保留在原始记录和修订链中。</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="governedChangeProposed">拟更正值</label>
+                        <textarea class="form-control" id="governedChangeProposed" name="proposed_value" rows="2" placeholder="作废标注可留空，由系统生成标准标记"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="governedChangeReason">更正原因</label>
+                        <textarea class="form-control" id="governedChangeReason" name="reason" rows="2" required placeholder="说明为什么要改，以及依据什么核对"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">提交更正申请</button>
+                </form>
+            </div>
+            <div class="col-lg-7">
+                <h6>当前有效值与修订记录</h6>
+                {if empty($governedChangeContext.changes)}
+                <div class="text-muted border rounded p-3">尚无已批准更正。当前有效值与原记录一致。</div>
+                {else}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead><tr><th>字段</th><th>原值</th><th>当前有效值</th><th>更正人 / 时间</th><th>批准人 / 时间</th></tr></thead>
+                        <tbody>
+                        {foreach $governedChangeContext.changes as $change}
+                        <tr
+                            data-governed-field="{$change.field_label|htmlentities}"
+                            data-governed-old="{$change.old_value|default=''|htmlentities}"
+                            data-governed-new="{$change.new_value|default=''|htmlentities}"
+                        >
+                            <td>{$change.field_label}</td>
+                            <td class="text-decoration-line-through text-secondary">{$change.old_value|default='（空）'}</td>
+                            <td><strong>{$change.new_value|default='（空）'}</strong></td>
+                            <td>{$change.registered_by_label|default='未记录'}<br><small class="text-muted">{$change.registered_at}</small></td>
+                            <td>{$change.approved_by_label|default='未记录'}<br><small class="text-muted">{$change.approved_at}</small></td>
+                        </tr>
+                        <tr class="table-light"><td colspan="5"><small><strong>原因：</strong>{$change.reason}</small></td></tr>
+                        {/foreach}
+                        </tbody>
+                    </table>
+                </div>
+                {/if}
+            </div>
+        </div>
+        {/if}
+
+        {if !empty($governedChangeContext.pending_requests)}
+        <hr class="my-4">
+        <h6>待处理申请</h6>
+        <div class="row g-3">
+            {foreach $governedChangeContext.pending_requests as $changeRequest}
+            <div class="col-12">
+                <div class="border rounded p-3 bg-warning-subtle">
+                    <div class="d-flex justify-content-between gap-3 flex-wrap">
+                        <div>
+                            <strong>申请 {$changeRequest.id}</strong>
+                            <span class="badge text-bg-warning ms-2">待处理</span>
+                        </div>
+                        <small>{$changeRequest.requested_by_label|default='未记录'} · {$changeRequest.requested_at}</small>
+                    </div>
+                    <dl class="row mt-3 mb-2 small">
+                        <dt class="col-sm-2">记录</dt><dd class="col-sm-10">{$changeRequest.subject_label}</dd>
+                        <dt class="col-sm-2">字段</dt><dd class="col-sm-10">{$changeRequest.field_label}</dd>
+                        <dt class="col-sm-2">原值</dt><dd class="col-sm-10">{$changeRequest.original_value|default='（空）'}</dd>
+                        <dt class="col-sm-2">拟更正值</dt><dd class="col-sm-10"><strong>{$changeRequest.proposed_value|default='（空）'}</strong></dd>
+                        <dt class="col-sm-2">原因</dt><dd class="col-sm-10">{$changeRequest.reason}</dd>
+                    </dl>
+                    {if $governedChangeContext.can_decide}
+                    <form method="post" action="/governed_change/decide" class="border-top pt-3">
+                        <input type="hidden" name="request_id" value="{$changeRequest.id}">
+                        <input type="hidden" name="return_url" value="{$governedChangeContext.return_url}">
+                        <label class="form-label" for="decisionComment{$changeRequest.id}">处理这条申请</label>
+                        <textarea class="form-control mb-2" id="decisionComment{$changeRequest.id}" name="comment" rows="2" placeholder="批准可填写核对依据；驳回必须说明原因"></textarea>
+                        <button type="submit" name="decision" value="approved" class="btn btn-success btn-sm">批准并追加更正</button>
+                        <button type="submit" name="decision" value="rejected" class="btn btn-outline-danger btn-sm">驳回申请</button>
+                    </form>
+                    {else}
+                    <div class="small text-muted border-top pt-2">等待质量负责人或批准人处理。</div>
+                    {/if}
+                </div>
+            </div>
+            {/foreach}
+        </div>
+        {/if}
+
+        {if !empty($governedChangeContext.requests)}
+        <details class="mt-4">
+            <summary class="fw-semibold">查看全部申请和处理结果（{:count($governedChangeContext.requests)}）</summary>
+            <div class="table-responsive mt-2">
+                <table class="table table-sm">
+                    <thead><tr><th>申请时间</th><th>字段</th><th>原值 → 拟更正值</th><th>状态</th><th>处理意见</th></tr></thead>
+                    <tbody>
+                    {foreach $governedChangeContext.requests as $requestRow}
+                    <tr>
+                        <td>{$requestRow.requested_at}<br><small>{$requestRow.requested_by_label|default='未记录'}</small></td>
+                        <td>{$requestRow.field_label}</td>
+                        <td>{$requestRow.original_value|default='（空）'} → {$requestRow.proposed_value|default='（空）'}</td>
+                        <td>
+                            {if $requestRow.status == 'approved'}<span class="badge text-bg-success">已批准</span>
+                            {elseif $requestRow.status == 'rejected'}<span class="badge text-bg-danger">已驳回</span>
+                            {else}<span class="badge text-bg-warning">待处理</span>{/if}
+                        </td>
+                        <td>{$requestRow.decision_comment|default='-'}</td>
+                    </tr>
+                    {/foreach}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+        {/if}
+    </div>
+</section>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var panel = document.getElementById('governedChangePanel');
+    var select = document.getElementById('governedChangeField');
+    var current = document.getElementById('governedChangeCurrent');
+    if (select && current) {
+        var syncCurrentValue = function () {
+            var option = select.options[select.selectedIndex];
+            current.value = option ? (option.getAttribute('data-current') || '') : '';
+        };
+        select.addEventListener('change', syncCurrentValue);
+        syncCurrentValue();
+    }
+
+    if (!panel) return;
+    var normalize = function (value) {
+        return (value || '').replace(/\s+/g, '').replace(/[：:]/g, '');
+    };
+    panel.querySelectorAll('[data-governed-field]').forEach(function (row) {
+        var fieldLabel = normalize(row.getAttribute('data-governed-field'));
+        var oldValue = row.getAttribute('data-governed-old') || '';
+        var newValue = row.getAttribute('data-governed-new') || '';
+        var headings = Array.from(document.querySelectorAll('.container > .card table tr > th'));
+        var matchedHeadings = headings.filter(function (heading) {
+            return normalize(heading.textContent) === fieldLabel;
+        });
+        if (matchedHeadings.length === 0 && normalize(oldValue) !== '') {
+            var valueMatches = headings.filter(function (heading) {
+                var cell = heading.nextElementSibling;
+                if (!cell || cell.closest('#governedChangePanel')) return false;
+                var annotatedCurrent = cell.querySelector('.qms-annotated-current');
+                var displayedValue = annotatedCurrent
+                    ? (annotatedCurrent.textContent || '')
+                    : (cell.textContent || '');
+                return normalize(displayedValue) === normalize(oldValue);
+            });
+            if (valueMatches.length === 1) {
+                matchedHeadings = valueMatches;
+            }
+        }
+        matchedHeadings.forEach(function (heading) {
+            var cell = heading.nextElementSibling;
+            if (!cell || cell.closest('#governedChangePanel')) return;
+            var currentText = (cell.textContent || '').trim();
+            if (normalize(currentText) === normalize(newValue)) {
+                if (!cell.querySelector('.qms-annotated-current')) {
+                    cell.insertAdjacentHTML('beforeend', ' <span class="badge text-bg-primary qms-annotated-current">已应用更正</span>');
+                }
+                return;
+            }
+            cell.innerHTML = '<div class="text-decoration-line-through text-secondary small"></div>'
+                + '<div class="fw-semibold text-primary qms-annotated-current"></div>';
+            cell.children[0].textContent = oldValue || currentText || '（空）';
+            cell.children[1].textContent = newValue || '（空）';
+        });
+    });
+
+    if (panel.getAttribute('data-frozen') === '1') {
+        var subjectType = panel.getAttribute('data-subject-type') || '';
+        var subjectId = panel.getAttribute('data-subject-id') || '';
+        document.querySelectorAll('a[href]').forEach(function (link) {
+            var href = link.getAttribute('href') || '';
+            if (href.indexOf('/' + subjectType + '/edit?id=' + subjectId) !== 0) return;
+            link.classList.add('disabled');
+            link.setAttribute('aria-disabled', 'true');
+            link.setAttribute('title', '记录已冻结，请在下方按字段申请更正');
+            link.removeAttribute('href');
+            link.textContent = '已冻结';
+        });
+    }
+});
+</script>
+{/if}

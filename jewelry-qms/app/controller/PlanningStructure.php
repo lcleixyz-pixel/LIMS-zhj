@@ -5,6 +5,7 @@ namespace app\controller;
 
 use app\BaseController;
 use app\service\QmsDocumentStructureService;
+use app\service\GovernedTrialResolvedDocumentService;
 use think\exception\HttpException;
 use think\facade\Session;
 use think\facade\View;
@@ -34,8 +35,26 @@ class PlanningStructure extends BaseController
 
         View::assign('detail', $detail);
         View::assign('stepLabels', self::STEP_LABELS);
+        View::assign(
+            'resolvedArtifacts',
+            GovernedTrialResolvedDocumentService::resolvedArtifactLinks($detail['document'])
+        );
 
         return View::fetch('planning_structure/view');
+    }
+
+    public function resolvedArtifact()
+    {
+        $artifact = GovernedTrialResolvedDocumentService::resolvedArtifact(
+            (string)$this->request->param('id', ''),
+            (string)$this->request->param('kind', '')
+        );
+        if ($artifact === []) {
+            throw new HttpException(404, '治理解析稿材料不存在或不在允许目录内');
+        }
+        View::assign('artifact', $artifact);
+
+        return View::fetch('planning_structure/resolved_artifact');
     }
 
     public function editBlock()

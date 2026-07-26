@@ -21,6 +21,7 @@ use app\service\DocumentControlService;
 use app\service\DocumentStatusGuardService;
 use app\service\FieldAuditService;
 use app\service\FileService;
+use app\service\GovernedTrialResolvedDocumentService;
 use app\service\QmsDocumentStructureService;
 use app\service\TrialModeService;
 use think\exception\ValidateException;
@@ -150,7 +151,7 @@ class Document extends BaseController
             throw new HttpException(404, '文件不存在');
         }
         if ((string)$document->status !== 'draft') {
-            Session::flash('warning', '当前状态不可直接编辑。如需修改，请先发起修订或走作废/换版流程。');
+            Session::flash('warning', '只有草稿文件可直接编辑。如需修改，请先发起修订或走作废/换版流程。');
 
             return redirect('/document/view?id=' . $id);
         }
@@ -230,6 +231,7 @@ class Document extends BaseController
             ->where('record', $id)
             ->where('model_name', 'Document')
             ->where('soft_delete', 0)
+            ->order('workflow_round', 'desc')
             ->order('approval_level', 'asc')
             ->select();
 
@@ -261,7 +263,16 @@ class Document extends BaseController
             ->where('users.publish', 1)
             ->order('users.name', 'asc')
             ->select());
-        View::assign('currentUserEmail', strtolower(trim((string)Session::get('user.email', ''))));
+        $currentUserEmail = strtolower(trim((string)Session::get('user.email', '')));
+        if ($currentUserEmail === '') {
+            $currentUserEmail = strtolower(trim((string)(User::where('id', (string)Session::get('user.id', ''))
+                ->value('email') ?? '')));
+        }
+        View::assign('currentUserEmail', $currentUserEmail);
+        View::assign(
+            'signingStatus',
+            ApprovalService::documentWorkflowStatus($doc, (string)Session::get('user.id', ''))
+        );
         View::assign('structureSummary', QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id));
         View::assign('printLogs', ControlledPrintService::recentLogs((string)$doc->id, 5));
         $signingEmbeds = [];
@@ -518,7 +529,28 @@ class Document extends BaseController
         $id = $this->request->param('id');
         $doc = DocumentModel::find($id);
         if ($doc) {
+            if ((string)$doc->status !== 'draft') {
+                Session::flash('warning', '当前文件不在草稿状态，无需重复提交。请先查看当前签批进度。');
+
+                return redirect('/document/view?id=' . $id);
+            }
+
+            $isResubmission = !ApprovalService::hasActiveDocumentWorkflow((string)$doc->id)
+                && ApprovalService::currentWorkflowRound('Document', (string)$doc->id) > 0;
+            if ($isResubmission
+                && !(new \app\service\DocuSealService())->canStartAnotherSigningRound((string)$doc->id)
+            ) {
+                Session::flash('error', '该文件已达到 3 次驳回上限，不能继续重提。请由质量负责人复核后建立新版本。');
+
+                return redirect('/document/view?id=' . $id);
+            }
             Db::transaction(function () use ($doc) {
+                if (!ApprovalService::hasActiveDocumentWorkflow((string)$doc->id)) {
+                    ApprovalService::restartDocumentWorkflow(
+                        $doc,
+                        (string)Session::get('user.id')
+                    );
+                }
                 $doc->status = 'reviewing';
                 $doc->save();
             });
@@ -541,7 +573,12 @@ class Document extends BaseController
                     }
                 }
             }
-            Session::flash('success', '文件「' . ($doc->title ?? '') . '」已提交审核。审核人、批准人将依次收到签批通知，您可在本页查看进度。');
+            Session::flash(
+                'success',
+                $isResubmission
+                    ? '文件「' . ($doc->title ?? '') . '」已重新提交。上一轮记录已保留，本轮将从审核人重新开始签批。'
+                    : '文件「' . ($doc->title ?? '') . '」已提交审核。审核人、批准人将依次处理，您可在本页查看进度。'
+            );
         }
 
         return redirect('/document/view?id=' . $id);
@@ -553,6 +590,12 @@ class Document extends BaseController
         $doc = DocumentModel::find($id);
         if (!$doc || empty($doc->file_path)) {
             throw new HttpException(404, '附件不存在');
+        }
+        if (TrialModeService::isEnabled() && TrialModeService::isSimulationNumber((string)$doc->doc_number)) {
+            $resolvedPath = GovernedTrialResolvedDocumentService::resolveDownloadPath((string)$doc->file_path);
+            if ($resolvedPath !== null) {
+                FileService::downloadAbsolute($resolvedPath, (string)$doc->file_name);
+            }
         }
         FileService::download($doc->file_path, $doc->file_name);
     }
@@ -645,7 +688,19 @@ class Document extends BaseController
 
             $query = DocumentModel::where('doc_number', $value)->where('soft_delete', 0);
             if ($recordId !== null && $recordId !== '') {
-                $query->where('id', '<>', $recordId);
+                $excludedIds = [$recordId];
+                $current = DocumentModel::where('id', $recordId)->where('soft_delete', 0)->find();
+                if ($current) {
+                    $rootId = trim((string)$current->revision_root_id)
+                        ?: (trim((string)$current->supersedes_document_id) ?: (string)$current->id);
+                    $excludedIds[] = $rootId;
+                    $excludedIds = array_merge(
+                        $excludedIds,
+                        DocumentModel::where('revision_root_id', $rootId)->where('soft_delete', 0)->column('id'),
+                        DocumentModel::where('supersedes_document_id', $rootId)->where('soft_delete', 0)->column('id')
+                    );
+                }
+                $query->whereNotIn('id', array_values(array_unique(array_filter($excludedIds))));
             }
 
             return $query->count() === 0 ? true : '文件编号已存在';

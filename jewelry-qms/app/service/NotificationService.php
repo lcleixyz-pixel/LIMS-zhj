@@ -18,6 +18,8 @@ use think\facade\Log;
 
 class NotificationService
 {
+    private const STORAGE_TYPES = ['calibration', 'training', 'document', 'audit', 'general'];
+
     public static function notifyUsers(
         string $title,
         string $message,
@@ -30,6 +32,7 @@ class NotificationService
         ?string $notificationKey = null
     ): void {
         $companyId = Config::get('qms.company_id');
+        $type = self::normalizeTypeForStorage($type);
         $keySupported = self::notificationKeySupported();
         $notificationKey = $notificationKey !== null && trim($notificationKey) !== ''
             ? trim($notificationKey)
@@ -82,6 +85,13 @@ class NotificationService
         }
 
         self::attachRecipients((string)$notification->id, $userIds);
+    }
+
+    public static function normalizeTypeForStorage(string $type): string
+    {
+        $type = trim($type);
+
+        return in_array($type, self::STORAGE_TYPES, true) ? $type : 'general';
     }
 
     public static function notifyRole(

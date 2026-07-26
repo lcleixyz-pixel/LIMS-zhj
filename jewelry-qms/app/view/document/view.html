@@ -2,8 +2,15 @@
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
         <h5 class="mb-0">文件详情 - {$doc.doc_number|default=''}</h5>
         <div class="d-flex flex-wrap gap-1 align-items-center">
-            {* 主操作：根据状态和权限只显示一个最可能的下一步 *}
-            {if $doc.status == 'draft' && qms_can_action('document', 'submit_review', $doc)}
+            <!-- 主操作：根据状态和权限只显示一个最可能的下一步 -->
+            {if $doc.status == 'draft' && !empty($signingStatus.rejected) && qms_can_action('document', 'register', $doc)}
+            <a href="/document/edit?id={$doc.id}" class="btn btn-sm btn-primary">修改文件</a>
+            {if qms_can_action('document', 'submit_review', $doc)}
+            <form method="post" action="/document/submitReview?id={$doc.id}" class="d-inline" onsubmit="return confirm('请确认已完成本轮修改。重新提交后，将从审核人开始新一轮签批。');">
+                <button type="submit" class="btn btn-sm btn-success">修改完成，重新提交</button>
+            </form>
+            {/if}
+            {elseif $doc.status == 'draft' && qms_can_action('document', 'submit_review', $doc)}
             <form method="post" action="/document/submitReview?id={$doc.id}" class="d-inline">
                 <button type="submit" class="btn btn-sm btn-success">提交审核</button>
             </form>
@@ -13,11 +20,11 @@
             <a href="/document/revise?id={$doc.id}" class="btn btn-sm btn-warning">发起修订</a>
             {/if}
 
-            {* 更多操作下拉 *}
+            <!-- 更多操作下拉 -->
             <div class="dropdown d-inline">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">更多</button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    {if !in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'register', $doc)}
+                    {if !in_array($doc.status, ['trial_ready', 'published']) && empty($signingStatus.rejected) && qms_can_action('document', 'register', $doc)}
                     <li><a class="dropdown-item" href="/document/edit?id={$doc.id}">编辑</a></li>
                     {/if}
                     {if qms_can_action('document', 'review', $doc)}
@@ -41,11 +48,13 @@
         </div>
     </div>
     <div class="card-body">
-        {* 状态提示条：说明当前状态和下一步 *}
+        <!-- 状态提示条：说明当前状态和下一步 -->
         <div class="alert alert-light border mb-3 small">
             <strong>当前状态：</strong>
-            {if $doc.status == 'draft'}草稿。下一步：编辑完成后可提交审核。
-            {elseif $doc.status == 'reviewing'}审核中。下一步：等待审核人与批准人完成在线签批。
+            {if !empty($signingStatus.rejected)}
+            已驳回，已退回草稿。下一步：编制人查看驳回原因，修改后重新提交。
+            {elseif $doc.status == 'draft'}草稿。下一步：编辑完成后可提交审核。
+            {elseif $doc.status == 'reviewing'}{$signingStatus.stage_label|default='审核中'}。下一步：按当前岗位完成在线签批。
             {elseif $doc.status == 'approved'}已批准。下一步：等待发布。
             {elseif $doc.status == 'trial_ready'}试运行就绪。
             {elseif $doc.status == 'published'}已发布。
@@ -73,8 +82,10 @@
             <tr>
                 <th>文件状态</th>
                 <td>
-                    {if $doc.status == 'draft'}<span class="badge bg-secondary">草稿</span>
-                    {elseif $doc.status == 'reviewing'}<span class="badge bg-warning text-dark">审核中</span>
+                    {if !empty($signingStatus.rejected)}<span class="badge bg-danger">已驳回，待修改</span>
+                    {elseif $doc.status == 'draft'}<span class="badge bg-secondary">草稿</span>
+                    {elseif $doc.status == 'reviewing' && !empty($signingStatus.reviewed)}<span class="badge bg-info text-dark">已审核，待批准</span>
+                    {elseif $doc.status == 'reviewing'}<span class="badge bg-warning text-dark">等待审核</span>
                     {elseif $doc.status == 'approved'}<span class="badge bg-info text-dark">已批准</span>
                     {elseif $doc.status == 'trial_ready'}<span class="badge bg-warning text-dark">试运行就绪</span>
                     {elseif $doc.status == 'published'}<span class="badge bg-success">已发布</span>
@@ -113,9 +124,12 @@
     </div>
 </div>
 
-{if !empty($signingEmbeds)}
+{if $docusealSigningEnabled && (!empty($signingEmbeds) || in_array($signingStatus.stage, ['pending_review','pending_approval','rejected']))}
 <div class="card mb-3 border-warning">
-    <div class="card-header bg-warning-subtle"><h6 class="mb-0">在线签批</h6></div>
+    <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h6 class="mb-0">在线签批</h6>
+        {if !empty($signingStatus.round)}<span class="small text-muted">第 {$signingStatus.round} 轮</span>{/if}
+    </div>
     <div class="card-body">
         {php}
         $currentUserEmail = strtolower(trim($currentUserEmail ?? ''));
@@ -128,75 +142,66 @@
         }
         {/php}
 
-        {if !$isSigner}
-        <div class="alert alert-light border small mb-3">当前文件等待以下人员签署，您可在<a href="#approval-records">签批记录</a>中查看进度。</div>
-        {/if}
-
-        {* 签批进度条 *}
-        <div class="mb-3">
-            <div class="d-flex justify-content-between small text-muted mb-1">
-                <span>签批进度</span>
-                <span>
-                    {if $doc.status == 'draft'}草稿
-                    {elseif $doc.status == 'reviewing'}审核中
-                    {elseif in_array($doc.status, ['published','trial_ready'])}已完成
-                    {else}{$doc.status}{/if}
-                </span>
-            </div>
-            <div class="progress" style="height: 8px;">
-                {if in_array($doc.status, ['published','trial_ready'])}
-                <div class="progress-bar bg-success" style="width: 100%"></div>
-                {elseif $doc.status == 'reviewing'}
-                <div class="progress-bar bg-warning" style="width: 66%"></div>
-                {else}
-                <div class="progress-bar bg-secondary" style="width: 33%"></div>
-                {/if}
-            </div>
-            <div class="d-flex justify-content-between small mt-1">
-                <span class="{if in_array($doc.status, ['draft','reviewing','published','trial_ready'])}text-primary fw-semibold{/if}">1. 提交</span>
-                <span class="{if $doc.status == 'reviewing'}text-primary fw-semibold{elseif in_array($doc.status, ['published','trial_ready'])}text-success{/if}">2. 签批</span>
-                <span class="{if in_array($doc.status, ['published','trial_ready'])}text-success fw-semibold{/if}">3. 发布</span>
-            </div>
+        {if $signingStatus.stage == 'rejected'}
+        <div class="alert alert-danger" role="alert">
+            <strong>本轮已驳回。</strong>
+            {if $signingStatus.reject_reason}<div class="mt-1">原因：{$signingStatus.reject_reason}</div>{/if}
+            <div class="mt-1">下一步：由编制人修改文件，确认无误后点击“修改完成，重新提交”。</div>
+        </div>
+        {else}
+        <div class="alert {if $isSigner}alert-primary{else}alert-light border{/if}" role="status">
+            <strong>我的任务：</strong>
+            {if $signingStatus.current_user_level == 2 && $signingStatus.stage == 'pending_review'}
+            请核对文件内容并完成审核签字。完成后，文件将交给批准人。
+            {elseif $signingStatus.current_user_level == 3 && $signingStatus.stage == 'pending_approval'}
+            请核对审核结果并完成批准签字。完成后，SIM 文件将进入试运行就绪状态。
+            {elseif $signingStatus.current_user_level == 3 && $signingStatus.stage == 'pending_review'}
+            当前等待审核人处理，审核完成后才轮到您批准。
+            {elseif $signingStatus.current_user_level == 2 && $signingStatus.stage == 'pending_approval'}
+            您已完成审核，当前等待批准人处理。
+            {else}
+            当前无需您签字，可在下方查看进度。
+            {/if}
         </div>
 
-        <p class="text-muted small mb-2">请点击下方“打开签署页”完成电子签字。签名完成后自动进入下一环节。</p>
-        <div class="table-responsive">
-            <table class="table table-sm mb-3">
-                <thead><tr><th>角色</th><th>邮箱</th><th>签署入口</th></tr></thead>
-                <tbody>
-                    {volist name="signingEmbeds" id="embed"}
-                    {php}
-                    $embedEmail = strtolower(trim($embed['email'] ?? ''));
-                    $isCurrentSigner = $currentUserEmail !== '' && $embedEmail === $currentUserEmail;
-                    $roleLabel = $embed['role'] == 'Reviewer' ? '审核人' : ($embed['role'] == 'Approver' ? '批准人' : $embed['role']);
-                    {/php}
-                    <tr class="{if $isCurrentSigner}table-primary{/if}">
-                        <td>{$roleLabel}{if $isCurrentSigner} <span class="badge bg-primary">我</span>{/if}</td>
-                        <td>{$embed.email|default='-'}</td>
-                        <td>
-                            {if !empty($embed.embed_src)}
-                            <a class="btn btn-sm btn-outline-primary" href="{$embed.embed_src}" target="_blank" rel="noopener">打开签署页</a>
-                            {else}-
-                            {/if}
-                        </td>
-                    </tr>
-                    {/volist}
-                </tbody>
-            </table>
-        </div>
+        <ol class="list-group list-group-horizontal-md mb-3" aria-label="文件签批进度">
+            <li class="list-group-item flex-fill text-success">已提交</li>
+            <li class="list-group-item flex-fill {if $signingStatus.reviewed}text-success{elseif $signingStatus.stage == 'pending_review'}fw-semibold border-primary{/if}" {if $signingStatus.stage == 'pending_review'}aria-current="step"{/if}>
+                {if $signingStatus.reviewed}已审核{else}等待审核{/if}
+            </li>
+            <li class="list-group-item flex-fill {if $signingStatus.approved}text-success{elseif $signingStatus.stage == 'pending_approval'}fw-semibold border-primary{/if}" {if $signingStatus.stage == 'pending_approval'}aria-current="step"{/if}>
+                {if $signingStatus.approved}已批准{else}等待批准{/if}
+            </li>
+        </ol>
+
         {volist name="signingEmbeds" id="embed"}
         {if !empty($embed.embed_src)}
         {php}
         $embedEmail = strtolower(trim($embed['email'] ?? ''));
         $isCurrentSigner = $currentUserEmail !== '' && $embedEmail === $currentUserEmail;
         $roleLabel = $embed['role'] == 'Reviewer' ? '审核人' : ($embed['role'] == 'Approver' ? '批准人' : $embed['role']);
+        $canSignNow = $isCurrentSigner && (
+            ($embed['role'] == 'Reviewer' && $signingStatus['stage'] == 'pending_review')
+            || ($embed['role'] == 'Approver' && $signingStatus['stage'] == 'pending_approval')
+        );
         {/php}
-        <div class="mb-3 {if !$isCurrentSigner}d-none{/if}" data-signer-role="{$embed.role}">
-            <div class="small text-muted mb-1">{$roleLabel}{if $isCurrentSigner}（我）{/if} · {$embed.email|default=''}</div>
-            <iframe src="{$embed.embed_src}" title="在线签批 {$embed.role|default=''}" style="width:100%;min-height:520px;border:1px solid #dee2e6;border-radius:4px;"></iframe>
+        {if $canSignNow}
+        <div class="mb-3" data-signer-role="{$embed.role}">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <div class="fw-semibold">
+                    {if $embed.role == 'Reviewer'}审核人（我）{elseif $embed.role == 'Approver'}批准人（我）{else}{$roleLabel}（我）{/if}
+                </div>
+                <a class="btn btn-primary" href="{$embed.embed_src}" target="_blank" rel="noopener">打开签字页</a>
+            </div>
+            <p class="text-muted small mb-0">签字页将在新窗口打开。完成后返回本页刷新，系统会自动显示下一环节。</p>
         </div>
         {/if}
+        {/if}
         {/volist}
+        {if empty($signingEmbeds)}
+        <div class="alert alert-warning mb-0" role="alert">签字入口暂未生成。请稍后刷新；如仍未出现，请联系质量负责人核对签批配置。</div>
+        {/if}
+        {/if}
     </div>
 </div>
 {/if}
@@ -420,12 +425,13 @@
     </div>
 </div>
 
-<div class="card mb-3">
+<div class="card mb-3" id="approval-records">
     <div class="card-header"><h6 class="mb-0">审批流程</h6></div>
     <div class="card-body">
         {volist name="approvals" id="row"}
-        <div class="border rounded p-2 mb-2">
+        <div class="border rounded p-3 mb-2 {if $row.record_status == 0}bg-light text-muted{/if}">
             <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+                <span class="badge bg-light text-dark border">第 {$row.workflow_round|default=1} 轮</span>
                 <span class="badge bg-primary">层级 {$row.approval_level|default=''}</span>
                 <span class="badge {if $row.status == 'approved'}bg-success{elseif $row.status == 'rejected'}bg-danger{else}bg-secondary{/if}">
                     {if $row.status == 'approved'}已通过{elseif $row.status == 'rejected'}已驳回{else}待处理{/if}
@@ -439,23 +445,27 @@
                 </span>
                 <span class="text-muted ms-auto">{$row.approved_on|default='-'}</span>
             </div>
+            {if $row.record_status == 0}<div class="small mb-2">历史轮次，已结束，不参与当前签批。</div>{/if}
             {if $row.comments}
             <div class="text-muted small">{$row.comments}</div>
             {/if}
-            {if $row.status == 'pending' && isset($user.id) && $row.user_id == $user.id}
+            {if $row.status == 'pending' && $row.record_status == 1 && isset($user.id) && $row.user_id == $user.id}
             <form method="post" action="/approval/approve" class="row g-2 mt-2">
                 <input type="hidden" name="id" value="{$row.id}">
                 <div class="col-md-4">
-                    <select name="status" class="form-select form-select-sm" required>
+                    <label class="form-label small" for="approval-decision-{$row.id}">处理结果</label>
+                    <select id="approval-decision-{$row.id}" name="status" class="form-select form-select-sm" required>
                         <option value="approved">同意</option>
                         <option value="rejected">驳回</option>
                     </select>
                 </div>
                 <div class="col-md-5">
-                    <input type="text" name="comments" class="form-control form-control-sm" placeholder="审批意见">
+                    <label class="form-label small" for="approval-comments-{$row.id}">签批意见</label>
+                    <input id="approval-comments-{$row.id}" type="text" name="comments" class="form-control form-control-sm" aria-describedby="approval-comments-help-{$row.id}">
+                    <div id="approval-comments-help-{$row.id}" class="form-text">选择驳回时请填写需要修改的内容。</div>
                 </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-sm btn-primary">提交</button>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">提交签批结果</button>
                 </div>
             </form>
             {/if}

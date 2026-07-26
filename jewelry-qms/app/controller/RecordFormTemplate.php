@@ -13,6 +13,7 @@ use app\service\RecordFormFixtureService;
 use app\service\RecordFormPrintService;
 use app\service\RecordFormReconstructionReviewService;
 use app\service\RecordFormSchemaService;
+use app\service\RecordFormTemplateRevisionService;
 use app\service\TrialModeService;
 use app\service\CoreTrialTemplateService;
 use InvalidArgumentException;
@@ -353,6 +354,41 @@ class RecordFormTemplate extends BaseController
         return View::fetch('record_form_template/edit');
     }
 
+    public function createRevision()
+    {
+        $record = $this->findTemplate();
+        if (!$this->request->isPost()) {
+            Session::flash('warning', '请从模板详情页填写修订说明并发起换版。');
+
+            return redirect('/record_form_template/view?id=' . $record->id);
+        }
+        if (!TrialModeService::isEnabled()) {
+            Session::flash('warning', '当前环境未开启受控试运行，不能建立试运行修订草稿。');
+
+            return redirect('/record_form_template/view?id=' . $record->id);
+        }
+
+        try {
+            $result = RecordFormTemplateRevisionService::createDraftRevision(
+                $record,
+                trim((string)$this->request->post('revision_note', ''))
+            );
+            $draft = $result['template'];
+            Session::flash(
+                'success',
+                !empty($result['reused'])
+                    ? '该版本已有修订草稿，已为你打开；旧版本保持不变。'
+                    : '修订草稿已建立，旧版本保持不变；下一步请编辑草稿并提交复核。'
+            );
+
+            return redirect('/record_form_template/edit?id=' . $draft->id);
+        } catch (RuntimeException $exception) {
+            Session::flash('warning', $exception->getMessage());
+
+            return redirect('/record_form_template/view?id=' . $record->id);
+        }
+    }
+
     public function reviewSchemaDraftFields()
     {
         if (!$this->request->isPost()) {
@@ -395,6 +431,26 @@ class RecordFormTemplate extends BaseController
         View::assign('canCreateInstances', $this->canCreateInstances());
         View::assign('trialReadinessErrors', TrialModeService::readinessErrors($record));
         View::assign('trialModeEnabled', TrialModeService::isEnabled());
+        $versioningAvailable = RecordFormTemplateRevisionService::supportsVersioning($record);
+        View::assign('versioningAvailable', $versioningAvailable);
+        View::assign(
+            'canCreateRevision',
+            $versioningAvailable
+                && TrialModeService::isEnabled()
+                && in_array((string)$record->status, ['trial_ready', 'published'], true)
+        );
+        View::assign(
+            'previousTemplate',
+            $versioningAvailable ? RecordFormTemplateRevisionService::previousVersion($record) : null
+        );
+        View::assign(
+            'openRevisionDraft',
+            $versioningAvailable ? RecordFormTemplateRevisionService::openDraftFor($record) : null
+        );
+        View::assign(
+            'revisionHistory',
+            $versioningAvailable ? RecordFormTemplateRevisionService::history($record) : []
+        );
 
         return View::fetch('record_form_template/view');
     }
@@ -722,11 +778,7 @@ class RecordFormTemplate extends BaseController
         if ($docNumber === '') {
             $errors[] = '编号不能为空';
         } else {
-            $query = TemplateModel::where('soft_delete', 0)->where('doc_number', $docNumber);
-            if ($currentId !== '') {
-                $query->where('id', '<>', $currentId);
-            }
-            if ((int)$query->count() > 0) {
+            if (RecordFormTemplateRevisionService::conflictingNumberExists($docNumber, $currentId)) {
                 $errors[] = '编号已存在：受控记录表格编号应唯一，请走换版或作废流程。';
             }
         }

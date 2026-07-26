@@ -237,6 +237,7 @@ assert_same(true, invoke_private($controller, 'canExportPdf', [$draftRecord]), '
 
 $generatedRecord = new SmokeRecordFormInstance();
 $generatedRecord->status = 'generated';
+assert_same(false, invoke_private($controller, 'canExportPdf', [$generatedRecord]), 'Generated records cannot replace the frozen original PDF');
 assert_same(false, invoke_private($controller, 'canEditRecord', [$generatedRecord]), 'Generated records cannot be directly edited after a formal PDF is formed');
 assert_same(false, invoke_private($controller, 'canEditRecord', [$lockedRecord]), 'Locked records cannot be directly edited');
 assert_same(false, invoke_private($controller, 'canEditRecord', [$voidedRecord]), 'Voided records cannot be directly edited');
