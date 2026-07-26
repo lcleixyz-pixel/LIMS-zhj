@@ -55,5 +55,30 @@ workbench_runtime_assert(
     ($viewModel['document']['document_url'] ?? '') !== '',
     'CX-03-02 应回链文件详情和签批状态'
 );
+workbench_runtime_assert(
+    ($viewModel['chain']['missing'] ?? []) === [],
+    'CX-03-02 完成定向治理后不得再有外部依据、手册或记录schema断链'
+);
+$externalLabels = array_map(
+    static fn(array $row): string => (string)($row['source_code'] ?? '') . ' ' . (string)($row['clause_number'] ?? ''),
+    $viewModel['chain']['external_sources'] ?? []
+);
+foreach ([
+    '市场监管总局公告2023年第21号 2.11.3',
+    'CNAS-CL01-G001:2024 6.4.1a)',
+    'CNAS-CL01:2018 6.5.2',
+] as $expectedExternal) {
+    workbench_runtime_assert(
+        in_array($expectedExternal, $externalLabels, true),
+        'CX-03-02 缺少外部依据：' . $expectedExternal
+    );
+}
+$manualNumbers = array_column($viewModel['chain']['manual_sections'] ?? [], 'section_number');
+foreach (['6.4', '6.5'] as $expectedManual) {
+    workbench_runtime_assert(
+        in_array($expectedManual, $manualNumbers, true),
+        'CX-03-02 缺少质量手册落实章节：' . $expectedManual
+    );
+}
 
 echo "qms_file_governance_workbench_runtime_smoke passed\n";

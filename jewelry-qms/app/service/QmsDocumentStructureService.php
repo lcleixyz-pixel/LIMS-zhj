@@ -193,6 +193,18 @@ class QmsDocumentStructureService
         return $markdown;
     }
 
+    public static function structureRecordFormTemplate(string $templateId): array
+    {
+        $template = RecordFormTemplate::where('id', trim($templateId))
+            ->where('soft_delete', 0)
+            ->find();
+        if (!$template) {
+            throw new \RuntimeException('记录表格模板不存在，不能执行定向结构化');
+        }
+
+        return self::upsertRecordFormStructure($template);
+    }
+
     private static function recordFormSchemaRequirementProfileMarkdown(array|RecordFormTemplate $template, array $schema): string
     {
         $templateId = is_array($template)
@@ -3627,55 +3639,69 @@ class QmsDocumentStructureService
         $activeTemplateIds = [];
         foreach (RecordFormTemplate::where('soft_delete', 0)->order('doc_number', 'asc')->select() as $template) {
             $activeTemplateIds[] = (string)$template->id;
-            $resolvedPath = self::resolveRecordFormSourcePath($template);
-            $resolvedName = self::recordFormOriginalSourceName($template, $resolvedPath);
-            if ($resolvedPath !== '' && is_file(self::workspacePath($resolvedPath))
-                && ($resolvedPath !== (string)$template->source_file_path || $resolvedName !== (string)$template->source_file_name)) {
-                $template->save([
-                    'source_file_path' => $resolvedPath,
-                    'source_file_name' => $resolvedName,
-                ]);
-            }
-            $row = [
-                'doc_number' => (string)$template->doc_number,
-                'title' => (string)$template->name,
-                'version' => (string)$template->version,
-                'file_path' => $resolvedPath,
-                'file_name' => $resolvedName !== '' ? $resolvedName : (string)($template->source_file_name ?: $template->name . '.schema.json'),
-                'file_type' => $resolvedName !== '' ? strtolower((string)pathinfo($resolvedName, PATHINFO_EXTENSION)) : ($template->source_file_name ? strtolower((string)pathinfo((string)$template->source_file_name, PATHINFO_EXTENSION)) : 'json'),
-                'source_note' => '记录表格模板按程序文件记录要求形成字段 schema。',
-            ];
-            $asset = self::upsertAsset('record_form', $row, null, null, $template);
-            $summary['assets']++;
-            $structured = self::upsertStructuredDocument('record_form', $row, null, $asset);
-            $summary['structured_documents']++;
-            $sourceMarkdown = self::markdownFromSourcePath($resolvedPath, 80);
-            $schemaMarkdown = self::recordFormSchemaMarkdown($template, $sourceMarkdown);
-            $block = self::upsertBlock($structured, null, [
-                'stable_key' => 'record_form:' . self::stableToken((string)$template->doc_number) . ':schema',
-                'title' => '表格schema：' . (string)$template->name,
-                'block_type' => 'form_schema',
-                'sort_order' => 100,
-                'source_locator' => $resolvedPath,
-                'markdown' => $schemaMarkdown,
-            ]);
-            self::resetBlockLinks($block);
-            $summary['blocks']++;
-            self::createBlockLink($block, [
-                'element_id' => $template->element_id ? (string)$template->element_id : null,
-                'procedure_document_id' => $template->procedure_doc_id ? (string)$template->procedure_doc_id : null,
-                'record_form_template_id' => (string)$template->id,
-                'relation_type' => 'renders_to',
-                'confidence' => 'high',
-                'note' => '记录表格结构化块对应运行记录 schema。',
-            ]);
-            $summary['links']++;
-            $summary['links'] += self::createRecordTemplateModuleLinks($block, $template, (string)$template->element_id);
-            if (self::renderStructuredDocument($structured)) {
-                $summary['rendered']++;
+            $itemSummary = self::upsertRecordFormStructure($template);
+            foreach (['assets', 'structured_documents', 'blocks', 'links', 'rendered'] as $key) {
+                $summary[$key] += (int)($itemSummary[$key] ?? 0);
             }
         }
         $summary['retired'] = self::retireObsoleteRecordFormStructures($activeTemplateIds);
+
+        return $summary;
+    }
+
+    private static function upsertRecordFormStructure(RecordFormTemplate $template): array
+    {
+        $summary = ['assets' => 0, 'structured_documents' => 0, 'blocks' => 0, 'links' => 0, 'rendered' => 0];
+        $resolvedPath = self::resolveRecordFormSourcePath($template);
+        $resolvedName = self::recordFormOriginalSourceName($template, $resolvedPath);
+        if ($resolvedPath !== '' && is_file(self::workspacePath($resolvedPath))
+            && ($resolvedPath !== (string)$template->source_file_path || $resolvedName !== (string)$template->source_file_name)) {
+            $template->save([
+                'source_file_path' => $resolvedPath,
+                'source_file_name' => $resolvedName,
+            ]);
+        }
+        $row = [
+            'doc_number' => (string)$template->doc_number,
+            'title' => (string)$template->name,
+            'version' => (string)$template->version,
+            'file_path' => $resolvedPath,
+            'file_name' => $resolvedName !== '' ? $resolvedName : (string)($template->source_file_name ?: $template->name . '.schema.json'),
+            'file_type' => $resolvedName !== '' ? strtolower((string)pathinfo($resolvedName, PATHINFO_EXTENSION)) : ($template->source_file_name ? strtolower((string)pathinfo((string)$template->source_file_name, PATHINFO_EXTENSION)) : 'json'),
+            'source_note' => '记录表格模板按程序文件记录要求形成字段 schema。',
+        ];
+        $asset = self::upsertAsset('record_form', $row, null, null, $template);
+        $summary['assets']++;
+        $structured = self::upsertStructuredDocument('record_form', $row, null, $asset);
+        $summary['structured_documents']++;
+        $sourceMarkdown = self::markdownFromSourcePath($resolvedPath, 80);
+        $schemaMarkdown = self::recordFormSchemaMarkdown($template, $sourceMarkdown);
+        $block = self::upsertBlock($structured, null, [
+            'stable_key' => 'record_form:' . self::stableToken((string)$template->doc_number) . ':schema',
+            'title' => '表格schema：' . (string)$template->name,
+            'block_type' => 'form_schema',
+            'sort_order' => 100,
+            'source_locator' => $resolvedPath,
+            'markdown' => $schemaMarkdown,
+        ]);
+        self::resetBlockLinks($block);
+        $summary['blocks']++;
+        self::createBlockLink($block, [
+            'element_id' => $template->element_id ? (string)$template->element_id : null,
+            'procedure_document_id' => $template->procedure_doc_id ? (string)$template->procedure_doc_id : null,
+            'record_form_template_id' => (string)$template->id,
+            'relation_type' => 'renders_to',
+            'confidence' => 'high',
+            'note' => '记录表格结构化块对应运行记录 schema。',
+        ]);
+        $summary['links']++;
+        $summary['links'] += self::createRecordTemplateModuleLinks($block, $template, (string)$template->element_id);
+        if (self::renderStructuredDocument($structured)) {
+            $summary['rendered']++;
+        }
+        $summary['template_id'] = (string)$template->id;
+        $summary['doc_number'] = (string)$template->doc_number;
+        $summary['source_file_path'] = $resolvedPath;
 
         return $summary;
     }
