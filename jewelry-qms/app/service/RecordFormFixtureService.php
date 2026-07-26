@@ -76,16 +76,27 @@ class RecordFormFixtureService
     private static function trainingRecordSchema(): array
     {
         return [
-            ['key' => 'training_date', 'label' => '培训日期', 'type' => 'date', 'required' => true],
+            ['key' => 'usage_site', 'label' => '使用场所', 'type' => 'select', 'options' => ['wulumuqi', 'hetian'], 'required' => false, 'default' => 'wulumuqi'],
             ['key' => 'training_topic', 'label' => '培训主题', 'type' => 'text', 'required' => true],
-            ['key' => 'trainer', 'label' => '培训讲师', 'type' => 'text', 'required' => true],
-            ['key' => 'training_content', 'label' => '培训内容', 'type' => 'textarea', 'required' => false],
+            ['key' => 'training_category', 'label' => '培训类别', 'type' => 'select', 'options' => ['内部', '外委'], 'required' => true],
+            ['key' => 'training_date', 'label' => '培训日期', 'type' => 'date', 'required' => true],
+            ['key' => 'training_place', 'label' => '地点', 'type' => 'text', 'required' => false],
+            ['key' => 'trainer', 'label' => '讲师(内部)', 'type' => 'text', 'required' => false],
+            ['key' => 'training_provider', 'label' => '培训单位(外委)', 'type' => 'text', 'required' => false],
+            ['key' => 'training_materials', 'label' => '教材/资料', 'type' => 'textarea', 'required' => false],
+            ['key' => 'training_target_scope', 'label' => '培训对象范围', 'type' => 'text', 'required' => false],
+            ['key' => 'assessment_method', 'label' => '考核方式', 'type' => 'select', 'options' => ['考试', '提问', '实操', '不考核'], 'required' => false],
             ['key' => 'attendees', 'label' => '参训人员', 'type' => 'repeatable_table', 'columns' => [
                 ['key' => 'name', 'label' => '姓名', 'type' => 'person', 'required' => true],
-                ['key' => 'department', 'label' => '部门', 'type' => 'department', 'required' => false],
+                ['key' => 'position', 'label' => '岗位', 'type' => 'text', 'required' => false],
                 ['key' => 'signature', 'label' => '签名', 'type' => 'signature', 'required' => false],
             ]],
-            ['key' => 'effect_evaluation', 'label' => '效果评价', 'type' => 'textarea', 'required' => false],
+            ['key' => 'training_content', 'label' => '培训内容摘要', 'type' => 'textarea', 'required' => false],
+            ['key' => 'assessment_result', 'label' => '考核结果', 'type' => 'textarea', 'required' => false],
+            ['key' => 'effect_evaluation_note', 'label' => '效果评价衔接注', 'type' => 'textarea', 'required' => false],
+            ['key' => 'recorder', 'label' => '记录人', 'type' => 'person', 'required' => false],
+            ['key' => 'record_date', 'label' => '记录日期', 'type' => 'date', 'required' => false],
+            ['key' => 'archive_note', 'label' => '归档标识', 'type' => 'textarea', 'required' => false],
         ];
     }
 
@@ -147,6 +158,11 @@ class RecordFormFixtureService
     private static function trainingApplicationSchema(): array
     {
         return [
+            ['key' => 'usage_site', 'label' => '使用场所', 'type' => 'select', 'options' => ['wulumuqi', 'hetian'], 'required' => false, 'default' => 'wulumuqi'],
+            ['key' => 'applicant', 'label' => '申请人', 'type' => 'person', 'required' => false],
+            ['key' => 'application_department', 'label' => '申请部门', 'type' => 'department', 'required' => false],
+            ['key' => 'application_date', 'label' => '申请日期', 'type' => 'date', 'required' => false],
+            ['key' => 'training_category', 'label' => '培训类别', 'type' => 'select', 'options' => ['内部', '外委'], 'required' => true],
             ['key' => 'training_content', 'label' => '申请培训内容', 'type' => 'textarea', 'required' => true],
             ['key' => 'participants', 'label' => '参加人员', 'type' => 'repeatable_table', 'columns' => [
                 ['key' => 'name', 'label' => '姓名', 'type' => 'person', 'required' => true],
@@ -157,16 +173,13 @@ class RecordFormFixtureService
             ['key' => 'training_place', 'label' => '培训地点', 'type' => 'text', 'required' => false],
             ['key' => 'training_time', 'label' => '培训时间', 'type' => 'text', 'required' => false],
             ['key' => 'estimated_cost', 'label' => '所需费用', 'type' => 'number', 'required' => false],
-            ['key' => 'application_department', 'label' => '申请培训部门', 'type' => 'department', 'required' => false],
-            ['key' => 'application_opinion', 'label' => '申请部门意见', 'type' => 'textarea', 'required' => false],
-            ['key' => 'application_responsible_person', 'label' => '申请部门负责人', 'type' => 'person', 'required' => false],
-            ['key' => 'application_date', 'label' => '申请日期', 'type' => 'date', 'required' => false],
-            ['key' => 'audit_opinion', 'label' => '审核意见', 'type' => 'textarea', 'required' => false],
-            ['key' => 'auditor', 'label' => '审核人', 'type' => 'person', 'required' => false],
-            ['key' => 'audit_date', 'label' => '审核日期', 'type' => 'date', 'required' => false],
-            ['key' => 'approval_opinion', 'label' => '批准意见', 'type' => 'textarea', 'required' => false],
-            ['key' => 'approver', 'label' => '批准人', 'type' => 'person', 'required' => false],
-            ['key' => 'approval_date', 'label' => '批准日期', 'type' => 'date', 'required' => false],
+            ['key' => 'expected_capability', 'label' => '预期目标/能力要求', 'type' => 'textarea', 'required' => false],
+            ['key' => 'technical_manager_review_opinion', 'label' => '技术负责人审核意见', 'type' => 'textarea', 'required' => false],
+            ['key' => 'technical_manager', 'label' => '技术负责人', 'type' => 'person', 'required' => false],
+            ['key' => 'technical_manager_review_date', 'label' => '技术负责人审核日期', 'type' => 'date', 'required' => false],
+            ['key' => 'lab_director_approval_opinion', 'label' => '实验室主任批准意见', 'type' => 'textarea', 'required' => false],
+            ['key' => 'lab_director', 'label' => '实验室主任', 'type' => 'person', 'required' => false],
+            ['key' => 'lab_director_approval_date', 'label' => '实验室主任批准日期', 'type' => 'date', 'required' => false],
             ['key' => 'remarks', 'label' => '备注', 'type' => 'textarea', 'required' => false],
         ];
     }

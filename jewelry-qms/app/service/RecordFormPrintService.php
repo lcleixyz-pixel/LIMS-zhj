@@ -102,4 +102,16 @@ CSS;
 
         return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
     }
+
+    public static function displayDocNumber(array $template, array $values): string
+    {
+        $docNumber = (string)($template['doc_number'] ?? '');
+        $usageSite = trim((string)($values['usage_site'] ?? ''));
+
+        if ($usageSite === 'hetian' && preg_match('/\AXZTC\/BG-(\d{2}-\d{2})\z/', $docNumber, $matches) === 1) {
+            return 'XZTCH-BG-' . $matches[1];
+        }
+
+        return $docNumber;
+    }
 }

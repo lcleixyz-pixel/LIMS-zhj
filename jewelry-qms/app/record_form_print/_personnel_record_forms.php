@@ -3,7 +3,8 @@ use app\service\RecordFormPrintService as P;
 
 $kind = $personnelPrintTemplate ?? '';
 $templateName = htmlspecialchars((string)($template['name'] ?? '人员记录表格'), ENT_QUOTES, 'UTF-8');
-$docNumber = htmlspecialchars((string)($template['doc_number'] ?? ''), ENT_QUOTES, 'UTF-8');
+$docNumber = htmlspecialchars(P::displayDocNumber($template, $values), ENT_QUOTES, 'UTF-8');
+$masterDocNumber = htmlspecialchars((string)($template['doc_number'] ?? ''), ENT_QUOTES, 'UTF-8');
 $version = htmlspecialchars((string)($template['version'] ?? 'A/0'), ENT_QUOTES, 'UTF-8');
 $pageSize = in_array($kind, ['certificate_registry', 'assessment_record'], true) ? 'A4 landscape' : 'A4';
 $v = static fn (string $key, string $default = ''): string => P::value($values, $key, $default);
@@ -46,8 +47,8 @@ $checked = static fn (string $actual, string $expected): string => $actual === $
 <body>
     <div class="title"><?php if ($kind === 'annual_training_plan'): ?><?= $v('plan_year', date('Y')) ?>年度人员培训计划表<?php else: ?><?= $templateName ?><?php endif; ?></div>
     <div class="meta">
-        <span>编号：<?= $docNumber ?></span>
-        <span>版本：<?= $version ?></span>
+        <span>编号：<?= $docNumber ?><?php if ($docNumber !== $masterDocNumber): ?>（母版：<?= $masterDocNumber ?>）<?php endif; ?></span>
+        <span>版次：<?= $version ?>　保存期限：不少于6年</span>
     </div>
 
     <?php if ($kind === 'annual_training_plan'): ?>
@@ -199,16 +200,29 @@ $checked = static fn (string $actual, string $expected): string => $actual === $
     <?php elseif ($kind === 'training_application'): ?>
         <table>
             <tr>
+                <th class="label">申请人</th><td><?= $v('applicant') ?></td>
+                <th class="label">申请部门</th><td><?= $v('application_department') ?></td>
+                <th class="label">申请日期</th><td><?= $v('application_date') ?></td>
+            </tr>
+            <tr>
+                <th class="label">培训类别</th>
+                <td colspan="5"><?= $v('training_category') ?></td>
+            </tr>
+            <tr>
                 <th class="label">申请培训内容</th>
-                <td colspan="3" class="tall"><?= $text('training_content') ?></td>
+                <td colspan="5" class="tall"><?= $text('training_content') ?></td>
             </tr>
             <tr>
-                <th class="label">培训单位</th><td><?= $v('training_provider') ?></td>
-                <th class="label">培训地点</th><td><?= $v('training_place') ?></td>
+                <th class="label">培训单位</th><td colspan="2"><?= $v('training_provider') ?></td>
+                <th class="label">培训地点</th><td colspan="2"><?= $v('training_place') ?></td>
             </tr>
             <tr>
-                <th class="label">培训时间</th><td><?= $v('training_time') ?></td>
-                <th class="label">所需费用</th><td><?= $v('estimated_cost') ?></td>
+                <th class="label">培训时间</th><td colspan="2"><?= $v('training_time') ?></td>
+                <th class="label">所需费用</th><td colspan="2"><?= $v('estimated_cost') ?></td>
+            </tr>
+            <tr>
+                <th class="label">预期目标/能力要求</th>
+                <td colspan="5" class="tall"><?= $text('expected_capability') ?></td>
             </tr>
         </table>
         <div class="section-title">参加人员</div>
@@ -225,25 +239,16 @@ $checked = static fn (string $actual, string $expected): string => $actual === $
         </table>
         <table style="margin-top:8px">
             <tr>
-                <th class="label">申请培训部门</th><td><?= $v('application_department') ?></td>
-                <th class="label">负责人</th><td><?= $v('application_responsible_person') ?></td>
-                <th class="label">日期</th><td><?= $v('application_date') ?></td>
-            </tr>
-            <tr>
-                <th class="label">申请部门意见</th>
-                <td colspan="5" class="tall"><?= $text('application_opinion') ?></td>
-            </tr>
-            <tr>
-                <th class="label">审核</th>
-                <td colspan="3" class="tall"><?= $text('audit_opinion') ?></td>
+                <th class="label">技术负责人审核</th>
+                <td colspan="3" class="tall"><?= $text('technical_manager_review_opinion') ?></td>
                 <th class="label">审核人/日期</th>
-                <td><?= $v('auditor') ?><br><?= $v('audit_date') ?></td>
+                <td><?= $v('technical_manager') ?><br><?= $v('technical_manager_review_date') ?></td>
             </tr>
             <tr>
-                <th class="label">批准</th>
-                <td colspan="3" class="tall"><?= $text('approval_opinion') ?></td>
+                <th class="label">实验室主任批准</th>
+                <td colspan="3" class="tall"><?= $text('lab_director_approval_opinion') ?></td>
                 <th class="label">批准人/日期</th>
-                <td><?= $v('approver') ?><br><?= $v('approval_date') ?></td>
+                <td><?= $v('lab_director') ?><br><?= $v('lab_director_approval_date') ?></td>
             </tr>
             <tr>
                 <th class="label">备注</th>

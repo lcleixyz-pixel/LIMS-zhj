@@ -56,28 +56,36 @@ $template = [
     'version' => 'A/0',
 ];
 $values = [
+    'usage_site' => 'hetian',
     'training_date' => '2026-05-22',
     'training_topic' => '新版记录表格填写要求',
+    'training_category' => '内部',
+    'training_place' => '会议室',
     'trainer' => '质量负责人',
+    'training_materials' => '新版记录表格填写要求',
+    'training_target_scope' => '检测室',
+    'assessment_method' => '提问',
     'attendees' => [
-        ['name' => '张三', 'department' => '检测室', 'signature' => '张三'],
+        ['name' => '张三', 'position' => '检测员', 'signature' => '张三'],
         'bad row',
-        ['name' => ['bad'], 'department' => '质量部', 'signature' => '李四'],
+        ['name' => ['bad'], 'position' => '质量负责人', 'signature' => '李四'],
     ],
     'training_content' => "第一行\n第二行",
-    'effect_evaluation' => '<script>alert("x")</script>',
+    'assessment_result' => '<script>alert("x")</script>',
+    'effect_evaluation_note' => '效果评价见BG-01-09',
+    'archive_note' => '复印件入个人技术档案',
 ];
 
 $html = RecordFormPrintService::render('training_record', $template, $values);
 
-foreach (['人员培训记录表', 'XZTC/BG-01-02', '新版记录表格填写要求', '张三'] as $needle) {
+foreach (['人员培训记录表', 'XZTC/BG-01-02', 'XZTCH-BG-01-02', '版次：A/0', '保存期限：不少于6年', '新版记录表格填写要求', '张三'] as $needle) {
     assert_contains($needle, $html, 'Rendered HTML missing expected happy-path value');
 }
 
 assert_contains("第一行<br />\n第二行", $html, 'Preserves textarea newlines with nl2br');
 assert_contains('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;', $html, 'Escapes HTML values');
 assert_not_contains('<script>alert("x")</script>', $html, 'Does not render raw HTML values');
-assert_contains('质量部', $html, 'Keeps valid repeatable rows after malformed rows');
+assert_contains('质量负责人', $html, 'Keeps valid repeatable rows after malformed rows');
 assert_not_contains('bad row', $html, 'Ignores non-array repeatable rows');
 assert_contains('break-inside: avoid', $html, 'Print HTML asks Chromium not to split table rows across pages');
 assert_contains('page-break-inside: avoid', $html, 'Print HTML includes legacy page-break protection for PDF rendering');
