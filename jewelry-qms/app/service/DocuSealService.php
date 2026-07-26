@@ -274,6 +274,97 @@ class DocuSealService
     }
 
     /**
+     * 从 DocuSeal 读取已完成提交的首份签署文件，供系统做哈希校验和受控归档。
+     *
+     * @return array{ok: bool, content?: string, content_sha256?: string, filename?: string, error?: string}
+     */
+    public function fetchCompletedSubmissionDocument(string $submissionId): array
+    {
+        $submissionId = trim($submissionId);
+        if ($submissionId === '') {
+            return ['ok' => false, 'error' => 'missing_submission_id'];
+        }
+
+        if ($this->mockHttp) {
+            $content = 'mock-signed-document:' . $submissionId;
+
+            return [
+                'ok' => true,
+                'content' => $content,
+                'content_sha256' => hash('sha256', $content),
+                'filename' => 'signed-' . $submissionId . '.pdf',
+            ];
+        }
+
+        $ch = curl_init($this->baseUrl . '/api/submissions/' . rawurlencode($submissionId));
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => ['X-Auth-Token: ' . $this->apiKey],
+            CURLOPT_TIMEOUT => 30,
+        ]);
+        $response = curl_exec($ch);
+        $errno = curl_errno($ch);
+        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($errno !== 0 || $response === false) {
+            return ['ok' => false, 'error' => 'submission_transport_error'];
+        }
+
+        $decoded = json_decode((string)$response, true);
+        if ($status >= 400 || !is_array($decoded)) {
+            return ['ok' => false, 'error' => 'submission_http_status_' . $status];
+        }
+        if ((string)($decoded['status'] ?? '') !== 'completed') {
+            return ['ok' => false, 'error' => 'submission_not_completed'];
+        }
+
+        $documents = isset($decoded['documents']) && is_array($decoded['documents'])
+            ? $decoded['documents']
+            : [];
+        $first = $documents[0] ?? null;
+        if (!is_array($first) || trim((string)($first['url'] ?? '')) === '') {
+            return ['ok' => false, 'error' => 'signed_document_missing'];
+        }
+
+        $remoteUrl = trim((string)$first['url']);
+        $parts = parse_url($remoteUrl);
+        $downloadUrl = is_array($parts) && !empty($parts['path'])
+            ? $this->baseUrl . $parts['path'] . (isset($parts['query']) ? '?' . $parts['query'] : '')
+            : $remoteUrl;
+        $fileCh = curl_init($downloadUrl);
+        curl_setopt_array($fileCh, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => ['X-Auth-Token: ' . $this->apiKey],
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 30,
+        ]);
+        $content = curl_exec($fileCh);
+        $fileErrno = curl_errno($fileCh);
+        $fileStatus = (int)curl_getinfo($fileCh, CURLINFO_HTTP_CODE);
+        curl_close($fileCh);
+        if ($fileErrno !== 0 || $content === false) {
+            return ['ok' => false, 'error' => 'signed_document_transport_error'];
+        }
+        if ($fileStatus >= 400 || $content === '') {
+            return ['ok' => false, 'error' => 'signed_document_http_status_' . $fileStatus];
+        }
+
+        $name = trim((string)($first['name'] ?? ''));
+        if ($name === '') {
+            $name = basename((string)($parts['path'] ?? 'signed.pdf'));
+        } elseif (!str_contains($name, '.')) {
+            $name .= '.pdf';
+        }
+
+        return [
+            'ok' => true,
+            'content' => (string)$content,
+            'content_sha256' => hash('sha256', (string)$content),
+            'filename' => $name,
+        ];
+    }
+
+    /**
      * @param array<mixed> $decoded
      * @return array{ok: bool, submission_id?: string, embeds?: list<array<string, string>>, raw?: mixed, error?: string|null}
      */
@@ -367,10 +458,9 @@ class DocuSealService
     {
         $row = Db::name('document_signing_rounds')
             ->where('document_id', $documentId)
-            ->where('decision', 'pending')
             ->order('round_no', 'desc')
             ->find();
-        if (!$row) {
+        if (!$row || (string)($row['decision'] ?? '') !== 'pending') {
             return [];
         }
         $note = trim((string)($row['note'] ?? ''));
@@ -707,6 +797,82 @@ class DocuSealService
         }
 
         return ['ok' => true, 'round' => $round, 'reject_count' => $rejectCount];
+    }
+
+    public function canStartAnotherSigningRound(string $documentId): bool
+    {
+        $rejectCount = (int)Db::name('document_signing_rounds')
+            ->where('document_id', $documentId)
+            ->where('decision', 'rejected')
+            ->count();
+
+        return $rejectCount < self::MAX_REJECT_ROUNDS;
+    }
+
+    /**
+     * 驳回当前文件签批轮次并退回草稿。邮箱只用于锁定本次明确驳回的审批人。
+     *
+     * @param list<string> $emails
+     * @return array{ok: bool, round?: int, reject_count?: int, rejected_approval_id?: string|null, error?: string}
+     */
+    public function rejectDocumentWorkflow(
+        string $documentId,
+        ?string $submissionId = null,
+        array $emails = [],
+        string $reason = ''
+    ): array {
+        $doc = \app\model\Document::find($documentId);
+        if (!$doc) {
+            return ['ok' => false, 'error' => 'document_not_found'];
+        }
+
+        $round = $this->recordSigningRound(
+            $documentId,
+            'rejected',
+            $submissionId,
+            $reason !== '' ? $reason : '签批人已驳回'
+        );
+        if (!($round['ok'] ?? false)) {
+            return $round;
+        }
+
+        $normalizedEmails = array_values(array_unique(array_filter(array_map(
+            static fn ($email): string => strtolower(trim((string)$email)),
+            $emails
+        ))));
+        $approvalQuery = Db::name('approvals')->alias('a')
+            ->leftJoin('users u', 'u.id = a.user_id')
+            ->where('a.model_name', 'Document')
+            ->where('a.record', $documentId)
+            ->where('a.status', 'pending')
+            ->where('a.record_status', 1)
+            ->where('a.soft_delete', 0);
+        if ($normalizedEmails !== []) {
+            $approvalQuery->whereIn('u.email', $normalizedEmails);
+        }
+        $rejectedApprovalId = (string)($approvalQuery
+            ->order('a.approval_level', 'asc')
+            ->value('a.id') ?? '');
+
+        Db::transaction(function () use ($doc, $documentId, $rejectedApprovalId, $reason): void {
+            \app\service\ApprovalService::closeCurrentDocumentWorkflow(
+                $documentId,
+                $rejectedApprovalId !== '' ? $rejectedApprovalId : null,
+                $reason !== '' ? $reason : '签批人已驳回'
+            );
+            $doc->save([
+                'status' => 'draft',
+                'publish' => 0,
+                'modified' => date('Y-m-d H:i:s'),
+            ]);
+        });
+
+        return [
+            'ok' => true,
+            'round' => $round['round'] ?? null,
+            'reject_count' => $round['reject_count'] ?? null,
+            'rejected_approval_id' => $rejectedApprovalId !== '' ? $rejectedApprovalId : null,
+        ];
     }
 
     public function getWebhookSecret(): string

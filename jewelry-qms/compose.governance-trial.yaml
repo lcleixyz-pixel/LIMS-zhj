@@ -1,0 +1,90 @@
+# 治理后体系的独立模拟运行栈。只使用 SIM 文件、模板和记录，不接触 8010。
+name: lims-zhj-governance-trial-20260724
+
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: jewelry_qms
+      MYSQL_ROOT_HOST: "%"
+      TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:3319:3306"
+    volumes:
+      - governance_trial_db:/var/lib/mysql
+      - ./database/jewelry_qms.sql:/docker-entrypoint-initdb.d/01-jewelry-qms.sql:ro
+      - ./database/migrations/20260717_gr14_controlled_trial.sql:/docker-entrypoint-initdb.d/02-controlled-trial.sql:ro
+      - ./database/migrations/20260720_docuseal_signing.sql:/docker-entrypoint-initdb.d/03-docuseal-signing.sql:ro
+      - ./database/migrations/20260724_document_approval_round.sql:/docker-entrypoint-initdb.d/04-document-approval-round.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 25s
+
+  app:
+    image: jewelry-qms-app
+    depends_on:
+      db:
+        condition: service_healthy
+      docuseal:
+        condition: service_started
+    env_file:
+      - docker/.env.governance-trial.signing
+    environment:
+      APP_DEBUG: "false"
+      TZ: Asia/Shanghai
+      DB_TYPE: mysql
+      DB_HOST: db
+      DB_NAME: jewelry_qms
+      DB_USER: root
+      DB_PASS: ""
+      DB_PORT: "3306"
+      DB_CHARSET: utf8mb4
+      DEFAULT_LANG: zh-cn
+      QMS_TRIAL_MODE: "true"
+      QMS_TRIAL_BATCH: GOV-TRIAL-20260724
+      QMS_ENV_LABEL: 治理试运行模拟环境
+      QMS_ENV_NOTICE: 纸质体系仍为唯一正式体系；本环境仅用于治理试运行与迭代。
+      QMS_GOVERNANCE_TRIAL_OUTPUT_DIR: /.team/交接箱/2026-07-24-治理试运行体系装配/系统样例
+      DOCUSEAL_SIGNING_ENABLED: "1"
+      DOCUSEAL_BASE_URL: http://docuseal:3000
+      DOCUSEAL_PUBLIC_BASE_URL: http://127.0.0.1:3101
+      DOCUSEAL_SEND_EMAIL: "0"
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/chromium-browser
+      COMPOSER_CACHE_DIR: /tmp/composer-cache
+    ports:
+      - "127.0.0.1:8021:8000"
+    shm_size: "256mb"
+    volumes:
+      - .:/app
+      - ../docs:/docs:ro
+      - ../knowledge:/knowledge:ro
+      - ../现用文件:/现用文件:ro
+      - ../参考:/参考:ro
+      - ../.team:/.team
+      - ./docker/.env.docker:/app/.env:ro
+      - governance_trial_vendor:/app/vendor
+      - governance_trial_node:/app/node_modules
+      - governance_trial_composer_cache:/tmp/composer-cache
+
+  docuseal:
+    image: lims/docuseal-zh:3.1.5-zh
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:3101:3000"
+    volumes:
+      - governance_trial_docuseal_data:/data
+    expose:
+      - "3000"
+
+volumes:
+  governance_trial_db:
+  governance_trial_vendor:
+  governance_trial_node:
+  governance_trial_composer_cache:
+  governance_trial_docuseal_data:

@@ -231,6 +231,7 @@ class Document extends BaseController
             ->where('record', $id)
             ->where('model_name', 'Document')
             ->where('soft_delete', 0)
+            ->order('workflow_round', 'desc')
             ->order('approval_level', 'asc')
             ->select();
 
@@ -262,7 +263,16 @@ class Document extends BaseController
             ->where('users.publish', 1)
             ->order('users.name', 'asc')
             ->select());
-        View::assign('currentUserEmail', strtolower(trim((string)Session::get('user.email', ''))));
+        $currentUserEmail = strtolower(trim((string)Session::get('user.email', '')));
+        if ($currentUserEmail === '') {
+            $currentUserEmail = strtolower(trim((string)(User::where('id', (string)Session::get('user.id', ''))
+                ->value('email') ?? '')));
+        }
+        View::assign('currentUserEmail', $currentUserEmail);
+        View::assign(
+            'signingStatus',
+            ApprovalService::documentWorkflowStatus($doc, (string)Session::get('user.id', ''))
+        );
         View::assign('structureSummary', QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id));
         View::assign('printLogs', ControlledPrintService::recentLogs((string)$doc->id, 5));
         $signingEmbeds = [];
@@ -519,7 +529,28 @@ class Document extends BaseController
         $id = $this->request->param('id');
         $doc = DocumentModel::find($id);
         if ($doc) {
+            if ((string)$doc->status !== 'draft') {
+                Session::flash('warning', '当前文件不在草稿状态，无需重复提交。请先查看当前签批进度。');
+
+                return redirect('/document/view?id=' . $id);
+            }
+
+            $isResubmission = !ApprovalService::hasActiveDocumentWorkflow((string)$doc->id)
+                && ApprovalService::currentWorkflowRound('Document', (string)$doc->id) > 0;
+            if ($isResubmission
+                && !(new \app\service\DocuSealService())->canStartAnotherSigningRound((string)$doc->id)
+            ) {
+                Session::flash('error', '该文件已达到 3 次驳回上限，不能继续重提。请由质量负责人复核后建立新版本。');
+
+                return redirect('/document/view?id=' . $id);
+            }
             Db::transaction(function () use ($doc) {
+                if (!ApprovalService::hasActiveDocumentWorkflow((string)$doc->id)) {
+                    ApprovalService::restartDocumentWorkflow(
+                        $doc,
+                        (string)Session::get('user.id')
+                    );
+                }
                 $doc->status = 'reviewing';
                 $doc->save();
             });
@@ -542,7 +573,12 @@ class Document extends BaseController
                     }
                 }
             }
-            Session::flash('success', '文件「' . ($doc->title ?? '') . '」已提交审核。审核人、批准人将依次收到签批通知，您可在本页查看进度。');
+            Session::flash(
+                'success',
+                $isResubmission
+                    ? '文件「' . ($doc->title ?? '') . '」已重新提交。上一轮记录已保留，本轮将从审核人重新开始签批。'
+                    : '文件「' . ($doc->title ?? '') . '」已提交审核。审核人、批准人将依次处理，您可在本页查看进度。'
+            );
         }
 
         return redirect('/document/view?id=' . $id);

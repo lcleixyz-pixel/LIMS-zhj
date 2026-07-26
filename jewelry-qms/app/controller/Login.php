@@ -59,6 +59,7 @@ class Login extends BaseController
                         'id' => $user->id,
                         'username' => $user->username,
                         'name' => $user->name,
+                        'email' => strtolower(trim((string)$user->email)),
                         'role' => $user->role,
                         'employee_id' => $user->employee_id,
                         'department_id' => $user->department_id,

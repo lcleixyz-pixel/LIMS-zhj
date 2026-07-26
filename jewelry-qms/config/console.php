@@ -8,6 +8,7 @@ use app\command\ComplianceAssess;
 use app\command\CurrentFilesSeed;
 use app\command\P0BuildControlledMigrationPackage;
 use app\command\P0Preflight;
+use app\command\QmsGovernedTrialAssemble;
 use app\command\QmsGovernedTrialResolve;
 use app\command\QmsManualProcedureAlignmentCheck;
 use app\command\QmsPreimportPackage;
@@ -24,6 +25,7 @@ return [
         CurrentFilesSeed::class,
         P0BuildControlledMigrationPackage::class,
         P0Preflight::class,
+        QmsGovernedTrialAssemble::class,
         QmsGovernedTrialResolve::class,
         QmsManualProcedureAlignmentCheck::class,
         QmsPreimportPackage::class,
