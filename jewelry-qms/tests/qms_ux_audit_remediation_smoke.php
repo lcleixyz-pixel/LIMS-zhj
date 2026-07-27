@@ -89,6 +89,11 @@ ux_assert_contains('请由具备相应岗位权限的人员处理', $compliance,
 ux_assert_contains("'user/changepassword'", $rbac, 'UX-18: 所有登录用户必须能进入本人改密动作');
 ux_assert_contains("Route::rule('user/changepassword', 'User/changePassword')", $routes, 'UX-18: 本人改密必须命中受保护的小写路由');
 ux_assert_contains("Route::rule('login/changepassword', 'User/changePassword')", $routes, 'UX-18: 旧登录后改密地址必须进入同一受保护动作');
+ux_assert_contains(
+    "Route::rule('login/changepassword', 'User/changePassword');\nRoute::rule('login', 'Login/index');",
+    $routes,
+    'UX-18: 兼容改密路由必须位于宽泛登录路由之前'
+);
 ux_assert_contains("\\app\\middleware\\Auth::class => ['only' => ['changePassword']]", $userController, 'UX-18: 自动路由兜底也必须先认证');
 ux_assert_contains("RbacService::canWrite('user')", $userController, 'UX-18: 重置他人密码必须再次校验用户管理权限');
 ux_assert_contains('href="/user/changepassword"', $layout, 'UX-18: 顶部改密入口必须使用受保护的小写路由');
