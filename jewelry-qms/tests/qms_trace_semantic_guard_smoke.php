@@ -158,4 +158,79 @@ $unknown = QmsTraceSemanticGuardService::assess(
 );
 trace_semantic_guard_assert($unknown['status'] === 'not_assessed', '未知主题不得猜测预期手册章节');
 
+$genericCandidate = [
+    'available' => true,
+    'source_label' => '治理装配蓝图 / 本地条款映射',
+    'manual_sections' => [
+        ['section_number' => '6.2', 'title' => '人员'],
+        ['section_number' => '8.4', 'title' => '记录控制'],
+    ],
+];
+$genericInherited = QmsTraceSemanticGuardService::assess(
+    [
+        'doc_number' => 'XZTC/CX-11-2022',
+        'title' => '人员管理程序',
+    ],
+    trace_semantic_guard_block(
+        '6.2',
+        'implements',
+        'high',
+        '由GOV-TRIAL/0.1追溯关系继承，待0.2逐块复核。'
+    ),
+    $genericCandidate
+);
+trace_semantic_guard_assert(
+    $genericInherited['status'] === 'review_required',
+    '通用继承候选应等待人工复核'
+);
+trace_semantic_guard_assert(
+    ($genericInherited['profile']['candidate_only'] ?? false) === true,
+    '通用语义档案应明确标记为候选'
+);
+trace_semantic_guard_assert(
+    ($genericInherited['profile']['expected_manual_sections'] ?? []) === ['6.2', '8.4'],
+    '通用语义档案应保留有来源的候选章节'
+);
+
+$genericMissing = QmsTraceSemanticGuardService::assess(
+    [
+        'doc_number' => 'XZTC/CX-11-2022',
+        'title' => '人员管理程序',
+    ],
+    [],
+    $genericCandidate
+);
+trace_semantic_guard_assert(
+    $genericMissing['status'] === 'missing_primary',
+    '有候选但尚未保存主链时应明确主链缺失'
+);
+trace_semantic_guard_assert(
+    str_contains((string)($genericMissing['issues'][0]['message'] ?? ''), '候选不等于确认'),
+    '通用缺链提示应防止把候选误当成确认'
+);
+
+$candidateUnavailable = QmsTraceSemanticGuardService::assess(
+    [
+        'doc_number' => 'XZTC/CX-99-2022',
+        'title' => '未入蓝图程序',
+    ],
+    [],
+    [
+        'available' => false,
+        'source_label' => '治理装配蓝图 / 本地条款映射',
+        'issues' => ['治理装配蓝图未找到程序：XZTC/CX-99-2022'],
+    ]
+);
+trace_semantic_guard_assert(
+    $candidateUnavailable['status'] === 'candidate_unavailable',
+    '候选来源缺失时应给出明确状态'
+);
+trace_semantic_guard_assert(
+    str_contains(
+        (string)($candidateUnavailable['issues'][0]['message'] ?? ''),
+        'XZTC/CX-99-2022'
+    ),
+    '候选不可用提示应保留具体原因'
+);
+
 echo "qms_trace_semantic_guard_smoke passed\n";

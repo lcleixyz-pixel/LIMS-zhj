@@ -28,9 +28,15 @@ final class QmsTraceSemanticGuardService
         ],
     ];
 
-    public static function assess(array $document, array $blockRows): array
-    {
+    public static function assess(
+        array $document,
+        array $blockRows,
+        array $candidateContext = []
+    ): array {
         $profile = self::detectProfile($document, $blockRows);
+        if ($profile === [] && $candidateContext !== []) {
+            $profile = self::candidateProfile($document, $candidateContext);
+        }
         $manual = [
             'confirmed_primary' => [],
             'supporting' => [],
@@ -56,7 +62,22 @@ final class QmsTraceSemanticGuardService
 
         $status = 'not_assessed';
         $issues = [];
-        if ($profile !== []) {
+        if (
+            $profile !== []
+            && ($profile['candidate_available'] ?? true) === false
+        ) {
+            $status = 'candidate_unavailable';
+            $candidateIssues = array_values(array_filter(array_map(
+                'strval',
+                (array)($candidateContext['issues'] ?? [])
+            )));
+            $issues[] = [
+                'code' => 'candidate_source_unavailable',
+                'severity' => 'medium',
+                'message' => $candidateIssues[0]
+                    ?? '当前程序没有可用的治理候选来源，请先核对治理装配蓝图。',
+            ];
+        } elseif ($profile !== []) {
             if ($manual['confirmed_primary'] !== []) {
                 $status = 'aligned';
             } elseif ($manual['suspected_mismatch'] !== []) {
@@ -75,14 +96,17 @@ final class QmsTraceSemanticGuardService
                 ];
             } else {
                 $status = 'missing_primary';
+                $candidateOnly = (bool)($profile['candidate_only'] ?? false);
                 $issues[] = [
                     'code' => 'manual_primary_missing',
                     'severity' => 'high',
-                    'message' => '未找到与'
-                        . (string)$profile['label']
-                        . '主题匹配的手册主链，建议优先复核 '
-                        . implode('、', (array)$profile['expected_manual_sections'])
-                        . '。',
+                    'message' => $candidateOnly
+                        ? self::candidateMissingMessage($profile)
+                        : '未找到与'
+                            . (string)$profile['label']
+                            . '主题匹配的手册主链，建议优先复核 '
+                            . implode('、', (array)$profile['expected_manual_sections'])
+                            . '。',
                 ];
             }
         }
@@ -235,11 +259,55 @@ final class QmsTraceSemanticGuardService
         return [];
     }
 
+    private static function candidateProfile(array $document, array $candidateContext): array
+    {
+        $available = (bool)($candidateContext['available'] ?? false);
+        $sections = [];
+        foreach ((array)($candidateContext['manual_sections'] ?? []) as $section) {
+            if (!is_array($section)) {
+                continue;
+            }
+            $sectionNumber = trim((string)($section['section_number'] ?? ''));
+            if ($sectionNumber !== '') {
+                $sections[$sectionNumber] = $sectionNumber;
+            }
+        }
+        uksort($sections, 'strnatcmp');
+        $sourceLabel = trim((string)($candidateContext['source_label'] ?? ''));
+        $title = trim((string)($document['title'] ?? ''));
+
+        return [
+            'id' => $available
+                ? 'governance_blueprint_candidate'
+                : 'candidate_unavailable',
+            'label' => $title !== '' ? $title : '当前程序',
+            'expected_manual_sections' => array_values($sections),
+            'expected_manual_sections_text' => implode('、', array_values($sections)),
+            'matched_terms' => $sourceLabel !== '' ? [$sourceLabel] : [],
+            'matched_terms_text' => $sourceLabel,
+            'candidate_only' => true,
+            'candidate_available' => $available,
+            'candidate_source_label' => $sourceLabel,
+        ];
+    }
+
     private static function sectionMatches(string $actual, string $expected): bool
     {
         return $actual === $expected
             || str_starts_with($actual, $expected . '.')
             || str_starts_with($expected, $actual . '.');
+    }
+
+    private static function candidateMissingMessage(array $profile): string
+    {
+        $sections = array_values((array)($profile['expected_manual_sections'] ?? []));
+        $source = trim((string)($profile['candidate_source_label'] ?? '治理候选来源'));
+
+        return $sections !== []
+            ? '已从' . $source . '找到手册章节候选 '
+                . implode('、', $sections)
+                . '，但候选不等于确认；当前尚未保存已确认手册主链。'
+            : $source . '尚未提供可用的手册章节候选；当前手册主链仍缺失。';
     }
 
     private static function mismatchMessage(array $profile, array $links): string
