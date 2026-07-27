@@ -153,14 +153,14 @@
                     </ul>
                 </li>
                 {/if}
-                {if condition="qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material') || qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate') || qms_can('supplier')"}
+                {if condition="$canViewEquipmentMenu || qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material') || qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate') || qms_can('supplier')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">资源管理</a>
                     <ul class="dropdown-menu">
-                        {if condition="qms_can_action('equipment', 'view') || qms_can_action('equipment_transfer', 'view') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material')"}
+                        {if condition="$canViewEquipmentMenu || qms_can_action('equipment_transfer', 'view') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material')"}
                         <li><h6 class="dropdown-header text-muted">设备与计量</h6></li>
                         {/if}
-                        {if condition="qms_can_action('equipment', 'view')"}
+                        {if $canViewEquipmentMenu}
                         <li><a class="dropdown-item" href="/equipment/index">设备台账</a></li>
                         {/if}
                         {if condition="qms_can_action('equipment_transfer', 'view')"}
@@ -175,13 +175,13 @@
                         {if condition="qms_can('calibration')"}
                         <li><a class="dropdown-item" href="/calibration/index">校准记录</a></li>
                         {/if}
-                        {if condition="qms_can_action('equipment', 'view')"}
+                        {if $canViewEquipmentMenu}
                         <li><a class="dropdown-item" href="/equipment_period_check/index">期间核查计划</a></li>
                         {/if}
                         {if condition="qms_can('reference_material')"}
                         <li><a class="dropdown-item" href="/reference_material/index">标准物质台账</a></li>
                         {/if}
-                        {if condition="(qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material')) && (qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate'))"}
+                        {if condition="($canViewEquipmentMenu || qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material')) && (qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate'))"}
                         <li><hr class="dropdown-divider"></li>
                         {/if}
                         {if condition="qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate')"}
@@ -202,7 +202,7 @@
                         {if condition="qms_can('employee_certificate')"}
                         <li><a class="dropdown-item" href="/employee_certificate/index">人员资质证书</a></li>
                         {/if}
-                        {if condition="(qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material') || qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate')) && qms_can('supplier')"}
+                        {if condition="($canViewEquipmentMenu || qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material') || qms_can('training_plan') || qms_can('training') || qms_can('training_record') || qms_can('competency_record') || qms_can('employee_certificate')) && qms_can('supplier')"}
                         <li><hr class="dropdown-divider"></li>
                         {/if}
                         {if condition="qms_can('supplier')"}

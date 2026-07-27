@@ -36,6 +36,7 @@ $dashboardController = $read('app/controller/Dashboard.php');
 $dashboard = $read('app/view/dashboard/index.html');
 $complianceController = $read('app/controller/Compliance.php');
 $compliance = $read('app/view/compliance/index.html');
+$auth = $read('app/middleware/Auth.php');
 $layout = $read('app/view/layout/main.html');
 $rbac = $read('app/middleware/Rbac.php');
 $training = $read('app/view/training/index.html');
@@ -70,7 +71,13 @@ ux_assert_contains("'canDecide' => \$canDecide", $governedController, 'UX-14: �
 ux_assert_contains('更正申请中心', $governedInbox, 'UX-14: 统一入口必须使用申请人和审批人都能理解的名称');
 ux_assert_contains('{if $canDecide}', $governedInbox, 'UX-14: 审批按钮必须受处理权限控制');
 
-ux_assert_contains("qms_can_action('equipment', 'view')", $layout, 'UX-23: 设备菜单必须使用岗位动作权限');
+ux_assert_contains("'canViewEquipmentMenu'", $auth, 'UX-23: 认证后必须向页面布局提供统一的设备查看权限');
+ux_assert_contains(
+    '{if condition="$canViewEquipmentMenu || qms_can(\'equipment\')',
+    $layout,
+    'UX-23: 具备设备查看岗位时必须显示资源管理主菜单'
+);
+ux_assert_contains('{if $canViewEquipmentMenu}', $layout, 'UX-23: 设备与期间核查菜单必须使用统一岗位权限');
 ux_assert_contains('canViewEquipment', $dashboardController, 'UX-15: 仪表盘必须计算设备查看权限');
 ux_assert_contains('{if $canViewEquipment}', $dashboard, 'UX-15: 仪表盘设备入口必须受权限控制');
 ux_assert_contains('action_allowed', $complianceController, 'UX-22: 合规入口必须计算目标权限');

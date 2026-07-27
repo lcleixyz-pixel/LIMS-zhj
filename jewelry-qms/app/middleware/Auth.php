@@ -5,6 +5,7 @@ namespace app\middleware;
 
 use app\model\QmsExternalChangeCandidate;
 use app\model\NotificationUser;
+use app\service\ActionAuthorizationService;
 use think\facade\Config;
 use think\facade\Session;
 use think\facade\View;
@@ -69,6 +70,7 @@ class Auth
             'environmentNotice' => $qmsConfig['environment_notice'] ?? '',
             'notificationCount' => $notificationCount,
             'pendingRegulatoryCandidateCount' => $pendingRegulatoryCandidateCount,
+            'canViewEquipmentMenu' => ActionAuthorizationService::allows('equipment', 'view'),
         ]);
 
         return $next($request);
