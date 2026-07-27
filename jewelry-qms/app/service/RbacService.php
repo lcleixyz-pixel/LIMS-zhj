@@ -8,8 +8,22 @@ use think\facade\Session;
 
 class RbacService
 {
+    public static function isRestrictedRecordOperator(): bool
+    {
+        return ActionAuthorizationService::isRestrictedRecordOperator();
+    }
+
     public static function canAccess(string $controller): bool
     {
+        if (self::isRestrictedRecordOperator()) {
+            $allowed = (array)Config::get('qms.position_permissions.record_operator', []);
+            if (!ActionAuthorizationService::canRecordOperatorFill()) {
+                $allowed = array_values(array_diff($allowed, ['record_form_template']));
+            }
+
+            return self::controllerIn($controller, $allowed);
+        }
+
         $role = Session::get('user.role', 'staff');
         $permissions = Config::get('qms.permissions', []);
 
@@ -27,6 +41,11 @@ class RbacService
 
     public static function canWrite(string $controller): bool
     {
+        if (self::isRestrictedRecordOperator()) {
+            return ActionAuthorizationService::canRecordOperatorFill()
+                && self::controllerIn($controller, ['record_form_instance']);
+        }
+
         $role = Session::get('user.role', 'staff');
         // 体系文件类写操作（新建/编辑/删除文件）：仅 admin 和 quality_manager（2026-07-11 收紧）
         $documentWriteControllers = ['document', 'doc_category', 'doc_template'];

@@ -14,10 +14,12 @@ use app\model\Equipment;
 use app\model\ManagementReview;
 use app\model\Nonconformity;
 use app\model\ReviewAction;
+use app\model\RecordFormInstance;
 use app\model\Site;
 use app\model\Training;
 use app\service\DashboardMetricService;
 use app\service\ActionAuthorizationService;
+use app\service\RbacService;
 use think\facade\Session;
 use think\facade\View;
 
@@ -31,7 +33,25 @@ class Dashboard extends BaseController
 
     public function index()
     {
-        $userId = Session::get('user.id');
+        $userId = (string)Session::get('user.id', '');
+        $recordOperatorMode = RbacService::isRestrictedRecordOperator();
+        if ($recordOperatorMode) {
+            $myRecords = RecordFormInstance::where('created_by', $userId);
+            View::assign('recordOperatorMode', true);
+            View::assign(
+                'recordOperatorActive',
+                ActionAuthorizationService::canRecordOperatorFill()
+            );
+            View::assign('myRecordStats', [
+                'all' => (clone $myRecords)->count(),
+                'draft' => (clone $myRecords)->where('status', 'draft')->count(),
+                'generated' => (clone $myRecords)->whereIn('status', ['generated', 'locked'])->count(),
+            ]);
+
+            return View::fetch('dashboard/index');
+        }
+
+        View::assign('recordOperatorMode', false);
         $canViewEquipment = ActionAuthorizationService::allows('equipment', 'view');
         $pendingApprovals = Approval::where('user_id', $userId)
             ->where('status', 'pending')

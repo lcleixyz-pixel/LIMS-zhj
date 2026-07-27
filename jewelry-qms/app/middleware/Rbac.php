@@ -43,6 +43,38 @@ class Rbac
                 return json(['code' => 403, 'msg' => '无此动作权限，请联系质量负责人确认岗位任命'], 403);
             }
 
+            if ($controller === 'recordforminstance' && in_array($action, [
+                'view',
+                'edit',
+                'print',
+                'printcorrections',
+                'downloadcurrentpackage',
+                'downloadcurrentpdf',
+                'downloadpdf',
+                'downloadpreviewpdf',
+                'requestcorrection',
+                'exportpdf',
+            ], true)) {
+                $inactiveRecordOperatorAction = RbacService::isRestrictedRecordOperator()
+                    && !ActionAuthorizationService::canRecordOperatorFill()
+                    && in_array($action, [
+                        'edit',
+                        'downloadcurrentpackage',
+                        'downloadcurrentpdf',
+                        'requestcorrection',
+                        'exportpdf',
+                    ], true);
+                View::assign($inactiveRecordOperatorAction
+                    ? [
+                        'accessDeniedTitle' => '当前岗位不能修改或生成记录',
+                        'accessDeniedMessage' => '您的“记录填报员”岗位当前无效，只能查看本人历史记录。请联系质量负责人核对岗位任命。',
+                    ]
+                    : [
+                        'accessDeniedTitle' => '不能查看或处理这条记录',
+                        'accessDeniedMessage' => '您只能查看本人填写的记录。如需查阅其他记录，请联系质量负责人。',
+                    ]);
+            }
+
             return Response::create(View::fetch('error/403'), 'html', 403);
         }
         if ($actionDecision === true) {

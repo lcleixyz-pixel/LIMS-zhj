@@ -1,13 +1,31 @@
 <div class="qms-page-header">
     <div>
         <h4>已填记录</h4>
-        <small class="text-muted">这里保存已经填写或正在填写的表；要新填一张，请点右侧蓝色按钮。</small>
+        <small class="text-muted">
+            {if $canCreateRecord}这里保存已经填写或正在填写的表；要新填一张，请点右侧蓝色按钮。
+            {else}这里仅供查阅本人已经填写的历史记录。{/if}
+        </small>
     </div>
     <div class="qms-page-actions">
+        {if condition="qms_can_action('record_form_instance', 'review_list')"}
         <a href="/record_form_instance/reviewDashboard?year=2025" class="btn btn-sm btn-outline-success">2025 年度记录运行确认</a>
+        {/if}
+        {if $canCreateRecord}
         <a href="/record_form_template/index" class="btn btn-sm btn-primary">开始填一张新表</a>
+        {/if}
     </div>
 </div>
+
+{if !empty($ownRecordsOnly)}
+<div class="alert alert-info" role="status">
+    <strong>这里仅显示您本人填写的记录。</strong>
+    {if $canCreateRecord}
+    需要新填一张表时，请点击“开始填一张新表”；需要查阅他人记录时，请联系质量负责人。
+    {else}
+    当前岗位只能查阅本人历史记录；需要继续填报时，请联系质量负责人核对岗位任命。
+    {/if}
+</div>
+{/if}
 
 <div class="card">
     <div class="card-body">
@@ -63,7 +81,7 @@
                             <a href="/record_form_instance/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
                             {if $item.can_edit}
                             <a href="/record_form_instance/edit?id={$item.id}" class="btn btn-sm btn-outline-primary">编辑</a>
-                            {else}
+                            {elseif $item.can_edit_action}
                             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已形成 PDF 后不可直接编辑；如需更正，请先走作废/换版/更正流程。">编辑</button>
                             {/if}
                             <a href="/record_form_instance/print?id={$item.id}" target="_blank" class="btn btn-sm btn-outline-secondary">打印预览</a>
@@ -72,14 +90,23 @@
                                 <input type="hidden" name="pdf_token" value="{$item.pdf_token}">
                                 <button type="submit" class="btn btn-sm btn-outline-success">生成PDF</button>
                             </form>
-                            {else}
+                            {elseif $item.can_export_action}
                             <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="已归档或已作废记录不能重新生成 PDF">生成PDF</button>
                             {/if}
                         </td>
                     </tr>
                     {/volist}
                     {empty name="items"}
-                    <tr><td colspan="8" class="text-center text-muted">暂无填写记录</td></tr>
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="text-muted mb-2">尚未找到您填写的记录</div>
+                            {if $canCreateRecord}
+                            <a href="/record_form_template/index" class="btn btn-sm btn-primary">开始填第一张表</a>
+                            {else}
+                            <div class="small text-muted">岗位恢复有效后，才会显示新建入口。</div>
+                            {/if}
+                        </td>
+                    </tr>
                     {/empty}
                 </tbody>
             </table>

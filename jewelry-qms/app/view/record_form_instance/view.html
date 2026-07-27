@@ -3,26 +3,28 @@
         <h5 class="mb-0">记录详情 - {$record.record_title}</h5>
         <div class="d-flex flex-wrap justify-content-end align-items-center gap-1">
             {if $canEdit}
-                {if $canExportPdf && qms_can_action('record_form_instance', 'exportPdf', $record)}
+                {if $canExportPdf && $canExportAction}
                 <form method="post" action="/record_form_instance/exportPdf?id={$record.id}" class="d-inline">
                     <input type="hidden" name="pdf_token" value="{$pdfToken}">
                     <button type="submit" class="btn btn-sm btn-success">生成PDF</button>
                 </form>
-                {elseif $canExportPdf}
-                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="无生成 PDF 权限">生成PDF</button>
                 {/if}
-                {if qms_can_action('record_form_instance', 'edit', $record)}
+                {if $canEditAction}
                 <a href="/record_form_instance/edit?id={$record.id}" class="btn btn-sm btn-outline-primary">编辑</a>
                 {/if}
             {else}
                 {if $record.generated_pdf_path}
-                    {if $recordCorrections}
+                    {if $recordCorrections && $canExportAction}
                     <a href="/record_form_instance/downloadCurrentPdf?id={$record.id}" class="btn btn-sm btn-primary">下载当前状态 PDF</a>
+                    {elseif $recordCorrections}
+                    <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-primary">下载原始 PDF</a>
                     {else}
                     <a href="/record_form_instance/downloadPdf?id={$record.id}" class="btn btn-sm btn-primary">下载 PDF</a>
                     {/if}
                 {/if}
+                {if $canRequestCorrection}
                 <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#requestCorrectionModal">{if $correctionRequests}补充更正申请{else}申请更正{/if}</button>
+                {/if}
                 {if $record.generated_pdf_path}
                 <span class="badge text-bg-light border text-secondary">原始 PDF 已冻结</span>
                 {/if}
@@ -33,7 +35,9 @@
                     <li><a href="/record_form_instance/print?id={$record.id}" target="_blank" class="dropdown-item">打印预览</a></li>
                     {if $record.generated_pdf_path && $recordCorrections}
                     <li><a href="/record_form_instance/downloadPdf?id={$record.id}" class="dropdown-item">下载原始 PDF</a></li>
+                    {if $canExportAction}
                     <li><a href="/record_form_instance/downloadCurrentPackage?id={$record.id}" class="dropdown-item">下载归档包</a></li>
+                    {/if}
                     {/if}
                     {if $recordCorrections}
                     <li><a href="/record_form_instance/printCorrections?id={$record.id}" target="_blank" class="dropdown-item">打印更正附页</a></li>
@@ -106,19 +110,21 @@
         <div class="card record-annotation-card mb-3" id="recordAnnotationCard">
             <div class="card-header d-flex justify-content-between align-items-center gap-2">
                 <h6 class="mb-0">填写内容（原记录＋批注）</h6>
-                {if $canEdit == false}
+                {if $canEdit == false && $canRequestCorrection}
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge text-bg-light border text-secondary" id="recordAnnotationModeLabel">阅读模式</span>
                     <button type="button" class="btn btn-sm btn-outline-primary" id="recordAnnotationModeToggle" aria-pressed="false">进入批注模式</button>
                 </div>
-                {else}
+                {elseif $canEdit && $canEditAction}
                 <span class="badge text-bg-light border text-secondary">草稿填写视图</span>
+                {else}
+                <span class="badge text-bg-light border text-secondary">历史记录只读视图</span>
                 {/if}
             </div>
             <div class="card-body">
                 <div class="alert alert-light border small">
                     <strong>系统批注视图：</strong>这里按纸质划改思路显示批注，原始记录值始终保留；修改值、作废标注和补充行叠加显示。底层原记录和原 PDF 未被修改。
-                    {if $canEdit == false}<br>需要更正时，请点击右上角“进入批注模式”。<strong class="text-primary annotation-mode-help">蓝色标记的位置可直接点击批注。</strong>{/if}
+                    {if $canRequestCorrection}<br>需要更正时，请点击右上角“进入批注模式”。<strong class="text-primary annotation-mode-help">蓝色标记的位置可直接点击批注。</strong>{/if}
                 </div>
                 {volist name="annotatedSchema" id="field"}
                 <section class="mb-4">
@@ -133,11 +139,11 @@
                                 {volist name="field.display_rows" id="displayRow"}
                                 <tr{if $displayRow.is_appended} class="record-appended-row"{/if}>
                                     {volist name="displayRow.cells" id="displayCell"}
-                                    <td{if $displayRow.is_appended == false && $canEdit == false} class="record-correction-target" data-correction-path="{$displayCell.field_path}" aria-label="批注：{$field.label}第{$displayRow.row_number}行{$displayCell.label}"{/if}>
+                                    <td{if $displayRow.is_appended == false && $canRequestCorrection} class="record-correction-target" data-correction-path="{$displayCell.field_path}" aria-label="批注：{$field.label}第{$displayRow.row_number}行{$displayCell.label}"{/if}>
                                         {if $displayRow.is_appended}
                                         <div class="record-original-value">{$displayCell.display_value|default='-'}</div>
                                         {else}
-                                        {if $canEdit == false}
+                                        {if $canRequestCorrection}
                                         <div class="d-flex justify-content-end mb-1">
                                             <span class="record-correction-target-badge">点击批注</span>
                                         </div>
@@ -191,7 +197,7 @@
                             </tbody>
                         </table>
                     </div>
-                    {if $canEdit == false}
+                    {if $canRequestCorrection}
                     <div class="mt-2">
                         <button type="button" class="btn btn-sm btn-outline-primary record-add-row-action" data-correction-path="append:{$field.key}">
                             ＋ 批注新增一行
@@ -199,8 +205,8 @@
                     </div>
                     {/if}
                     {else}
-                    <div{if $canEdit == false} class="record-correction-target record-field-target" data-correction-path="{$field.field_path}" aria-label="批注：{$field.label}"{/if}>
-                        {if $canEdit == false}
+                    <div{if $canRequestCorrection} class="record-correction-target record-field-target" data-correction-path="{$field.field_path}" aria-label="批注：{$field.label}"{/if}>
+                        {if $canRequestCorrection}
                         <div class="d-flex justify-content-end mb-1">
                             <span class="record-correction-target-badge">点击批注</span>
                         </div>
@@ -453,6 +459,7 @@
         {/if}
     </div>
 </div>
+{if $canRequestCorrection}
 <div class="modal fade" id="requestCorrectionModal" tabindex="-1" aria-labelledby="requestCorrectionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <form method="post" action="/record_form_instance/requestCorrection?id={$record.id}" class="modal-content">
@@ -710,3 +717,4 @@
     refreshTarget();
 })();
 </script>
+{/if}

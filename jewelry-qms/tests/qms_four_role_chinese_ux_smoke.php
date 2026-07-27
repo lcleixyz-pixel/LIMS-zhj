@@ -32,6 +32,9 @@ $notificationController = $read('app/controller/Notification.php');
 $notificationView = $read('app/view/notification/index.html');
 $recordIndex = $read('app/view/record_form_instance/index.html');
 $recordCreate = $read('app/view/record_form_instance/create.html');
+$recordEdit = $read('app/view/record_form_instance/edit.html');
+$recordView = $read('app/view/record_form_instance/view.html');
+$recordController = $read('app/controller/RecordFormInstance.php');
 $revisionView = $read('app/view/document/revise.html');
 $fieldAuditService = $read('app/service/FieldAuditService.php');
 $routes = $read('route/app.php');
@@ -66,11 +69,20 @@ four_role_assert_not_contains('{$item.type}', $notificationView, '通知不得�
 
 four_role_assert_contains('<h4>已填记录</h4>', $recordIndex, '记录列表必须说明这里展示的是已填记录');
 four_role_assert_contains('开始填一张新表', $recordIndex, '记录员必须看到低门槛的新建入口');
+four_role_assert_contains('$canCreateRecord', $recordIndex, '记录新建入口必须受当前动作权限控制');
+four_role_assert_contains('can_edit_action', $recordController . $recordIndex, '列表编辑入口必须结合记录动作权限');
+four_role_assert_contains('can_export_action', $recordController . $recordIndex, '列表 PDF 入口必须结合记录动作权限');
+four_role_assert_contains('$canRequestCorrection', $recordView, '详情批注和更正入口必须受更正动作权限控制');
+four_role_assert_contains('$canExportAction', $recordView, '详情当前 PDF 和归档包必须受生成动作权限控制');
 four_role_assert_contains('开始填一张新表', $dashboard, '工作台快速入口必须与记录页面使用相同的中文动作名称');
 four_role_assert_contains('aria-label="{$column.label}', $recordCreate, '表格内每个输入格必须有中文可访问名称');
 four_role_assert_contains('{$column.unit}', $recordCreate, '数值字段必须显示固定单位');
 four_role_assert_contains('这张表还不能保存，请补充以下内容', $recordCreate, '校验失败时必须集中列出中文补充项');
 four_role_assert_contains('data-required-when-field', $recordCreate, '条件必填字段必须向前端声明触发条件');
+four_role_assert_contains('aria-label="{$column.label}', $recordEdit, '编辑页表格内每个输入格必须有中文可访问名称');
+four_role_assert_contains('这张表还不能保存，请补充以下内容', $recordEdit, '编辑页校验失败时必须集中列出中文补充项');
+four_role_assert_contains('data-required-when-field', $recordEdit, '编辑页条件必填字段必须声明触发条件');
+four_role_assert_contains('{if $column.required}required{/if}', $recordEdit, '编辑页必须保留明细列必填约束');
 
 four_role_assert_contains('controlledPrintForm', $documentController, '受控打印必须先进入事前确认页');
 four_role_assert_contains('QmsReadableMarkdownService::toHtml', $documentController, 'Markdown 打印正文必须调用真实存在的安全渲染方法');

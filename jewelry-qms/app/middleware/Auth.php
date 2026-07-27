@@ -6,6 +6,7 @@ namespace app\middleware;
 use app\model\QmsExternalChangeCandidate;
 use app\model\NotificationUser;
 use app\service\ActionAuthorizationService;
+use app\service\RbacService;
 use think\facade\Config;
 use think\facade\Session;
 use think\facade\View;
@@ -71,6 +72,8 @@ class Auth
             'notificationCount' => $notificationCount,
             'pendingRegulatoryCandidateCount' => $pendingRegulatoryCandidateCount,
             'canViewEquipmentMenu' => ActionAuthorizationService::allows('equipment', 'view'),
+            'recordOperatorMode' => RbacService::isRestrictedRecordOperator(),
+            'recordOperatorActive' => ActionAuthorizationService::canRecordOperatorFill(),
         ]);
 
         return $next($request);

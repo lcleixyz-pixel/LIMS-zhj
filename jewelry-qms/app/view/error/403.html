@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>无此动作权限</title>
+    <title>{$accessDeniedTitle|default='无此动作权限'}</title>
     <style>
         body {
             margin: 0;
@@ -42,8 +42,8 @@
 </head>
 <body>
 <main>
-    <h1>无此动作权限</h1>
-    <p>当前账号没有执行此操作的有效岗位任命或记录范围。</p>
+    <h1>{$accessDeniedTitle|default='无此动作权限'}</h1>
+    <p>{$accessDeniedMessage|default='当前账号没有执行此操作的有效岗位任命或记录范围。'}</p>
     <p>请返回上一页，或联系质量负责人核对岗位、场所和任命有效期。</p>
     <div class="actions">
         <button type="button" onclick="history.back()">返回上一页</button>

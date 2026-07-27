@@ -13,6 +13,7 @@
         </div>
     </div>
     <div class="card-body">
+        {if qms_can_action('record_form_template', 'draft')}
         <details class="mb-3 border rounded-2 p-2 qms-system-maintenance">
             <summary class="small fw-semibold text-muted">系统维护</summary>
             <div class="d-flex gap-2 flex-wrap mt-2">
@@ -24,6 +25,7 @@
                 </form>
             </div>
         </details>
+        {/if}
         <form method="get" action="/record_form_template/index" class="row g-2 mb-3">
             <div class="col-md-5">
                 <input type="text" name="keyword" value="{$filter.keyword|default=''}" class="form-control form-control-sm" placeholder="编号、名称、模块">

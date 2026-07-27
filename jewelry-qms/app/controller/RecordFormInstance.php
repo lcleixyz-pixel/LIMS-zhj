@@ -35,6 +35,10 @@ class RecordFormInstance extends BaseController
     public function index()
     {
         $query = InstanceModel::with('template');
+        $visibilityScope = ActionAuthorizationService::recordFormVisibilityScope();
+        if (!$visibilityScope['all']) {
+            $query->where('created_by', $visibilityScope['user_id']);
+        }
 
         if ($keyword = trim((string)$this->request->param('keyword', ''))) {
             $query->where(function ($q) use ($keyword) {
@@ -49,6 +53,11 @@ class RecordFormInstance extends BaseController
         View::assign('items', $items);
         View::assign('pages', $items->render());
         View::assign('filter', ['keyword' => $this->request->param('keyword', '')]);
+        View::assign('ownRecordsOnly', !$visibilityScope['all']);
+        View::assign(
+            'canCreateRecord',
+            ActionAuthorizationService::allows('record_form_instance', 'create')
+        );
 
         return View::fetch('record_form_instance/index');
     }
@@ -112,8 +121,25 @@ class RecordFormInstance extends BaseController
             $status = (string)$item->status;
             $correctionSummary = $correctionSummaries[(string)$item->id] ?? ['count' => 0, 'latest_at' => ''];
             $correctionCount = (int)$correctionSummary['count'];
-            $item->setAttr('pdf_token', $this->canExportPdf($item) ? $this->issuePdfActionToken((string)$item->id) : '');
-            $item->setAttr('can_edit', $this->canEditRecord($item));
+            $canEditAction = ActionAuthorizationService::allows(
+                'record_form_instance',
+                'edit',
+                $item
+            );
+            $canExportAction = ActionAuthorizationService::allows(
+                'record_form_instance',
+                'export_pdf',
+                $item
+            );
+            $item->setAttr(
+                'pdf_token',
+                $canExportAction && $this->canExportPdf($item)
+                    ? $this->issuePdfActionToken((string)$item->id)
+                    : ''
+            );
+            $item->setAttr('can_edit_action', $canEditAction);
+            $item->setAttr('can_export_action', $canExportAction);
+            $item->setAttr('can_edit', $canEditAction && $this->canEditRecord($item));
             $item->setAttr('status_label', self::recordStatusLabels()[$status] ?? $status);
             $item->setAttr('filler_label', $userLabels[(string)$item->created_by] ?? ((string)$item->created_by !== '' ? (string)$item->created_by : '未记录'));
             $item->setAttr('reviewer_label', in_array($status, ['locked', 'voided'], true)
@@ -375,6 +401,21 @@ class RecordFormInstance extends BaseController
         $schema = $this->decodeSchema($template);
         $values = $this->decodeValues($record->field_values);
         $recordCorrections = $this->recordCorrectionsFor((string)$record->id);
+        $canEditAction = ActionAuthorizationService::allows(
+            'record_form_instance',
+            'edit',
+            $record
+        );
+        $canExportAction = ActionAuthorizationService::allows(
+            'record_form_instance',
+            'export_pdf',
+            $record
+        );
+        $canRequestCorrection = ActionAuthorizationService::allows(
+            'record_form_instance',
+            'request_correction',
+            $record
+        );
         View::assign('record', $record);
         View::assign('template', $template);
         View::assign('schema', $schema);
@@ -394,7 +435,15 @@ class RecordFormInstance extends BaseController
         );
         View::assign('canExportPdf', $this->canExportPdf($record));
         View::assign('canEdit', $this->canEditRecord($record));
-        View::assign('pdfToken', $this->canExportPdf($record) ? $this->issuePdfActionToken((string)$record->id) : '');
+        View::assign('canEditAction', $canEditAction);
+        View::assign('canExportAction', $canExportAction);
+        View::assign('canRequestCorrection', $canRequestCorrection);
+        View::assign(
+            'pdfToken',
+            $canExportAction && $this->canExportPdf($record)
+                ? $this->issuePdfActionToken((string)$record->id)
+                : ''
+        );
         View::assign('previewPdfFiles', $this->previewPdfFiles((string)$record->id));
         View::assign('correctionRequests', $this->correctionRequestsFor((string)$record->id));
         View::assign('correctionDecisions', $this->correctionDecisionsFor((string)$record->id));
@@ -1568,6 +1617,9 @@ class RecordFormInstance extends BaseController
         $record = InstanceModel::where('id', $id)->find();
         if (!$record) {
             throw new HttpException(404, '记录不存在');
+        }
+        if (!ActionAuthorizationService::canViewRecordFormInstance($record)) {
+            throw new HttpException(403, '您只能查看本人填写的记录。如需查阅其他记录，请联系质量负责人。');
         }
 
         return $record;

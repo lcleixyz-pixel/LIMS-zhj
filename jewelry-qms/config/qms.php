@@ -61,6 +61,13 @@ return [
         ],
     ],
 
+    // 受限业务岗位在既有系统角色之上进一步收口，不改变 users.role 数据结构。
+    'position_permissions' => [
+        'record_operator' => [
+            'dashboard', 'record_form_template', 'record_form_instance', 'notification',
+        ],
+    ],
+
     'statusLabels' => [
         'capa' => [
             'open' => '待处理',

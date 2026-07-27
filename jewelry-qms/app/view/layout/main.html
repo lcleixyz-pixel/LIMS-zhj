@@ -57,9 +57,11 @@
         <a class="navbar-brand" href="/dashboard/index">工作台</a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav">
+                {if condition="qms_can('calendar')"}
                 <li class="nav-item">
                     <a class="nav-link" href="/calendar/index">本月待办</a>
                 </li>
+                {/if}
                 {if condition="qms_can('record_form_template') || qms_can('record_form_instance')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">记录填报</a>
@@ -68,10 +70,12 @@
                         <li><a class="dropdown-item" href="/record_form_template/index">记录模板</a></li>
                         {/if}
                         {if condition="qms_can('record_form_instance')"}
-                        <li><a class="dropdown-item" href="/record_form_instance/index">填写记录</a></li>
+                        <li><a class="dropdown-item" href="/record_form_instance/index">我的记录</a></li>
+                        {if condition="qms_can_action('record_form_instance', 'review_list')"}
                         <li><a class="dropdown-item" href="/record_form_instance/reviewDashboard?year=2025">年度运行确认（2025）</a></li>
                         {/if}
-                        {if condition="qms_can('record_form_template')"}
+                        {/if}
+                        {if condition="qms_can_action('record_form_template', 'review_list')"}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="/record_form_template/review">模板复核</a></li>
                         {/if}
@@ -250,6 +254,12 @@
                     </ul>
                 </li>
                 {/if}
+                {if !empty($recordOperatorMode)}
+                <li class="nav-item">
+                    <a class="nav-link" href="/notification/index">通知中心</a>
+                </li>
+                {/if}
+                {if empty($recordOperatorMode)}
                 {if condition="qms_can('department') || qms_can('site') || qms_can('employee') || qms_can('user') || qms_can('import') || qms_can('ai_assistant') || qms_can('ai_settings') || qms_can('notification')"}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">系统设置</a>
@@ -283,6 +293,7 @@
                         {/if}
                     </ul>
                 </li>
+                {/if}
                 {/if}
             </ul>
         </div>

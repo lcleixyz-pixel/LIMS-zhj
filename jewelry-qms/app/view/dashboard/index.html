@@ -1,3 +1,75 @@
+{if !empty($recordOperatorMode)}
+<div class="qms-page-header">
+    <div>
+        <h4>新人记录员工作台</h4>
+        <small class="text-muted">按纸质表格的习惯操作：先选表，再填写，确认后生成 PDF。</small>
+    </div>
+    <div class="qms-page-actions">
+        {if !empty($recordOperatorActive)}
+        <a href="/record_form_template/index" class="btn btn-primary">开始填一张新表</a>
+        {/if}
+        <a href="/record_form_instance/index" class="btn btn-outline-primary">查看我的记录</a>
+    </div>
+</div>
+
+{if !empty($recordOperatorActive)}
+<div class="alert alert-info" role="status">
+    <strong>您当前使用“记录填报员”岗位。</strong>
+    页面只显示记录填报所需功能，且只能查看和处理本人填写的记录。
+</div>
+{else}
+<div class="alert alert-warning" role="alert">
+    <strong>您的“记录填报员”岗位当前无效。</strong>
+    为保护历史记录，您现在只能查看本人已填写的记录，不能新建、编辑或生成 PDF。
+    如需恢复填报，请联系质量负责人核对岗位任命。
+</div>
+{/if}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <a href="/record_form_instance/index" class="card h-100 text-decoration-none text-body">
+            <div class="card-body">
+                <div class="qms-kpi-label">我的全部记录</div>
+                <div class="qms-kpi-value">{$myRecordStats.all|default=0}</div>
+                <div class="small text-primary">查看记录清单 →</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="/record_form_instance/index" class="card h-100 text-decoration-none text-body">
+            <div class="card-body">
+                <div class="qms-kpi-label">待继续填写</div>
+                <div class="qms-kpi-value">{$myRecordStats.draft|default=0}</div>
+                <div class="small text-primary">继续处理草稿 →</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="/record_form_instance/index" class="card h-100 text-decoration-none text-body">
+            <div class="card-body">
+                <div class="qms-kpi-label">已形成 PDF / 已归档</div>
+                <div class="qms-kpi-value">{$myRecordStats.generated|default=0}</div>
+                <div class="small text-primary">查看已完成记录 →</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h6 class="mb-0">第一次使用怎么做</h6></div>
+    <div class="card-body">
+        {if !empty($recordOperatorActive)}
+        <ol class="mb-0">
+            <li class="mb-2">点击“开始填一张新表”，按名称或编号找到纸质表格对应的模板。</li>
+            <li class="mb-2">点击“填写”，逐项录入；暂时没填完可以先保存草稿。</li>
+            <li>确认内容无误后生成 PDF。生成后记录会锁定；需要修改时，从记录详情发起更正申请。</li>
+        </ol>
+        {else}
+        <p class="mb-0">请先查看“我的记录”核对历史内容；需要继续填报时，由质量负责人恢复有效任命后再操作。</p>
+        {/if}
+    </div>
+</div>
+{else}
 <!-- 页头 -->
 <div class="qms-page-header">
     <div>
@@ -242,3 +314,4 @@ qmsChartOrEmpty('auditFindingChart', qmsChartData.auditFindings, {
     series: [{ type: 'bar', data: qmsChartData.auditFindings.values }]
 }, '暂无内审发现数据', {if condition="qms_can('audit_plan')"}{ url: '/audit_plan/index', label: '查看内审计划' }{else}null{/if});
 </script>
+{/if}

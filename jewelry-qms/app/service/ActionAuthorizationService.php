@@ -9,6 +9,30 @@ use think\facade\Session;
 
 final class ActionAuthorizationService
 {
+    private const RECORD_FORM_MANAGER_POSITIONS = [
+        'quality_manager',
+        'document_controller',
+        'technical_manager',
+        'testing_room_manager',
+        'internal_auditor',
+    ];
+
+    /** @var array<string,array{id:string,employee_id:string,role:string}|null> */
+    private static array $identityCache = [];
+
+    /** @var array<string,list<string>> */
+    private static array $activePositionCodesCache = [];
+
+    /** @var array<string,array{profile:bool,active:bool}> */
+    private static array $recordOperatorContextCache = [];
+
+    public static function clearRequestCache(): void
+    {
+        self::$identityCache = [];
+        self::$activePositionCodesCache = [];
+        self::$recordOperatorContextCache = [];
+    }
+
     public static function allows(string $module, string $action, ?object $record = null): bool
     {
         $identity = self::currentIdentity();
@@ -63,12 +87,26 @@ final class ActionAuthorizationService
             ),
             'recordformtemplate.approvetrial' => self::canApproveTrialTemplate($employeeId, $record),
 
-            'recordforminstance.edit', 'recordforminstance.exportpdf', 'recordforminstance.create'
-                => self::hasAnyPosition(
-                    $employeeId,
-                    ['quality_manager', 'document_controller', 'technical_manager', 'testing_room_manager', 'internal_auditor']
+            'recordforminstance.create'
+                => self::isActiveRecordOperatorIdentity($identity)
+                    || self::canManageRecordFormInstances($employeeId),
+            'recordforminstance.edit', 'recordforminstance.exportpdf'
+                => (
+                    self::isActiveRecordOperatorIdentity($identity)
+                    && self::isOwnRecord($record, $userId)
                 )
-                || self::hasGlobalPosition($employeeId, ['quality_manager']),
+                    || self::canManageRecordFormInstances($employeeId),
+            'recordforminstance.requestcorrection'
+                => !self::isRecordOperatorProfileIdentity($identity)
+                    || (
+                        self::isActiveRecordOperatorIdentity($identity)
+                        && self::isOwnRecord($record, $userId)
+                    ),
+            'recordforminstance.view'
+                => !self::isRecordOperatorProfileIdentity($identity)
+                    || self::isOwnRecord($record, $userId),
+            'recordforminstance.reviewlist'
+                => self::canManageRecordFormInstances($employeeId),
             'recordforminstance.decidecorrection'
                 => self::canDecideRecordCorrection($employeeId),
             'recordforminstance.registercorrection'
@@ -136,6 +174,16 @@ final class ActionAuthorizationService
         if ($employeeId === '') {
             return [];
         }
+        $siteId = $siteId !== null ? trim($siteId) : null;
+        $cacheKey = implode('|', [
+            (string)Config::get('qms.company_id'),
+            $employeeId,
+            $siteId ?? '*',
+            date('Y-m-d'),
+        ]);
+        if (array_key_exists($cacheKey, self::$activePositionCodesCache)) {
+            return self::$activePositionCodesCache[$cacheKey];
+        }
 
         $query = Db::name('employee_appointments')->alias('ea')
             ->join('qms_positions p', 'p.id = ea.position_id')
@@ -155,8 +203,7 @@ final class ActionAuthorizationService
                 $query->whereNull('ea.valid_until')->whereOr('ea.valid_until', '>=', date('Y-m-d'));
             });
 
-        if ($siteId !== null && trim($siteId) !== '') {
-            $siteId = trim($siteId);
+        if ($siteId !== null && $siteId !== '') {
             $query->where(function ($query) use ($siteId) {
                 $query->whereNull('ea.site_id')->whereOr('ea.site_id', $siteId);
             });
@@ -165,7 +212,52 @@ final class ActionAuthorizationService
         $codes = array_map('strval', $query->distinct(true)->column('p.code'));
         sort($codes);
 
-        return array_values(array_unique($codes));
+        self::$activePositionCodesCache[$cacheKey] = array_values(array_unique($codes));
+
+        return self::$activePositionCodesCache[$cacheKey];
+    }
+
+    public static function isRestrictedRecordOperator(): bool
+    {
+        $identity = self::currentIdentity();
+
+        return $identity !== null && self::isRecordOperatorProfileIdentity($identity);
+    }
+
+    public static function canRecordOperatorFill(): bool
+    {
+        $identity = self::currentIdentity();
+
+        return $identity !== null && self::isActiveRecordOperatorIdentity($identity);
+    }
+
+    /**
+     * @return array{all:bool,user_id:string}
+     */
+    public static function recordFormVisibilityScope(): array
+    {
+        $identity = self::currentIdentity();
+        if ($identity === null) {
+            return ['all' => false, 'user_id' => ''];
+        }
+
+        return [
+            'all' => !self::isRecordOperatorProfileIdentity($identity),
+            'user_id' => $identity['id'],
+        ];
+    }
+
+    public static function canViewRecordFormInstance(?object $record): bool
+    {
+        $identity = self::currentIdentity();
+        if ($identity === null || $record === null) {
+            return false;
+        }
+        if (!self::isRecordOperatorProfileIdentity($identity)) {
+            return true;
+        }
+
+        return self::isOwnRecord($record, $identity['id']);
     }
 
     public static function requestDecision(string $controller, string $action, object $request): ?bool
@@ -458,6 +550,76 @@ final class ActionAuthorizationService
             );
     }
 
+    private static function canManageRecordFormInstances(string $employeeId): bool
+    {
+        return self::hasAnyPosition($employeeId, self::RECORD_FORM_MANAGER_POSITIONS)
+            || self::hasGlobalPosition($employeeId, ['quality_manager']);
+    }
+
+    /**
+     * @param array{id:string,employee_id:string,role:string} $identity
+     */
+    private static function isRecordOperatorProfileIdentity(array $identity): bool
+    {
+        return self::recordOperatorContext($identity)['profile'];
+    }
+
+    /**
+     * @param array{id:string,employee_id:string,role:string} $identity
+     */
+    private static function isActiveRecordOperatorIdentity(array $identity): bool
+    {
+        return self::recordOperatorContext($identity)['active'];
+    }
+
+    /**
+     * @param array{id:string,employee_id:string,role:string} $identity
+     * @return array{profile:bool,active:bool}
+     */
+    private static function recordOperatorContext(array $identity): array
+    {
+        $cacheKey = implode('|', [
+            (string)Config::get('qms.company_id'),
+            $identity['id'],
+            $identity['employee_id'],
+            $identity['role'],
+        ]);
+        if (array_key_exists($cacheKey, self::$recordOperatorContextCache)) {
+            return self::$recordOperatorContextCache[$cacheKey];
+        }
+        if ($identity['role'] !== 'staff') {
+            return self::$recordOperatorContextCache[$cacheKey] = [
+                'profile' => false,
+                'active' => false,
+            ];
+        }
+
+        $historicalRecordOperator = Db::name('employee_appointments')->alias('ea')
+            ->join('qms_positions p', 'p.id = ea.position_id')
+            ->where('ea.company_id', (string)Config::get('qms.company_id'))
+            ->where('p.company_id', (string)Config::get('qms.company_id'))
+            ->where('ea.employee_id', $identity['employee_id'])
+            ->where('p.code', 'record_operator')
+            ->count() > 0;
+        if (!$historicalRecordOperator) {
+            return self::$recordOperatorContextCache[$cacheKey] = [
+                'profile' => false,
+                'active' => false,
+            ];
+        }
+
+        $activePositionCodes = self::activePositionCodes($identity['employee_id']);
+        $profile = array_intersect(
+            self::RECORD_FORM_MANAGER_POSITIONS,
+            $activePositionCodes
+        ) === [];
+
+        return self::$recordOperatorContextCache[$cacheKey] = [
+            'profile' => $profile,
+            'active' => $profile && in_array('record_operator', $activePositionCodes, true),
+        ];
+    }
+
     private static function hasAnyPosition(string $employeeId, array $codes): bool
     {
         return array_intersect($codes, self::activePositionCodes($employeeId)) !== [];
@@ -536,8 +698,13 @@ final class ActionAuthorizationService
     {
         $userId = trim((string)Session::get('user.id', ''));
         $employeeId = trim((string)Session::get('user.employee_id', ''));
+        $sessionRole = trim((string)Session::get('user.role', ''));
         if ($userId === '' || $employeeId === '') {
             return null;
+        }
+        $cacheKey = implode('|', [$userId, $employeeId, $sessionRole]);
+        if (array_key_exists($cacheKey, self::$identityCache)) {
+            return self::$identityCache[$cacheKey];
         }
 
         $user = Db::name('users')
@@ -547,7 +714,7 @@ final class ActionAuthorizationService
             ->where('soft_delete', 0)
             ->find();
         if (!$user) {
-            return null;
+            return self::$identityCache[$cacheKey] = null;
         }
 
         $employee = Db::name('employees')
@@ -557,10 +724,10 @@ final class ActionAuthorizationService
             ->where('soft_delete', 0)
             ->find();
         if (!$employee) {
-            return null;
+            return self::$identityCache[$cacheKey] = null;
         }
 
-        return [
+        return self::$identityCache[$cacheKey] = [
             'id' => $userId,
             'employee_id' => $employeeId,
             'role' => (string)$user['role'],
@@ -657,11 +824,28 @@ final class ActionAuthorizationService
                 'create' => 'create',
                 'edit' => 'edit',
                 'exportpdf' => 'export_pdf',
+                'downloadcurrentpackage', 'downloadcurrentpdf' => 'export_pdf',
+                'requestcorrection' => 'request_correction',
+                'view', 'print', 'printcorrections', 'downloadpdf', 'downloadpreviewpdf' => 'view',
+                'reviewdashboard', 'updatelayoutstatus', 'reviewartifact' => 'review_list',
                 'decidecorrection' => 'decide_correction',
                 'registercorrection' => 'register_correction',
                 default => null,
             };
-            if (in_array($action, ['edit', 'exportpdf', 'decidecorrection', 'registercorrection'], true)) {
+            if (in_array($action, [
+                'edit',
+                'exportpdf',
+                'view',
+                'print',
+                'printcorrections',
+                'downloadcurrentpackage',
+                'downloadcurrentpdf',
+                'downloadpdf',
+                'downloadpreviewpdf',
+                'requestcorrection',
+                'decidecorrection',
+                'registercorrection',
+            ], true)) {
                 $record = self::recordFormInstanceRecord(self::requestId($request))
                     ?? self::authorizationDeniedRecord();
             }

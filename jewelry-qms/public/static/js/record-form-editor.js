@@ -66,16 +66,32 @@
         });
     }
 
-    function syncConditionalRequired(row) {
-        Array.prototype.slice.call(row.querySelectorAll('[data-required-when-field]')).forEach(function (control) {
-            var dependent = row.querySelector(
-                '[data-column-key="' + control.dataset.requiredWhenField + '"]'
-            );
-            var required = !!dependent
-                && controlValue(dependent).trim() === (control.dataset.requiredWhenEquals || '');
-            var baseLabel = (control.getAttribute('aria-label') || '').replace(/（判定不符合时必填）$/, '');
+    function syncRowRequired(row) {
+        var rowHasValue = !isRowEmpty(row);
+        controls(row).forEach(function (control) {
+            if (control.dataset.baseRequired === undefined) {
+                control.dataset.baseRequired = control.required ? '1' : '0';
+            }
+
+            var required = control.dataset.baseRequired === '1' && rowHasValue;
+            if (control.dataset.requiredWhenField) {
+                var dependent = row.querySelector(
+                    '[data-column-key="' + control.dataset.requiredWhenField + '"]'
+                );
+                required = !!dependent
+                    && controlValue(dependent).trim() === (control.dataset.requiredWhenEquals || '');
+            }
+            var baseLabel = (control.getAttribute('aria-label') || '')
+                .replace(/（此行填写后必填）$/, '')
+                .replace(/（判定不符合时必填）$/, '');
             control.required = required;
-            control.setAttribute('aria-label', baseLabel + (required ? '（判定不符合时必填）' : ''));
+            if (control.dataset.requiredWhenField) {
+                control.setAttribute('aria-label', baseLabel + (required ? '（判定不符合时必填）' : ''));
+            } else {
+                control.setAttribute('aria-label', baseLabel + (
+                    control.dataset.baseRequired === '1' ? '（此行填写后必填）' : ''
+                ));
+            }
         });
     }
 
@@ -90,7 +106,7 @@
         var row = fragment.querySelector('tr[data-repeatable-row]');
         tbody.appendChild(fragment);
         reindexRows(table);
-        syncConditionalRequired(row);
+        syncRowRequired(row);
 
         return row;
     }
@@ -99,6 +115,7 @@
         var rows = table.querySelectorAll('tbody tr[data-repeatable-row]');
         if (rows.length <= 1) {
             clearRow(row);
+            syncRowRequired(row);
         } else {
             row.remove();
         }
@@ -166,6 +183,7 @@
             if (departmentColumn !== '') {
                 setControlValue(row, departmentColumn, department);
             }
+            syncRowRequired(row);
             return;
         }
 
@@ -206,7 +224,7 @@
         }
         var row = event.target.closest('tr[data-repeatable-row]');
         if (row) {
-            syncConditionalRequired(row);
+            syncRowRequired(row);
         }
     });
 
@@ -217,7 +235,7 @@
         }
         var row = event.target.closest('tr[data-repeatable-row]');
         if (row) {
-            syncConditionalRequired(row);
+            syncRowRequired(row);
         }
 
         Array.prototype.slice.call(document.querySelectorAll('[data-employee-picker="' + table.dataset.repeatableTable + '"]')).forEach(function (picker) {
@@ -227,7 +245,7 @@
 
     document.querySelectorAll('[data-repeatable-table]').forEach(function (table) {
         reindexRows(table);
-        Array.prototype.slice.call(table.querySelectorAll('tr[data-repeatable-row]')).forEach(syncConditionalRequired);
+        Array.prototype.slice.call(table.querySelectorAll('tr[data-repeatable-row]')).forEach(syncRowRequired);
     });
 
     document.querySelectorAll('[data-employee-picker]').forEach(function (picker) {
