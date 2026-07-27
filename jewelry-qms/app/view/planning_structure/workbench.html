@@ -43,6 +43,82 @@
 </div>
 {/notempty}
 
+{notempty name="workbench.candidate_trace"}
+<div class="card mb-3 border-warning">
+    <div class="card-header d-flex flex-column flex-md-row justify-content-between gap-1">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <h5 class="mb-0">治理候选（不计闭环）</h5>
+            <span class="badge bg-warning text-dark">候选·待复核</span>
+        </div>
+        <div class="text-muted small">
+            候选来源：{$workbench.candidate_trace.source_label|default='治理装配蓝图 / 本地条款映射'}
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning py-2 small" role="status">
+            以下内容只帮助定位可能的追溯关系。只有在内容块追溯复核页逐条确认后，才会进入系统设计链条并计入闭环。
+        </div>
+        {if $workbench.candidate_trace.available}
+        <div class="row g-3">
+            <div class="col-12 col-lg-4">
+                <div class="border rounded h-100 p-3">
+                    <h6>候选外部依据</h6>
+                    {volist name="workbench.candidate_trace.external_sources" id="candidateSource"}
+                    <div class="small mt-2">
+                        <span class="fw-semibold">{$candidateSource.source_code} {$candidateSource.clause_number}</span>
+                        <div class="text-muted">{$candidateSource.title|default='条款标题待治理'}</div>
+                    </div>
+                    {/volist}
+                    {empty name="workbench.candidate_trace.external_sources"}
+                    <div class="text-muted small">尚无可用的本地外部依据候选。</div>
+                    {/empty}
+                </div>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="border rounded h-100 p-3">
+                    <h6>候选手册条款</h6>
+                    {volist name="workbench.candidate_trace.manual_sections" id="candidateSection"}
+                    <div class="small mt-2">
+                        <span class="fw-semibold">{$candidateSection.section_number}</span>
+                        <div class="text-muted">{$candidateSection.title|default='章节标题待治理'}</div>
+                    </div>
+                    {/volist}
+                    {empty name="workbench.candidate_trace.manual_sections"}
+                    <div class="text-muted small">治理蓝图尚未给出候选手册条款。</div>
+                    {/empty}
+                </div>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="border rounded h-100 p-3">
+                    <h6>候选运行记录</h6>
+                    {volist name="workbench.candidate_trace.record_templates" id="candidateRecord"}
+                    <div class="small mt-2">
+                        <span class="fw-semibold">{$candidateRecord.doc_number}</span>
+                        <div class="text-muted">{$candidateRecord.name|default='记录名称待治理'}</div>
+                    </div>
+                    {/volist}
+                    {empty name="workbench.candidate_trace.record_templates"}
+                    <div class="text-muted small">治理蓝图尚未给出候选运行记录。</div>
+                    {/empty}
+                </div>
+            </div>
+        </div>
+        {else}
+        <div class="text-muted small">
+            {volist name="workbench.candidate_trace.issues" id="candidateIssue"}
+            <div>{$candidateIssue}</div>
+            {/volist}
+        </div>
+        {/if}
+        {notempty name="workbench.candidate_trace.review_url"}
+        <a href="{$workbench.candidate_trace.review_url}" class="btn btn-sm btn-outline-warning mt-3">
+            进入人工追溯复核
+        </a>
+        {/notempty}
+    </div>
+</div>
+{/notempty}
+
 <div class="card mb-3">
     <div class="card-header d-flex flex-column flex-md-row justify-content-between gap-1">
         <h5 class="mb-0">系统设计链条</h5>

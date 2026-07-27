@@ -33,6 +33,9 @@ $detailView = (string)file_get_contents($root . '/app/view/planning_structure/vi
 $linkReviewView = (string)file_get_contents($root . '/app/view/planning_structure/link_review.html');
 
 foreach ([
+    '治理候选（不计闭环）',
+    '候选·待复核',
+    '候选来源',
     '系统设计链条',
     '外部依据',
     '手册条款',
@@ -55,6 +58,7 @@ workbench_ui_assert(
     '外部依据数量必须来自 ViewModel'
 );
 foreach ([
+    'workbench.candidate_trace',
     'workbench.chain.confirmed_external_sources',
     'workbench.chain.confirmed_manual_sections',
     'workbench.chain.confirmed_record_evidence',

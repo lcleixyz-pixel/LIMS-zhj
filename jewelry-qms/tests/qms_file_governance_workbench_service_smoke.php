@@ -395,4 +395,86 @@ workbench_service_assert(
     '已废止文件不得生成提交签批动作'
 );
 
+$candidateDetail = [
+    'document' => [
+        'id' => 'structured-candidate',
+        'document_id' => 'document-candidate',
+        'document_role' => 'procedure',
+        'doc_number' => 'XZTC/CX-TEST-2022',
+        'title' => '人员能力管理程序',
+        'status' => 'draft',
+    ],
+    'blocks' => [[
+        'block' => [
+            'id' => 'block-candidate',
+            'title' => '能力要求',
+            'block_type' => 'section',
+            'markdown' => '规定人员能力确认和记录要求。',
+        ],
+        'links' => [],
+    ]],
+];
+$candidateBaseline = QmsFileGovernanceWorkbenchService::fromSnapshot(
+    $candidateDetail,
+    [],
+    [],
+    ['document_blockers' => [], 'system_notices' => []],
+    ['id' => 'document-candidate', 'status' => 'draft'],
+    ['stage' => 'draft', 'stage_label' => '草稿，等待提交']
+);
+$candidateWorkbench = QmsFileGovernanceWorkbenchService::fromSnapshot(
+    $candidateDetail,
+    [],
+    [],
+    ['document_blockers' => [], 'system_notices' => []],
+    ['id' => 'document-candidate', 'status' => 'draft'],
+    ['stage' => 'draft', 'stage_label' => '草稿，等待提交'],
+    [
+        'available' => true,
+        'source_kind' => 'governance_blueprint',
+        'source_label' => '治理装配蓝图 / 本地条款映射',
+        'canonical_doc_number' => 'XZTC/CX-TEST-2022',
+        'manual_sections' => [
+            ['section_number' => '6.2', 'title' => '人员'],
+        ],
+        'external_sources' => [
+            [
+                'source_code' => 'CNAS-CL01:2018',
+                'clause_number' => '6.2',
+                'title' => '人员',
+            ],
+        ],
+        'record_templates' => [
+            ['doc_number' => 'XZTC/BG-11-01', 'name' => '人员能力记录'],
+        ],
+        'review_required' => true,
+        'candidate_complete' => true,
+        'issues' => [],
+    ]
+);
+workbench_service_assert(
+    ($candidateWorkbench['candidate_trace']['review_required'] ?? false) === true,
+    '工作台应单独暴露只读候选链'
+);
+workbench_service_assert(
+    ($candidateWorkbench['candidate_trace']['review_url'] ?? '')
+        === '/planning/structures/links/review?block_id=block-candidate',
+    '候选链应复用现有人工追溯复核入口'
+);
+workbench_service_assert(
+    $candidateWorkbench['chain']['confirmed_external_sources'] === []
+        && $candidateWorkbench['chain']['confirmed_manual_sections'] === []
+        && $candidateWorkbench['chain']['confirmed_record_evidence'] === [],
+    '治理候选不得混入已确认主链'
+);
+workbench_service_assert(
+    $candidateWorkbench['summary']['completed_checks']
+        === $candidateBaseline['summary']['completed_checks'],
+    '治理候选不得增加闭环证据计数'
+);
+workbench_service_assert(
+    ($candidateWorkbench['semantic_guard']['status'] ?? '') !== 'not_assessed',
+    '有治理候选的通用程序应进入语义复核状态'
+);
+
 echo "qms_file_governance_workbench_service_smoke passed\n";

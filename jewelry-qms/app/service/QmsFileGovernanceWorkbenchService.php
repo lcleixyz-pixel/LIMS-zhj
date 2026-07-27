@@ -25,6 +25,22 @@ final class QmsFileGovernanceWorkbenchService
         $conflicts = GovernedTrialResolvedDocumentService::currentConflictSummary(
             (string)($structured['doc_number'] ?? '')
         );
+        try {
+            $candidateTrace = QmsTraceSemanticCandidateService::forDocument($structured);
+        } catch (\Throwable $exception) {
+            $candidateTrace = [
+                'available' => false,
+                'source_kind' => 'governance_blueprint',
+                'source_label' => '治理装配蓝图 / 本地条款映射',
+                'canonical_doc_number' => (string)($structured['doc_number'] ?? ''),
+                'manual_sections' => [],
+                'external_sources' => [],
+                'record_templates' => [],
+                'review_required' => true,
+                'candidate_complete' => false,
+                'issues' => ['候选暂不可用：' . $exception->getMessage()],
+            ];
+        }
 
         $controlledDocument = [];
         $workflow = [
@@ -55,7 +71,8 @@ final class QmsFileGovernanceWorkbenchService
             $artifacts,
             $conflicts,
             $controlledDocument,
-            $workflow
+            $workflow,
+            $candidateTrace
         );
     }
 
@@ -65,7 +82,8 @@ final class QmsFileGovernanceWorkbenchService
         array $artifacts,
         array $conflicts,
         array $controlledDocument,
-        array $workflow
+        array $workflow,
+        array $candidateTrace = []
     ): array {
         $document = self::row($detail['document'] ?? []);
         if ($document === []) {
@@ -85,7 +103,8 @@ final class QmsFileGovernanceWorkbenchService
         $mismatchReviewUrl = '';
         $semanticGuard = QmsTraceSemanticGuardService::assess(
             $document,
-            (array)($detail['blocks'] ?? [])
+            (array)($detail['blocks'] ?? []),
+            $candidateTrace
         );
         $expectedManualSections = (array)($semanticGuard['profile']['expected_manual_sections'] ?? []);
         $reviewStates = [
@@ -217,6 +236,21 @@ final class QmsFileGovernanceWorkbenchService
         $traceReviewUrl = $mismatchReviewUrl !== ''
             ? $mismatchReviewUrl
             : ($pendingReviewUrl !== '' ? $pendingReviewUrl : $firstReviewUrl);
+        if ($candidateTrace !== []) {
+            $candidateTrace = array_merge([
+                'available' => false,
+                'source_kind' => '',
+                'source_label' => '治理装配蓝图 / 本地条款映射',
+                'canonical_doc_number' => (string)($document['doc_number'] ?? ''),
+                'manual_sections' => [],
+                'external_sources' => [],
+                'record_templates' => [],
+                'review_required' => true,
+                'candidate_complete' => false,
+                'issues' => [],
+            ], $candidateTrace);
+            $candidateTrace['review_url'] = $traceReviewUrl;
+        }
         $documentBlockers = array_values((array)($conflicts['document_blockers'] ?? []));
         $systemNotices = array_values((array)($conflicts['system_notices'] ?? []));
         $workflowStage = (string)($workflow['stage'] ?? '');
@@ -304,6 +338,7 @@ final class QmsFileGovernanceWorkbenchService
                 'missing' => $missingChain,
             ],
             'semantic_guard' => $semanticGuard,
+            'candidate_trace' => $candidateTrace,
             'record_coverage' => $recordCoverage,
             'artifacts' => $artifacts,
             'conflicts' => [
