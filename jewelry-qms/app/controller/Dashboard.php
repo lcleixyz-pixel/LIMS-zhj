@@ -17,6 +17,7 @@ use app\model\ReviewAction;
 use app\model\Site;
 use app\model\Training;
 use app\service\DashboardMetricService;
+use app\service\ActionAuthorizationService;
 use think\facade\Session;
 use think\facade\View;
 
@@ -31,14 +32,17 @@ class Dashboard extends BaseController
     public function index()
     {
         $userId = Session::get('user.id');
+        $canViewEquipment = ActionAuthorizationService::allows('equipment', 'view');
         $stats = [
             'docCount' => Document::where('soft_delete', 0)->count(),
             'pendingReview' => Document::whereIn('status', ['draft', 'reviewing'])->where('soft_delete', 0)->count(),
-            'equipmentCount' => Equipment::where('soft_delete', 0)->count(),
-            'calibrationExpiring' => Equipment::where('soft_delete', 0)
-                ->where('calibration_required', 1)
-                ->where('next_calibration_date', '<=', date('Y-m-d', strtotime('+30 days')))
-                ->count(),
+            'equipmentCount' => $canViewEquipment ? Equipment::where('soft_delete', 0)->count() : 0,
+            'calibrationExpiring' => $canViewEquipment
+                ? Equipment::where('soft_delete', 0)
+                    ->where('calibration_required', 1)
+                    ->where('next_calibration_date', '<=', date('Y-m-d', strtotime('+30 days')))
+                    ->count()
+                : 0,
             'activeCapa' => Capa::where('status', '<>', 'closed')->where('soft_delete', 0)->count(),
             'auditPlanCount' => AuditPlan::where('soft_delete', 0)->count(),
             'openComplaints' => CustomerComplaint::where('status', '<>', 'closed')->where('soft_delete', 0)->count(),
@@ -55,12 +59,14 @@ class Dashboard extends BaseController
         ];
 
         $upcomingCalibrations = [];
-        $equipments = Equipment::where('soft_delete', 0)
-            ->where('calibration_required', 1)
-            ->where('next_calibration_date', '<=', date('Y-m-d', strtotime('+30 days')))
-            ->order('next_calibration_date', 'asc')
-            ->limit(8)
-            ->select();
+        $equipments = $canViewEquipment
+            ? Equipment::where('soft_delete', 0)
+                ->where('calibration_required', 1)
+                ->where('next_calibration_date', '<=', date('Y-m-d', strtotime('+30 days')))
+                ->order('next_calibration_date', 'asc')
+                ->limit(8)
+                ->select()
+            : [];
 
         foreach ($equipments as $eq) {
             $site = $eq->site_id ? Site::find($eq->site_id) : null;
@@ -84,7 +90,7 @@ class Dashboard extends BaseController
         if ($stats['overdueCapa'] > 0) {
             $todos[] = ['title' => '超期CAPA', 'count' => $stats['overdueCapa'], 'url' => '/capa/index'];
         }
-        if ($stats['calibrationExpiring'] > 0) {
+        if ($canViewEquipment && $stats['calibrationExpiring'] > 0) {
             $todos[] = ['title' => '校准即将到期', 'count' => $stats['calibrationExpiring'], 'url' => '/equipment/index?due=1'];
         }
         if ($stats['openComplaints'] > 0) {
@@ -97,6 +103,7 @@ class Dashboard extends BaseController
         View::assign('stats', $stats);
         View::assign('upcomingCalibrations', $upcomingCalibrations);
         View::assign('todos', $todos);
+        View::assign('canViewEquipment', $canViewEquipment);
         View::assign('chartDataJson', json_encode(DashboardMetricService::chartData(), JSON_UNESCAPED_UNICODE));
 
         return View::fetch('dashboard/index');

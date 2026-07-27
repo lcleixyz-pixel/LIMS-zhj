@@ -33,9 +33,14 @@ governed_controller_assert_contains(
     'Controlled master-data state changes must use the shared event ledger'
 );
 governed_controller_assert_contains(
-    'GovernedChangeService::pendingRequestsForDisplay',
+    'GovernedChangeService::inboxRequestsForDisplay',
     $controller,
-    'Approvers must have a cross-module inbox without requiring business-module access'
+    'Applicants and approvers must share a role-aware cross-module request center'
+);
+governed_controller_assert_contains(
+    "ActionAuthorizationService::allows('governedchange', 'decide')",
+    $controller,
+    'The request center must separate read access from decision authority'
 );
 governed_controller_assert_contains(
     "Route::post('governed_change/request'",

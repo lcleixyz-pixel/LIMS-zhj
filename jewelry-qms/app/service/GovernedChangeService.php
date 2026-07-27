@@ -311,6 +311,28 @@ final class GovernedChangeService
         return $rows;
     }
 
+    public static function inboxRequestsForDisplay(bool $canDecide, string $userId): array
+    {
+        if (!self::tablesReady()) {
+            return [];
+        }
+
+        $query = QmsGovernedChangeRequest::where('company_id', Config::get('qms.company_id'))
+            ->where('soft_delete', 0);
+        if ($canDecide) {
+            $query->where('status', 'pending')->order('requested_at', 'asc');
+        } else {
+            if (trim($userId) === '') {
+                return [];
+            }
+            $query->where('requested_by', $userId)->order('requested_at', 'desc');
+        }
+        $rows = $query->limit(50)->select()->toArray();
+        self::attachUserLabels($rows, ['requested_by', 'decided_by']);
+
+        return $rows;
+    }
+
     public static function eventFields(string $subjectType, Model $record): array
     {
         $policy = GovernedChangePolicyService::policy($subjectType);

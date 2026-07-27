@@ -47,7 +47,7 @@
                 {/if}
             </a>
             <br>
-            <a href="/login/changePassword" class="btn btn-sm btn-outline-secondary">修改密码</a>
+            <a href="/user/changePassword" class="btn btn-sm btn-outline-secondary">修改密码</a>
             <a href="/login/logout" class="btn btn-sm btn-primary">退出</a>
         </div>
     </div>
@@ -157,13 +157,13 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">资源管理</a>
                     <ul class="dropdown-menu">
-                        {if condition="qms_can('equipment') || qms_can('equipment_transfer') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material')"}
+                        {if condition="qms_can_action('equipment', 'view') || qms_can_action('equipment_transfer', 'view') || qms_can('equipment_maintenance') || qms_can('equipment_authorization') || qms_can('calibration') || qms_can('reference_material')"}
                         <li><h6 class="dropdown-header text-muted">设备与计量</h6></li>
                         {/if}
-                        {if condition="qms_can('equipment')"}
+                        {if condition="qms_can_action('equipment', 'view')"}
                         <li><a class="dropdown-item" href="/equipment/index">设备台账</a></li>
                         {/if}
-                        {if condition="qms_can('equipment_transfer')"}
+                        {if condition="qms_can_action('equipment_transfer', 'view')"}
                         <li><a class="dropdown-item" href="/equipment_transfer/index">设备调拨</a></li>
                         {/if}
                         {if condition="qms_can('equipment_maintenance')"}
@@ -175,7 +175,7 @@
                         {if condition="qms_can('calibration')"}
                         <li><a class="dropdown-item" href="/calibration/index">校准记录</a></li>
                         {/if}
-                        {if condition="qms_can('equipment')"}
+                        {if condition="qms_can_action('equipment', 'view')"}
                         <li><a class="dropdown-item" href="/equipment_period_check/index">期间核查计划</a></li>
                         {/if}
                         {if condition="qms_can('reference_material')"}

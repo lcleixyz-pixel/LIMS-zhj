@@ -19,6 +19,7 @@ class Rbac
         'dashboard/index',
         'notification/index',
         'notification/read',
+        'user/changepassword',
     ];
 
     /**

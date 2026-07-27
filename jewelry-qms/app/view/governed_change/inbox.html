@@ -1,26 +1,30 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <div>
-            <h5 class="mb-0">更正审批待办</h5>
-            <small class="text-secondary">只显示申请时冻结的记录、字段、原值、拟更正值和原因，不扩大业务模块访问权限。</small>
+            <h5 class="mb-0">更正申请中心</h5>
+            <small class="text-secondary">
+                {if $canDecide}当前显示等待您处理的更正申请。{else}当前显示由您提交的更正申请和处理进度。{/if}
+            </small>
         </div>
         <a href="/dashboard/index" class="btn btn-sm btn-outline-secondary">返回工作台</a>
     </div>
     <div class="card-body">
-        {if empty($pendingRequests)}
+        {if empty($requests)}
         <div class="text-center text-muted py-5">
             <div class="fs-2 mb-2">✓</div>
-            当前没有待处理的更正申请
+            {if $canDecide}当前没有待处理的更正申请{else}您尚未提交更正申请{/if}
         </div>
         {else}
         <div class="row g-3">
-            {foreach $pendingRequests as $changeRequest}
+            {foreach $requests as $changeRequest}
             <div class="col-12">
-                <article class="border rounded p-3 bg-warning-subtle">
+                <article class="border rounded p-3 {if $changeRequest.status == 'pending'}bg-warning-subtle{elseif $changeRequest.status == 'approved'}bg-success-subtle{else}bg-light{/if}">
                     <div class="d-flex justify-content-between gap-3 flex-wrap">
                         <div>
                             <strong>{$changeRequest.subject_label}</strong>
-                            <span class="badge text-bg-warning ms-2">待处理</span>
+                            {if $changeRequest.status == 'approved'}<span class="badge text-bg-success ms-2">已批准</span>
+                            {elseif $changeRequest.status == 'rejected'}<span class="badge text-bg-danger ms-2">已驳回</span>
+                            {else}<span class="badge text-bg-warning ms-2">待处理</span>{/if}
                         </div>
                         <small>申请人：{$changeRequest.requested_by_label|default='未记录'} · {$changeRequest.requested_at}</small>
                     </div>
@@ -31,6 +35,13 @@
                         <dt class="col-sm-2">拟更正值</dt><dd class="col-sm-10"><strong>{$changeRequest.proposed_value|default='（空）'}</strong></dd>
                         <dt class="col-sm-2">更正原因</dt><dd class="col-sm-10">{$changeRequest.reason}</dd>
                     </dl>
+                    {if $changeRequest.status != 'pending'}
+                    <div class="border-top pt-2 small">
+                        <strong>处理意见：</strong>{$changeRequest.decision_comment|default='同意更正'}
+                        {if !empty($changeRequest.decided_at)}<span class="text-muted ms-2">{$changeRequest.decided_at}</span>{/if}
+                    </div>
+                    {/if}
+                    {if $canDecide}
                     <form method="post" action="/governed_change/decide" class="border-top pt-3">
                         <input type="hidden" name="request_id" value="{$changeRequest.id}">
                         <input type="hidden" name="return_url" value="/governed_change/inbox">
@@ -39,6 +50,7 @@
                         <button type="submit" name="decision" value="approved" class="btn btn-success btn-sm">批准并追加更正</button>
                         <button type="submit" name="decision" value="rejected" class="btn btn-outline-danger btn-sm">驳回申请</button>
                     </form>
+                    {/if}
                 </article>
             </div>
             {/foreach}

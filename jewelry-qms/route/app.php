@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use think\facade\Route;
 
+Route::rule('login/changePassword', 'User/changePassword');
 Route::rule('login', 'Login/index');
 Route::get('logout', 'Login/logout');
 Route::get('login/logout', 'Login/logout');
-Route::rule('login/changePassword', 'Login/changePassword');
 Route::get('api/v1/employees', 'Api/employees');
 Route::get('api/v1/equipments', 'Api/equipments');
 Route::get('api/v1/customers', 'Api/customers');

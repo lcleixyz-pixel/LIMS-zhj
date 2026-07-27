@@ -109,7 +109,13 @@ $scoreClass = $totalScore >= 90 ? 'success' : ($totalScore >= 70 ? 'warning' : '
                             <div>{$first.reason|default=''}</div>
                             {if !empty($first['name'])}<div class="text-muted small">{$first.code} {$first.name}</div>{/if}
                         </td>
-                        <td class="qms-action-cell"><a class="btn btn-sm btn-outline-primary" href="{$gap.action_url}">查看详情</a></td>
+                        <td class="qms-action-cell">
+                            {if $gap.action_allowed}
+                            <a class="btn btn-sm btn-outline-primary" href="{$gap.action_url}">查看详情</a>
+                            {else}
+                            <span class="text-muted small">请由具备相应岗位权限的人员处理</span>
+                            {/if}
+                        </td>
                     </tr>
                     {/foreach}
                     {empty name="gaps"}

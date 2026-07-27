@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace app\controller;
 
 use app\BaseController;
+use app\service\ActionAuthorizationService;
 use app\service\GovernedChangePolicyService;
 use app\service\GovernedChangeService;
 use app\service\NotificationService;
@@ -129,8 +130,15 @@ final class GovernedChange extends BaseController
 
     public function inbox()
     {
-        View::assign('pendingRequests', GovernedChangeService::pendingRequestsForDisplay());
-        View::assign('pageTitle', '更正审批待办');
+        $canDecide = ActionAuthorizationService::allows('governedchange', 'decide');
+        View::assign([
+            'requests' => GovernedChangeService::inboxRequestsForDisplay(
+                $canDecide,
+                (string)Session::get('user.id', '')
+            ),
+            'canDecide' => $canDecide,
+            'pageTitle' => '更正申请中心',
+        ]);
 
         return View::fetch('governed_change/inbox');
     }

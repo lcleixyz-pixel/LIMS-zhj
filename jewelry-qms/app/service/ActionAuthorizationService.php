@@ -75,8 +75,8 @@ final class ActionAuthorizationService
                 => self::canRegisterRecordCorrection($employeeId),
             'governedchange.request' => true,
             'governedchange.event' => true,
-            'governedchange.decide', 'governedchange.inbox'
-                => self::canDecideRecordCorrection($employeeId),
+            'governedchange.inbox' => true,
+            'governedchange.decide' => self::canDecideRecordCorrection($employeeId),
 
             'auditplan.organize', 'auditplan.approve', 'auditplan.complete'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
@@ -604,6 +604,16 @@ final class ActionAuthorizationService
                         (string)Session::get('user.employee_id', '')
                     ),
                 ];
+            }
+        } elseif ($controller === 'equipmentperiodcheck') {
+            $module = 'equipment';
+            $policyAction = $action === 'index' ? 'view' : ($action === 'add' ? 'edit' : null);
+            if ($action === 'add') {
+                $equipmentId = trim((string)$request->post(
+                    'equipment_id',
+                    (string)$request->param('equipment_id', '')
+                ));
+                $record = $equipmentId !== '' ? self::tableRecord('equipments', $equipmentId) : null;
             }
         } elseif ($controller === 'equipmentmaintenance') {
             if (in_array($action, ['add', 'edit', 'delete'], true)) {

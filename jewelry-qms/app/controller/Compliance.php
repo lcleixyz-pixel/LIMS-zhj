@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace app\controller;
 
 use app\BaseController;
+use app\service\ActionAuthorizationService;
 use app\service\ComplianceCheckService;
+use app\service\RbacService;
 use think\facade\Config;
 use think\facade\Session;
 use think\facade\View;
@@ -16,6 +18,13 @@ class Compliance extends BaseController
         $companyId = (string)Config::get('qms.company_id');
         $scorecard = ComplianceCheckService::getLatestScorecard($companyId);
         $gaps = ComplianceCheckService::getAllGaps($companyId);
+        foreach ($gaps as &$gap) {
+            $module = trim(explode('/', trim((string)($gap['action_url'] ?? ''), '/'))[0] ?? '');
+            $gap['action_allowed'] = $module === 'equipment'
+                ? ActionAuthorizationService::allows('equipment', 'view')
+                : ($module !== '' && RbacService::canAccess($module));
+        }
+        unset($gap);
         $trend = ComplianceCheckService::scoreTrend($companyId, 10);
         $dimensions = ComplianceCheckService::dimensionLabels();
         $dimensionCheckCounts = array_fill_keys(array_keys($dimensions), 0);
