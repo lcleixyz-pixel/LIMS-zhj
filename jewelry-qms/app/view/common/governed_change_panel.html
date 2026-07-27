@@ -87,7 +87,7 @@
             <small class="text-secondary">原记录冻结保留；批准的更正只追加，不覆盖、不删除。</small>
         </div>
         {if $governedChangeContext.frozen}
-        <span class="badge text-bg-secondary">已冻结</span>
+        <span class="badge text-bg-primary">🔒 已冻结</span>
         {else}
         <span class="badge text-bg-success">可直接编辑</span>
         {/if}
@@ -110,7 +110,7 @@
                         <select class="form-select" id="governedChangeField" name="field_name" required>
                             <option value="">请选择字段</option>
                             {foreach $governedChangeContext.fields as $field}
-                            <option value="{$field.name}" data-current="{$field.value|htmlentities}">{$field.label}</option>
+                            <option value="{$field.name}" data-current="{$field.value|htmlentities}" data-empty-label="{$field.empty_label|default='（空白）'}">{$field.label}</option>
                             {/foreach}
                         </select>
                     </div>
@@ -243,7 +243,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (select && current) {
         var syncCurrentValue = function () {
             var option = select.options[select.selectedIndex];
-            current.value = option ? (option.getAttribute('data-current') || '') : '';
+            current.value = option
+                ? (option.getAttribute('data-current') || option.getAttribute('data-empty-label') || '（空白）')
+                : '';
         };
         select.addEventListener('change', syncCurrentValue);
         syncCurrentValue();

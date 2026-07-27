@@ -32,6 +32,11 @@ class Training extends BusinessBase
         View::assign('today', date('Y-m-d'));
     }
 
+    protected function assignIndexContext(): void
+    {
+        $this->assignFormContext();
+    }
+
     public function view()
     {
         $id = $this->request->param('id');

@@ -49,6 +49,7 @@ services:
       QMS_TRIAL_BATCH: GOV-TRIAL-20260724
       QMS_ENV_LABEL: 治理试运行模拟环境
       QMS_ENV_NOTICE: 纸质体系仍为唯一正式体系；本环境仅用于治理试运行与迭代。
+      QMS_SUPPORT_CONTACT: 8021 试运行支持：质量负责人
       QMS_GOVERNANCE_TRIAL_OUTPUT_DIR: /.team/交接箱/2026-07-24-治理试运行体系装配/系统样例
       DOCUSEAL_SIGNING_ENABLED: "1"
       DOCUSEAL_BASE_URL: http://docuseal:3000

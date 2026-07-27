@@ -21,7 +21,7 @@
                     </td>
                 </tr>
                 {/volist}
-                {empty name="items"}<tr><td colspan="7" class="text-center text-muted">暂无数据</td></tr>{/empty}
+                {empty name="items"}<tr><td colspan="7"><div class="qms-empty-state">暂无 CAPA。需要纠正措施时，点击右上角“新建 CAPA”。</div></td></tr>{/empty}
             </tbody>
         </table>
         <nav><ul class="pagination pagination-sm justify-content-center">{$pages|raw}</ul></nav>

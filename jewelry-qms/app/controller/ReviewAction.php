@@ -24,6 +24,15 @@ class ReviewAction extends BusinessBase
         View::assign('reviews', $reviews);
     }
 
+    protected function assignIndexContext(): void
+    {
+        $this->assignStatusLabels('review_action');
+        View::assign(
+            'responsibleMap',
+            \app\model\User::where('soft_delete', 0)->where('publish', 1)->column('name', 'id')
+        );
+    }
+
     public function verify()
     {
         $id = $this->request->param('id');

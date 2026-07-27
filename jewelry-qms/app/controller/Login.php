@@ -81,6 +81,7 @@ class Login extends BaseController
             'systemTitle' => $qmsConfig['title'] ?? 'QMS',
             'environmentLabel' => $qmsConfig['environment_label'] ?? '',
             'environmentNotice' => $qmsConfig['environment_notice'] ?? '',
+            'supportContact' => $qmsConfig['support_contact'] ?? '',
         ]);
 
         return View::fetch('login/index');

@@ -251,6 +251,7 @@ final class GovernedChangeService
                 'name' => $name,
                 'label' => self::fieldLabel($name),
                 'value' => self::scalar($values[$name] ?? ''),
+                'empty_label' => str_ends_with($name, '_id') ? '未关联' : '（空白）',
             ];
         }
 

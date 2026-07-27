@@ -39,6 +39,7 @@ $compliance = $read('app/view/compliance/index.html');
 $layout = $read('app/view/layout/main.html');
 $rbac = $read('app/middleware/Rbac.php');
 $training = $read('app/view/training/index.html');
+$trainingController = $read('app/controller/Training.php');
 $governedPanel = $read('app/view/common/governed_change_panel.html');
 $recordIndex = $read('app/view/record_form_instance/index.html');
 $auditPlan = $read('app/view/audit_plan/index.html');
@@ -79,8 +80,8 @@ ux_assert_contains('href="/user/changePassword"', $layout, 'UX-18: 顶部改密�
 
 ux_assert_contains('qmsChartEmptyAction', $dashboard, 'UX-4/5: 图表空态必须使用安全的引导组件');
 ux_assert_not_contains('const node = document.getElementById(id);' . PHP_EOL . '    const node = document.getElementById(id);', $dashboard, 'UX-4: 图表初始化不得重复声明变量');
-ux_assert_contains("'internal' => '内部培训'", $training, 'UX-9: 培训类型必须中文化');
-ux_assert_contains("|| '未关联'", $governedPanel, 'UX-17: 空关联字段必须显示未关联');
+ux_assert_contains("'internal' => '内部培训'", $trainingController, 'UX-9: 培训类型必须中文化');
+ux_assert_contains('data-empty-label="{$field.empty_label', $governedPanel, 'UX-17: 空关联字段必须显示未关联');
 ux_assert_contains('已生成（不可直接编辑）', $recordIndex, 'UX-13: PDF 状态必须解释编辑边界');
 ux_assert_contains('<th>计划年度</th>', $auditPlan, 'UX-24: 内审计划表头必须使用业务名词');
 ux_assert_contains('<th>工号</th>', $employee, 'UX-24: 员工表头必须使用业务名词');

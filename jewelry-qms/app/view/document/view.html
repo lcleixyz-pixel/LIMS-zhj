@@ -1,6 +1,9 @@
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-        <h5 class="mb-0">文件详情 - {$doc.doc_number|default=''}</h5>
+        <div>
+            <h5 class="mb-0">文件详情 - {$doc.title|default='未命名文件'}</h5>
+            <small class="text-muted">文件编号：{$doc.doc_number|default='未设置'}</small>
+        </div>
         <div class="d-flex flex-wrap gap-1 align-items-center">
             <!-- 主操作：根据状态和权限只显示一个最可能的下一步 -->
             {if $doc.status == 'draft' && !empty($signingStatus.rejected) && qms_can_action('document', 'register', $doc)}

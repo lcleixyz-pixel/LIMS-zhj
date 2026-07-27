@@ -5,6 +5,7 @@ return [
     'company_id' => '00000000-0000-0000-0000-000000000001',
     'environment_label' => getenv('QMS_ENV_LABEL') ?: '',
     'environment_notice' => getenv('QMS_ENV_NOTICE') ?: '',
+    'support_contact' => env('QMS_SUPPORT_CONTACT', getenv('QMS_SUPPORT_CONTACT') ?: ''),
     'trial_mode' => [
         'enabled' => env('QMS_TRIAL_MODE', getenv('QMS_TRIAL_MODE') ?: false),
         'batch' => env('QMS_TRIAL_BATCH', getenv('QMS_TRIAL_BATCH') ?: ''),
@@ -164,7 +165,7 @@ return [
         ],
         'record_form_instance' => [
             'draft' => '草稿',
-            'generated' => '已生成PDF',
+            'generated' => '已生成（不可直接编辑）',
             'locked' => '已归档',
             'voided' => '已作废',
         ],

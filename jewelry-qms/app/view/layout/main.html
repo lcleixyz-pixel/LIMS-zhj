@@ -22,7 +22,7 @@
     data-qms-ai-configured="{if isset($qmsAiConfigured) && $qmsAiConfigured}1{else}0{/if}"
 >
 {if !empty($environmentLabel)}
-<div class="alert alert-warning rounded-0 border-0 border-bottom mb-0 py-2 text-center" role="alert">
+<div class="alert alert-warning rounded-0 border-0 border-bottom mb-0 py-2 text-center" role="status">
     <strong>{$environmentLabel}</strong>
     {if !empty($environmentNotice)}<span class="ms-2">{$environmentNotice}</span>{/if}
 </div>
@@ -337,8 +337,8 @@
         <div class="qms-copilot-toolbar">
             <div class="d-flex gap-2 align-items-center flex-wrap">
                 <select id="qmsCopilotMode" class="form-select form-select-sm" style="width:auto;">
-                    <option value="general">通用</option>
-                    <option value="context" selected>上下文</option>
+                    <option value="general">通用问答</option>
+                    <option value="context" selected>当前页面问答</option>
                     <option value="expert">评审专家</option>
                 </select>
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="qmsCopilotNewChat">新对话</button>

@@ -44,7 +44,7 @@
                         <td>{if $item.template_name}{$item.template_name}{else}{$item.template.name|default=$item.template_id}{/if}</td>
                         <td>
                             {if $item.status == 'draft'}<span class="badge badge-status-draft">{$item.status_label}</span>
-                            {elseif $item.status == 'generated'}<span class="badge badge-status-generated">已形成PDF</span>
+                            {elseif $item.status == 'generated'}<span class="badge badge-status-generated">已生成（不可直接编辑）</span>
                             {elseif $item.status == 'locked'}<span class="badge badge-status-archived">{$item.status_label}</span>
                             {elseif $item.status == 'voided'}<span class="badge badge-status-obsolete">{$item.status_label}</span>
                             {else}<span class="badge badge-status-draft">{$item.status}</span>{/if}

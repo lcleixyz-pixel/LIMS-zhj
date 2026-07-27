@@ -188,11 +188,26 @@ function qmsHasData(dataset) {
     if (Array.isArray(dataset.values)) return dataset.values.reduce(function (sum, value) { return sum + Number(value || 0); }, 0) > 0;
     return false;
 }
-function qmsChartOrEmpty(id, dataset, options, emptyText) {
+function qmsChartEmptyAction(node, emptyText, action) {
+    const empty = document.createElement('div');
+    empty.className = 'qms-chart-empty';
+    const message = document.createElement('div');
+    message.textContent = emptyText;
+    empty.appendChild(message);
+    if (action && action.url && action.label) {
+        const link = document.createElement('a');
+        link.href = action.url;
+        link.className = 'btn btn-sm btn-outline-primary mt-2';
+        link.textContent = action.label;
+        empty.appendChild(link);
+    }
+    node.replaceChildren(empty);
+}
+function qmsChartOrEmpty(id, dataset, options, emptyText, action) {
     const node = document.getElementById(id);
     if (!node) return;
     if (!qmsHasData(dataset)) {
-        node.innerHTML = '<div class="qms-chart-empty">' + emptyText + '</div>';
+        qmsChartEmptyAction(node, emptyText, action);
         return;
     }
     qmsChart(id, options);
@@ -206,20 +221,20 @@ qmsChartOrEmpty('capaTrendChart', qmsChartData.capaTrend, {
         { name: '新建', type: 'line', smooth: true, data: qmsChartData.capaTrend.opened },
         { name: '关闭', type: 'line', smooth: true, data: qmsChartData.capaTrend.closed }
     ]
-}, '暂无 CAPA 数据');
+}, '暂无 CAPA 数据', {if condition="qms_can('capa')"}{ url: '/capa/add', label: '新建 CAPA' }{else}null{/if});
 qmsChartOrEmpty('calibrationResultChart', qmsChartData.calibrationResults, {
     tooltip: { trigger: 'item' },
     series: [{ type: 'pie', radius: ['45%', '70%'], data: qmsChartData.calibrationResults.labels.map(function (label, index) { return { name: label, value: qmsChartData.calibrationResults.values[index] }; }) }]
-}, '暂无校准记录');
+}, '暂无校准记录', {if $canViewEquipment}{ url: '/equipment/index', label: '查看设备台账' }{else}null{/if});
 qmsChartOrEmpty('trainingCoverageChart', qmsChartData.trainingCoverage, {
     title: { text: qmsChartData.trainingCoverage.rate + '%', left: 'center', top: '42%', textStyle: { fontSize: 22 } },
     tooltip: { trigger: 'item' },
     series: [{ type: 'pie', radius: ['55%', '75%'], data: qmsChartData.trainingCoverage.labels.map(function (label, index) { return { name: label, value: qmsChartData.trainingCoverage.values[index] }; }) }]
-}, '暂无培训覆盖数据');
+}, '暂无培训覆盖数据', {if condition="qms_can('training')"}{ url: '/training/index', label: '查看培训活动' }{else}null{/if});
 qmsChartOrEmpty('auditFindingChart', qmsChartData.auditFindings, {
     tooltip: { trigger: 'axis' },
     xAxis: { type: 'category', data: qmsChartData.auditFindings.labels },
     yAxis: { type: 'value', minInterval: 1 },
     series: [{ type: 'bar', data: qmsChartData.auditFindings.values }]
-}, '暂无内审发现数据');
+}, '暂无内审发现数据', {if condition="qms_can('audit_plan')"}{ url: '/audit_plan/index', label: '查看内审计划' }{else}null{/if});
 </script>
