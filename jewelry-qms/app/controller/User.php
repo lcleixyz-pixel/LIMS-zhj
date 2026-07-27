@@ -6,6 +6,7 @@ namespace app\controller;
 use app\model\User as UserModel;
 use app\model\Department;
 use app\model\Employee;
+use app\service\RbacService;
 use think\facade\Session;
 use think\facade\View;
 
@@ -14,6 +15,10 @@ class User extends CrudBase
     protected string $modelClass = UserModel::class;
     protected string $viewPrefix = 'user';
     protected string $pageTitle = '用户管理';
+    protected array $middleware = [
+        \app\middleware\Auth::class => ['only' => ['changePassword']],
+        \think\middleware\FormTokenCheck::class => ['only' => ['changePassword']],
+    ];
 
     public function add()
     {
@@ -69,6 +74,10 @@ class User extends CrudBase
         // 强制改密或未传 id：本人改密
         if ($id === '' || $forcedSelf || $id === $currentUserId) {
             return $this->changeOwnPassword($currentUserId, $forcedSelf);
+        }
+
+        if (!RbacService::canWrite('user')) {
+            throw new \think\exception\HttpException(403, '无权重置他人密码');
         }
 
         $record = UserModel::find($id);
