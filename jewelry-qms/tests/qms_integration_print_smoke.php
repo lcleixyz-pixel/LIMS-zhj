@@ -79,7 +79,7 @@ assert_contains('function controlledPrint', $documentController, 'Document contr
 assert_contains('ControlledPrintService::recentLogs', $documentController, 'Document detail loads recent print logs');
 assert_contains('/document/onlyoffice', $documentView, 'Document detail links to ONLYOFFICE entry');
 assert_contains('/document/controlledPrint', $documentView, 'Document detail links to controlled print');
-assert_contains('ONLYOFFICE', $onlyofficeView, 'ONLYOFFICE view is labelled');
+assert_contains('在线编辑', $onlyofficeView, '在线编辑页面使用中文业务名称');
 assert_contains('DocsAPI.DocEditor', $onlyofficeView, 'ONLYOFFICE view can initialize DocumentEditor when configured');
 assert_contains('受控打印', $controlledPrintView, 'Controlled print view is labelled');
 assert_contains('watermark', $controlledPrintView, 'Controlled print view renders a watermark');

@@ -11,6 +11,7 @@ class RecordFormSchemaService
         'text',
         'textarea',
         'date',
+        'month',
         'number',
         'select',
         'checkbox',
@@ -105,6 +106,13 @@ class RecordFormSchemaService
                             continue;
                         }
 
+                        $conditionalError = self::conditionalRequiredError($column, $row, $field['columns']);
+                        if ($conditionalError !== null && self::isBlank($cellValue)) {
+                            $errors[$key . '.' . $rowIndex . '.' . $column['key']] =
+                                $field['label'] . '第' . ($rowIndex + 1) . '行' . $conditionalError;
+                            continue;
+                        }
+
                         $typeError = self::validateFieldType($column, $cellValue);
                         if ($typeError !== null) {
                             $errors[$key . '.' . $rowIndex . '.' . $column['key']] =
@@ -160,6 +168,8 @@ class RecordFormSchemaService
             'print_bind' => (string)($field['print_bind'] ?? $key),
             'validation' => $field['validation'] ?? [],
             'help_text' => (string)($field['help_text'] ?? ''),
+            'unit' => trim((string)($field['unit'] ?? '')),
+            'placeholder' => trim((string)($field['placeholder'] ?? '')),
         ];
 
         if ($type === 'repeatable_table') {
@@ -216,6 +226,7 @@ class RecordFormSchemaService
         $stringValue = trim((string)$value);
         return match ($field['type']) {
             'date' => self::isValidDate($stringValue) ? null : $field['label'] . '必须是有效日期',
+            'month' => self::isValidMonth($stringValue) ? null : $field['label'] . '必须是有效月份',
             'number' => is_numeric($stringValue) ? null : $field['label'] . '必须是数字',
             'select' => in_array($stringValue, $field['options'] ?? [], true) ? null : $field['label'] . '不在可选范围内',
             'checkbox' => in_array($stringValue, ['0', '1'], true) ? null : $field['label'] . '必须是勾选值',
@@ -232,6 +243,41 @@ class RecordFormSchemaService
         $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
 
         return $date instanceof \DateTimeImmutable && $date->format('Y-m-d') === $value;
+    }
+
+    private static function isValidMonth(string $value): bool
+    {
+        if (preg_match('/\A\d{4}-\d{2}\z/', $value) !== 1) {
+            return false;
+        }
+
+        $month = \DateTimeImmutable::createFromFormat('!Y-m', $value);
+
+        return $month instanceof \DateTimeImmutable && $month->format('Y-m') === $value;
+    }
+
+    private static function conditionalRequiredError(array $field, array $values, array $siblings): ?string
+    {
+        $rule = $field['validation']['required_when'] ?? null;
+        if (!is_array($rule)) {
+            return null;
+        }
+
+        $dependentKey = trim((string)($rule['field'] ?? ''));
+        $expectedValue = trim((string)($rule['equals'] ?? ''));
+        if ($dependentKey === '' || trim((string)($values[$dependentKey] ?? '')) !== $expectedValue) {
+            return null;
+        }
+
+        $dependentLabel = $dependentKey;
+        foreach ($siblings as $sibling) {
+            if (($sibling['key'] ?? '') === $dependentKey) {
+                $dependentLabel = (string)($sibling['label'] ?? $dependentKey);
+                break;
+            }
+        }
+
+        return $field['label'] . '在“' . $dependentLabel . '”为“' . $expectedValue . '”时不能为空';
     }
 
     private static function isBlank(mixed $value): bool

@@ -66,6 +66,19 @@
         });
     }
 
+    function syncConditionalRequired(row) {
+        Array.prototype.slice.call(row.querySelectorAll('[data-required-when-field]')).forEach(function (control) {
+            var dependent = row.querySelector(
+                '[data-column-key="' + control.dataset.requiredWhenField + '"]'
+            );
+            var required = !!dependent
+                && controlValue(dependent).trim() === (control.dataset.requiredWhenEquals || '');
+            var baseLabel = (control.getAttribute('aria-label') || '').replace(/（判定不符合时必填）$/, '');
+            control.required = required;
+            control.setAttribute('aria-label', baseLabel + (required ? '（判定不符合时必填）' : ''));
+        });
+    }
+
     function addRow(table) {
         var template = table.querySelector('template[data-repeatable-row-template]');
         var tbody = table.querySelector('tbody');
@@ -77,6 +90,7 @@
         var row = fragment.querySelector('tr[data-repeatable-row]');
         tbody.appendChild(fragment);
         reindexRows(table);
+        syncConditionalRequired(row);
 
         return row;
     }
@@ -190,12 +204,20 @@
         if (event.target.matches('[data-employee-option]')) {
             handleEmployeePickerChange(event.target);
         }
+        var row = event.target.closest('tr[data-repeatable-row]');
+        if (row) {
+            syncConditionalRequired(row);
+        }
     });
 
     document.addEventListener('input', function (event) {
         var table = event.target.closest('[data-repeatable-table]');
         if (!table) {
             return;
+        }
+        var row = event.target.closest('tr[data-repeatable-row]');
+        if (row) {
+            syncConditionalRequired(row);
         }
 
         Array.prototype.slice.call(document.querySelectorAll('[data-employee-picker="' + table.dataset.repeatableTable + '"]')).forEach(function (picker) {
@@ -205,6 +227,7 @@
 
     document.querySelectorAll('[data-repeatable-table]').forEach(function (table) {
         reindexRows(table);
+        Array.prototype.slice.call(table.querySelectorAll('tr[data-repeatable-row]')).forEach(syncConditionalRequired);
     });
 
     document.querySelectorAll('[data-employee-picker]').forEach(function (picker) {

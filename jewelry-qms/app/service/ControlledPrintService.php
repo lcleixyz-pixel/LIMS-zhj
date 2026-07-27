@@ -10,7 +10,40 @@ use think\facade\Session;
 
 class ControlledPrintService
 {
-    public static function createLog(Document $document, int $copyCount = 1, string $purpose = '', ?string $ipAddress = null): ControlledPrintLog
+    public static function createLog(
+        Document $document,
+        int $copyCount = 1,
+        string $purpose = '',
+        ?string $ipAddress = null,
+        string $recipient = ''
+    ): ControlledPrintLog {
+        self::assertPrintable($document);
+        $isTrialCopy = TrialModeService::isSimulationNumber((string)$document->doc_number);
+        $copyCount = max(1, min(999, $copyCount));
+        $printNumber = self::watermarkCode($document);
+        $watermarkPrefix = $isTrialCopy ? '试运行/非正式受控副本 ' : '受控打印 ';
+
+        $data = [
+            'document_id' => (string)$document->id,
+            'print_number' => $printNumber,
+            'copy_count' => $copyCount,
+            'purpose' => self::truncate(trim($purpose), 200),
+            'watermark_text' => self::truncate($watermarkPrefix . $printNumber, 200),
+            'printed_by' => Session::get('user.id'),
+            'printed_at' => date('Y-m-d H:i:s'),
+            'ip_address' => $ipAddress,
+            'publish' => 1,
+            'soft_delete' => 0,
+        ];
+        $model = new ControlledPrintLog();
+        if ($model->hasColumn('recipient')) {
+            $data['recipient'] = self::truncate(trim($recipient), 100);
+        }
+
+        return ControlledPrintLog::create($data);
+    }
+
+    public static function assertPrintable(Document $document): void
     {
         $isTrialCopy = TrialModeService::isSimulationNumber((string)$document->doc_number);
         if ($isTrialCopy && !TrialModeService::isEnabled()) {
@@ -22,22 +55,6 @@ class ControlledPrintService
         if (!$isTrialCopy && ((string)$document->status !== 'published' || (int)$document->publish !== 1)) {
             throw new RuntimeException('当前正式发布版本才可生成正式受控打印');
         }
-        $copyCount = max(1, min(999, $copyCount));
-        $printNumber = self::watermarkCode($document);
-        $watermarkPrefix = $isTrialCopy ? '试运行/非正式受控副本 ' : '受控打印 ';
-
-        return ControlledPrintLog::create([
-            'document_id' => (string)$document->id,
-            'print_number' => $printNumber,
-            'copy_count' => $copyCount,
-            'purpose' => self::truncate(trim($purpose), 200),
-            'watermark_text' => self::truncate($watermarkPrefix . $printNumber, 200),
-            'printed_by' => Session::get('user.id'),
-            'printed_at' => date('Y-m-d H:i:s'),
-            'ip_address' => $ipAddress,
-            'publish' => 1,
-            'soft_delete' => 0,
-        ]);
     }
 
     public static function watermarkCode(Document $document): string

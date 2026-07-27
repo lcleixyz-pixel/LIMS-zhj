@@ -8,6 +8,7 @@ use app\service\GovernedTrialResolvedDocumentService;
 use app\service\QmsDocumentStructureService;
 use app\service\QmsFileGovernanceWorkbenchService;
 use app\service\QmsGovernanceQueueService;
+use app\service\QmsReadableMarkdownService;
 use think\exception\HttpException;
 use think\facade\Session;
 use think\facade\View;
@@ -99,6 +100,11 @@ class PlanningStructure extends BaseController
         if ($artifact === []) {
             throw new HttpException(404, '治理解析稿材料不存在或不在允许目录内');
         }
+        $readableParts = QmsReadableMarkdownService::separateGovernancePreamble((string)$artifact['content']);
+        $artifact['content_html'] = QmsReadableMarkdownService::toHtml($readableParts['body']);
+        $artifact['technical_content_html'] = $readableParts['technical'] !== ''
+            ? QmsReadableMarkdownService::toHtml($readableParts['technical'])
+            : '';
         View::assign('artifact', $artifact);
 
         return View::fetch('planning_structure/resolved_artifact');

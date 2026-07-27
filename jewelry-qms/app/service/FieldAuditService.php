@@ -350,6 +350,9 @@ class FieldAuditService
             return $statusLabels[$mapKey][$text];
         }
         if ($field === 'status') {
+            if ($modelName === 'Document') {
+                return DocumentPresentationService::statusLabel($text);
+            }
             $module = [
                 'Equipment' => 'equipment',
                 'Nonconformity' => 'nonconformity',

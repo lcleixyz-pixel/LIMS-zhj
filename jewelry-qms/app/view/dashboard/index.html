@@ -5,7 +5,7 @@
         <small class="text-muted">机构运营概览 · {:date('Y-m-d')}</small>
     </div>
     <div class="qms-page-actions">
-        <a href="/record_form_template/index" class="btn btn-sm btn-primary">选择模板填写</a>
+        <a href="/record_form_template/index" class="btn btn-sm btn-primary">开始填一张新表</a>
         <a href="/calendar/index" class="btn btn-sm btn-outline-primary">本月待办</a>
     </div>
 </div>
@@ -17,8 +17,12 @@
             <div class="card-body">
                 <div class="qms-kpi-label">体系文件总数</div>
                 <div class="qms-kpi-value">{$stats.docCount|default=0}</div>
-                {if $stats.pendingReview > 0}<div class="qms-kpi-label" style="color:var(--qms-warn);margin-top:6px">{$stats.pendingReview} 件待审核</div>{/if}
-                <a href="/document/index" class="small text-decoration-none">查看全部 →</a>
+                {if $stats.pendingReview > 0}
+                <div class="qms-kpi-label mt-1"><a href="/document/index?pending_for_me=1" class="text-decoration-none">{$stats.pendingReview} 件待我签批 →</a></div>
+                {else}
+                <div class="qms-kpi-label mt-1 text-success">当前没有需要您签批的文件</div>
+                {/if}
+                <a href="/document/index" class="small text-decoration-none">查看全部体系文件 →</a>
             </div>
         </div>
     </div>

@@ -52,6 +52,7 @@ Route::group(function () {
     Route::post('document/obsolete', 'Document/obsolete');
     Route::post('document/submitReview', 'Document/submitReview');
     Route::get('document/onlyoffice', 'Document/onlyoffice');
+    Route::get('document/controlledPrintForm', 'Document/controlledPrintForm');
     Route::post('document/controlledPrint', 'Document/controlledPrint');
     Route::get('document/download', 'Document/download');
     Route::get('external_evidence_reference/index', 'ExternalEvidenceReference/index');

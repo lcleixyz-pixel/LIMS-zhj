@@ -18,11 +18,13 @@ use app\service\ApprovalService;
 use app\service\ActionAuthorizationService;
 use app\service\ControlledPrintService;
 use app\service\DocumentControlService;
+use app\service\DocumentPresentationService;
 use app\service\DocumentStatusGuardService;
 use app\service\FieldAuditService;
 use app\service\FileService;
 use app\service\GovernedTrialResolvedDocumentService;
 use app\service\QmsDocumentStructureService;
+use app\service\QmsReadableMarkdownService;
 use app\service\QmsGovernanceVersionResolverService;
 use app\service\TrialModeService;
 use think\exception\ValidateException;
@@ -37,6 +39,7 @@ class Document extends BaseController
     public function index()
     {
         $query = DocumentModel::where('soft_delete', 0);
+        $pendingForMe = (string)$this->request->param('pending_for_me', '') === '1';
         $manageableSiteIds = ActionAuthorizationService::documentManageableSiteIds();
         if ($manageableSiteIds !== null) {
             $query->where(function ($query) use ($manageableSiteIds) {
@@ -52,6 +55,18 @@ class Document extends BaseController
         }
         if ($status = $this->request->param('status')) {
             $query->where('status', $status);
+        }
+        if ($pendingForMe) {
+            $pendingDocumentIds = Approval::where('user_id', (string)Session::get('user.id', ''))
+                ->where('model_name', 'Document')
+                ->where('status', 'pending')
+                ->where('soft_delete', 0)
+                ->column('record');
+            if ($pendingDocumentIds === []) {
+                $query->where('id', '__NO_PENDING_DOCUMENT__');
+            } else {
+                $query->whereIn('id', array_values(array_unique(array_map('strval', $pendingDocumentIds))));
+            }
         }
         if ($keyword = trim((string) $this->request->param('keyword', ''))) {
             $query->where(function ($q) use ($keyword) {
@@ -73,8 +88,10 @@ class Document extends BaseController
             'level' => $this->request->param('level', ''),
             'status' => $this->request->param('status', ''),
             'keyword' => $this->request->param('keyword', ''),
+            'pending_for_me' => $pendingForMe ? '1' : '',
         ]);
         View::assign('siteMap', Site::where('soft_delete', 0)->column('name', 'id'));
+        View::assign('trialModeEnabled', TrialModeService::isEnabled());
 
         return View::fetch('document/index');
     }
@@ -277,7 +294,25 @@ class Document extends BaseController
             'signingStatus',
             ApprovalService::documentWorkflowStatus($doc, (string)Session::get('user.id', ''))
         );
-        View::assign('structureSummary', QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id));
+        $structureSummary = QmsDocumentStructureService::controlledDocumentStructureSummary((string)$doc->id);
+        View::assign(
+            'structureSummary',
+            $structureSummary === [] ? [] : DocumentPresentationService::structureSummary($structureSummary)
+        );
+        View::assign('changeReasonPresentation', DocumentPresentationService::changeReason((string)$doc->change_reason));
+        $onlyofficeServerUrl = rtrim((string)Config::get('qms.onlyoffice.server_url', ''), '/');
+        $onlyofficeEnabled = filter_var(Config::get('qms.onlyoffice.enabled', false), FILTER_VALIDATE_BOOL);
+        View::assign(
+            'onlyofficeAvailable',
+            DocumentPresentationService::onlyofficeAvailable(
+                (string)$doc->status,
+                (string)$doc->file_path,
+                (string)$doc->file_name,
+                $onlyofficeEnabled,
+                $onlyofficeServerUrl
+            )
+        );
+        View::assign('trialModeEnabled', TrialModeService::isEnabled());
         View::assign('printLogs', ControlledPrintService::recentLogs((string)$doc->id, 5));
         $signingEmbeds = [];
         if (in_array((string)$doc->status, ['reviewing', 'draft'], true) && \app\service\DocuSealService::isSigningEnabled()) {
@@ -363,7 +398,23 @@ class Document extends BaseController
         $doc = $this->loadDocument((string)$this->request->param('id', ''));
         $serverUrl = rtrim((string)Config::get('qms.onlyoffice.server_url', ''), '/');
         $enabledConfig = Config::get('qms.onlyoffice.enabled', false);
-        $enabled = filter_var($enabledConfig, FILTER_VALIDATE_BOOL) && $serverUrl !== '' && !empty($doc->file_path);
+        $enabled = DocumentPresentationService::onlyofficeAvailable(
+            (string)$doc->status,
+            (string)$doc->file_path,
+            (string)$doc->file_name,
+            filter_var($enabledConfig, FILTER_VALIDATE_BOOL),
+            $serverUrl
+        );
+        if (!$enabled) {
+            Session::flash(
+                'warning',
+                (string)$doc->status !== 'draft'
+                    ? '当前文件已经进入受控状态，不能原地在线编辑。请使用“发起修订”建立新草稿，旧版本会完整保留。'
+                    : '当前未启用在线编辑。您可以下载附件修改后重新上传，或联系系统管理员配置在线编辑服务。'
+            );
+
+            return redirect('/document/view?id=' . $doc->id);
+        }
         $fileType = strtolower(pathinfo((string)$doc->file_name, PATHINFO_EXTENSION));
         if ($fileType === '') {
             $fileType = strtolower((string)$doc->file_type) ?: 'docx';
@@ -397,6 +448,22 @@ class Document extends BaseController
         return View::fetch('document/onlyoffice');
     }
 
+    public function controlledPrintForm()
+    {
+        $doc = $this->loadDocument((string)$this->request->param('id', ''));
+        try {
+            ControlledPrintService::assertPrintable($doc);
+        } catch (\RuntimeException $exception) {
+            Session::flash('error', $exception->getMessage());
+
+            return redirect('/document/view?id=' . $doc->id);
+        }
+
+        View::assign('doc', $doc);
+
+        return View::fetch('document/controlled_print_form');
+    }
+
     public function controlledPrint()
     {
         $doc = $this->loadDocument((string)$this->request->param('id', ''));
@@ -405,14 +472,37 @@ class Document extends BaseController
 
             return redirect('/document/view?id=' . $doc->id);
         }
-        $copyCount = (int)$this->request->param('copy_count', 1);
-        $purpose = trim((string)$this->request->param('purpose', '受控打印'));
+        $copyCount = (int)$this->request->post('copy_count', 0);
+        $purpose = trim((string)$this->request->post('purpose', ''));
+        $recipient = trim((string)$this->request->post('recipient', ''));
+        $confirmed = (string)$this->request->post('confirm_print', '') === '1';
+        $errors = [];
         if ($purpose === '') {
-            $purpose = '受控打印';
+            $errors[] = '请填写打印用途';
+        }
+        if ($recipient === '') {
+            $errors[] = '请填写接收人或使用部门';
+        }
+        if ($copyCount < 1 || $copyCount > 999) {
+            $errors[] = '打印份数必须为 1～999 份';
+        }
+        if (!$confirmed) {
+            $errors[] = '请勾选确认，说明您已核对版本、用途和接收人';
+        }
+        if ($errors !== []) {
+            Session::flash('error', '尚未创建打印登记：' . implode('；', $errors) . '。');
+
+            return redirect('/document/controlledPrintForm?id=' . $doc->id);
         }
 
         try {
-            $printLog = ControlledPrintService::createLog($doc, $copyCount, $purpose, $this->request->ip());
+            $printLog = ControlledPrintService::createLog(
+                $doc,
+                $copyCount,
+                $purpose,
+                $this->request->ip(),
+                $recipient
+            );
         } catch (\RuntimeException $exception) {
             Session::flash('error', $exception->getMessage());
 
@@ -422,6 +512,13 @@ class Document extends BaseController
         View::assign('doc', $doc);
         View::assign('printLog', $printLog);
         View::assign('downloadUrl', '/document/download?id=' . $doc->id);
+        View::assign(
+            'documentStatusLabel',
+            DocumentPresentationService::statusLabel((string)$doc->status, TrialModeService::isEnabled())
+        );
+        [$printContentAvailable, $printContentHtml] = $this->readablePrintContent($doc);
+        View::assign('printContentAvailable', $printContentAvailable);
+        View::assign('printContentHtml', $printContentHtml);
 
         return View::fetch('document/controlled_print');
     }
@@ -436,17 +533,7 @@ class Document extends BaseController
 
         if ($this->request->isPost()) {
             $rev = (int) $doc->revision + 1;
-            $majorLetter = chr(ord('A') + (int) (($rev - 1) / 10));
-            $minorNum = ($rev - 1) % 10;
-            $newVersion = $majorLetter . '/' . $minorNum;
-            if ($newVersion === (string)$doc->version) {
-                $minorNum++;
-                if ($minorNum > 9) {
-                    $majorLetter = chr(ord($majorLetter) + 1);
-                    $minorNum = 0;
-                }
-                $newVersion = $majorLetter . '/' . $minorNum;
-            }
+            $newVersion = DocumentPresentationService::nextVersion((string)$doc->version, (int)$doc->revision);
 
             $newId = qms_uuid();
             $newDocument = new DocumentModel();
@@ -524,6 +611,7 @@ class Document extends BaseController
 
         View::assign('doc', $doc);
         View::assign('record', $doc);
+        View::assign('nextVersion', DocumentPresentationService::nextVersion((string)$doc->version, (int)$doc->revision));
 
         return View::fetch('document/revise');
     }
@@ -612,6 +700,41 @@ class Document extends BaseController
         }
 
         return $doc;
+    }
+
+    private function readablePrintContent(DocumentModel $doc): array
+    {
+        $fileType = strtolower((string)($doc->file_type ?: pathinfo((string)$doc->file_name, PATHINFO_EXTENSION)));
+        if (!in_array($fileType, ['md', 'markdown', 'txt'], true) || trim((string)$doc->file_path) === '') {
+            return [false, ''];
+        }
+
+        $absolutePath = GovernedTrialResolvedDocumentService::resolveDownloadPath((string)$doc->file_path);
+        if ($absolutePath === null) {
+            $candidate = public_path() . ltrim((string)$doc->file_path, '/');
+            $publicRoot = realpath(public_path());
+            $candidateReal = realpath($candidate);
+            if (
+                $publicRoot === false
+                || $candidateReal === false
+                || !is_file($candidateReal)
+                || !str_starts_with($candidateReal, $publicRoot . DIRECTORY_SEPARATOR)
+            ) {
+                return [false, ''];
+            }
+            $absolutePath = $candidateReal;
+        }
+
+        $content = file_get_contents($absolutePath);
+        if (!is_string($content)) {
+            return [false, ''];
+        }
+
+        if (in_array($fileType, ['md', 'markdown'], true)) {
+            return [true, QmsReadableMarkdownService::toHtml($content)];
+        }
+
+        return [true, '<div class="qms-readable-text">' . nl2br(htmlspecialchars($content, ENT_QUOTES, 'UTF-8')) . '</div>'];
     }
 
     private function documentTypeFor(string $fileType): string

@@ -2,30 +2,43 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">体系文件列表</h5>
         <div class="d-flex flex-wrap gap-2">
+            <a href="/document/index?pending_for_me=1" class="btn btn-outline-success btn-sm">待我签批</a>
             <a href="/planning/structures/governance-queue" class="btn btn-outline-primary btn-sm">当前治理队列</a>
             <a href="/document/add" class="btn btn-primary btn-sm">新建文件</a>
         </div>
     </div>
     <div class="card-body">
+        {if $trialModeEnabled}
+        <div class="alert alert-warning py-2" role="status">
+            <strong>8021 治理试运行：</strong>“当前试运行版本”表示可在本系统模拟使用，纸质文件仍为正式依据。
+        </div>
+        {/if}
+        {if ($filter.pending_for_me ?? '') == '1'}
+        <div class="alert alert-info py-2" role="status">
+            <strong>当前查看：待我签批。</strong>
+            这里只列出当前登录账号需要处理的文件；处理完成后，该文件会自动从本清单移除。
+            <a href="/document/index" class="alert-link">返回全部体系文件</a>
+        </div>
+        {/if}
         <form method="get" action="/document/index" class="row g-2 mb-3">
             <div class="col-md-2">
                 <select name="level" class="form-select form-select-sm">
                     <option value="">全部层级</option>
-                    <option value="1" {if $filter.level ?? '' == '1'}selected{/if}>一级-质量手册</option>
-                    <option value="2" {if $filter.level ?? '' == '2'}selected{/if}>二级-程序文件</option>
-                    <option value="3" {if $filter.level ?? '' == '3'}selected{/if}>三级-作业指导书</option>
-                    <option value="4" {if $filter.level ?? '' == '4'}selected{/if}>四级-记录表单</option>
+                    <option value="1" {if ($filter.level ?? '') == '1'}selected{/if}>一级-质量手册</option>
+                    <option value="2" {if ($filter.level ?? '') == '2'}selected{/if}>二级-程序文件</option>
+                    <option value="3" {if ($filter.level ?? '') == '3'}selected{/if}>三级-作业指导书</option>
+                    <option value="4" {if ($filter.level ?? '') == '4'}selected{/if}>四级-记录表单</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <select name="status" class="form-select form-select-sm">
                     <option value="">全部状态</option>
-                    <option value="draft" {if $filter.status ?? '' == 'draft'}selected{/if}>草稿</option>
-                    <option value="reviewing" {if $filter.status ?? '' == 'reviewing'}selected{/if}>审核中</option>
-                    <option value="approved" {if $filter.status ?? '' == 'approved'}selected{/if}>已批准</option>
-                    <option value="published" {if $filter.status ?? '' == 'published'}selected{/if}>已发布</option>
-                    <option value="trial_ready" {if $filter.status ?? '' == 'trial_ready'}selected{/if}>试运行就绪</option>
-                    <option value="obsolete" {if $filter.status ?? '' == 'obsolete'}selected{/if}>已作废</option>
+                    <option value="draft" {if ($filter.status ?? '') == 'draft'}selected{/if}>草稿</option>
+                    <option value="reviewing" {if ($filter.status ?? '') == 'reviewing'}selected{/if}>审核中</option>
+                    <option value="approved" {if ($filter.status ?? '') == 'approved'}selected{/if}>已批准</option>
+                    <option value="published" {if ($filter.status ?? '') == 'published'}selected{/if}>已发布</option>
+                    <option value="trial_ready" {if ($filter.status ?? '') == 'trial_ready'}selected{/if}>试运行就绪</option>
+                    <option value="obsolete" {if ($filter.status ?? '') == 'obsolete'}selected{/if}>已作废</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -63,11 +76,11 @@
                         <td>
                             {$doc.version|default='1.0'}
                             {if $doc.governance_version_role == 'current_candidate'}
-                            <div><span class="badge bg-primary mt-1">当前电子治理候选</span></div>
+                            <div><span class="badge bg-primary mt-1">当前试运行版本</span></div>
                             {elseif $doc.governance_version_role == 'source_version'}
-                            <div><span class="badge bg-secondary mt-1">纸质现用来源</span></div>
+                            <div><span class="badge bg-success mt-1">纸质现用来源（正式依据）</span></div>
                             {elseif $doc.governance_version_role == 'candidate_conflict'}
-                            <div><span class="badge bg-danger mt-1">候选冲突</span></div>
+                            <div><span class="badge bg-danger mt-1">存在多个候选，需质量员裁决</span></div>
                             {/if}
                         </td>
                         <td>

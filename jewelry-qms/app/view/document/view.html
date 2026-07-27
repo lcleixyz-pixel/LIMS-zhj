@@ -35,15 +35,12 @@
                     {/if}
                     {if $doc.file_path}
                     <li><a class="dropdown-item" href="/document/download?id={$doc.id}">下载附件</a></li>
+                    {if $onlyofficeAvailable}
                     <li><a class="dropdown-item" href="/document/onlyoffice?id={$doc.id}">在线编辑</a></li>
                     {/if}
+                    {/if}
                     {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'controlled_print', $doc)}
-                    <li>
-                        <form method="post" action="/document/controlledPrint?id={$doc.id}" class="d-inline">
-                            <input type="hidden" name="purpose" value="受控打印">
-                            <button type="submit" class="dropdown-item">受控打印</button>
-                        </form>
-                    </li>
+                    <li><a class="dropdown-item" href="/document/controlledPrintForm?id={$doc.id}">受控打印</a></li>
                     {/if}
                     <li><a class="dropdown-item" href="/document/index">返回列表</a></li>
                 </ul>
@@ -59,7 +56,8 @@
             {elseif $doc.status == 'draft'}草稿。下一步：编辑完成后可提交审核。
             {elseif $doc.status == 'reviewing'}{$signingStatus.stage_label|default='审核中'}。下一步：按当前岗位完成在线签批。
             {elseif $doc.status == 'approved'}已批准。下一步：等待发布。
-            {elseif $doc.status == 'trial_ready'}试运行就绪。
+            {elseif $doc.status == 'trial_ready'}<strong>当前试运行版本。</strong>可在 8021 模拟使用，纸质文件仍为正式依据。
+            {elseif $doc.status == 'published' && $trialModeEnabled}系统已发布登记。当前仍处于 8021 试运行阶段，纸质文件仍为正式依据。
             {elseif $doc.status == 'published'}已发布。
             {elseif $doc.status == 'obsolete'}已作废。
             {else}{$doc.status}{/if}
@@ -90,7 +88,7 @@
                     {elseif $doc.status == 'reviewing' && !empty($signingStatus.reviewed)}<span class="badge bg-info text-dark">已审核，待批准</span>
                     {elseif $doc.status == 'reviewing'}<span class="badge bg-warning text-dark">等待审核</span>
                     {elseif $doc.status == 'approved'}<span class="badge bg-info text-dark">已批准</span>
-                    {elseif $doc.status == 'trial_ready'}<span class="badge bg-warning text-dark">试运行就绪</span>
+                    {elseif $doc.status == 'trial_ready'}<span class="badge bg-primary">当前试运行版本</span>
                     {elseif $doc.status == 'published'}<span class="badge bg-success">已发布</span>
                     {elseif $doc.status == 'obsolete'}<span class="badge bg-dark">已作废</span>
                     {else}<span class="badge bg-secondary">{$doc.status}</span>{/if}
@@ -113,7 +111,15 @@
             </tr>
             <tr>
                 <th>修订说明</th>
-                <td colspan="3">{$doc.change_reason|default='-'}</td>
+                <td colspan="3">
+                    <div>{$changeReasonPresentation.summary|default='尚未填写修订说明'}</div>
+                    {if !empty($changeReasonPresentation.technical)}
+                    <details class="mt-2">
+                        <summary class="text-muted small">查看技术信息</summary>
+                        <pre class="small bg-light border rounded p-2 mt-2 mb-0" style="white-space:pre-wrap;word-break:break-word">{$changeReasonPresentation.technical}</pre>
+                    </details>
+                    {/if}
+                </td>
             </tr>
             <tr>
                 <th>附件</th>
@@ -366,7 +372,7 @@
         <div class="row g-3 align-items-center">
             <div class="col-md-3">
                 <div class="text-muted small">结构状态</div>
-                <div>{$structureSummary.status} / {$structureSummary.render_status}</div>
+                <div>{$structureSummary.status_label} / {$structureSummary.render_status_label}</div>
             </div>
             <div class="col-md-3">
                 <div class="text-muted small">内容块</div>
@@ -380,7 +386,7 @@
                 <a href="/planning/structures/view?id={$structureSummary.structured_document_id}" class="btn btn-sm btn-outline-primary">查看结构化文件</a>
             </div>
             <div class="col-12">
-                <div class="text-muted small">同步结构化：文件修订保存后会从受控附件重新抽取 Markdown 内容块，生成草稿并等待复核发布。</div>
+                <div class="text-muted small">系统会把附件整理成可阅读正文和可追溯内容块；质量员仍需核对正文、程序和记录表格是否一致。</div>
             </div>
         </div>
         {else}
@@ -393,10 +399,7 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0">受控打印记录</h6>
         {if in_array($doc.status, ['trial_ready', 'published']) && qms_can_action('document', 'controlled_print', $doc)}
-        <form method="post" action="/document/controlledPrint?id={$doc.id}" class="d-inline">
-            <input type="hidden" name="purpose" value="受控打印">
-            <button type="submit" class="btn btn-sm btn-outline-dark">生成打印页</button>
-        </form>
+        <a href="/document/controlledPrintForm?id={$doc.id}" class="btn btn-sm btn-outline-dark">准备受控打印</a>
         {/if}
     </div>
     <div class="card-body table-responsive">
@@ -406,6 +409,7 @@
                     <th>打印编号</th>
                     <th>份数</th>
                     <th>用途</th>
+                    <th>接收人/部门</th>
                     <th>水印</th>
                     <th>打印时间</th>
                 </tr>
@@ -416,12 +420,13 @@
                     <td>{$log.print_number|default=''}</td>
                     <td>{$log.copy_count|default='1'}</td>
                     <td>{$log.purpose|default='-'}</td>
+                    <td>{$log.recipient|default='-'}</td>
                     <td>{$log.watermark_text|default=''}</td>
                     <td>{$log.printed_at|default=''}</td>
                 </tr>
                 {/volist}
                 {empty name="printLogs"}
-                <tr><td colspan="5" class="text-center text-muted">暂无受控打印记录</td></tr>
+                <tr><td colspan="6" class="text-center text-muted">暂无受控打印记录</td></tr>
                 {/empty}
             </tbody>
         </table>

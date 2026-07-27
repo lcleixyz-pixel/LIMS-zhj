@@ -14,10 +14,36 @@
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">{$artifact.title}</span>
-        <span class="text-muted small font-monospace">{$artifact.relative_path}</span>
+        <div>
+            <span class="fw-semibold">可阅读{$artifact.title}</span>
+            <div class="text-muted small">已按标题、段落、清单和表格整理；内容仍来自治理解析稿。</div>
+        </div>
     </div>
     <div class="card-body">
-        <pre class="mb-0 p-3 bg-light border rounded" style="white-space: pre-wrap; word-break: break-word; font: 14px/1.75 ui-monospace, SFMono-Regular, Menlo, monospace;">{$artifact.content|htmlspecialchars}</pre>
+        <article class="qms-readable-document">{$artifact.content_html|raw}</article>
+        <details class="mt-4">
+            <summary class="text-muted small">技术信息（供追溯或排障使用）</summary>
+            <div class="small mt-2">
+                {if $artifact.technical_content_html}
+                <div class="qms-technical-document mb-3">{$artifact.technical_content_html|raw}</div>
+                {/if}
+                <div><strong>系统内部文件：</strong><code>{$artifact.relative_path}</code></div>
+                <p class="text-muted mb-0">普通阅读和审核不需要使用该路径。</p>
+            </div>
+        </details>
     </div>
 </div>
+<style>
+.qms-readable-document{max-width:78ch;margin:0 auto;color:#243447;font-size:1rem;line-height:1.85}
+.qms-readable-document h1{font-size:1.75rem;margin:0 0 1.5rem;border-bottom:2px solid #d9e3ee;padding-bottom:.75rem}
+.qms-readable-document h2{font-size:1.35rem;margin:2rem 0 .8rem;color:#173f6b}
+.qms-readable-document h3{font-size:1.12rem;margin:1.5rem 0 .65rem}
+.qms-readable-document p{margin:.65rem 0}
+.qms-readable-document blockquote{margin:1rem 0;padding:.75rem 1rem;border-left:4px solid #3b6f9f;background:#f3f7fb;color:#334e68}
+.qms-readable-document li{margin:.35rem 0}
+.qms-readable-table{margin:1rem 0;background:#fff}
+.qms-readable-code{white-space:pre-wrap;word-break:break-word;padding:1rem;background:#f6f8fa;border:1px solid #d9e2ec;border-radius:.35rem}
+.qms-technical-document{max-width:100%;overflow-wrap:anywhere}
+.qms-technical-document h1{font-size:1rem;margin:.5rem 0}
+.qms-technical-document blockquote{margin:.5rem 0}
+</style>

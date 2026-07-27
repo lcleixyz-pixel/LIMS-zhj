@@ -67,7 +67,12 @@ $noteLines = array_values(array_filter([
                 <tr>
                     <th style="width:7%">序号</th>
                     <?php foreach ($columns as $column): ?>
-                        <th><?= htmlspecialchars((string)$column['label'], ENT_QUOTES, 'UTF-8') ?></th>
+                        <th>
+                            <?= htmlspecialchars((string)$column['label'], ENT_QUOTES, 'UTF-8') ?>
+                            <?php if (($column['unit'] ?? '') !== ''): ?>
+                                （<?= htmlspecialchars((string)$column['unit'], ENT_QUOTES, 'UTF-8') ?>）
+                            <?php endif; ?>
+                        </th>
                     <?php endforeach; ?>
                 </tr>
                 </thead>
@@ -76,7 +81,13 @@ $noteLines = array_values(array_filter([
                     <tr>
                         <td style="text-align:center"><?= $index + 1 ?></td>
                         <?php foreach ($columns as $column): ?>
-                            <td><?= P::cell($row, (string)$column['key']) ?></td>
+                            <?php $cell = P::cell($row, (string)$column['key']); ?>
+                            <td>
+                                <?= $cell ?>
+                                <?php if ($cell !== '' && ($column['unit'] ?? '') !== ''): ?>
+                                    <?= htmlspecialchars((string)$column['unit'], ENT_QUOTES, 'UTF-8') ?>
+                                <?php endif; ?>
+                            </td>
                         <?php endforeach; ?>
                     </tr>
                 <?php endforeach; ?>

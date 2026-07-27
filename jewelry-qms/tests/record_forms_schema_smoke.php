@@ -86,6 +86,7 @@ $supportedTypesSchema = [
     ['key' => 'text_field', 'label' => '文本', 'type' => 'text'],
     ['key' => 'textarea_field', 'label' => '多行文本', 'type' => 'textarea'],
     ['key' => 'date_field', 'label' => '日期', 'type' => 'date'],
+    ['key' => 'month_field', 'label' => '月份', 'type' => 'month'],
     ['key' => 'number_field', 'label' => '数字', 'type' => 'number'],
     ['key' => 'select_field', 'label' => '选项', 'type' => 'select', 'options' => ['合格', '不合格']],
     ['key' => 'checkbox_field', 'label' => '勾选', 'type' => 'checkbox'],
@@ -106,6 +107,7 @@ assert_same([
     'text',
     'textarea',
     'date',
+    'month',
     'number',
     'select',
     'checkbox',
@@ -195,6 +197,7 @@ $typeSchema = RecordFormSchemaService::normalize([
     ['key' => 'score', 'label' => '分数', 'type' => 'number'],
     ['key' => 'status', 'label' => '状态', 'type' => 'select', 'options' => ['合格', '不合格']],
     ['key' => 'test_date', 'label' => '测试日期', 'type' => 'date'],
+    ['key' => 'monitor_month', 'label' => '监控月份', 'type' => 'month'],
     [
         'key' => 'items',
         'label' => '项目',
@@ -209,6 +212,7 @@ $typeErrors = RecordFormSchemaService::validateValues($typeSchema, [
     'score' => 'one',
     'status' => '待定',
     'test_date' => '2026-02-31',
+    'monitor_month' => '2026-13',
     'items' => [
         ['result' => '不满意'],
     ],
@@ -217,6 +221,7 @@ assert_same('确认必须是勾选值', $typeErrors['checked'], 'Reports invalid
 assert_same('分数必须是数字', $typeErrors['score'], 'Reports invalid number value');
 assert_same('状态不在可选范围内', $typeErrors['status'], 'Reports invalid select option');
 assert_same('测试日期必须是有效日期', $typeErrors['test_date'], 'Reports invalid date');
+assert_same('监控月份必须是有效月份', $typeErrors['monitor_month'], 'Reports invalid month');
 assert_same('项目第1行结果不在可选范围内', $typeErrors['items.0.result'], 'Reports invalid table select option');
 
 $readonlySchema = RecordFormSchemaService::normalize([
@@ -229,5 +234,37 @@ $readonlyValues = RecordFormSchemaService::enforceReadonly($readonlySchema, [
 ]);
 assert_same('作业指导书', $readonlyValues['fixed_basis'], 'Readonly fields are restored to schema defaults');
 assert_same('按步骤完成', $readonlyValues['operator_note'], 'Editable fields keep submitted values');
+
+$conditionalSchema = RecordFormSchemaService::normalize([
+    [
+        'key' => 'daily_items',
+        'label' => '逐日监控',
+        'type' => 'repeatable_table',
+        'required' => true,
+        'columns' => [
+            ['key' => 'temperature', 'label' => '温度', 'type' => 'number', 'required' => true, 'unit' => '℃'],
+            ['key' => 'conclusion', 'label' => '符合性', 'type' => 'select', 'required' => true, 'options' => ['符合', '不符合']],
+            [
+                'key' => 'disposal',
+                'label' => '异常处置',
+                'type' => 'textarea',
+                'validation' => [
+                    'required_when' => ['field' => 'conclusion', 'equals' => '不符合'],
+                ],
+            ],
+        ],
+    ],
+]);
+assert_same('℃', $conditionalSchema[0]['columns'][0]['unit'], 'Keeps field unit for friendly input');
+$conditionalErrors = RecordFormSchemaService::validateValues($conditionalSchema, [
+    'daily_items' => [
+        ['temperature' => '22.5', 'conclusion' => '不符合', 'disposal' => ''],
+    ],
+]);
+assert_same(
+    '逐日监控第1行异常处置在“符合性”为“不符合”时不能为空',
+    $conditionalErrors['daily_items.0.disposal'],
+    'Reports conditionally required table cell'
+);
 
 echo "record_forms_schema_smoke passed\n";

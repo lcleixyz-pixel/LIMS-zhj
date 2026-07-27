@@ -52,6 +52,7 @@
         <div>
             <h5 class="mb-1">受控打印 - {$doc.doc_number|default=''}</h5>
             <div class="text-muted small">打印编号：{$printLog.print_number|default=''} · 份数：{$printLog.copy_count|default='1'}</div>
+            <div class="text-success small fw-semibold">打印登记已创建；请按下方提示完成正文打印。</div>
         </div>
         <div class="d-flex gap-1">
             <button type="button" class="btn btn-sm btn-primary" onclick="window.print()">打印</button>
@@ -75,6 +76,7 @@
                 <div><strong>{$printLog.watermark_text|default=''}</strong></div>
                 <div>打印时间：{$printLog.printed_at|default=''}</div>
                 <div>打印用途：{$printLog.purpose|default='-'}</div>
+                <div>接收人/部门：{$printLog.recipient|default='-'}</div>
             </div>
         </div>
 
@@ -91,7 +93,7 @@
             </tr>
             <tr>
                 <th>文件状态</th>
-                <td>{$doc.status|default=''}</td>
+                <td>{$documentStatusLabel|default='-'}</td>
                 <th>生效日期</th>
                 <td>{$doc.effective_date|default='-'}</td>
             </tr>
@@ -102,13 +104,28 @@
                 <td>{$printLog.copy_count|default='1'}</td>
             </tr>
             <tr>
+                <th>接收人/部门</th>
+                <td>{$printLog.recipient|default='-'}</td>
+                <th>打印用途</th>
+                <td>{$printLog.purpose|default='-'}</td>
+            </tr>
+            <tr>
                 <th>水印</th>
                 <td colspan="3">{$printLog.watermark_text|default=''}</td>
             </tr>
         </table>
 
-        <div class="alert alert-secondary mb-0">
-            此页用于受控打印留痕。正式文件内容以受控附件为准；如需打印附件正文，请先下载原附件，并在打印件上保留本页水印编号。
+        {if $printContentAvailable}
+        <div class="alert alert-success">
+            <strong>正文已合并到本打印页。</strong>点击上方“打印”，会同时打印登记信息、正文和水印。
         </div>
+        <div class="qms-readable-content border-top pt-3">{$printContentHtml|raw}</div>
+        {else}
+        <div class="alert alert-warning mb-0">
+            <strong>打印登记已完成，附件正文尚未打印。</strong>
+            当前附件格式暂不能安全合并到本页。请点击“下载原附件”打印正文，并将本页打印编号
+            <strong>{$printLog.print_number|default=''}</strong>标注在纸质副本上，确保两者可以对应。
+        </div>
+        {/if}
     </div>
 </div>

@@ -53,8 +53,30 @@ g2b2_contains('编号迁移仍按阻断维持不动', (string)($byNumber['XZTC/B
 g2b2_contains('领用记录', (string)($byNumber['XZTC/BG-35-02']['alias_note'] ?? ''), 'BG-35-02 carries alias note');
 g2b2_contains('XZTC-ZW01', (string)($byNumber['XZTC/BG-03-02']['migration_note'] ?? ''), 'BG-03-02 carries stray-number archive note');
 
+$environmentSchema = array_column($byNumber['XZTC/BG-02-01']['field_schema'], null, 'key');
+g2b2_assert(($environmentSchema['monitor_month']['type'] ?? '') === 'month', 'BG-02-01 monitor month uses month input');
+g2b2_assert(($environmentSchema['monitor_month']['required'] ?? false) === true, 'BG-02-01 monitor month is required');
+g2b2_assert(($environmentSchema['monitor_site']['required'] ?? false) === true, 'BG-02-01 monitor site is required');
+g2b2_assert(($environmentSchema['daily_monitor_items']['required'] ?? false) === true, 'BG-02-01 requires at least one daily row');
+$dailyColumns = array_column($environmentSchema['daily_monitor_items']['columns'] ?? [], null, 'key');
+g2b2_assert(($dailyColumns['date']['type'] ?? '') === 'date', 'BG-02-01 daily date uses date input');
+g2b2_assert(($dailyColumns['temperature']['type'] ?? '') === 'number', 'BG-02-01 temperature uses number input');
+g2b2_assert(($dailyColumns['temperature']['unit'] ?? '') === '℃', 'BG-02-01 temperature displays Celsius');
+g2b2_assert(($dailyColumns['humidity']['type'] ?? '') === 'number', 'BG-02-01 humidity uses number input');
+g2b2_assert(($dailyColumns['humidity']['unit'] ?? '') === '%RH', 'BG-02-01 humidity displays RH unit');
+g2b2_assert(($dailyColumns['conformity_judgment']['type'] ?? '') === 'select', 'BG-02-01 conformity uses select input');
+g2b2_assert(
+    ($dailyColumns['conformity_judgment']['options'] ?? []) === ['符合', '不符合'],
+    'BG-02-01 conformity offers clear options'
+);
+g2b2_assert(($dailyColumns['recorder']['type'] ?? '') === 'person', 'BG-02-01 recorder uses personnel picker');
+g2b2_assert(
+    (($dailyColumns['exception_disposal']['validation']['required_when']['field'] ?? '') === 'conformity_judgment'),
+    'BG-02-01 requires disposal when conformity changes'
+);
+
 $needles = [
-    'XZTC/BG-02-01' => ['月度逐日监控网格', '要求值预印栏', '逐日实测', '符合性判定', '异常处置记录指引'],
+    'XZTC/BG-02-01' => ['月度逐日监控网格', '环境控制要求', '逐日实测', '符合性判定', '异常处置', '℃', '%RH'],
     'XZTC/BG-03-02' => ['关联样品/委托编号'],
     'XZTC/BG-03-03' => ['依据保养计划/周期'],
     'XZTC/BG-04-03' => ['空白母版', '核查依据', '标准值', '实测值', '允差', '结论判定', '由设备档案带出'],

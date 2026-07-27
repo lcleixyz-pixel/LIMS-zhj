@@ -37,6 +37,7 @@ function dc_all(string $source, array $needles): bool
 $document = dc_source('app/controller/Document.php');
 $approval = dc_source('app/controller/Approval.php');
 $approvalService = dc_source('app/service/ApprovalService.php');
+$documentPresentation = dc_source('app/service/DocumentPresentationService.php');
 $trialMode = dc_source('app/service/TrialModeService.php');
 $control = dc_source('app/service/DocumentControlService.php');
 $print = dc_source('app/service/ControlledPrintService.php');
@@ -68,10 +69,10 @@ dc_check(
 );
 
 dc_check(
-    dc_all($approval, [
+    dc_all($approvalService, [
         'supersedes_document_id',
         "'status' => 'obsolete'",
-        'Db::transaction',
+        'finalizeDocumentIfFullyApproved',
     ]),
     'DC03',
     '新版本批准发布时原版本才作废'
@@ -141,8 +142,9 @@ dc_check(
 );
 
 dc_check(
-    str_contains($document, "\$newVersion === (string)\$doc->version")
-    && str_contains($document, '$minorNum++'),
+    str_contains($document, 'DocumentPresentationService::nextVersion')
+    && str_contains($documentPresentation, 'public static function nextVersion')
+    && str_contains($documentPresentation, '+ 1'),
     'DC11',
     '发起修订时新版本号不得与当前版本号重复'
 );
@@ -181,8 +183,8 @@ dc_check(
 dc_check(
     str_contains($migration, "TABLE_NAME = 'documents'")
     && str_contains($migration, "enum('draft','reviewing','approved','trial_ready','published','obsolete')")
-    && str_contains($approval, "TrialModeService::isSimulationNumber")
-    && str_contains($approval, "'trial_ready'"),
+    && str_contains($approvalService, "TrialModeService::isSimulationNumber")
+    && str_contains($approvalService, "'trial_ready'"),
     'DC16',
     'SIM 文件完成审批后进入 trial_ready，不得写成正式 published'
 );

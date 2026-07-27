@@ -299,6 +299,7 @@ CREATE TABLE `controlled_print_logs` (
   `print_number` varchar(80) NOT NULL,
   `copy_count` int DEFAULT 1,
   `purpose` varchar(200) DEFAULT NULL,
+  `recipient` varchar(100) DEFAULT NULL,
   `watermark_text` varchar(200) NOT NULL,
   `printed_by` varchar(36) DEFAULT NULL,
   `printed_at` datetime NOT NULL,

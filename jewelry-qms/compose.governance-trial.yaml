@@ -18,6 +18,7 @@ services:
       - ./database/migrations/20260720_docuseal_signing.sql:/docker-entrypoint-initdb.d/03-docuseal-signing.sql:ro
       - ./database/migrations/20260724_document_approval_round.sql:/docker-entrypoint-initdb.d/04-document-approval-round.sql:ro
       - ./database/migrations/20260727_equipment_period_checks.sql:/docker-entrypoint-initdb.d/05-equipment-period-checks.sql:ro
+      - ./database/migrations/20260728_controlled_print_recipient.sql:/docker-entrypoint-initdb.d/06-controlled-print-recipient.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "--silent"]
       interval: 5s

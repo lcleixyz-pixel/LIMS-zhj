@@ -33,9 +33,13 @@ class Dashboard extends BaseController
     {
         $userId = Session::get('user.id');
         $canViewEquipment = ActionAuthorizationService::allows('equipment', 'view');
+        $pendingApprovals = Approval::where('user_id', $userId)
+            ->where('status', 'pending')
+            ->where('soft_delete', 0)
+            ->count();
         $stats = [
             'docCount' => Document::where('soft_delete', 0)->count(),
-            'pendingReview' => Document::whereIn('status', ['draft', 'reviewing'])->where('soft_delete', 0)->count(),
+            'pendingReview' => $pendingApprovals,
             'equipmentCount' => $canViewEquipment ? Equipment::where('soft_delete', 0)->count() : 0,
             'calibrationExpiring' => $canViewEquipment
                 ? Equipment::where('soft_delete', 0)
@@ -53,7 +57,7 @@ class Dashboard extends BaseController
                 ->where('due_date', '<', date('Y-m-d'))
                 ->whereNotNull('due_date')
                 ->where('soft_delete', 0)->count(),
-            'pendingApprovals' => Approval::where('user_id', $userId)->where('status', 'pending')->where('soft_delete', 0)->count(),
+            'pendingApprovals' => $pendingApprovals,
             'overdueActions' => ReviewAction::where('status', 'overdue')->where('soft_delete', 0)->count(),
             'pendingReviews' => ManagementReview::where('status', 'planned')->where('soft_delete', 0)->count(),
         ];
@@ -85,7 +89,11 @@ class Dashboard extends BaseController
 
         $todos = [];
         if ($stats['pendingApprovals'] > 0) {
-            $todos[] = ['title' => '待审批文件', 'count' => $stats['pendingApprovals'], 'url' => '/document/index?status=reviewing'];
+            $todos[] = [
+                'title' => '待我签批的文件',
+                'count' => $stats['pendingApprovals'],
+                'url' => '/document/index?pending_for_me=1',
+            ];
         }
         if ($stats['overdueCapa'] > 0) {
             $todos[] = ['title' => '超期CAPA', 'count' => $stats['overdueCapa'], 'url' => '/capa/index'];

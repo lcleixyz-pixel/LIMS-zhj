@@ -1,0 +1,63 @@
+<div class="qms-page-header">
+    <div>
+        <h4>准备受控打印</h4>
+        <small class="text-muted">先核对版本、用途、份数和接收人；提交确认后才会生成打印登记。</small>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/document/view?id={$doc.id}" class="btn btn-sm btn-outline-secondary">返回文件</a>
+    </div>
+</div>
+
+<div class="alert alert-warning">
+    <strong>当前尚未创建打印登记。</strong>
+    8021 生成的是试运行副本，纸质文件仍为正式依据。请勿将试运行副本作为正式受控文件发放。
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header"><strong>请核对本次打印信息</strong></div>
+            <div class="card-body">
+                <dl class="row mb-4">
+                    <dt class="col-sm-3">文件</dt>
+                    <dd class="col-sm-9">{$doc.doc_number}　{$doc.title}</dd>
+                    <dt class="col-sm-3">当前版本</dt>
+                    <dd class="col-sm-9">{$doc.version|default='A/0'}</dd>
+                    <dt class="col-sm-3">打印结果</dt>
+                    <dd class="col-sm-9">生成带唯一编号和试运行水印的打印页，并留下可追溯登记。</dd>
+                </dl>
+
+                <form method="post" action="/document/controlledPrint?id={$doc.id}">
+                    <div class="mb-3">
+                        <label for="print_purpose" class="form-label required">打印用途</label>
+                        <input id="print_purpose" name="purpose" class="form-control" maxlength="200" required placeholder="例如：质量员试运行核对、技术负责人会签">
+                        <div class="form-text">请说明为什么打印，避免只写“使用”或“备用”。</div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label for="print_recipient" class="form-label required">接收人或使用部门</label>
+                            <input id="print_recipient" name="recipient" class="form-control" maxlength="100" required placeholder="例如：张三 / 技术部">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="copy_count" class="form-label required">打印份数</label>
+                            <div class="input-group">
+                                <input id="copy_count" type="number" name="copy_count" class="form-control" min="1" max="999" value="1" required>
+                                <span class="input-group-text">份</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-check border rounded p-3 ps-5 mb-3">
+                        <input id="confirm_print" class="form-check-input" type="checkbox" name="confirm_print" value="1" required>
+                        <label class="form-check-label" for="confirm_print">
+                            我已核对文件编号和版本，并理解提交后会立即创建本次打印登记。
+                        </label>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="/document/view?id={$doc.id}" class="btn btn-outline-secondary">取消</a>
+                        <button type="submit" class="btn btn-primary">确认并生成打印页</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

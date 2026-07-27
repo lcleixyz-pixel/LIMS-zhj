@@ -10,11 +10,19 @@
 
 <div class="card">
     <div class="card-body">
+        {notempty name="errors"}
+        <div class="alert alert-danger" role="alert" aria-live="polite">
+            <strong>这张表还不能保存，请补充以下内容：</strong>
+            <ul class="mb-0 mt-2">
+                {volist name="errors" id="error"}<li>{$error}</li>{/volist}
+            </ul>
+        </div>
+        {/notempty}
         <form method="post" action="/record_form_instance/create?template_id={$template.id}">
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
-                    <label class="form-label required">记录年度</label>
-                    <select name="record_year" class="form-select" data-record-year-select data-template-id="{$template.id}">
+                    <label class="form-label required" for="record_year">记录年度</label>
+                    <select id="record_year" name="record_year" class="form-select" data-record-year-select data-template-id="{$template.id}" required>
                         {volist name="recordYearOptions" id="yearOption"}
                         <option value="{$yearOption}" {if $yearOption == $recordYear}selected{/if}>{$yearOption}</option>
                         {/volist}
@@ -27,22 +35,27 @@
                 </div>
             </div>
             <div class="mb-3">
-                <label class="form-label required">记录标题</label>
-                <input type="text" name="record_title" class="form-control" value="{$recordTitleValue|default=$template.name}" required>
+                <label class="form-label required" for="record_title">记录标题</label>
+                <input id="record_title" type="text" name="record_title" class="form-control" value="{$recordTitleValue|default=$template.name}" required>
                 <input type="hidden" name="suggested_record_title" value="{$recordTitleSuggestion.record_title|default=''}">
             </div>
             {volist name="schema" id="field"}
             <div class="mb-3">
-                <label class="form-label {if $field.required}required{/if}">{$field.label}{if $field.readonly} <span class="badge bg-secondary">只读</span>{/if}</label>
+                <label class="form-label {if $field.required}required{/if}" for="field_{$field.key}">{$field.label}{if $field.readonly} <span class="badge bg-secondary">只读</span>{/if}</label>
                 {if $field.help_text}<div class="form-text mb-1">{$field.help_text}</div>{/if}
                 {if $field.type == 'textarea'}
-                <textarea name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" rows="4" {if $field.readonly}readonly{/if}>{$values[$field.key]|default=$field.default}</textarea>
+                <textarea id="field_{$field.key}" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" rows="4" placeholder="{$field.placeholder}" {if $field.required}required{/if} {if $field.readonly}readonly{/if}>{$values[$field.key]|default=$field.default}</textarea>
                 {elseif $field.type == 'date'}
-                <input type="date" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.readonly}readonly{/if}>
+                <input id="field_{$field.key}" type="date" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.required}required{/if} {if $field.readonly}readonly{/if}>
+                {elseif $field.type == 'month'}
+                <input id="field_{$field.key}" type="month" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.required}required{/if} {if $field.readonly}readonly{/if}>
                 {elseif $field.type == 'number'}
-                <input type="number" step="0.01" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.readonly}readonly{/if}>
+                <div class="input-group">
+                    <input id="field_{$field.key}" type="number" step="0.01" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" placeholder="{$field.placeholder}" {if $field.required}required{/if} {if $field.readonly}readonly{/if}>
+                    {if $field.unit}<span class="input-group-text">{$field.unit}</span>{/if}
+                </div>
                 {elseif $field.type == 'select'}
-                <select name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.readonly}disabled{/if}>
+                <select id="field_{$field.key}" name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.required}required{/if} {if $field.readonly}disabled{/if}>
                     <option value="">请选择</option>
                     {volist name="field.options" id="option"}
                     <option value="{$option}" {if isset($values[$field.key]) && $values[$field.key] == $option}selected{/if}>{$option}</option>
@@ -56,7 +69,7 @@
                 </div>
                 {if $field.readonly}<input type="hidden" name="fields[{$field.key}]" value="{$values[$field.key]|default=$field.default}">{/if}
                 {elseif $field.type == 'person'}
-                <select name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.readonly}disabled{/if}>
+                <select id="field_{$field.key}" name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.required}required{/if} {if $field.readonly}disabled{/if}>
                     <option value="">请选择人员</option>
                     {volist name="employeeOptions" id="employee"}
                     <option value="{$employee.name}" {if isset($values[$field.key]) && $values[$field.key] == $employee.name}selected{/if}>{$employee.name}{if $employee.department_name}（{$employee.department_name}）{/if}</option>
@@ -64,7 +77,7 @@
                 </select>
                 {if $field.readonly}<input type="hidden" name="fields[{$field.key}]" value="{$values[$field.key]|default=$field.default}">{/if}
                 {elseif $field.type == 'department'}
-                <select name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.readonly}disabled{/if}>
+                <select id="field_{$field.key}" name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.required}required{/if} {if $field.readonly}disabled{/if}>
                     <option value="">请选择部门</option>
                     {volist name="departmentOptions" id="department"}
                     <option value="{$department.name}" {if isset($values[$field.key]) && $values[$field.key] == $department.name}selected{/if}>{$department.name}</option>
@@ -105,14 +118,17 @@
                                     {volist name="field.columns" id="column"}
                                     <td>
                                         {if $column.type == 'textarea'}
-                                        <textarea name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" rows="2">{$row[$column.key]|default=''}</textarea>
+                                        <textarea aria-label="{$column.label}" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" {if isset($column.validation.required_when)}data-required-when-field="{$column.validation.required_when.field}" data-required-when-equals="{$column.validation.required_when.equals}"{/if} class="form-control form-control-sm" rows="2" placeholder="{$column.placeholder}" {if $column.required}required{/if}>{$row[$column.key]|default=''}</textarea>
                                         {elseif $column.type == 'date'}
-                                        <input type="date" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}">
+                                        <input aria-label="{$column.label}" type="date" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}" {if $column.required}required{/if}>
                                         {elseif $column.type == 'number'}
-                                        <input type="number" step="0.01" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}">
+                                        <div class="input-group input-group-sm flex-nowrap">
+                                            <input aria-label="{$column.label}，单位{$column.unit}" type="number" step="0.01" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control" value="{$row[$column.key]|default=''}" placeholder="{$column.placeholder}" {if $column.required}required{/if}>
+                                            {if $column.unit}<span class="input-group-text">{$column.unit}</span>{/if}
+                                        </div>
                                         {elseif $column.type == 'select'}
-                                        <select name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
-                                            <option value=""></option>
+                                        <select aria-label="{$column.label}" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
+                                            <option value="">请选择</option>
                                             {volist name="column.options" id="option"}
                                             <option value="{$option}" {if isset($row[$column.key]) && $row[$column.key] == $option}selected{/if}>{$option}</option>
                                             {/volist}
@@ -120,21 +136,21 @@
                                         {elseif $column.type == 'checkbox'}
                                         <input type="checkbox" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" value="1" class="form-check-input" {if isset($row[$column.key]) && ($row[$column.key] == '1' || $row[$column.key] == 1)}checked{/if}>
                                         {elseif $column.type == 'person'}
-                                        <select name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
-                                            <option value=""></option>
+                                        <select aria-label="{$column.label}" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
+                                            <option value="">请选择人员</option>
                                             {volist name="employeeOptions" id="employee"}
                                             <option value="{$employee.name}" {if isset($row[$column.key]) && $row[$column.key] == $employee.name}selected{/if}>{$employee.name}{if $employee.department_name}（{$employee.department_name}）{/if}</option>
                                             {/volist}
                                         </select>
                                         {elseif $column.type == 'department'}
-                                        <select name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
-                                            <option value=""></option>
+                                        <select aria-label="{$column.label}" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
+                                            <option value="">请选择部门</option>
                                             {volist name="departmentOptions" id="department"}
                                             <option value="{$department.name}" {if isset($row[$column.key]) && $row[$column.key] == $department.name}selected{/if}>{$department.name}</option>
                                             {/volist}
                                         </select>
                                         {else}
-                                        <input type="text" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}">
+                                        <input aria-label="{$column.label}" type="text" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}" placeholder="{$column.placeholder}" {if $column.required}required{/if}>
                                         {/if}
                                     </td>
                                     {/volist}
@@ -152,30 +168,33 @@
                             {volist name="field.columns" id="column"}
                             <td>
                                 {if $column.type == 'textarea'}
-                                <textarea name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" rows="2"></textarea>
+                                <textarea aria-label="{$column.label}" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" {if isset($column.validation.required_when)}data-required-when-field="{$column.validation.required_when.field}" data-required-when-equals="{$column.validation.required_when.equals}"{/if} class="form-control form-control-sm" rows="2" placeholder="{$column.placeholder}" {if $column.required}required{/if}></textarea>
                                 {elseif $column.type == 'date'}
-                                <input type="date" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="">
+                                <input aria-label="{$column.label}" type="date" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="" {if $column.required}required{/if}>
                                 {elseif $column.type == 'number'}
-                                <input type="number" step="0.01" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="">
+                                <div class="input-group input-group-sm flex-nowrap">
+                                    <input aria-label="{$column.label}，单位{$column.unit}" type="number" step="0.01" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control" value="" placeholder="{$column.placeholder}" {if $column.required}required{/if}>
+                                    {if $column.unit}<span class="input-group-text">{$column.unit}</span>{/if}
+                                </div>
                                 {elseif $column.type == 'select'}
-                                <select name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
-                                    <option value=""></option>
+                                <select aria-label="{$column.label}" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
+                                    <option value="">请选择</option>
                                     {volist name="column.options" id="option"}<option value="{$option}">{$option}</option>{/volist}
                                 </select>
                                 {elseif $column.type == 'checkbox'}
                                 <input type="checkbox" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" value="1" class="form-check-input">
                                 {elseif $column.type == 'person'}
-                                <select name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
-                                    <option value=""></option>
+                                <select aria-label="{$column.label}" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
+                                    <option value="">请选择人员</option>
                                     {volist name="employeeOptions" id="employee"}<option value="{$employee.name}">{$employee.name}{if $employee.department_name}（{$employee.department_name}）{/if}</option>{/volist}
                                 </select>
                                 {elseif $column.type == 'department'}
-                                <select name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm">
-                                    <option value=""></option>
+                                <select aria-label="{$column.label}" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
+                                    <option value="">请选择部门</option>
                                     {volist name="departmentOptions" id="department"}<option value="{$department.name}">{$department.name}</option>{/volist}
                                 </select>
                                 {else}
-                                <input type="text" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="">
+                                <input aria-label="{$column.label}" type="text" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="" placeholder="{$column.placeholder}" {if $column.required}required{/if}>
                                 {/if}
                             </td>
                             {/volist}
@@ -186,7 +205,10 @@
                     </template>
                 </div>
                 {else}
-                <input type="text" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.readonly}readonly{/if}>
+                <div class="{if $field.unit}input-group{/if}">
+                    <input id="field_{$field.key}" type="text" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" placeholder="{$field.placeholder}" {if $field.required}required{/if} {if $field.readonly}readonly{/if}>
+                    {if $field.unit}<span class="input-group-text">{$field.unit}</span>{/if}
+                </div>
                 {/if}
                 {if isset($errors[$field.key])}<div class="text-danger small mt-1">{$errors[$field.key]}</div>{/if}
             </div>

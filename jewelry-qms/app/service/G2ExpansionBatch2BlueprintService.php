@@ -11,17 +11,40 @@ final class G2ExpansionBatch2BlueprintService
     {
         return [
             self::template('XZTC/BG-02-01', '检测环境监控记录表', '设施与环境条件控制和维护程序', [
-                self::field('monitor_month', '监控月份'),
-                self::field('monitor_site', '监控场所'),
-                self::field('requirement_value', '要求值预印栏'),
+                self::field('monitor_month', '监控月份', 'month', [], [], true, [
+                    'help_text' => '请选择本张记录所覆盖的月份。',
+                ]),
+                self::field('monitor_site', '监控场所', 'text', [], [], true, [
+                    'placeholder' => '例如：检测室一',
+                ]),
+                self::field('requirement_value', '环境控制要求', 'textarea', [], [], true, [
+                    'help_text' => '填写程序文件或作业指导书规定的温湿度及其他环境要求。',
+                    'placeholder' => '例如：温度 20～26 ℃，相对湿度不高于 70%RH',
+                ]),
                 self::field('daily_monitor_items', '月度逐日监控网格(逐日实测)', 'repeatable_table', [], [
-                    self::column('date', '日期'),
-                    self::column('temperature', '温度实测'),
-                    self::column('humidity', '湿度实测'),
+                    self::column('date', '日期', 'date', true),
+                    self::column('temperature', '温度实测', 'number', true, [], [
+                        'unit' => '℃',
+                        'placeholder' => '23.2',
+                    ]),
+                    self::column('humidity', '湿度实测', 'number', true, [], [
+                        'unit' => '%RH',
+                        'placeholder' => '52',
+                    ]),
                     self::column('other_condition', '其他环境条件'),
-                    self::column('conformity_judgment', '符合性判定'),
-                    self::column('exception_disposal', '异常处置记录指引'),
-                    self::column('recorder', '记录人'),
+                    self::column('conformity_judgment', '符合性判定', 'select', true, ['符合', '不符合']),
+                    self::column('exception_disposal', '异常处置', 'textarea', false, [], [
+                        'placeholder' => '判为不符合时，填写采取的措施或关联记录',
+                        'validation' => [
+                            'required_when' => [
+                                'field' => 'conformity_judgment',
+                                'equals' => '不符合',
+                            ],
+                        ],
+                    ]),
+                    self::column('recorder', '记录人', 'person', true),
+                ], true, [
+                    'help_text' => '每天填写一行；判定为“不符合”时必须填写异常处置。',
                 ]),
             ]),
             self::template('XZTC/BG-03-02', '仪器设备使用记录表', '仪器设备管理程序', [
@@ -143,8 +166,8 @@ final class G2ExpansionBatch2BlueprintService
                 'requirement_value' => '温度20-25℃；湿度45%-65%RH',
                 'daily_monitor_items' => [[
                     'date' => '2026-07-24',
-                    'temperature' => '23.2℃',
-                    'humidity' => '52%RH',
+                    'temperature' => '23.2',
+                    'humidity' => '52',
                     'other_condition' => '照明正常',
                     'conformity_judgment' => '符合',
                     'exception_disposal' => '无；超限时按不符合工作程序处理',
@@ -253,9 +276,17 @@ final class G2ExpansionBatch2BlueprintService
         ];
     }
 
-    private static function field(string $key, string $label, string $type = 'text', array $options = [], array $columns = []): array
+    private static function field(
+        string $key,
+        string $label,
+        string $type = 'text',
+        array $options = [],
+        array $columns = [],
+        bool $required = false,
+        array $extra = []
+    ): array
     {
-        $field = ['key' => $key, 'label' => $label, 'type' => $type, 'required' => false];
+        $field = $extra + ['key' => $key, 'label' => $label, 'type' => $type, 'required' => $required];
         if ($options !== []) {
             $field['options'] = $options;
         }
@@ -266,8 +297,21 @@ final class G2ExpansionBatch2BlueprintService
         return $field;
     }
 
-    private static function column(string $key, string $label): array
+    private static function column(
+        string $key,
+        string $label,
+        string $type = 'text',
+        bool $required = false,
+        array $options = [],
+        array $extra = []
+    ): array
     {
-        return ['key' => $key, 'label' => $label, 'type' => 'text', 'required' => false];
+        return $extra + [
+            'key' => $key,
+            'label' => $label,
+            'type' => $type,
+            'required' => $required,
+            'options' => $options,
+        ];
     }
 }

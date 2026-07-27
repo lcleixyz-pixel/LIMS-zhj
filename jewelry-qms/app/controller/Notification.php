@@ -6,6 +6,7 @@ namespace app\controller;
 use app\BaseController;
 use app\model\Notification as NotificationModel;
 use app\model\NotificationUser;
+use app\service\NotificationPresentationService;
 use think\facade\Session;
 use think\facade\View;
 
@@ -14,25 +15,20 @@ class Notification extends BaseController
     public function index()
     {
         $userId = Session::get('user.id');
-        $nuList = NotificationUser::where('user_id', $userId)
-            ->order('status', 'asc')
-            ->order('id', 'desc')
+        $nuList = NotificationUser::alias('nu')
+            ->leftJoin('notifications n', 'n.id = nu.notification_id')
+            ->where('nu.user_id', $userId)
+            ->where('n.soft_delete', 0)
+            ->field(
+                'nu.id,nu.status,nu.read_at,nu.notification_id,'
+                . 'n.title,n.message,n.type,n.created,n.link_controller,n.link_action,n.link_id,n.due_date'
+            )
+            ->order('n.created', 'desc')
             ->paginate(20);
 
         $list = [];
         foreach ($nuList as $nu) {
-            $n = NotificationModel::find($nu->notification_id);
-            $list[] = [
-                'id' => $nu->id,
-                'status' => $nu->status,
-                'title' => $n->title ?? '',
-                'message' => $n->message ?? '',
-                'type' => $n->type ?? '',
-                'created' => $n->created ?? '',
-                'link_controller' => $n->link_controller ?? null,
-                'link_action' => $n->link_action ?? null,
-                'link_id' => $n->link_id ?? null,
-            ];
+            $list[] = NotificationPresentationService::present($nu->toArray());
         }
 
         View::assign('items', $list);
