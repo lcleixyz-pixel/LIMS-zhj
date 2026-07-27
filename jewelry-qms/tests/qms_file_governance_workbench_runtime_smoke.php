@@ -102,9 +102,9 @@ workbench_runtime_assert(
 );
 
 foreach ([
-    'CX-19' => ['记录控制', '8.4'],
-    'CX-26' => ['数据和信息管理', '7.11'],
-] as $procedureCode => [$profileLabel, $expectedSection]) {
+    'CX-19' => '8.4',
+    'CX-26' => '7.11',
+] as $procedureCode => $expectedSection) {
     $candidate = Db::name('qms_structured_documents')
         ->whereLike('doc_number', 'SIM-GOV02-XZTC/' . $procedureCode . '%')
         ->where('version', 'GOV-TRIAL/0.2')
@@ -113,13 +113,20 @@ foreach ([
     workbench_runtime_assert(is_array($candidate), '8021 缺少 ' . $procedureCode . ' GOV-TRIAL/0.2');
     $candidateViewModel = QmsFileGovernanceWorkbenchService::detail((string)$candidate['id']);
     workbench_runtime_assert(
-        (string)($candidateViewModel['semantic_guard']['status'] ?? '') === 'suspected_mismatch',
-        $procedureCode . ' 应识别现有 4.2 关系为疑似错挂'
+        (string)($candidateViewModel['semantic_guard']['status'] ?? '') === 'aligned',
+        $procedureCode . ' 定向治理后应形成语义一致主链'
     );
-    $issue = (string)($candidateViewModel['semantic_guard']['issues'][0]['message'] ?? '');
     workbench_runtime_assert(
-        str_contains($issue, $profileLabel) && str_contains($issue, $expectedSection),
-        $procedureCode . ' 应提示对应主题和建议手册章节 ' . $expectedSection
+        ($candidateViewModel['chain']['missing'] ?? []) === [],
+        $procedureCode . ' 定向治理后不应缺少外部依据、手册或运行证据主链'
+    );
+    $confirmedManualNumbers = array_column(
+        $candidateViewModel['chain']['confirmed_manual_sections'] ?? [],
+        'section_number'
+    );
+    workbench_runtime_assert(
+        in_array($expectedSection, $confirmedManualNumbers, true),
+        $procedureCode . ' 应确认手册主链 ' . $expectedSection
     );
 }
 

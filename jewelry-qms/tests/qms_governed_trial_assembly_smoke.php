@@ -83,6 +83,16 @@ governed_trial_assert(
         === 'manual_v5_candidate_8_3',
     'CX-08 主手册关系应明确选择 8.3，不能按排序误取 4.2'
 );
+governed_trial_assert(
+    ($proceduresByNumber['XZTC/CX-19-2022']['primary_manual_section_key'] ?? '')
+        === 'manual_v5_candidate_8_4',
+    'CX-19 主手册关系应明确选择 8.4，不能按排序误取 4.2'
+);
+governed_trial_assert(
+    ($proceduresByNumber['XZTC/CX-26-2022']['primary_manual_section_key'] ?? '')
+        === 'manual_v5_candidate_7_11',
+    'CX-26 主手册关系应明确选择 7.11，不能按排序误取 4.2'
+);
 
 $procedureLinkSpecs = GovernedTrialAssemblyService::procedureLinkSpecifications(
     $proceduresByNumber['XZTC/CX-08-2022'],
