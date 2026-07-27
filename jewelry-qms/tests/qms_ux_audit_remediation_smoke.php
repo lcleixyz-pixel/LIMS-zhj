@@ -49,6 +49,9 @@ $user = $read('app/view/user/index.html');
 $reviewAction = $read('app/view/review_action/index.html');
 $document = $read('app/view/document/view.html');
 $login = $read('app/view/login/index.html');
+$userChangePassword = $read('app/view/user/change_password.html');
+$userResetPassword = $read('app/view/user/reset_password.html');
+$routes = $read('route/app.php');
 $config = $read('config/qms.php');
 
 ux_assert_contains(
@@ -83,7 +86,12 @@ ux_assert_contains('{if $canViewEquipment}', $dashboard, 'UX-15: 仪表盘设备
 ux_assert_contains('action_allowed', $complianceController, 'UX-22: 合规入口必须计算目标权限');
 ux_assert_contains('请由具备相应岗位权限的人员处理', $compliance, 'UX-22: 无权限缺口必须说明下一步');
 ux_assert_contains("'user/changepassword'", $rbac, 'UX-18: 所有登录用户必须能进入本人改密动作');
-ux_assert_contains('href="/user/changePassword"', $layout, 'UX-18: 顶部改密入口必须使用本人改密路由');
+ux_assert_contains("Route::rule('user/changepassword', 'User/changePassword')", $routes, 'UX-18: 本人改密必须命中受保护的小写路由');
+ux_assert_contains("Route::rule('login/changepassword', 'User/changePassword')", $routes, 'UX-18: 旧登录后改密地址必须进入同一受保护动作');
+ux_assert_contains('href="/user/changepassword"', $layout, 'UX-18: 顶部改密入口必须使用受保护的小写路由');
+ux_assert_contains('action="/user/changepassword"', $userChangePassword, 'UX-18: 本人改密表单必须提交到受保护路由');
+ux_assert_contains('action="/user/changepassword?id={$record.id}"', $userResetPassword, 'UX-18: 管理员重置表单必须提交到受保护路由');
+ux_assert_not_contains('href="/login/changePassword"', $login, 'UX-18: 未登录页面不得显示无效的改密链接');
 
 ux_assert_contains('qmsChartEmptyAction', $dashboard, 'UX-4/5: 图表空态必须使用安全的引导组件');
 ux_assert_not_contains('const node = document.getElementById(id);' . PHP_EOL . '    const node = document.getElementById(id);', $dashboard, 'UX-4: 图表初始化不得重复声明变量');

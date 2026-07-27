@@ -28,7 +28,7 @@
                         <td>{$item.last_login|default='从未登录'}</td>
                         <td>
                             <a href="/user/view?id={$item.id}" class="btn btn-sm btn-outline-info">查看</a>
-                            <a href="/user/changePassword?id={$item.id}" class="btn btn-sm btn-outline-warning">重置密码</a>
+                            <a href="/user/changepassword?id={$item.id}" class="btn btn-sm btn-outline-warning">重置密码</a>
                             <a href="/user/delete?id={$item.id}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确认删除此记录？删除后无法恢复。')">删除</a>
                         </td>
                     </tr>

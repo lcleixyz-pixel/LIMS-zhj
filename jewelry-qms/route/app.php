@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use think\facade\Route;
 
-Route::rule('login/changePassword', 'User/changePassword');
 Route::rule('login', 'Login/index');
 Route::get('logout', 'Login/logout');
 Route::get('login/logout', 'Login/logout');
@@ -167,7 +166,8 @@ Route::group(function () {
     Route::get('governed_change/inbox', 'GovernedChange/inbox');
     Route::post('governed_change/decide', 'GovernedChange/decide');
 
-    Route::rule('user/changePassword', 'User/changePassword');
+    Route::rule('login/changepassword', 'User/changePassword');
+    Route::rule('user/changepassword', 'User/changePassword');
 
     Route::rule('import/index', 'Import/index');
     Route::post('import/upload', 'Import/upload');

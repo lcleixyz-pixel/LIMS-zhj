@@ -43,7 +43,7 @@ class Auth
                 'logout/index',
             ];
             if (!in_array($route, $allowedWhileForced, true) && $controller !== 'logout') {
-                return redirect('/user/changePassword');
+                return redirect('/user/changepassword');
             }
         }
 

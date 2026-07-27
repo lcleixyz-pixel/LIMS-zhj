@@ -178,9 +178,8 @@
                 <button type="submit" class="login-btn">登 录</button>
             </form>
             <div class="login-foot">
-                首次登录或忘记密码，请联系系统管理员
-                {if !empty($supportContact)}<br><strong>支持联系人：{$supportContact}</strong>{/if}<br>
-                <a href="/login/changePassword">修改密码</a>
+                首次登录后系统会引导修改密码；忘记密码请联系系统管理员
+                {if !empty($supportContact)}<br><strong>支持联系人：{$supportContact}</strong>{/if}
             </div>
         </div>
     </div>

@@ -127,7 +127,7 @@ class Login extends BaseController
     private function postLoginRedirect()
     {
         if ((int)Session::get('user.must_change_password', 0) === 1) {
-            return redirect('/user/changePassword');
+            return redirect('/user/changepassword');
         }
 
         return redirect('/dashboard/index');
