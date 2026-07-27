@@ -116,6 +116,8 @@ Route::group(function () {
     Route::post('planning/clauses/local-element', 'PlanningClause/localElement');
     Route::rule('planning/clauses/view', 'PlanningClause/view');
     Route::rule('planning/clauses', 'PlanningClause/index');
+    Route::get('planning/structures/governance-queue', 'PlanningStructure/governanceQueue');
+    Route::get('planning/structures/governance-next', 'PlanningStructure/nextGovernance');
     Route::get('planning/structures/workbench', 'PlanningStructure/workbench');
     Route::rule('planning/structures/view', 'PlanningStructure/view');
     Route::get('planning/structures/resolved-artifact', 'PlanningStructure/resolvedArtifact');

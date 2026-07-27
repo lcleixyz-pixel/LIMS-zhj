@@ -23,6 +23,7 @@ use app\service\FieldAuditService;
 use app\service\FileService;
 use app\service\GovernedTrialResolvedDocumentService;
 use app\service\QmsDocumentStructureService;
+use app\service\QmsGovernanceVersionResolverService;
 use app\service\TrialModeService;
 use think\exception\ValidateException;
 use think\exception\HttpException;
@@ -60,6 +61,9 @@ class Document extends BaseController
         }
 
         $documents = $query->order('doc_number', 'asc')->paginate(20);
+        QmsGovernanceVersionResolverService::decorateControlledDocuments(
+            $documents->items()
+        );
         $categories = DocCategory::where('soft_delete', 0)->select();
 
         View::assign('documents', $documents);

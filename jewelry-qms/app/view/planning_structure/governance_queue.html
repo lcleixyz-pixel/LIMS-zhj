@@ -1,0 +1,162 @@
+<div class="qms-page-header">
+    <div>
+        <h4 class="mb-1">当前治理队列</h4>
+        <div class="text-muted small">
+            {$queue.scope.label} · 候选版本 {$queue.scope.version}
+        </div>
+    </div>
+    <div class="qms-page-actions">
+        <a href="/planning/structures" class="btn btn-sm btn-outline-secondary">结构化文件总览</a>
+        <a href="/document/index" class="btn btn-sm btn-outline-primary">体系文件列表</a>
+    </div>
+</div>
+
+<div class="alert alert-info mb-3" role="status">
+    <span class="fw-semibold">试运行边界：</span>
+    纸质体系仍为唯一正式体系；本页只汇总电子治理候选的只读状态，不自动确认追溯关系，不构成正式发布或评审证据。
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">已对齐</div>
+                <div class="h4 mb-0 text-success">{$queue.summary.aligned|default=0}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">疑似错挂</div>
+                <div class="h4 mb-0 text-danger">{$queue.summary.suspected_mismatch|default=0}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">主链缺失</div>
+                <div class="h4 mb-0 text-warning">{$queue.summary.missing_primary|default=0}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">候选冲突</div>
+                <div class="h4 mb-0 text-danger">{$queue.summary.version_conflict|default=0}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" action="/planning/structures/governance-queue" class="row g-3 align-items-end mb-3">
+            <div class="col-12 col-md-4">
+                <label for="governance-status" class="form-label small fw-semibold">治理状态</label>
+                <select id="governance-status" name="status" class="form-select form-select-sm">
+                    <option value="all" {if $queue.filters.status == 'all'}selected{/if}>全部状态</option>
+                    <option value="aligned" {if $queue.filters.status == 'aligned'}selected{/if}>已对齐</option>
+                    <option value="suspected_mismatch" {if $queue.filters.status == 'suspected_mismatch'}selected{/if}>疑似错挂</option>
+                    <option value="missing_primary" {if $queue.filters.status == 'missing_primary'}selected{/if}>主链缺失</option>
+                    <option value="review_required" {if $queue.filters.status == 'review_required'}selected{/if}>待人工复核</option>
+                    <option value="version_conflict" {if $queue.filters.status == 'version_conflict'}selected{/if}>候选冲突</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-5">
+                <label for="governance-keyword" class="form-label small fw-semibold">文件编号或标题</label>
+                <input
+                    id="governance-keyword"
+                    type="search"
+                    name="keyword"
+                    class="form-control form-control-sm"
+                    value="{$queue.filters.keyword|default=''}"
+                    placeholder="例如：CX-08 或 文件控制"
+                >
+            </div>
+            <div class="col-12 col-md-3">
+                <button type="submit" class="btn btn-sm btn-primary">筛选</button>
+                <a href="/planning/structures/governance-queue" class="btn btn-sm btn-outline-secondary">重置</a>
+            </div>
+        </form>
+
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+            <div class="fw-semibold">文件状态</div>
+            <div class="text-muted small">当前显示 {$queue.visible_count} / {$queue.scope.total} 份</div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>程序文件</th>
+                        <th>版本角色</th>
+                        <th>语义主链</th>
+                        <th>缺失链条</th>
+                        <th>记录支撑</th>
+                        <th>明确证据</th>
+                        <th>更新时间</th>
+                        <th class="text-end">下一步</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {volist name="queue.rows" id="row"}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{$row.doc_number}</div>
+                            <div class="text-muted small">{$row.title}</div>
+                        </td>
+                        <td>
+                            {if $row.version_state == 'candidate_conflict'}
+                            <span class="badge bg-danger">{$row.version_label}</span>
+                            {else}
+                            <span class="badge bg-primary">{$row.version_label}</span>
+                            {/if}
+                            <div class="text-muted small mt-1">{$row.version}</div>
+                        </td>
+                        <td>
+                            {if $row.semantic_status == 'aligned'}
+                            <span class="badge bg-success">{$row.semantic_label}</span>
+                            {elseif $row.semantic_status == 'suspected_mismatch'}
+                            <span class="badge bg-danger">{$row.semantic_label}</span>
+                            {elseif $row.semantic_status == 'version_conflict'}
+                            <span class="badge bg-danger">{$row.semantic_label}</span>
+                            {else}
+                            <span class="badge bg-warning text-dark">{$row.semantic_label}</span>
+                            {/if}
+                            <div class="text-muted small mt-1">{$row.summary_message}</div>
+                        </td>
+                        <td>
+                            {if $row.missing_chain_text}
+                            <span class="small">{$row.missing_chain_text}</span>
+                            {else}
+                            <span class="text-muted small">无</span>
+                            {/if}
+                        </td>
+                        <td><span class="small">{$row.record_label}</span></td>
+                        <td class="text-nowrap">{$row.completed_checks} / {$row.total_checks}</td>
+                        <td class="text-nowrap small">{$row.modified|default='—'}</td>
+                        <td class="text-end">
+                            {if $row.workbench_url}
+                            <a href="{$row.workbench_url}" class="btn btn-sm btn-primary text-nowrap">继续治理</a>
+                            {else}
+                            <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" disabled>先处理冲突</button>
+                            {/if}
+                            <div class="text-muted small mt-1">{$row.next_step}</div>
+                        </td>
+                    </tr>
+                    {/volist}
+                    {empty name="queue.rows"}
+                    <tr>
+                        <td colspan="8">
+                            <div class="qms-empty-state">没有符合当前筛选条件的文件，请调整状态或关键词。</div>
+                        </td>
+                    </tr>
+                    {/empty}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

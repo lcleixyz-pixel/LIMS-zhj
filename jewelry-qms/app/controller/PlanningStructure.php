@@ -7,6 +7,7 @@ use app\BaseController;
 use app\service\GovernedTrialResolvedDocumentService;
 use app\service\QmsDocumentStructureService;
 use app\service\QmsFileGovernanceWorkbenchService;
+use app\service\QmsGovernanceQueueService;
 use think\exception\HttpException;
 use think\facade\Session;
 use think\facade\View;
@@ -57,6 +58,36 @@ class PlanningStructure extends BaseController
         View::assign('workbench', $workbench);
 
         return View::fetch('planning_structure/workbench');
+    }
+
+    public function governanceQueue()
+    {
+        $queue = QmsGovernanceQueueService::listing([
+            'status' => (string)$this->request->param('status', 'all'),
+            'keyword' => trim((string)$this->request->param('keyword', '')),
+        ], (string)Session::get('user.id', ''));
+
+        View::assign('queue', $queue);
+
+        return View::fetch('planning_structure/governance_queue');
+    }
+
+    public function nextGovernance()
+    {
+        $next = QmsGovernanceQueueService::nextUnresolved(
+            (string)$this->request->param('current_id', ''),
+            (string)Session::get('user.id', '')
+        );
+        if ($next === []) {
+            Session::flash('success', '当前没有其他未完成文件。');
+
+            return redirect('/planning/structures/governance-queue');
+        }
+
+        return redirect(
+            '/planning/structures/workbench?id='
+            . rawurlencode((string)$next['structured_id'])
+        );
     }
 
     public function resolvedArtifact()

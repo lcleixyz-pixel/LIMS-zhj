@@ -120,6 +120,29 @@ final class QmsGovernanceVersionResolverService
         return $roles;
     }
 
+    public static function decorateControlledDocuments(
+        iterable $documents,
+        array $resolution = []
+    ): void {
+        $documents = is_array($documents) ? $documents : iterator_to_array($documents);
+        $roles = self::classifyControlledDocuments($documents, $resolution);
+
+        foreach ($documents as $document) {
+            if (!is_object($document)) {
+                continue;
+            }
+            $id = trim((string)($document->id ?? ''));
+            $role = (array)($roles[$id] ?? self::role('standard', ''));
+            if (method_exists($document, 'setAttr')) {
+                $document->setAttr('governance_version_role', (string)$role['role']);
+                $document->setAttr('governance_version_label', (string)$role['label']);
+                continue;
+            }
+            $document->governance_version_role = (string)$role['role'];
+            $document->governance_version_label = (string)$role['label'];
+        }
+    }
+
     private static function role(string $role, string $label): array
     {
         return [
