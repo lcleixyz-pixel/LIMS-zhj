@@ -6,15 +6,16 @@ namespace app\service;
 final class QmsTraceWorkItemService
 {
     private const CANDIDATE_COLLECTIONS = [
-        'manual_sections',
         'external_sources',
+        'manual_sections',
         'record_templates',
     ];
 
-    private const PRIMARY_RELATION_TYPES = [
-        'basis',
-        'implements',
-        'requires_record',
+    private const AUXILIARY_RELATION_TYPES = [
+        'supporting',
+        'mentions',
+        'responsible',
+        'renders_to',
     ];
 
     private const BLOCK_TYPE_LABELS = [
@@ -52,17 +53,9 @@ final class QmsTraceWorkItemService
         $candidatesByBlock = self::candidatesByBlock($candidateTrace);
         $items = [];
 
-        foreach ($blocks as $rawBlockRow) {
-            if (!is_array($rawBlockRow)) {
-                continue;
-            }
-            $block = is_array($rawBlockRow['block'] ?? null)
-                ? (array)$rawBlockRow['block']
-                : $rawBlockRow;
+        foreach (self::mergeBlockRows($blocks) as $rawBlockRow) {
+            $block = (array)$rawBlockRow['block'];
             $blockId = trim((string)($block['id'] ?? ''));
-            if ($blockId === '') {
-                continue;
-            }
 
             $issues = [];
             $confirmedPrimary = [];
@@ -140,9 +133,9 @@ final class QmsTraceWorkItemService
                 } elseif (
                     $state === 'pending_review'
                     || (
-                        in_array(
+                        !in_array(
                             $relationType,
-                            self::PRIMARY_RELATION_TYPES,
+                            self::AUXILIARY_RELATION_TYPES,
                             true
                         )
                         && $state !== 'confirmed_primary'
@@ -315,6 +308,36 @@ final class QmsTraceWorkItemService
         ];
     }
 
+    private static function mergeBlockRows(array $blocks): array
+    {
+        $merged = [];
+        foreach ($blocks as $rawBlockRow) {
+            if (!is_array($rawBlockRow)) {
+                continue;
+            }
+            $block = is_array($rawBlockRow['block'] ?? null)
+                ? (array)$rawBlockRow['block']
+                : $rawBlockRow;
+            $blockId = trim((string)($block['id'] ?? ''));
+            if ($blockId === '') {
+                continue;
+            }
+            if (!isset($merged[$blockId])) {
+                $merged[$blockId] = [
+                    'block' => $block,
+                    'links' => [],
+                ];
+            }
+            foreach ((array)($rawBlockRow['links'] ?? []) as $link) {
+                if (is_array($link)) {
+                    $merged[$blockId]['links'][] = $link;
+                }
+            }
+        }
+
+        return array_values($merged);
+    }
+
     private static function expectedManualSections(
         array $candidateTrace
     ): array {
@@ -354,7 +377,7 @@ final class QmsTraceWorkItemService
                 $candidate['review_url'] = self::validGetUrl(
                     (string)$candidate['review_url'],
                     $blockId,
-                    'GET'
+                    (string)($row['review_method'] ?? 'GET')
                 );
                 $key = (string)$candidate['candidate_kind']
                     . '|' . (string)$candidate['target_id']
@@ -406,6 +429,9 @@ final class QmsTraceWorkItemService
             'target_block_type' => trim(
                 (string)($row['target_block_type'] ?? '')
             ),
+            'recommendation_reason' => trim(
+                (string)($row['recommendation_reason'] ?? '')
+            ),
             'routable' => true,
             'routing_issue' => trim(
                 (string)($row['routing_issue'] ?? '')
@@ -423,7 +449,7 @@ final class QmsTraceWorkItemService
         $relationType = trim(
             (string)($link['relation_type'] ?? '')
         );
-        if (!in_array($relationType, self::PRIMARY_RELATION_TYPES, true)) {
+        if (in_array($relationType, self::AUXILIARY_RELATION_TYPES, true)) {
             return;
         }
         foreach ([

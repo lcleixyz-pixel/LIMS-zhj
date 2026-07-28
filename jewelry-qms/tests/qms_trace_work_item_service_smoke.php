@@ -13,6 +13,18 @@ function trace_work_item_assert(bool $condition, string $message): void
     }
 }
 
+function trace_work_item_group_assert(
+    string $group,
+    bool $condition,
+    string $message
+): void {
+    $selectedGroup = trim((string)getenv('TRACE_WORK_ITEM_TEST_GROUP'));
+    if ($selectedGroup !== '' && $selectedGroup !== $group) {
+        return;
+    }
+    trace_work_item_assert($condition, '[' . $group . '] ' . $message);
+}
+
 function trace_work_item_candidate(array $overrides): array
 {
     return array_merge([
@@ -374,5 +386,427 @@ foreach ($items as $item) {
         );
     }
 }
+
+$mergeBlocks = [
+    [
+        'block' => [
+            'id' => 'block-merge',
+            'section_number' => '7.1',
+            'title' => '归并内容块',
+            'block_type' => 'purpose',
+            'sort_order' => 10,
+        ],
+        'links' => [[
+            'id' => 'link-merge',
+            'clause_id' => 'clause-merge',
+            'clause_number' => '7.1',
+            'relation_type' => 'basis',
+            'confidence' => 'review_required',
+        ]],
+    ],
+    [
+        'block' => [
+            'id' => 'block-merge',
+            'section_number' => '7.1',
+            'title' => '归并内容块',
+            'block_type' => 'purpose',
+            'sort_order' => 10,
+        ],
+        'links' => [[
+            'id' => 'link-merge',
+            'clause_id' => 'clause-merge',
+            'clause_number' => '7.1',
+            'relation_type' => 'basis',
+            'confidence' => 'review_required',
+        ]],
+    ],
+];
+$mergeTrace = [
+    'external_sources' => [
+        trace_work_item_candidate([
+            'candidate_kind' => 'external_source',
+            'candidate_kind_label' => '外部依据',
+            'relation_type' => 'basis',
+            'relation_label' => '主链：外部依据',
+            'target_field' => 'clause_id',
+            'target_id' => 'clause-merge',
+            'target_label' => '7.1 归并候选',
+            'target_block_id' => 'block-merge',
+            'target_block_title' => '归并内容块',
+            'target_block_type' => 'purpose',
+            'review_url' => '/planning/structures/links/review?block_id=block-merge&candidate_kind=external_source&candidate_id=clause-merge',
+        ]),
+    ],
+];
+$mergeResult = QmsTraceWorkItemService::build($mergeBlocks, $mergeTrace);
+trace_work_item_group_assert(
+    'merge',
+    ($mergeResult['block_count'] ?? 0) === 1
+        && count((array)($mergeResult['items'] ?? [])) === 1
+        && count((array)($mergeResult['items'][0]['issues'] ?? [])) === 2
+        && count((array)($mergeResult['items'][0]['candidates'] ?? [])) === 1,
+    '相同 block_id 的多行必须归并为一张卡，并合并去重问题与候选'
+);
+
+$relationResult = QmsTraceWorkItemService::build([
+    [
+        'block' => [
+            'id' => 'block-relations',
+            'section_number' => '8.3',
+            'title' => '关系分类',
+            'block_type' => 'control_requirement',
+            'sort_order' => 10,
+        ],
+        'links' => [
+            [
+                'id' => 'link-basis-review',
+                'clause_id' => 'clause-review',
+                'relation_type' => 'basis',
+                'confidence' => 'review_required',
+            ],
+            [
+                'id' => 'link-manual-review',
+                'manual_section_id' => 'manual-review',
+                'section_number' => '8.3',
+                'relation_type' => 'implements',
+                'confidence' => 'review_required',
+            ],
+            [
+                'id' => 'link-record-review',
+                'record_form_template_id' => 'record-review',
+                'record_number' => 'XZTC/BG-08-01',
+                'relation_type' => 'requires_record',
+                'confidence' => 'review_required',
+            ],
+            [
+                'id' => 'link-future-primary',
+                'procedure_document_id' => 'procedure-future',
+                'procedure_number' => 'XZTC/CX-FUTURE',
+                'relation_type' => 'future_primary',
+                'confidence' => 'high',
+            ],
+            [
+                'id' => 'link-supporting-safe',
+                'clause_id' => 'clause-supporting',
+                'relation_type' => 'supporting',
+                'confidence' => 'review_required',
+            ],
+            [
+                'id' => 'link-mentions-safe',
+                'manual_section_id' => 'manual-mentions',
+                'section_number' => '4.2',
+                'relation_type' => 'mentions',
+                'confidence' => 'review_required',
+            ],
+            [
+                'id' => 'link-responsible-safe',
+                'position_id' => 'position-safe',
+                'relation_type' => 'responsible',
+                'confidence' => 'review_required',
+            ],
+            [
+                'id' => 'link-renders-safe',
+                'business_module_id' => 'module-safe',
+                'relation_type' => 'renders_to',
+                'confidence' => 'review_required',
+            ],
+        ],
+    ],
+], []);
+$relationIssues = (array)($relationResult['items'][0]['issues'] ?? []);
+trace_work_item_group_assert(
+    'relations',
+    count($relationIssues) === 4
+        && array_values(array_unique(array_column(
+            $relationIssues,
+            'code'
+        ))) === ['pending_review']
+        && array_column($relationIssues, 'link_id') === [
+            'link-basis-review',
+            'link-future-primary',
+            'link-manual-review',
+            'link-record-review',
+        ],
+    '三类未确认主链和未知关系应待复核，四类明确辅助关系不得误报'
+);
+
+$candidateOrderResult = QmsTraceWorkItemService::build([
+    [
+        'block' => [
+            'id' => 'block-candidate-order',
+            'section_number' => '6.2',
+            'title' => '候选顺序',
+            'block_type' => 'process_step',
+            'sort_order' => 10,
+        ],
+        'links' => [],
+    ],
+], [
+    'manual_sections' => [
+        trace_work_item_candidate([
+            'target_id' => 'manual-order',
+            'section_number' => '6.2',
+            'target_label' => '6.2 人员',
+            'target_block_id' => 'block-candidate-order',
+            'target_block_title' => '候选顺序',
+            'target_block_type' => 'process_step',
+            'recommendation_reason' => '手册候选理由',
+            'review_url' => '/planning/structures/links/review?block_id=block-candidate-order&candidate_kind=manual_section&candidate_id=manual-order',
+        ]),
+    ],
+    'external_sources' => [
+        trace_work_item_candidate([
+            'candidate_kind' => 'external_source',
+            'candidate_kind_label' => '外部依据',
+            'relation_type' => 'basis',
+            'relation_label' => '主链：外部依据',
+            'target_field' => 'clause_id',
+            'target_id' => 'external-order',
+            'target_label' => 'CNAS-CL01 6.2',
+            'target_block_id' => 'block-candidate-order',
+            'target_block_title' => '候选顺序',
+            'target_block_type' => 'process_step',
+            'recommendation_reason' => '外部依据候选理由',
+            'review_url' => '/planning/structures/links/review?block_id=block-candidate-order&candidate_kind=external_source&candidate_id=external-order',
+        ]),
+    ],
+    'record_templates' => [
+        trace_work_item_candidate([
+            'candidate_kind' => 'record_template',
+            'candidate_kind_label' => '运行记录',
+            'relation_type' => 'requires_record',
+            'relation_label' => '主链：运行记录',
+            'target_field' => 'record_form_template_id',
+            'target_id' => 'record-order',
+            'target_label' => 'XZTC/BG-11-01 人员能力记录',
+            'target_block_id' => 'block-candidate-order',
+            'target_block_title' => '候选顺序',
+            'target_block_type' => 'process_step',
+            'recommendation_reason' => '运行记录候选理由',
+            'review_url' => '/planning/structures/links/review?block_id=block-candidate-order&candidate_kind=record_template&candidate_id=record-order',
+        ]),
+    ],
+]);
+$orderedCandidates = (array)(
+    $candidateOrderResult['items'][0]['candidates'] ?? []
+);
+trace_work_item_group_assert(
+    'candidates',
+    array_column($orderedCandidates, 'candidate_kind') === [
+        'external_source',
+        'manual_section',
+        'record_template',
+    ]
+        && array_column($orderedCandidates, 'recommendation_reason') === [
+            '外部依据候选理由',
+            '手册候选理由',
+            '运行记录候选理由',
+        ],
+    '候选应按外部依据、手册、运行记录排序并保留推荐理由'
+);
+
+$noLinkIdResult = QmsTraceWorkItemService::build([
+    [
+        'block' => [
+            'id' => 'block-no-link-id',
+            'section_number' => '7.1',
+            'title' => '稳定摘要去重',
+            'block_type' => 'purpose',
+            'sort_order' => 10,
+        ],
+        'links' => [
+            [
+                'clause_id' => 'clause-no-link-id',
+                'clause_number' => '7.1',
+                'relation_type' => 'basis',
+                'confidence' => 'review_required',
+            ],
+            [
+                'clause_id' => 'clause-no-link-id',
+                'clause_number' => '7.1',
+                'relation_type' => 'basis',
+                'confidence' => 'review_required',
+            ],
+        ],
+    ],
+], []);
+trace_work_item_group_assert(
+    'edges',
+    count((array)($noLinkIdResult['items'][0]['issues'] ?? [])) === 1,
+    '无 link_id 的相同问题应按稳定目标摘要去重'
+);
+
+$typeBlocks = [];
+$typeFixtures = [
+    ['type-purpose', 'purpose', 20, '1', '目的'],
+    ['type-scope', 'scope', 10, '10', '范围'],
+    ['type-responsibility', 'responsibility', 10, '2', 'B 职责'],
+    ['type-process', 'process_step', 10, '2', 'A 过程'],
+    ['type-control', 'control_requirement', 30, '3', '控制要求'],
+    ['type-record', 'record_requirement', 40, '4', '记录要求'],
+    ['type-default', 'future_block', 50, '5', '未知类型'],
+];
+foreach ($typeFixtures as [$id, $type, $order, $section, $title]) {
+    $typeBlocks[] = [
+        'block' => [
+            'id' => $id,
+            'section_number' => $section,
+            'title' => $title,
+            'block_type' => $type,
+            'sort_order' => $order,
+        ],
+        'links' => [[
+            'id' => 'link-' . $id,
+            'clause_id' => 'clause-' . $id,
+            'relation_type' => 'basis',
+            'confidence' => 'review_required',
+        ]],
+    ];
+}
+$typeResult = QmsTraceWorkItemService::build($typeBlocks, []);
+$typeItems = (array)($typeResult['items'] ?? []);
+trace_work_item_group_assert(
+    'edges',
+    array_column($typeItems, 'block_id') === [
+        'type-process',
+        'type-responsibility',
+        'type-scope',
+        'type-purpose',
+        'type-control',
+        'type-record',
+        'type-default',
+    ],
+    '同级卡应按 sort_order、自然 section、title 稳定排序'
+);
+$labelsByType = [];
+foreach ($typeItems as $typeItem) {
+    $labelsByType[(string)$typeItem['block_id']] =
+        (string)$typeItem['block_type_label'];
+}
+trace_work_item_group_assert(
+    'edges',
+    $labelsByType === [
+        'type-process' => '过程步骤',
+        'type-responsibility' => '职责',
+        'type-scope' => '范围',
+        'type-purpose' => '目的',
+        'type-control' => '控制要求',
+        'type-record' => '记录要求',
+        'type-default' => '内容块',
+    ],
+    '六类已知内容块和未知类型都应有稳定中文映射'
+);
+
+$unsafeUrlResult = QmsTraceWorkItemService::build([
+    [
+        'block' => [
+            'id' => 'block-unsafe-url',
+            'section_number' => '7.1',
+            'title' => '不安全入口',
+            'block_type' => 'purpose',
+            'sort_order' => 10,
+        ],
+        'links' => [[
+            'id' => 'link-unsafe-url',
+            'clause_id' => 'clause-unsafe-url',
+            'relation_type' => 'basis',
+            'confidence' => 'review_required',
+            'review_method' => 'GET',
+            'review_url' => 'https://example.test/review?block_id=block-unsafe-url',
+        ]],
+    ],
+], [
+    'external_sources' => [
+        trace_work_item_candidate([
+            'candidate_kind' => 'external_source',
+            'candidate_kind_label' => '外部依据',
+            'relation_type' => 'basis',
+            'relation_label' => '主链：外部依据',
+            'target_field' => 'clause_id',
+            'target_id' => 'candidate-post',
+            'target_label' => 'POST 候选',
+            'target_block_id' => 'block-unsafe-url',
+            'target_block_title' => '不安全入口',
+            'target_block_type' => 'purpose',
+            'review_method' => 'POST',
+            'review_url' => '/planning/structures/links/review?block_id=block-unsafe-url&candidate_id=candidate-post',
+        ]),
+        trace_work_item_candidate([
+            'candidate_kind' => 'external_source',
+            'candidate_kind_label' => '外部依据',
+            'relation_type' => 'basis',
+            'relation_label' => '主链：外部依据',
+            'target_field' => 'clause_id',
+            'target_id' => 'candidate-host',
+            'target_label' => '主机候选',
+            'target_block_id' => 'block-unsafe-url',
+            'target_block_title' => '不安全入口',
+            'target_block_type' => 'purpose',
+            'review_url' => '//example.test/review',
+        ]),
+        trace_work_item_candidate([
+            'candidate_kind' => 'external_source',
+            'candidate_kind_label' => '外部依据',
+            'relation_type' => 'basis',
+            'relation_label' => '主链：外部依据',
+            'target_field' => 'clause_id',
+            'target_id' => 'candidate-scheme',
+            'target_label' => '绝对地址候选',
+            'target_block_id' => 'block-unsafe-url',
+            'target_block_title' => '不安全入口',
+            'target_block_type' => 'purpose',
+            'review_url' => 'https://example.test/review',
+        ]),
+        trace_work_item_candidate([
+            'candidate_kind' => 'external_source',
+            'candidate_kind_label' => '外部依据',
+            'relation_type' => 'basis',
+            'relation_label' => '主链：外部依据',
+            'target_field' => 'clause_id',
+            'target_id' => 'candidate-no-slash',
+            'target_label' => '无斜杠候选',
+            'target_block_id' => 'block-unsafe-url',
+            'target_block_title' => '不安全入口',
+            'target_block_type' => 'purpose',
+            'review_url' => 'planning/structures/links/review',
+        ]),
+    ],
+]);
+$unsafeUrlItem = (array)($unsafeUrlResult['items'][0] ?? []);
+trace_work_item_group_assert(
+    'edges',
+    ($unsafeUrlItem['primary_url'] ?? 'unexpected') === ''
+        && array_values(array_unique(array_column(
+            (array)($unsafeUrlItem['candidates'] ?? []),
+            'review_url'
+        ))) === [''],
+    '非 GET、带 scheme/host 或不以斜杠开头的入口必须拒绝'
+);
+
+$existingGetResult = QmsTraceWorkItemService::build([
+    [
+        'block' => [
+            'id' => 'block-existing-get',
+            'section_number' => '7.1',
+            'title' => '已有 GET 入口',
+            'block_type' => 'purpose',
+            'sort_order' => 10,
+        ],
+        'links' => [[
+            'id' => 'link-existing-get',
+            'clause_id' => 'clause-existing-get',
+            'relation_type' => 'basis',
+            'confidence' => 'review_required',
+            'review_method' => 'GET',
+            'review_url' => '/planning/structures/links/review?block_id=block-existing-get&link_id=link-existing-get',
+        ]],
+    ],
+], []);
+trace_work_item_group_assert(
+    'edges',
+    ($existingGetResult['items'][0]['primary_url'] ?? '') ===
+        '/planning/structures/links/review?block_id=block-existing-get&link_id=link-existing-get',
+    '合法入口应只沿用同块已有 GET review_url'
+);
 
 echo "qms_trace_work_item_service_smoke passed\n";
