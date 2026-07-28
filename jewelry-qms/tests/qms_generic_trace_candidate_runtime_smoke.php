@@ -97,12 +97,15 @@ foreach ($procedures as $procedure) {
         || str_contains($label, 'CX-26-2022')
     ) {
         generic_trace_candidate_assert(
-            $semanticStatus === 'aligned',
-            $label . ' 定向治理结果应继续保持已对齐'
+            $semanticStatus === 'suspected_mismatch'
+                && (string)(
+                    $viewModel['semantic_guard']['issues'][0]['reason_code'] ?? ''
+                ) === 'mixed_relation',
+            $label . ' 应识别候选章节正确但要素与手册关系混装'
         );
         generic_trace_candidate_assert(
-            (array)($viewModel['chain']['missing'] ?? []) === [],
-            $label . ' 定向治理结果应继续保持主链闭合'
+            (array)($viewModel['chain']['missing'] ?? []) === ['手册主链'],
+            $label . ' 在拆分前不得把混装关系计入手册主链'
         );
     }
 }

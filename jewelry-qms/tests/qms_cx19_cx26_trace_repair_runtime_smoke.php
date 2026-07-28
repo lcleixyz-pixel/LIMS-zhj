@@ -61,21 +61,25 @@ foreach ($expectations as $procedureCode => $expected) {
 
     $viewModel = QmsFileGovernanceWorkbenchService::detail((string)$structured['id']);
     cx19_cx26_trace_repair_assert(
-        (string)($viewModel['semantic_guard']['status'] ?? '') === 'aligned',
-        $procedureCode . ' 应形成语义一致的手册主链'
+        (string)($viewModel['semantic_guard']['status'] ?? '')
+            === 'suspected_mismatch'
+            && (string)(
+                $viewModel['semantic_guard']['issues'][0]['reason_code'] ?? ''
+            ) === 'mixed_relation',
+        $procedureCode . ' 的候选章节正确，但要素与手册关系仍需拆分'
     );
     cx19_cx26_trace_repair_assert(
-        ($viewModel['chain']['missing'] ?? []) === [],
-        $procedureCode . ' 的外部依据、手册、程序和运行证据主链应闭合'
+        ($viewModel['chain']['missing'] ?? []) === ['手册主链'],
+        $procedureCode . ' 的混装手册关系不得计入独立主链'
     );
 
     $manualNumbers = array_column(
-        $viewModel['chain']['confirmed_manual_sections'] ?? [],
+        $viewModel['chain']['manual_sections'] ?? [],
         'section_number'
     );
     cx19_cx26_trace_repair_assert(
         in_array((string)$expected['manual_section'], $manualNumbers, true),
-        $procedureCode . ' 应确认手册 ' . (string)$expected['manual_section']
+        $procedureCode . ' 应保留候选手册 ' . (string)$expected['manual_section']
     );
 
     $externalLabels = array_map(

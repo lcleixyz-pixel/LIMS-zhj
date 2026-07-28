@@ -26,12 +26,14 @@ cx08_trace_repair_assert(is_array($structured), '8021 缺少 CX-08 GOV-TRIAL/0.2
 
 $viewModel = QmsFileGovernanceWorkbenchService::detail((string)$structured['id']);
 cx08_trace_repair_assert(
-    (string)($viewModel['semantic_guard']['status'] ?? '') === 'aligned',
-    'CX-08 应以 8.3 作为已确认手册主链'
+    (string)($viewModel['semantic_guard']['status'] ?? '') === 'suspected_mismatch'
+        && (string)($viewModel['semantic_guard']['issues'][0]['reason_code'] ?? '')
+            === 'mixed_relation',
+    'CX-08 的 8.3 章节正确，但要素与手册关系仍需拆分'
 );
 cx08_trace_repair_assert(
-    ($viewModel['chain']['missing'] ?? []) === [],
-    'CX-08 的外部依据、手册、程序和运行证据主链应闭合'
+    ($viewModel['chain']['missing'] ?? []) === ['手册主链'],
+    'CX-08 的混装手册关系不得计入独立主链'
 );
 
 $blockIds = Db::name('qms_document_blocks')
@@ -47,10 +49,10 @@ $mixedCount = Db::name('qms_document_block_links')
 cx08_trace_repair_assert((int)$mixedCount === 0, 'CX-08 不得保留手册与记录混装关系');
 
 $manualNumbers = array_column(
-    $viewModel['chain']['confirmed_manual_sections'] ?? [],
+    $viewModel['chain']['manual_sections'] ?? [],
     'section_number'
 );
-cx08_trace_repair_assert(in_array('8.3', $manualNumbers, true), 'CX-08 应确认手册 8.3');
+cx08_trace_repair_assert(in_array('8.3', $manualNumbers, true), 'CX-08 应保留候选手册 8.3');
 
 $externalLabels = array_map(
     static fn(array $row): string =>

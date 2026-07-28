@@ -47,11 +47,11 @@ governance_queue_runtime_assert(
     '当前批次应稳定解析为 37 份程序文件'
 );
 governance_queue_runtime_assert(
-    (int)($queue['summary']['aligned'] ?? 0) === 4
-    && (int)($queue['summary']['suspected_mismatch'] ?? 0) === 14
+    (int)($queue['summary']['aligned'] ?? 0) === 0
+    && (int)($queue['summary']['suspected_mismatch'] ?? 0) === 18
     && (int)($queue['summary']['missing_primary'] ?? 0) === 19
     && (int)($queue['summary']['version_conflict'] ?? 0) === 0,
-    '治理队列语义状态统计与当前 8021 沙箱基线不一致'
+    '原因分类后治理队列应如实计入 4 份历史混装程序'
 );
 
 $next = QmsGovernanceQueueService::nextUnresolved('', '');

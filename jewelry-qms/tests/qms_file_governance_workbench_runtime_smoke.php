@@ -56,12 +56,18 @@ workbench_runtime_assert(
     'CX-03-02 应回链文件详情和签批状态'
 );
 workbench_runtime_assert(
-    ($viewModel['chain']['missing'] ?? []) === ['运行证据主链'],
-    'CX-03-02 继承的记录证据关系在逐块复核前不得误报闭环'
+    ($viewModel['chain']['missing'] ?? []) === ['手册主链', '运行证据主链'],
+    'CX-03-02 的混装手册关系和继承记录关系均不得误报闭环'
 );
 workbench_runtime_assert(
     (int)($viewModel['chain']['review_summary']['pending_review'] ?? 0) === 1,
     'CX-03-02 应明确显示一条继承关系等待复核'
+);
+workbench_runtime_assert(
+    (int)($viewModel['chain']['review_summary']['suspected_mismatch'] ?? 0) === 2
+        && (string)($viewModel['semantic_guard']['issues'][0]['reason_code'] ?? '')
+            === 'mixed_relation',
+    'CX-03-02 应识别两条要素与手册章节混装关系'
 );
 $externalLabels = array_map(
     static fn(array $row): string => (string)($row['source_code'] ?? '') . ' ' . (string)($row['clause_number'] ?? ''),
@@ -93,12 +99,16 @@ $cx08 = Db::name('qms_structured_documents')
 workbench_runtime_assert(is_array($cx08), '8021 缺少 CX-08 GOV-TRIAL/0.2');
 $cx08ViewModel = QmsFileGovernanceWorkbenchService::detail((string)$cx08['id']);
 workbench_runtime_assert(
-    (string)($cx08ViewModel['semantic_guard']['status'] ?? '') === 'aligned',
-    'CX-08 定向治理后应以手册 8.3 形成语义一致主链'
+    (string)($cx08ViewModel['semantic_guard']['status'] ?? '')
+        === 'suspected_mismatch'
+        && (string)(
+            $cx08ViewModel['semantic_guard']['issues'][0]['reason_code'] ?? ''
+        ) === 'mixed_relation',
+    'CX-08 的 8.3 章节正确，但要素与手册关系混装仍应被识别'
 );
 workbench_runtime_assert(
-    ($cx08ViewModel['chain']['missing'] ?? []) === [],
-    'CX-08 定向治理后不应缺少外部依据、手册或运行证据主链'
+    ($cx08ViewModel['chain']['missing'] ?? []) === ['手册主链'],
+    'CX-08 在拆分手册关系前仍应明确缺少独立手册主链'
 );
 
 foreach ([
@@ -113,20 +123,24 @@ foreach ([
     workbench_runtime_assert(is_array($candidate), '8021 缺少 ' . $procedureCode . ' GOV-TRIAL/0.2');
     $candidateViewModel = QmsFileGovernanceWorkbenchService::detail((string)$candidate['id']);
     workbench_runtime_assert(
-        (string)($candidateViewModel['semantic_guard']['status'] ?? '') === 'aligned',
-        $procedureCode . ' 定向治理后应形成语义一致主链'
+        (string)($candidateViewModel['semantic_guard']['status'] ?? '')
+            === 'suspected_mismatch'
+            && (string)(
+                $candidateViewModel['semantic_guard']['issues'][0]['reason_code'] ?? ''
+            ) === 'mixed_relation',
+        $procedureCode . ' 的候选章节正确，但混装关系仍应被识别'
     );
     workbench_runtime_assert(
-        ($candidateViewModel['chain']['missing'] ?? []) === [],
-        $procedureCode . ' 定向治理后不应缺少外部依据、手册或运行证据主链'
+        ($candidateViewModel['chain']['missing'] ?? []) === ['手册主链'],
+        $procedureCode . ' 在拆分手册关系前仍应缺少独立手册主链'
     );
-    $confirmedManualNumbers = array_column(
-        $candidateViewModel['chain']['confirmed_manual_sections'] ?? [],
+    $candidateManualNumbers = array_column(
+        $candidateViewModel['chain']['manual_sections'] ?? [],
         'section_number'
     );
     workbench_runtime_assert(
-        in_array($expectedSection, $confirmedManualNumbers, true),
-        $procedureCode . ' 应确认手册主链 ' . $expectedSection
+        in_array($expectedSection, $candidateManualNumbers, true),
+        $procedureCode . ' 应保留正确的候选手册章节 ' . $expectedSection
     );
 }
 
