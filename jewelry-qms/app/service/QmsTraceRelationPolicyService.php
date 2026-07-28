@@ -124,6 +124,12 @@ final class QmsTraceRelationPolicyService
     public static function inspectExistingLink(array $link): array
     {
         $selectedTargets = self::selectedTargets($link);
+        $isPolicyInvalid = false;
+        try {
+            self::validatePayload($link);
+        } catch (\RuntimeException) {
+            $isPolicyInvalid = true;
+        }
         $splitPreview = [];
         foreach ($selectedTargets as $field) {
             $relationType = (string)self::TARGETS[$field]['split_relation_type'];
@@ -137,7 +143,8 @@ final class QmsTraceRelationPolicyService
         }
 
         return [
-            'is_mixed' => count($selectedTargets) > 1,
+            'is_mixed' => count($selectedTargets) > 1 && $isPolicyInvalid,
+            'is_policy_invalid' => $isPolicyInvalid,
             'target_count' => count($selectedTargets),
             'selected_targets' => $selectedTargets,
             'split_preview' => $splitPreview,

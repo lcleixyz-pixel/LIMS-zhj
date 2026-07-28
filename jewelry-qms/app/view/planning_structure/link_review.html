@@ -9,6 +9,73 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const relationType = document.getElementById('relation_type');
+    const targetKindWrap = document.getElementById('relation_target_kind_wrap');
+    const targetKind = document.getElementById('relation_target_kind');
+    const help = document.getElementById('relation_policy_help');
+    const targetGroups = Array.from(document.querySelectorAll('[data-relation-target]'));
+    const policies = {
+        basis: {
+            visible: ['clause_id', 'element_id'],
+            required: 'clause_id',
+            help: '选择一条外部条款作为主要依据；如需分类，可再选择一个要素。'
+        },
+        implements: {
+            visible: ['manual_section_id'],
+            required: 'manual_section_id',
+            help: '选择一条手册章节，证明本程序落实了哪项手册要求。'
+        },
+        requires_record: {
+            visible: ['record_form_template_id'],
+            required: 'record_form_template_id',
+            help: '选择一份记录表格，证明程序运行后留下什么记录。'
+        },
+        responsible: {
+            visible: ['position_id'],
+            required: 'position_id',
+            help: '选择一个岗位，说明谁对本内容块承担职责。'
+        },
+        renders_to: {
+            visible: ['business_module_id'],
+            required: 'business_module_id',
+            help: '选择一个运行模块，说明本要求在系统哪里执行或留痕。'
+        },
+        mentions: {
+            flexible: true,
+            help: '先选择对象类别，再选择一个仅在正文中提及的对象。'
+        },
+        supporting: {
+            flexible: true,
+            help: '先选择对象类别，再选择一个辅助证明对象。'
+        }
+    };
+
+    function applyRelationPolicy() {
+        const policy = policies[relationType.value] || policies.implements;
+        const flexible = policy.flexible === true;
+        targetKindWrap.classList.toggle('d-none', !flexible);
+        targetKind.disabled = !flexible;
+        const visibleTargets = flexible ? [targetKind.value] : policy.visible;
+
+        targetGroups.forEach(function (group) {
+            const target = group.getAttribute('data-relation-target');
+            const field = group.querySelector('select');
+            const visible = visibleTargets.includes(target);
+            group.classList.toggle('d-none', !visible);
+            field.disabled = !visible;
+            field.required = visible && (flexible || policy.required === target);
+        });
+        help.textContent = policy.help;
+    }
+
+    relationType.addEventListener('change', applyRelationPolicy);
+    targetKind.addEventListener('change', applyRelationPolicy);
+    applyRelationPolicy();
+});
+</script>
+
 <div class="card mb-3">
     <div class="card-body">
         <div class="row qms-info-grid">
@@ -42,90 +109,108 @@
     <div class="card-body">
         <form method="post" action="/planning/structures/links/save">
             <input type="hidden" name="block_id" value="{$detail.block.id}">
+            <div id="relation_policy_help" class="alert alert-info py-2 mb-3" role="status">
+                选择一条手册章节，证明本程序落实了哪项手册要求。
+            </div>
             <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label" for="relation_type">关系类型</label>
+                <div class="col-md-4">
+                    <label class="form-label" for="relation_type">关系用途</label>
                     <select id="relation_type" name="relation_type" class="form-select">
-                        <option value="implements">落实</option>
-                        <option value="basis">依据</option>
-                        <option value="mentions">提及</option>
+                        <option value="implements">主链：落实手册</option>
+                        <option value="basis">主链：外部依据</option>
+                        <option value="requires_record">主链：运行记录</option>
                         <option value="responsible">职责</option>
-                        <option value="requires_record">要求记录</option>
-                        <option value="renders_to">渲染到</option>
-                        <option value="supporting">支撑</option>
+                        <option value="renders_to">运行入口</option>
+                        <option value="mentions">仅提及</option>
+                        <option value="supporting">辅助关系</option>
                     </select>
+                    <div class="form-text">关系用途决定本次可以选择哪一种证明对象。</div>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label" for="confidence">置信度</label>
-                    <select id="confidence" name="confidence" class="form-select">
-                        <option value="review_required">需复核</option>
-                        <option value="high">高</option>
-                        <option value="medium">中</option>
-                        <option value="low">低</option>
+                <div id="relation_target_kind_wrap" class="col-md-4 d-none">
+                    <label class="form-label" for="relation_target_kind">对象类别</label>
+                    <select id="relation_target_kind" class="form-select" disabled>
+                        <option value="element_id">要素</option>
+                        <option value="clause_id">外部条款</option>
+                        <option value="manual_section_id">手册章节</option>
+                        <option value="procedure_document_id">程序文件</option>
+                        <option value="record_form_template_id">记录表格</option>
+                        <option value="position_id">岗位</option>
+                        <option value="business_module_id">运行模块</option>
                     </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label" for="note">复核说明</label>
-                    <input id="note" name="note" class="form-control" required placeholder="说明映射依据、来源句或人工判断理由">
+                    <div class="form-text">“仅提及”和“辅助关系”一次只能选择一个对象。</div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label" for="element_id">要素</label>
-                    <select id="element_id" name="element_id" class="form-select">
+                    <label class="form-label" for="confidence">复核状态</label>
+                    <select id="confidence" name="confidence" class="form-select">
+                        <option value="review_required">等待复核</option>
+                        <option value="high">已人工确认</option>
+                        <option value="medium">中置信候选</option>
+                        <option value="low">低置信候选</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="note">复核说明</label>
+                    <input id="note" name="note" class="form-control" required placeholder="说明映射依据、来源句或人工判断理由">
+                    <div class="form-text">请写清为何建立这条关系，方便后续审核和版本追溯。</div>
+                </div>
+                <div class="col-md-6 d-none" data-relation-target="element_id">
+                    <label class="form-label" for="element_id">要素（外部依据时可选）</label>
+                    <select id="element_id" name="element_id" class="form-select" disabled>
                         <option value="">不关联</option>
                         {volist name="detail.options.elements" id="option"}
                         <option value="{$option.id}">{$option.name}</option>
                         {/volist}
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6 d-none" data-relation-target="clause_id">
                     <label class="form-label" for="clause_id">外部条款</label>
-                    <select id="clause_id" name="clause_id" class="form-select">
-                        <option value="">不关联</option>
+                    <select id="clause_id" name="clause_id" class="form-select" disabled>
+                        <option value="">请选择外部条款</option>
                         {volist name="detail.options.clauses" id="option"}
                         <option value="{$option.id}">{$option.source_code} {$option.clause_number} {$option.title}</option>
                         {/volist}
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6 d-none" data-relation-target="manual_section_id">
                     <label class="form-label" for="manual_section_id">手册章节</label>
-                    <select id="manual_section_id" name="manual_section_id" class="form-select">
-                        <option value="">不关联</option>
+                    <select id="manual_section_id" name="manual_section_id" class="form-select" disabled>
+                        <option value="">请选择手册章节</option>
                         {volist name="detail.options.manual_sections" id="option"}
                         <option value="{$option.id}">{$option.section_number} {$option.title}</option>
                         {/volist}
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6 d-none" data-relation-target="procedure_document_id">
                     <label class="form-label" for="procedure_document_id">程序文件</label>
-                    <select id="procedure_document_id" name="procedure_document_id" class="form-select">
-                        <option value="">不关联</option>
+                    <select id="procedure_document_id" name="procedure_document_id" class="form-select" disabled>
+                        <option value="">请选择程序文件</option>
                         {volist name="detail.options.procedure_documents" id="option"}
                         <option value="{$option.id}">{$option.doc_number} {$option.title}</option>
                         {/volist}
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6 d-none" data-relation-target="record_form_template_id">
                     <label class="form-label" for="record_form_template_id">记录表格</label>
-                    <select id="record_form_template_id" name="record_form_template_id" class="form-select">
-                        <option value="">不关联</option>
+                    <select id="record_form_template_id" name="record_form_template_id" class="form-select" disabled>
+                        <option value="">请选择记录表格</option>
                         {volist name="detail.options.record_forms" id="option"}
                         <option value="{$option.id}">{$option.doc_number} {$option.name}</option>
                         {/volist}
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6 d-none" data-relation-target="position_id">
                     <label class="form-label" for="position_id">岗位</label>
-                    <select id="position_id" name="position_id" class="form-select">
-                        <option value="">不关联</option>
+                    <select id="position_id" name="position_id" class="form-select" disabled>
+                        <option value="">请选择岗位</option>
                         {volist name="detail.options.positions" id="option"}
                         <option value="{$option.id}">{$option.name}</option>
                         {/volist}
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6 d-none" data-relation-target="business_module_id">
                     <label class="form-label" for="business_module_id">运行模块</label>
-                    <select id="business_module_id" name="business_module_id" class="form-select">
-                        <option value="">不关联</option>
+                    <select id="business_module_id" name="business_module_id" class="form-select" disabled>
+                        <option value="">请选择运行模块</option>
                         {volist name="detail.options.modules" id="option"}
                         <option value="{$option.id}">{$option.code} {$option.name}</option>
                         {/volist}
@@ -133,7 +218,7 @@
                 </div>
             </div>
             <div class="d-flex justify-content-end mt-3">
-                <button type="submit" class="btn btn-primary">保存追溯关系</button>
+                <button type="submit" class="btn btn-primary">保存本条关系</button>
             </div>
         </form>
     </div>
@@ -190,6 +275,21 @@
                         <td>{$link.position_name|default='-'}</td>
                         <td>{$link.note|default='-'}</td>
                         <td class="qms-action-cell">
+                            {if $link.relation_policy.is_mixed}
+                            <div class="alert alert-warning py-2 px-2 text-start mb-2">
+                                <strong>历史混装，需拆分</strong>
+                                <div class="small mt-1">本行包含 {$link.relation_policy.target_count} 个对象，不能整体确认为一条关系。</div>
+                                <details class="mt-2">
+                                    <summary>查看拆分预览</summary>
+                                    <ul class="small ps-3 mb-0 mt-1">
+                                        {volist name="link.relation_policy.split_preview" id="split"}
+                                        <li>{$split.target_kind_label}：{$split.target_label} → {$split.relation_label}</li>
+                                        {/volist}
+                                    </ul>
+                                </details>
+                                <div class="small mt-2">请按预览在上方逐条新增，核对无误后再删除本行；系统不会自动改写历史证据。</div>
+                            </div>
+                            {else}
                             <details class="mb-2">
                                 <summary class="btn btn-sm btn-outline-primary">确认或调整关系</summary>
                                 <form method="post" action="/planning/structures/links/save" class="border rounded p-2 mt-2 text-start">
@@ -235,6 +335,7 @@
                                     <button type="submit" class="btn btn-sm btn-primary w-100">保存复核结论</button>
                                 </form>
                             </details>
+                            {/if}
                             <form method="post" action="/planning/structures/links/delete" class="qms-suggestion-form justify-content-end" onsubmit="return confirm('确认删除该追溯关系？');">
                                 <input type="hidden" name="block_id" value="{$detail.block.id}">
                                 <input type="hidden" name="link_id" value="{$link.id}">

@@ -83,6 +83,16 @@ trace_relation_policy_throws(
     '辅助关系不得混装两个主要对象'
 );
 
+$validBasisInspection = QmsTraceRelationPolicyService::inspectExistingLink([
+    'clause_id' => 'clause-1',
+    'element_id' => 'element-1',
+    'relation_type' => 'basis',
+]);
+trace_relation_policy_assert(
+    ($validBasisInspection['is_mixed'] ?? true) === false,
+    '外部依据附带一个要素属于合法关系，不应误报为历史混装'
+);
+
 $inspection = QmsTraceRelationPolicyService::inspectExistingLink([
     'clause_id' => 'clause-1',
     'clause_number' => '8.3',
