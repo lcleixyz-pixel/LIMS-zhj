@@ -137,21 +137,11 @@ final class QmsTraceSemanticGuardService
         ) {
             return 'supporting';
         }
-        if ($targetKind === 'manual' && $relationType !== 'implements') {
-            return 'suspected_mismatch';
-        }
-        if ($targetKind === 'manual' && $expectedManualSections !== []) {
-            $section = trim((string)($link['section_number'] ?? ''));
-            $matchesExpectedSection = false;
-            foreach ($expectedManualSections as $expected) {
-                if (self::sectionMatches($section, (string)$expected)) {
-                    $matchesExpectedSection = true;
-                    break;
-                }
-            }
-            if (!$matchesExpectedSection) {
-                return 'suspected_mismatch';
-            }
+        if ($targetKind === 'manual') {
+            return (string)self::assessManualLink(
+                $link,
+                $expectedManualSections
+            )['state'];
         }
 
         $confidence = trim((string)($link['confidence'] ?? ''));
@@ -174,6 +164,119 @@ final class QmsTraceSemanticGuardService
         }
 
         return 'confirmed_primary';
+    }
+
+    public static function assessManualLink(
+        array $link,
+        array $expectedManualSections = []
+    ): array {
+        $section = trim((string)($link['section_number'] ?? ''));
+        $relationType = trim((string)($link['relation_type'] ?? ''));
+        if (
+            $section === ''
+            || in_array($relationType, ['mentions', 'supporting'], true)
+        ) {
+            return self::manualLinkResult('supporting');
+        }
+
+        $matchesExpectedSection = self::matchesExpectedSection(
+            $section,
+            $expectedManualSections
+        );
+        $policy = QmsTraceRelationPolicyService::inspectExistingLink($link);
+        if (
+            $relationType !== 'implements'
+            || (bool)($policy['is_mixed'] ?? false)
+        ) {
+            $expectedText = implode('、', array_values(array_map(
+                'strval',
+                $expectedManualSections
+            )));
+            $otherTargets = array_values(array_filter(
+                (array)($policy['split_preview'] ?? []),
+                static fn(array $row): bool =>
+                    (string)($row['target_field'] ?? '') !== 'manual_section_id'
+            ));
+            $otherTargetLabels = array_values(array_unique(array_filter(array_map(
+                static fn(array $row): string =>
+                    trim((string)($row['target_kind_label'] ?? '')),
+                $otherTargets
+            ))));
+
+            if ($matchesExpectedSection) {
+                $message = $otherTargetLabels !== []
+                    ? $section
+                        . ' 章节候选正确，但当前与'
+                        . implode('、', $otherTargetLabels)
+                        . '等对象混在同一关系中，尚不能作为手册主链。'
+                    : $section
+                        . ' 章节候选正确，但当前关系用途不是“落实手册”，'
+                        . '尚不能作为手册主链。';
+                $message .= '请按拆分预览建立独立的 '
+                    . $section
+                    . ' 手册主链。';
+            } else {
+                $message = '当前关系同时混装多个对象，且手册章节 '
+                    . ($section !== '' ? $section : '未明确')
+                    . ($expectedText !== ''
+                        ? ' 与建议章节 ' . $expectedText . ' 不一致。'
+                        : ' 仍需人工复核。')
+                    . '请先按拆分预览拆开，再复核手册章节。';
+            }
+
+            return self::manualLinkResult(
+                'suspected_mismatch',
+                'mixed_relation',
+                '关系混装',
+                $message,
+                '进入对应内容块，先按拆分预览拆开历史混装关系，再确认独立手册主链。'
+            );
+        }
+
+        if (!$matchesExpectedSection) {
+            $expectedText = implode('、', array_values(array_map(
+                'strval',
+                $expectedManualSections
+            )));
+
+            return self::manualLinkResult(
+                'suspected_mismatch',
+                'wrong_section',
+                '章节不匹配',
+                '当前手册章节 '
+                    . ($section !== '' ? $section : '未明确')
+                    . ($expectedText !== ''
+                        ? ' 与建议主手册章节 ' . $expectedText . ' 不一致。'
+                        : ' 尚未进入建议主手册章节集合。')
+                    . ($expectedText !== ''
+                        ? '请移除或改为辅助关系，再单独建立 '
+                            . $expectedText
+                            . ' 手册主链。'
+                        : '请复核后重新建立正确的手册主链。'),
+                '进入对应内容块，将当前章节移除或改为辅助关系，再单独建立'
+                    . ($expectedText !== '' ? ' ' . $expectedText : '正确的')
+                    . ' 手册主链。'
+            );
+        }
+
+        $confidence = trim((string)($link['confidence'] ?? ''));
+        $note = (string)($link['note'] ?? '');
+        if (
+            $confidence !== 'high'
+            || str_contains($note, self::INHERITED_REVIEW_MARKER)
+        ) {
+            return self::manualLinkResult(
+                'pending_review',
+                'unconfirmed_relation',
+                '尚未确认',
+                $section
+                    . ' 与建议章节一致，但该关系仍是继承或待复核候选，'
+                    . '尚未人工确认，暂不计入闭环。',
+                '进入对应内容块逐条确认继承关系；仅确认后的独立手册主链计入闭环。'
+            );
+        }
+
+        return self::manualLinkResult('confirmed_primary');
     }
 
     public static function combinedLinkState(
@@ -296,6 +399,40 @@ final class QmsTraceSemanticGuardService
         return $actual === $expected
             || str_starts_with($actual, $expected . '.')
             || str_starts_with($expected, $actual . '.');
+    }
+
+    private static function matchesExpectedSection(
+        string $section,
+        array $expectedManualSections
+    ): bool
+    {
+        if ($expectedManualSections === []) {
+            return true;
+        }
+        foreach ($expectedManualSections as $expected) {
+            if (self::sectionMatches($section, (string)$expected)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function manualLinkResult(
+        string $state,
+        string $reasonCode = '',
+        string $reasonLabel = '',
+        string $message = '',
+        string $recommendedAction = ''
+    ): array
+    {
+        return [
+            'state' => $state,
+            'reason_code' => $reasonCode,
+            'reason_label' => $reasonLabel,
+            'message' => $message,
+            'recommended_action' => $recommendedAction,
+        ];
     }
 
     private static function candidateMissingMessage(array $profile): string

@@ -33,6 +33,78 @@ function trace_semantic_guard_block(string $section, string $relation, string $c
     ]];
 }
 
+$mixedCorrectReason = QmsTraceSemanticGuardService::assessManualLink([
+    'manual_section_id' => 'manual-62',
+    'section_number' => '6.2',
+    'manual_title' => '人员',
+    'relation_type' => 'requires_record',
+    'record_form_template_id' => 'form-11-01',
+    'record_number' => 'XZTC/BG-11-01',
+    'record_name' => '人员能力记录',
+    'confidence' => 'high',
+    'note' => '历史混装关系。',
+], ['6.2']);
+trace_semantic_guard_assert(
+    ($mixedCorrectReason['reason_code'] ?? '') === 'mixed_relation',
+    '候选章节正确但夹在运行记录关系中时应识别为关系混装'
+);
+trace_semantic_guard_assert(
+    ($mixedCorrectReason['reason_label'] ?? '') === '关系混装',
+    '关系混装应提供简短中文标签'
+);
+trace_semantic_guard_assert(
+    str_contains((string)($mixedCorrectReason['message'] ?? ''), '6.2 章节候选正确')
+        && str_contains((string)($mixedCorrectReason['message'] ?? ''), '混在同一关系中'),
+    '关系混装提示应明确章节候选正确而关系形态错误'
+);
+trace_semantic_guard_assert(
+    str_contains((string)($mixedCorrectReason['recommended_action'] ?? ''), '拆分预览'),
+    '关系混装应引导用户按拆分预览处理'
+);
+
+$wrongSectionReason = QmsTraceSemanticGuardService::assessManualLink([
+    'manual_section_id' => 'manual-42',
+    'section_number' => '4.2',
+    'manual_title' => '保密性',
+    'relation_type' => 'implements',
+    'confidence' => 'high',
+    'note' => '独立手册关系。',
+], ['8.3']);
+trace_semantic_guard_assert(
+    ($wrongSectionReason['reason_code'] ?? '') === 'wrong_section',
+    '独立落实关系指向非候选章节时应识别为章节不匹配'
+);
+trace_semantic_guard_assert(
+    ($wrongSectionReason['reason_label'] ?? '') === '章节不匹配',
+    '章节不匹配应提供简短中文标签'
+);
+trace_semantic_guard_assert(
+    str_contains((string)($wrongSectionReason['recommended_action'] ?? ''), '改为辅助关系'),
+    '章节不匹配应提供调整关系或重建主链的动作'
+);
+
+$unconfirmedReason = QmsTraceSemanticGuardService::assessManualLink([
+    'manual_section_id' => 'manual-62',
+    'section_number' => '6.2',
+    'manual_title' => '人员',
+    'relation_type' => 'implements',
+    'confidence' => 'high',
+    'note' => '由GOV-TRIAL/0.1追溯关系继承，待0.2逐块复核。',
+], ['6.2']);
+trace_semantic_guard_assert(
+    ($unconfirmedReason['reason_code'] ?? '') === 'unconfirmed_relation',
+    '候选章节吻合但仍待人工复核时应识别为尚未确认'
+);
+trace_semantic_guard_assert(
+    ($unconfirmedReason['reason_label'] ?? '') === '尚未确认',
+    '尚未确认应提供简短中文标签'
+);
+trace_semantic_guard_assert(
+    str_contains((string)($unconfirmedReason['message'] ?? ''), '与建议章节一致')
+        && str_contains((string)($unconfirmedReason['message'] ?? ''), '暂不计入闭环'),
+    '尚未确认提示应说明章节正确但证据尚不能计入闭环'
+);
+
 $cx08Wrong = QmsTraceSemanticGuardService::assess(
     [
         'doc_number' => 'XZTC/CX-08-2022',
