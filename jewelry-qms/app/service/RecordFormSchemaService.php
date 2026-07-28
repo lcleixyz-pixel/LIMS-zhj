@@ -17,6 +17,7 @@ class RecordFormSchemaService
         'checkbox',
         'person',
         'department',
+        'position',
         'signature',
         'repeatable_table',
     ];
@@ -151,6 +152,10 @@ class RecordFormSchemaService
         if (!in_array($type, self::TYPES, true)) {
             throw new InvalidArgumentException('不支持的字段类型：' . $type);
         }
+        $multiple = (bool)($field['multiple'] ?? false);
+        if ($multiple && !in_array($type, ['person', 'department', 'position'], true)) {
+            throw new InvalidArgumentException('字段 ' . $key . ' 仅人员、部门或岗位类型支持多选');
+        }
 
         $options = self::normalizeOptions($field['options'] ?? []);
         if ($type === 'select' && $options === []) {
@@ -170,6 +175,7 @@ class RecordFormSchemaService
             'help_text' => (string)($field['help_text'] ?? ''),
             'unit' => trim((string)($field['unit'] ?? '')),
             'placeholder' => trim((string)($field['placeholder'] ?? '')),
+            'multiple' => $multiple,
         ];
 
         if ($type === 'repeatable_table') {

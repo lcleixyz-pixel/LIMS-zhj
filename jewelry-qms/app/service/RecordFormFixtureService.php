@@ -64,10 +64,10 @@ class RecordFormFixtureService
         return [
             ['key' => 'plan_year', 'label' => '计划年度', 'type' => 'text', 'required' => true],
             ['key' => 'training_plan_items', 'label' => '培训计划明细', 'type' => 'repeatable_table', 'columns' => [
-                ['key' => 'training_time', 'label' => '培训时间', 'type' => 'text', 'required' => true],
+                ['key' => 'training_time', 'label' => '培训时间', 'type' => 'month', 'required' => true],
                 ['key' => 'training_content', 'label' => '培训内容', 'type' => 'textarea', 'required' => true],
-                ['key' => 'training_target', 'label' => '培训对象', 'type' => 'text', 'required' => false],
-                ['key' => 'training_department', 'label' => '培训部门', 'type' => 'department', 'required' => false],
+                ['key' => 'training_target', 'label' => '培训对象', 'type' => 'person', 'multiple' => true, 'required' => false],
+                ['key' => 'training_department', 'label' => '培训部门', 'type' => 'department', 'multiple' => true, 'required' => false],
                 ['key' => 'remarks', 'label' => '备注', 'type' => 'text', 'required' => false],
             ]],
         ];
@@ -88,7 +88,7 @@ class RecordFormFixtureService
             ['key' => 'assessment_method', 'label' => '考核方式', 'type' => 'select', 'options' => ['考试', '提问', '实操', '不考核'], 'required' => false],
             ['key' => 'attendees', 'label' => '参训人员', 'type' => 'repeatable_table', 'columns' => [
                 ['key' => 'name', 'label' => '姓名', 'type' => 'person', 'required' => true],
-                ['key' => 'position', 'label' => '岗位', 'type' => 'text', 'required' => false],
+                ['key' => 'position', 'label' => '岗位', 'type' => 'position', 'required' => false],
                 ['key' => 'signature', 'label' => '签名', 'type' => 'signature', 'required' => false],
             ]],
             ['key' => 'training_content', 'label' => '培训内容摘要', 'type' => 'textarea', 'required' => false],

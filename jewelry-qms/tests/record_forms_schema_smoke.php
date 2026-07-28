@@ -92,6 +92,8 @@ $supportedTypesSchema = [
     ['key' => 'checkbox_field', 'label' => '勾选', 'type' => 'checkbox'],
     ['key' => 'person_field', 'label' => '人员', 'type' => 'person'],
     ['key' => 'department_field', 'label' => '部门', 'type' => 'department'],
+    ['key' => 'position_field', 'label' => '岗位', 'type' => 'position'],
+    ['key' => 'multi_person_field', 'label' => '多个人员', 'type' => 'person', 'multiple' => true],
     ['key' => 'signature_field', 'label' => '签名', 'type' => 'signature'],
     [
         'key' => 'table_field',
@@ -113,9 +115,13 @@ assert_same([
     'checkbox',
     'person',
     'department',
+    'position',
+    'person',
     'signature',
     'repeatable_table',
 ], $supportedTypes, 'Normalizes all supported field types');
+assert_same(false, RecordFormSchemaService::normalize($supportedTypesSchema)[7]['multiple'], 'Single-select fields default to one choice');
+assert_same(true, RecordFormSchemaService::normalize($supportedTypesSchema)[10]['multiple'], 'Multiple-select fields keep the checkbox mode');
 
 assert_throws(
     fn () => RecordFormSchemaService::decode('{bad json'),

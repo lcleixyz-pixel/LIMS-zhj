@@ -31,6 +31,96 @@
         return control ? controlValue(control).trim() : '';
     }
 
+    function splitPickerValue(value) {
+        return (value || '')
+            .split(/[、,，;；]/)
+            .map(function (item) { return item.trim(); })
+            .filter(function (item, index, items) {
+                return item !== '' && items.indexOf(item) === index;
+            });
+    }
+
+    function pickerValueControl(picker) {
+        return picker.parentElement
+            ? picker.parentElement.querySelector('[data-multi-picker-value]')
+            : null;
+    }
+
+    function pickerSummary(picker) {
+        return picker.parentElement
+            ? picker.parentElement.querySelector('[data-multi-picker-summary]')
+            : null;
+    }
+
+    function pickerOptions(picker) {
+        return Array.prototype.slice.call(picker.querySelectorAll('[data-multi-picker-option]'));
+    }
+
+    function updatePickerSummary(picker, values) {
+        var summary = pickerSummary(picker);
+        if (!summary) {
+            return;
+        }
+
+        summary.textContent = values.length === 0
+            ? '尚未选择'
+            : '已选' + values.length + '项：' + values.join('、');
+    }
+
+    function initializeMultiPicker(picker) {
+        var valueControl = pickerValueControl(picker);
+        if (!valueControl) {
+            return;
+        }
+
+        var values = splitPickerValue(valueControl.value);
+        var optionValues = pickerOptions(picker).map(function (option) { return option.value; });
+        picker.dataset.unmatchedValues = JSON.stringify(values.filter(function (value) {
+            return optionValues.indexOf(value) === -1;
+        }));
+        pickerOptions(picker).forEach(function (option) {
+            option.checked = values.indexOf(option.value) !== -1;
+        });
+        updatePickerSummary(picker, values);
+    }
+
+    function syncMultiPickerValue(picker) {
+        var valueControl = pickerValueControl(picker);
+        if (!valueControl) {
+            return;
+        }
+
+        var unmatched = [];
+        try {
+            unmatched = JSON.parse(picker.dataset.unmatchedValues || '[]');
+        } catch (error) {
+            unmatched = [];
+        }
+        var selected = pickerOptions(picker)
+            .filter(function (option) { return option.checked; })
+            .map(function (option) { return option.value; });
+        var values = unmatched.concat(selected).filter(function (value, index, items) {
+            return value !== '' && items.indexOf(value) === index;
+        });
+        valueControl.value = values.join('、');
+        updatePickerSummary(picker, values);
+    }
+
+    function syncMultiPickers(container) {
+        Array.prototype.slice.call(container.querySelectorAll('[data-multi-picker]')).forEach(initializeMultiPicker);
+    }
+
+    function localDateValue(periodType) {
+        var now = new Date();
+        var year = String(now.getFullYear());
+        var month = String(now.getMonth() + 1).padStart(2, '0');
+        if (periodType === 'month') {
+            return year + '-' + month;
+        }
+
+        return year + '-' + month + '-' + String(now.getDate()).padStart(2, '0');
+    }
+
     function clearRow(row) {
         controls(row).forEach(function (control) {
             if (control.type === 'checkbox') {
@@ -40,6 +130,7 @@
 
             control.value = '';
         });
+        syncMultiPickers(row);
     }
 
     function isRowEmpty(row) {
@@ -107,6 +198,7 @@
         tbody.appendChild(fragment);
         reindexRows(table);
         syncRowRequired(row);
+        syncMultiPickers(row);
 
         return row;
     }
@@ -193,6 +285,20 @@
     }
 
     document.addEventListener('click', function (event) {
+        var periodButton = event.target.closest('[data-fill-current-period]');
+        if (periodButton) {
+            var target = periodButton.dataset.targetId
+                ? document.getElementById(periodButton.dataset.targetId)
+                : periodButton.closest('.input-group').querySelector('input[type="date"], input[type="month"]');
+            if (target && !target.readOnly && !target.disabled) {
+                target.value = localDateValue(periodButton.dataset.periodType || target.type);
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.dispatchEvent(new Event('change', { bubbles: true }));
+                target.focus();
+            }
+            return;
+        }
+
         var addButton = event.target.closest('[data-add-repeatable-row]');
         if (addButton) {
             var table = addButton.closest('[data-repeatable-table]');
@@ -219,6 +325,12 @@
     });
 
     document.addEventListener('change', function (event) {
+        if (event.target.matches('[data-multi-picker-option]')) {
+            var multiPicker = event.target.closest('[data-multi-picker]');
+            if (multiPicker) {
+                syncMultiPickerValue(multiPicker);
+            }
+        }
         if (event.target.matches('[data-employee-option]')) {
             handleEmployeePickerChange(event.target);
         }
@@ -254,4 +366,6 @@
             syncPickerState(picker, table);
         }
     });
+
+    syncMultiPickers(document);
 }());

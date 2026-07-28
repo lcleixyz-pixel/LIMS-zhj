@@ -8,6 +8,7 @@ use app\model\Department as DepartmentModel;
 use app\model\Employee as EmployeeModel;
 use app\model\RecordFormInstance as InstanceModel;
 use app\model\RecordFormTemplate as TemplateModel;
+use app\model\QmsPosition as QmsPositionModel;
 use app\model\User;
 use app\service\FileService;
 use app\service\ActionAuthorizationService;
@@ -1959,6 +1960,7 @@ class RecordFormInstance extends BaseController
         View::assign('errors', $errors);
         View::assign('employeeOptions', $this->employeeOptions());
         View::assign('departmentOptions', $this->departmentOptions());
+        View::assign('positionOptions', $this->positionOptions());
     }
 
     private function selectedRecordYear(): int
@@ -2013,7 +2015,7 @@ class RecordFormInstance extends BaseController
     private function firstPersonColumn(array $columns): string
     {
         foreach ($columns as $column) {
-            if (($column['type'] ?? '') === 'person') {
+            if (($column['type'] ?? '') === 'person' && !($column['multiple'] ?? false)) {
                 return (string)$column['key'];
             }
         }
@@ -2072,6 +2074,26 @@ class RecordFormInstance extends BaseController
             $options[] = [
                 'id' => (string)$department->id,
                 'name' => (string)$department->name,
+            ];
+        }
+
+        return $options;
+    }
+
+    private function positionOptions(): array
+    {
+        $positions = QmsPositionModel::where('soft_delete', 0)
+            ->where('publish', 1)
+            ->order('name')
+            ->select();
+
+        $options = [];
+        foreach ($positions as $position) {
+            $options[] = [
+                'id' => (string)$position->id,
+                'code' => (string)$position->code,
+                'name' => (string)$position->name,
+                'department_hint' => (string)($position->department_hint ?? ''),
             ];
         }
 

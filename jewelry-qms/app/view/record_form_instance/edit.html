@@ -21,9 +21,15 @@
                 {if $field.type == 'textarea'}
                 <textarea id="field_{$field.key}" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" rows="4" placeholder="{$field.placeholder}" {if $field.required}required{/if} {if $field.readonly}readonly{/if}>{$values[$field.key]|default=$field.default}</textarea>
                 {elseif $field.type == 'date'}
-                <input id="field_{$field.key}" type="date" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.required}required{/if} {if $field.readonly}readonly{/if}>
+                <div class="input-group">
+                    <input id="field_{$field.key}" type="date" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.required}required{/if} {if $field.readonly}readonly{/if}>
+                    {if !$field.readonly}<button type="button" class="btn btn-outline-secondary" data-fill-current-period data-period-type="date" data-target-id="field_{$field.key}">今天</button>{/if}
+                </div>
                 {elseif $field.type == 'month'}
-                <input id="field_{$field.key}" type="month" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.required}required{/if} {if $field.readonly}readonly{/if}>
+                <div class="input-group">
+                    <input id="field_{$field.key}" type="month" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" {if $field.required}required{/if} {if $field.readonly}readonly{/if}>
+                    {if !$field.readonly}<button type="button" class="btn btn-outline-secondary" data-fill-current-period data-period-type="month" data-target-id="field_{$field.key}">本月</button>{/if}
+                </div>
                 {elseif $field.type == 'number'}
                 <div class="input-group">
                     <input id="field_{$field.key}" type="number" step="0.01" name="fields[{$field.key}]" class="form-control{if $field.readonly} bg-light{/if}" value="{$values[$field.key]|default=$field.default}" placeholder="{$field.placeholder}" {if $field.required}required{/if} {if $field.readonly}readonly{/if}>
@@ -44,6 +50,21 @@
                 </div>
                 {if $field.readonly}<input type="hidden" name="fields[{$field.key}]" value="{$values[$field.key]|default=$field.default}">{/if}
                 {elseif $field.type == 'person'}
+                {if $field.multiple}
+                <details class="record-form-multi-picker" data-multi-picker>
+                    <summary class="btn btn-outline-secondary w-100 text-start">勾选人员（可多选）</summary>
+                    <div class="border rounded p-2 mt-1 bg-white" style="max-height:14rem;overflow-y:auto;">
+                        {volist name="employeeOptions" id="employee"}
+                        <label class="form-check mb-1">
+                            <input type="checkbox" class="form-check-input" data-multi-picker-option value="{$employee.name}" {if $field.readonly}disabled{/if}>
+                            <span class="form-check-label">{$employee.name}{if $employee.department_name}（{$employee.department_name}）{/if}</span>
+                        </label>
+                        {/volist}
+                    </div>
+                </details>
+                <input id="field_{$field.key}" type="hidden" name="fields[{$field.key}]" data-multi-picker-value value="{$values[$field.key]|default=$field.default}">
+                <div class="form-text" data-multi-picker-summary>尚未选择人员</div>
+                {else}
                 <select id="field_{$field.key}" name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.required}required{/if} {if $field.readonly}disabled{/if}>
                     <option value="">请选择人员</option>
                     {volist name="employeeOptions" id="employee"}
@@ -51,7 +72,23 @@
                     {/volist}
                 </select>
                 {if $field.readonly}<input type="hidden" name="fields[{$field.key}]" value="{$values[$field.key]|default=$field.default}">{/if}
+                {/if}
                 {elseif $field.type == 'department'}
+                {if $field.multiple}
+                <details class="record-form-multi-picker" data-multi-picker>
+                    <summary class="btn btn-outline-secondary w-100 text-start">勾选部门（可多选）</summary>
+                    <div class="border rounded p-2 mt-1 bg-white" style="max-height:14rem;overflow-y:auto;">
+                        {volist name="departmentOptions" id="department"}
+                        <label class="form-check mb-1">
+                            <input type="checkbox" class="form-check-input" data-multi-picker-option value="{$department.name}" {if $field.readonly}disabled{/if}>
+                            <span class="form-check-label">{$department.name}</span>
+                        </label>
+                        {/volist}
+                    </div>
+                </details>
+                <input id="field_{$field.key}" type="hidden" name="fields[{$field.key}]" data-multi-picker-value value="{$values[$field.key]|default=$field.default}">
+                <div class="form-text" data-multi-picker-summary>尚未选择部门</div>
+                {else}
                 <select id="field_{$field.key}" name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.required}required{/if} {if $field.readonly}disabled{/if}>
                     <option value="">请选择部门</option>
                     {volist name="departmentOptions" id="department"}
@@ -59,6 +96,31 @@
                     {/volist}
                 </select>
                 {if $field.readonly}<input type="hidden" name="fields[{$field.key}]" value="{$values[$field.key]|default=$field.default}">{/if}
+                {/if}
+                {elseif $field.type == 'position'}
+                {if $field.multiple}
+                <details class="record-form-multi-picker" data-multi-picker>
+                    <summary class="btn btn-outline-secondary w-100 text-start">勾选岗位（可多选）</summary>
+                    <div class="border rounded p-2 mt-1 bg-white" style="max-height:14rem;overflow-y:auto;">
+                        {volist name="positionOptions" id="position"}
+                        <label class="form-check mb-1">
+                            <input type="checkbox" class="form-check-input" data-multi-picker-option value="{$position.name}" {if $field.readonly}disabled{/if}>
+                            <span class="form-check-label">{$position.name}</span>
+                        </label>
+                        {/volist}
+                    </div>
+                </details>
+                <input id="field_{$field.key}" type="hidden" name="fields[{$field.key}]" data-multi-picker-value value="{$values[$field.key]|default=$field.default}">
+                <div class="form-text" data-multi-picker-summary>尚未选择岗位</div>
+                {else}
+                <select id="field_{$field.key}" name="fields[{$field.key}]" class="form-select{if $field.readonly} bg-light{/if}" {if $field.required}required{/if} {if $field.readonly}disabled{/if}>
+                    <option value="">请选择岗位</option>
+                    {volist name="positionOptions" id="position"}
+                    <option value="{$position.name}" {if isset($values[$field.key]) && $values[$field.key] == $position.name}selected{/if}>{$position.name}</option>
+                    {/volist}
+                </select>
+                {if $field.readonly}<input type="hidden" name="fields[{$field.key}]" value="{$values[$field.key]|default=$field.default}">{/if}
+                {/if}
                 {elseif $field.type == 'repeatable_table'}
                 {if isset($field['employee_picker']) && $field.employee_picker && !empty($employeeOptions)}
                 <div class="record-form-employee-picker mb-2" data-employee-picker="{$field.key}" data-name-column="{$field.employee_name_column}" data-department-column="{$field.employee_department_column}">
@@ -95,7 +157,15 @@
                                         {if $column.type == 'textarea'}
                                         <textarea aria-label="{$column.label}" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" {if isset($column.validation.required_when)}data-required-when-field="{$column.validation.required_when.field}" data-required-when-equals="{$column.validation.required_when.equals}"{/if} class="form-control form-control-sm" rows="2" placeholder="{$column.placeholder}" {if $column.required}required{/if}>{$row[$column.key]|default=''}</textarea>
                                         {elseif $column.type == 'date'}
-                                        <input aria-label="{$column.label}" type="date" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}" {if $column.required}required{/if}>
+                                        <div class="input-group input-group-sm flex-nowrap">
+                                            <input aria-label="{$column.label}" type="date" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}" {if $column.required}required{/if}>
+                                            <button type="button" class="btn btn-outline-secondary" data-fill-current-period data-period-type="date">今天</button>
+                                        </div>
+                                        {elseif $column.type == 'month'}
+                                        <div class="input-group input-group-sm flex-nowrap">
+                                            <input aria-label="{$column.label}" type="month" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}" {if $column.required}required{/if}>
+                                            <button type="button" class="btn btn-outline-secondary" data-fill-current-period data-period-type="month">本月</button>
+                                        </div>
                                         {elseif $column.type == 'number'}
                                         <div class="input-group input-group-sm flex-nowrap">
                                             <input aria-label="{$column.label}，单位{$column.unit}" type="number" step="0.01" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control" value="{$row[$column.key]|default=''}" placeholder="{$column.placeholder}" {if $column.required}required{/if}>
@@ -111,19 +181,74 @@
                                         {elseif $column.type == 'checkbox'}
                                         <input type="checkbox" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" value="1" class="form-check-input" {if isset($row[$column.key]) && ($row[$column.key] == '1' || $row[$column.key] == 1)}checked{/if}>
                                         {elseif $column.type == 'person'}
+                                        {if $column.multiple}
+                                        <details class="record-form-multi-picker" data-multi-picker>
+                                            <summary class="btn btn-outline-secondary btn-sm w-100 text-start">勾选人员</summary>
+                                            <div class="border rounded p-2 mt-1 bg-white" style="min-width:14rem;max-height:14rem;overflow-y:auto;">
+                                                {volist name="employeeOptions" id="employee"}
+                                                <label class="form-check mb-1">
+                                                    <input type="checkbox" class="form-check-input" data-multi-picker-option value="{$employee.name}">
+                                                    <span class="form-check-label">{$employee.name}{if $employee.department_name}<span class="text-muted small d-block">{$employee.department_name}</span>{/if}</span>
+                                                </label>
+                                                {/volist}
+                                            </div>
+                                        </details>
+                                        <input type="hidden" aria-label="{$column.label}" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" data-multi-picker-value value="{$row[$column.key]|default=''}">
+                                        <div class="form-text small" data-multi-picker-summary>尚未选择</div>
+                                        {else}
                                         <select aria-label="{$column.label}" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
                                             <option value="">请选择人员</option>
                                             {volist name="employeeOptions" id="employee"}
                                             <option value="{$employee.name}" {if isset($row[$column.key]) && $row[$column.key] == $employee.name}selected{/if}>{$employee.name}{if $employee.department_name}（{$employee.department_name}）{/if}</option>
                                             {/volist}
                                         </select>
+                                        {/if}
                                         {elseif $column.type == 'department'}
+                                        {if $column.multiple}
+                                        <details class="record-form-multi-picker" data-multi-picker>
+                                            <summary class="btn btn-outline-secondary btn-sm w-100 text-start">勾选部门</summary>
+                                            <div class="border rounded p-2 mt-1 bg-white" style="min-width:12rem;max-height:14rem;overflow-y:auto;">
+                                                {volist name="departmentOptions" id="department"}
+                                                <label class="form-check mb-1">
+                                                    <input type="checkbox" class="form-check-input" data-multi-picker-option value="{$department.name}">
+                                                    <span class="form-check-label">{$department.name}</span>
+                                                </label>
+                                                {/volist}
+                                            </div>
+                                        </details>
+                                        <input type="hidden" aria-label="{$column.label}" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" data-multi-picker-value value="{$row[$column.key]|default=''}">
+                                        <div class="form-text small" data-multi-picker-summary>尚未选择</div>
+                                        {else}
                                         <select aria-label="{$column.label}" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
                                             <option value="">请选择部门</option>
                                             {volist name="departmentOptions" id="department"}
                                             <option value="{$department.name}" {if isset($row[$column.key]) && $row[$column.key] == $department.name}selected{/if}>{$department.name}</option>
                                             {/volist}
                                         </select>
+                                        {/if}
+                                        {elseif $column.type == 'position'}
+                                        {if $column.multiple}
+                                        <details class="record-form-multi-picker" data-multi-picker>
+                                            <summary class="btn btn-outline-secondary btn-sm w-100 text-start">勾选岗位</summary>
+                                            <div class="border rounded p-2 mt-1 bg-white" style="min-width:14rem;max-height:14rem;overflow-y:auto;">
+                                                {volist name="positionOptions" id="position"}
+                                                <label class="form-check mb-1">
+                                                    <input type="checkbox" class="form-check-input" data-multi-picker-option value="{$position.name}">
+                                                    <span class="form-check-label">{$position.name}</span>
+                                                </label>
+                                                {/volist}
+                                            </div>
+                                        </details>
+                                        <input type="hidden" aria-label="{$column.label}" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" data-multi-picker-value value="{$row[$column.key]|default=''}">
+                                        <div class="form-text small" data-multi-picker-summary>尚未选择</div>
+                                        {else}
+                                        <select aria-label="{$column.label}" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
+                                            <option value="">请选择岗位</option>
+                                            {volist name="positionOptions" id="position"}
+                                            <option value="{$position.name}" {if isset($row[$column.key]) && $row[$column.key] == $position.name}selected{/if}>{$position.name}</option>
+                                            {/volist}
+                                        </select>
+                                        {/if}
                                         {else}
                                         <input aria-label="{$column.label}" type="text" name="fields[{$field.key}][{$rowIndex}][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="{$row[$column.key]|default=''}" placeholder="{$column.placeholder}" {if $column.required}required{/if}>
                                         {/if}
@@ -145,7 +270,15 @@
                                 {if $column.type == 'textarea'}
                                 <textarea aria-label="{$column.label}" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" {if isset($column.validation.required_when)}data-required-when-field="{$column.validation.required_when.field}" data-required-when-equals="{$column.validation.required_when.equals}"{/if} class="form-control form-control-sm" rows="2" placeholder="{$column.placeholder}" {if $column.required}required{/if}></textarea>
                                 {elseif $column.type == 'date'}
-                                <input aria-label="{$column.label}" type="date" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="" {if $column.required}required{/if}>
+                                <div class="input-group input-group-sm flex-nowrap">
+                                    <input aria-label="{$column.label}" type="date" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="" {if $column.required}required{/if}>
+                                    <button type="button" class="btn btn-outline-secondary" data-fill-current-period data-period-type="date">今天</button>
+                                </div>
+                                {elseif $column.type == 'month'}
+                                <div class="input-group input-group-sm flex-nowrap">
+                                    <input aria-label="{$column.label}" type="month" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="" {if $column.required}required{/if}>
+                                    <button type="button" class="btn btn-outline-secondary" data-fill-current-period data-period-type="month">本月</button>
+                                </div>
                                 {elseif $column.type == 'number'}
                                 <div class="input-group input-group-sm flex-nowrap">
                                     <input aria-label="{$column.label}，单位{$column.unit}" type="number" step="0.01" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control" value="" placeholder="{$column.placeholder}" {if $column.required}required{/if}>
@@ -159,15 +292,68 @@
                                 {elseif $column.type == 'checkbox'}
                                 <input type="checkbox" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" value="1" class="form-check-input">
                                 {elseif $column.type == 'person'}
+                                {if $column.multiple}
+                                <details class="record-form-multi-picker" data-multi-picker>
+                                    <summary class="btn btn-outline-secondary btn-sm w-100 text-start">勾选人员</summary>
+                                    <div class="border rounded p-2 mt-1 bg-white" style="min-width:14rem;max-height:14rem;overflow-y:auto;">
+                                        {volist name="employeeOptions" id="employee"}
+                                        <label class="form-check mb-1">
+                                            <input type="checkbox" class="form-check-input" data-multi-picker-option value="{$employee.name}">
+                                            <span class="form-check-label">{$employee.name}{if $employee.department_name}<span class="text-muted small d-block">{$employee.department_name}</span>{/if}</span>
+                                        </label>
+                                        {/volist}
+                                    </div>
+                                </details>
+                                <input type="hidden" aria-label="{$column.label}" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" data-multi-picker-value value="">
+                                <div class="form-text small" data-multi-picker-summary>尚未选择</div>
+                                {else}
                                 <select aria-label="{$column.label}" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
                                     <option value="">请选择人员</option>
                                     {volist name="employeeOptions" id="employee"}<option value="{$employee.name}">{$employee.name}{if $employee.department_name}（{$employee.department_name}）{/if}</option>{/volist}
                                 </select>
+                                {/if}
                                 {elseif $column.type == 'department'}
+                                {if $column.multiple}
+                                <details class="record-form-multi-picker" data-multi-picker>
+                                    <summary class="btn btn-outline-secondary btn-sm w-100 text-start">勾选部门</summary>
+                                    <div class="border rounded p-2 mt-1 bg-white" style="min-width:12rem;max-height:14rem;overflow-y:auto;">
+                                        {volist name="departmentOptions" id="department"}
+                                        <label class="form-check mb-1">
+                                            <input type="checkbox" class="form-check-input" data-multi-picker-option value="{$department.name}">
+                                            <span class="form-check-label">{$department.name}</span>
+                                        </label>
+                                        {/volist}
+                                    </div>
+                                </details>
+                                <input type="hidden" aria-label="{$column.label}" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" data-multi-picker-value value="">
+                                <div class="form-text small" data-multi-picker-summary>尚未选择</div>
+                                {else}
                                 <select aria-label="{$column.label}" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
                                     <option value="">请选择部门</option>
                                     {volist name="departmentOptions" id="department"}<option value="{$department.name}">{$department.name}</option>{/volist}
                                 </select>
+                                {/if}
+                                {elseif $column.type == 'position'}
+                                {if $column.multiple}
+                                <details class="record-form-multi-picker" data-multi-picker>
+                                    <summary class="btn btn-outline-secondary btn-sm w-100 text-start">勾选岗位</summary>
+                                    <div class="border rounded p-2 mt-1 bg-white" style="min-width:14rem;max-height:14rem;overflow-y:auto;">
+                                        {volist name="positionOptions" id="position"}
+                                        <label class="form-check mb-1">
+                                            <input type="checkbox" class="form-check-input" data-multi-picker-option value="{$position.name}">
+                                            <span class="form-check-label">{$position.name}</span>
+                                        </label>
+                                        {/volist}
+                                    </div>
+                                </details>
+                                <input type="hidden" aria-label="{$column.label}" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" data-multi-picker-value value="">
+                                <div class="form-text small" data-multi-picker-summary>尚未选择</div>
+                                {else}
+                                <select aria-label="{$column.label}" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-select form-select-sm" {if $column.required}required{/if}>
+                                    <option value="">请选择岗位</option>
+                                    {volist name="positionOptions" id="position"}<option value="{$position.name}">{$position.name}</option>{/volist}
+                                </select>
+                                {/if}
                                 {else}
                                 <input aria-label="{$column.label}" type="text" name="fields[{$field.key}][__INDEX__][{$column.key}]" data-field-key="{$field.key}" data-column-key="{$column.key}" class="form-control form-control-sm" value="" placeholder="{$column.placeholder}" {if $column.required}required{/if}>
                                 {/if}

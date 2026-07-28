@@ -195,7 +195,7 @@
                 <tr>
                     <td>{$field.key}</td>
                     <td>{$field.label}</td>
-                    <td>{$field.type}</td>
+                    <td>{$field.type}{if !empty($field.multiple)}（多选）{/if}</td>
                     <td>{if $field.required}是{else}否{/if}</td>
                     <td>{$field.print_bind}</td>
                 </tr>
@@ -210,7 +210,7 @@
                                 <tr>
                                     <td>{$column.key}</td>
                                     <td>{$column.label|default='-'}</td>
-                                    <td>{$column.type|default='text'}</td>
+                                    <td>{$column.type|default='text'}{if !empty($column.multiple)}（多选）{/if}</td>
                                     <td>{if !empty($column.required)}是{else}否{/if}</td>
                                 </tr>
                                 {/volist}

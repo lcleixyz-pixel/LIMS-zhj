@@ -11,7 +11,14 @@ final class G2ExpansionBatch3BlueprintService
     {
         return [
             self::template('XZTC/BG-01-01', '年度人员培训计划表', '人员培训程序', '甲组|人员与监督', [
-                self::table('training_plan_items', '培训计划明细', ['培训时间', '培训内容', '培训对象', '培训部门', '预期目标', '完成情况回填']),
+                self::table('training_plan_items', '培训计划明细', [
+                    ['label' => '培训时间', 'type' => 'month'],
+                    '培训内容',
+                    ['label' => '培训对象', 'type' => 'person', 'multiple' => true],
+                    ['label' => '培训部门', 'type' => 'department', 'multiple' => true],
+                    '预期目标',
+                    '完成情况回填',
+                ]),
             ]),
             self::template('XZTC/BG-01-03', '检测人员持证登记表', '人员培训程序', '甲组|人员与监督', [
                 self::table('certificate_items', '持证登记明细', ['姓名', '证别', '证书号码', '发证单位', '有效期', '证书复审提醒期', '备注']),
@@ -159,10 +166,18 @@ final class G2ExpansionBatch3BlueprintService
             'label' => $label,
             'type' => 'repeatable_table',
             'required' => false,
-            'columns' => array_map(
-                static fn(string $label): array => ['key' => self::keyFromLabel($label), 'label' => $label, 'type' => 'text', 'required' => false],
-                $columns
-            ),
+            'columns' => array_map(static function (string|array $column): array {
+                $definition = is_string($column) ? ['label' => $column] : $column;
+                $columnLabel = trim((string)($definition['label'] ?? ''));
+
+                return [
+                    'key' => (string)($definition['key'] ?? self::keyFromLabel($columnLabel)),
+                    'label' => $columnLabel,
+                    'type' => (string)($definition['type'] ?? 'text'),
+                    'required' => (bool)($definition['required'] ?? false),
+                    'multiple' => (bool)($definition['multiple'] ?? false),
+                ];
+            }, $columns),
         ];
     }
 
