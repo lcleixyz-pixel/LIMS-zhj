@@ -367,131 +367,164 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 
 <div class="card">
-    <div class="card-header"><h5 class="mb-0">当前追溯关系</h5></div>
+    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h5 class="mb-0">当前追溯关系</h5>
+        <span class="badge badge-status-review">共 {$detail.link_presentation.total} 条</span>
+    </div>
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>关系</th>
-                        <th>要素</th>
-                        <th>条款</th>
-                        <th>手册章节</th>
-                        <th>程序文件</th>
-                        <th>记录表格</th>
-                        <th>运行模块</th>
-                        <th>岗位</th>
-                        <th>说明</th>
-                        <th class="qms-action-cell">入口</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {volist name="detail.links" id="link"}
-                    <tr>
-                        <td>
-                            {if $link.relation_type == 'supporting'}支撑
-                            {elseif $link.relation_type == 'implements'}落实
-                            {elseif $link.relation_type == 'basis'}依据
-                            {elseif $link.relation_type == 'mentions'}提及
-                            {elseif $link.relation_type == 'responsible'}职责
-                            {elseif $link.relation_type == 'requires_record'}要求记录
-                            {else}{$link.relation_type|default='待确认'}{/if}
-                            <div class="small mt-1">
-                                {if $link.governance_state == 'suspected_mismatch'}
-                                <span class="badge bg-danger">疑似错挂</span>
-                                {elseif $link.governance_state == 'pending_review'}
-                                <span class="badge bg-warning text-dark">等待复核</span>
-                                {elseif $link.governance_state == 'confirmed_primary'}
-                                <span class="badge bg-success">已确认主链</span>
-                                {else}
-                                <span class="badge bg-secondary">辅助关系</span>
-                                {/if}
+        <p class="text-muted small mb-3">
+            系统按主链证据、职责、运行入口和辅助关系分组，只显示本条关系实际关联的对象。
+        </p>
+
+        {if $detail.link_presentation.priority}
+        <section class="qms-trace-priority mb-4" aria-labelledby="trace-priority-title">
+            <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-2">
+                <div>
+                    <h6 id="trace-priority-title" class="mb-1">需优先处理</h6>
+                    <p class="small mb-0">以下历史关系包含多个对象，请先核对拆分预览，再逐条建立正确关系。</p>
+                </div>
+                <span class="badge badge-status-warning">{$detail.link_presentation.priority|count} 条</span>
+            </div>
+            <div class="qms-trace-priority-list">
+                {volist name="detail.link_presentation.priority" id="link"}
+                <article class="qms-trace-link-card qms-trace-link-card-priority">
+                    <div class="qms-trace-link-heading">
+                        <div>
+                            <span class="qms-trace-relation-label">{$link.relation_label}</span>
+                            <span class="badge {$link.state_class}">{$link.state_label}</span>
+                        </div>
+                        <span class="qms-trace-target-count">{$link.relation_policy.target_count} 个对象</span>
+                    </div>
+                    <dl class="qms-trace-targets mb-0">
+                        {volist name="link.targets" id="target"}
+                        <div class="qms-trace-target">
+                            <dt>{$target.label}</dt>
+                            <dd>{$target.value}</dd>
+                        </div>
+                        {/volist}
+                    </dl>
+                    <div class="qms-trace-note">
+                        <span>关系说明</span>
+                        <p>{$link.note|default='暂无说明'}</p>
+                    </div>
+                    <div class="alert alert-warning py-2 px-3 mb-3">
+                        <strong>历史混装，需拆分</strong>
+                        <div class="small mt-1">本条关系不能整体确认，系统不会自动改写历史证据。</div>
+                        <details class="mt-2">
+                            <summary>查看拆分预览</summary>
+                            <ul class="small ps-3 mb-0 mt-2">
+                                {volist name="link.relation_policy.split_preview" id="split"}
+                                <li>{$split.target_kind_label}：{$split.target_label} → {$split.relation_label}</li>
+                                {/volist}
+                            </ul>
+                        </details>
+                        <div class="small mt-2">请按预览在上方逐条新增，核对无误后再删除本条历史关系。</div>
+                    </div>
+                    <form method="post" action="/planning/structures/links/delete" class="qms-suggestion-form justify-content-end" onsubmit="return confirm('确认删除该追溯关系？');">
+                        <input type="hidden" name="block_id" value="{$detail.block.id}">
+                        <input type="hidden" name="link_id" value="{$link.id}">
+                        <label class="visually-hidden" for="priority_delete_note_{$link.id}">删除说明</label>
+                        <input id="priority_delete_note_{$link.id}" type="text" name="review_note" class="form-control form-control-sm" required placeholder="填写删除说明">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">删除历史关系</button>
+                    </form>
+                </article>
+                {/volist}
+            </div>
+        </section>
+        {/if}
+
+        {if $detail.link_presentation.groups}
+        <div class="qms-trace-group-grid">
+            {volist name="detail.link_presentation.groups" id="group"}
+            <section class="qms-trace-group" aria-labelledby="trace-group-{$group.key}">
+                <div class="qms-trace-group-heading">
+                    <div>
+                        <h6 id="trace-group-{$group.key}" class="mb-1">{$group.title}</h6>
+                        <p class="small text-muted mb-0">{$group.description}</p>
+                    </div>
+                    <span class="badge badge-status-draft">{$group.count} 条</span>
+                </div>
+                <div class="qms-trace-group-list">
+                    {volist name="group.links" id="link"}
+                    <article class="qms-trace-link-card">
+                        <div class="qms-trace-link-heading">
+                            <span class="qms-trace-relation-label">{$link.relation_label}</span>
+                            <span class="badge {$link.state_class}">{$link.state_label}</span>
+                        </div>
+                        <dl class="qms-trace-targets mb-0">
+                            {volist name="link.targets" id="target"}
+                            <div class="qms-trace-target">
+                                <dt>{$target.label}</dt>
+                                <dd>{$target.value}</dd>
                             </div>
-                        </td>
-                        <td>{$link.element_name|default='-'}</td>
-                        <td>{if $link.clause_number}{$link.source_code} {$link.clause_number}{else}-{/if}</td>
-                        <td>{if $link.section_number}{$link.section_number} {$link.manual_title}{else}-{/if}</td>
-                        <td>{if $link.procedure_number}{$link.procedure_number} {$link.procedure_title}{else}-{/if}</td>
-                        <td>{if $link.record_number}{$link.record_number} {$link.record_name}{else}-{/if}</td>
-                        <td>{if $link.module_name}{$link.module_code} {$link.module_name}{else}-{/if}</td>
-                        <td>{$link.position_name|default='-'}</td>
-                        <td>{$link.note|default='-'}</td>
-                        <td class="qms-action-cell">
-                            {if $link.relation_policy.is_mixed}
-                            <div class="alert alert-warning py-2 px-2 text-start mb-2">
-                                <strong>历史混装，需拆分</strong>
-                                <div class="small mt-1">本行包含 {$link.relation_policy.target_count} 个对象，不能整体确认为一条关系。</div>
-                                <details class="mt-2">
-                                    <summary>查看拆分预览</summary>
-                                    <ul class="small ps-3 mb-0 mt-1">
-                                        {volist name="link.relation_policy.split_preview" id="split"}
-                                        <li>{$split.target_kind_label}：{$split.target_label} → {$split.relation_label}</li>
-                                        {/volist}
-                                    </ul>
-                                </details>
-                                <div class="small mt-2">请按预览在上方逐条新增，核对无误后再删除本行；系统不会自动改写历史证据。</div>
-                            </div>
-                            {else}
-                            <details class="mb-2">
-                                <summary class="btn btn-sm btn-outline-primary">确认或调整关系</summary>
-                                <form method="post" action="/planning/structures/links/save" class="border rounded p-2 mt-2 text-start">
-                                    <input type="hidden" name="block_id" value="{$detail.block.id}">
-                                    <input type="hidden" name="link_id" value="{$link.id}">
-                                    <input type="hidden" name="element_id" value="{$link.element_id|default=''}">
-                                    <input type="hidden" name="clause_id" value="{$link.clause_id|default=''}">
-                                    {if $link.manual_section_id}
-                                    <label class="form-label small" for="manual_section_{$link.id}">手册章节处理</label>
-                                    <select id="manual_section_{$link.id}" name="manual_section_id" class="form-select form-select-sm mb-1">
-                                        <option value="">{if $link.governance_state == 'suspected_mismatch'}移除此错误手册挂接{else}移除本行手册挂接{/if}</option>
-                                        {volist name="detail.options.manual_sections" id="option"}
-                                        <option value="{$option.id}" {if $option.id == $link.manual_section_id}selected{/if}>{$option.section_number} {$option.title}</option>
-                                        {/volist}
-                                    </select>
-                                    <div class="form-text mb-2">若该行同时包含记录表格，请先移除错挂章节并保存，再在上方单独新增正确的手册主链。</div>
-                                    {else}
-                                    <input type="hidden" name="manual_section_id" value="{$link.manual_section_id|default=''}">
-                                    {/if}
-                                    <input type="hidden" name="procedure_document_id" value="{$link.procedure_document_id|default=''}">
-                                    <input type="hidden" name="record_form_template_id" value="{$link.record_form_template_id|default=''}">
-                                    <input type="hidden" name="position_id" value="{$link.position_id|default=''}">
-                                    <input type="hidden" name="business_module_id" value="{$link.business_module_id|default=''}">
-                                    <label class="form-label small" for="relation_type_{$link.id}">关系用途</label>
-                                    <select id="relation_type_{$link.id}" name="relation_type" class="form-select form-select-sm mb-2">
-                                        <option value="implements" {if $link.relation_type == 'implements'}selected{/if}>主链：落实手册</option>
-                                        <option value="basis" {if $link.relation_type == 'basis'}selected{/if}>主链：外部依据</option>
-                                        <option value="requires_record" {if $link.relation_type == 'requires_record'}selected{/if}>主链：运行记录</option>
-                                        <option value="supporting" {if $link.relation_type == 'supporting'}selected{/if}>辅助关系</option>
-                                        <option value="mentions" {if $link.relation_type == 'mentions'}selected{/if}>仅提及</option>
-                                        <option value="responsible" {if $link.relation_type == 'responsible'}selected{/if}>职责</option>
-                                        <option value="renders_to" {if $link.relation_type == 'renders_to'}selected{/if}>渲染到</option>
-                                    </select>
-                                    <label class="form-label small" for="confidence_{$link.id}">复核状态</label>
-                                    <select id="confidence_{$link.id}" name="confidence" class="form-select form-select-sm mb-2">
-                                        <option value="high" {if $link.governance_state == 'confirmed_primary' && $link.confidence == 'high'}selected{/if}>已人工确认</option>
-                                        <option value="review_required" {if $link.governance_state == 'pending_review' || $link.governance_state == 'suspected_mismatch' || $link.confidence == 'review_required'}selected{/if}>等待复核</option>
-                                        <option value="medium" {if $link.confidence == 'medium'}selected{/if}>中置信候选</option>
-                                        <option value="low" {if $link.confidence == 'low'}selected{/if}>低置信候选</option>
-                                    </select>
-                                    <label class="form-label small" for="review_note_{$link.id}">复核依据</label>
-                                    <input id="review_note_{$link.id}" type="text" name="note" class="form-control form-control-sm mb-2" required placeholder="说明为何确认为主链、辅助关系或继续待复核">
-                                    <button type="submit" class="btn btn-sm btn-primary w-100">保存复核结论</button>
-                                </form>
-                            </details>
-                            {/if}
-                            <form method="post" action="/planning/structures/links/delete" class="qms-suggestion-form justify-content-end" onsubmit="return confirm('确认删除该追溯关系？');">
+                            {/volist}
+                        </dl>
+                        <div class="qms-trace-note">
+                            <span>关系说明</span>
+                            <p>{$link.note|default='暂无说明'}</p>
+                        </div>
+                        <details class="qms-trace-review mb-2">
+                            <summary class="btn btn-sm btn-outline-primary">确认或调整关系</summary>
+                            <form method="post" action="/planning/structures/links/save" class="border rounded p-3 mt-2 text-start">
                                 <input type="hidden" name="block_id" value="{$detail.block.id}">
                                 <input type="hidden" name="link_id" value="{$link.id}">
-                                <input type="text" name="review_note" class="form-control form-control-sm" required placeholder="删除说明">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">删除</button>
+                                <input type="hidden" name="element_id" value="{$link.element_id|default=''}">
+                                <input type="hidden" name="clause_id" value="{$link.clause_id|default=''}">
+                                {if $link.manual_section_id}
+                                <label class="form-label small" for="manual_section_{$link.id}">手册章节处理</label>
+                                <select id="manual_section_{$link.id}" name="manual_section_id" class="form-select form-select-sm mb-1">
+                                    <option value="">{if $link.governance_state == 'suspected_mismatch'}移除此错误手册挂接{else}移除本条手册挂接{/if}</option>
+                                    {volist name="detail.options.manual_sections" id="option"}
+                                    <option value="{$option.id}" {if $option.id == $link.manual_section_id}selected{/if}>{$option.section_number} {$option.title}</option>
+                                    {/volist}
+                                </select>
+                                <div class="form-text mb-2">若本条同时包含记录表格，请先移除错挂章节并保存，再在上方单独新增正确的手册主链。</div>
+                                {else}
+                                <input type="hidden" name="manual_section_id" value="{$link.manual_section_id|default=''}">
+                                {/if}
+                                <input type="hidden" name="procedure_document_id" value="{$link.procedure_document_id|default=''}">
+                                <input type="hidden" name="record_form_template_id" value="{$link.record_form_template_id|default=''}">
+                                <input type="hidden" name="position_id" value="{$link.position_id|default=''}">
+                                <input type="hidden" name="business_module_id" value="{$link.business_module_id|default=''}">
+                                <label class="form-label small" for="relation_type_{$link.id}">关系用途</label>
+                                <select id="relation_type_{$link.id}" name="relation_type" class="form-select form-select-sm mb-2">
+                                    <option value="implements" {if $link.relation_type == 'implements'}selected{/if}>主链：落实手册</option>
+                                    <option value="basis" {if $link.relation_type == 'basis'}selected{/if}>主链：外部依据</option>
+                                    <option value="requires_record" {if $link.relation_type == 'requires_record'}selected{/if}>主链：运行记录</option>
+                                    <option value="supporting" {if $link.relation_type == 'supporting'}selected{/if}>辅助关系</option>
+                                    <option value="mentions" {if $link.relation_type == 'mentions'}selected{/if}>仅提及</option>
+                                    <option value="responsible" {if $link.relation_type == 'responsible'}selected{/if}>职责</option>
+                                    <option value="renders_to" {if $link.relation_type == 'renders_to'}selected{/if}>运行入口</option>
+                                </select>
+                                <label class="form-label small" for="confidence_{$link.id}">复核状态</label>
+                                <select id="confidence_{$link.id}" name="confidence" class="form-select form-select-sm mb-2">
+                                    <option value="high" {if $link.governance_state == 'confirmed_primary' && $link.confidence == 'high'}selected{/if}>已人工确认</option>
+                                    <option value="review_required" {if $link.governance_state == 'pending_review' || $link.governance_state == 'suspected_mismatch' || $link.confidence == 'review_required'}selected{/if}>等待复核</option>
+                                    <option value="medium" {if $link.confidence == 'medium'}selected{/if}>中置信候选</option>
+                                    <option value="low" {if $link.confidence == 'low'}selected{/if}>低置信候选</option>
+                                </select>
+                                <label class="form-label small" for="review_note_{$link.id}">复核依据</label>
+                                <input id="review_note_{$link.id}" type="text" name="note" class="form-control form-control-sm mb-2" required placeholder="说明为何确认为主链、辅助关系或继续待复核">
+                                <button type="submit" class="btn btn-sm btn-primary w-100">保存复核结论</button>
                             </form>
-                        </td>
-                    </tr>
+                        </details>
+                        <form method="post" action="/planning/structures/links/delete" class="qms-suggestion-form justify-content-end" onsubmit="return confirm('确认删除该追溯关系？');">
+                            <input type="hidden" name="block_id" value="{$detail.block.id}">
+                            <input type="hidden" name="link_id" value="{$link.id}">
+                            <label class="visually-hidden" for="delete_note_{$link.id}">删除说明</label>
+                            <input id="delete_note_{$link.id}" type="text" name="review_note" class="form-control form-control-sm" required placeholder="填写删除说明">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">删除</button>
+                        </form>
+                    </article>
                     {/volist}
-                    {empty name="detail.links"}
-                    <tr><td colspan="10"><div class="qms-empty-state">暂无追溯关系，请在上方选择对象后保存。</div></td></tr>
-                    {/empty}
-                </tbody>
-            </table>
+                </div>
+            </section>
+            {/volist}
         </div>
+        {/if}
+
+        {if $detail.link_presentation.total == 0}
+        <div class="qms-empty-state">暂无追溯关系，请在上方选择对象后保存。</div>
+        {/if}
     </div>
 </div>

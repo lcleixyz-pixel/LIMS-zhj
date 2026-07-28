@@ -373,6 +373,150 @@ body {
     color: #1d1d1f;
 }
 
+.qms-trace-priority {
+    background: #fffaf1;
+    border: 1px solid #f3d8a7;
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.qms-trace-priority h6 {
+    color: #8a5a12;
+}
+
+.qms-trace-priority-list,
+.qms-trace-group-list {
+    display: grid;
+    gap: 12px;
+}
+
+.qms-trace-group-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.qms-trace-group {
+    background: #fafbfc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    min-width: 0;
+    padding: 14px;
+}
+
+.qms-trace-group-heading,
+.qms-trace-link-heading {
+    align-items: flex-start;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.qms-trace-group-heading {
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+}
+
+.qms-trace-group-heading h6 {
+    color: #1e3a5f;
+}
+
+.qms-trace-link-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    min-width: 0;
+    padding: 14px;
+}
+
+.qms-trace-link-card-priority {
+    border-color: #e7c277;
+}
+
+.qms-trace-relation-label {
+    color: #2d3748;
+    font-size: 14px;
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+.qms-trace-target-count {
+    color: #718096;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.qms-trace-targets {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.qms-trace-target {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 76px minmax(0, 1fr);
+}
+
+.qms-trace-target dt {
+    color: #718096;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.qms-trace-target dd {
+    color: #2d3748;
+    font-size: 13px;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.qms-trace-note {
+    background: #f7f9fc;
+    border-radius: 4px;
+    margin: 12px 0;
+    padding: 8px 10px;
+}
+
+.qms-trace-note span {
+    color: #718096;
+    display: block;
+    font-size: 12px;
+    margin-bottom: 2px;
+}
+
+.qms-trace-note p {
+    font-size: 13px;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.qms-trace-review > summary {
+    list-style: none;
+}
+
+.qms-trace-review > summary::-webkit-details-marker {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .qms-trace-group-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .qms-trace-priority,
+    .qms-trace-group,
+    .qms-trace-link-card {
+        padding: 12px;
+    }
+
+    .qms-trace-target {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+}
+
 @media (max-width: 768px) {
     .qms-page-header {
         display: block;

@@ -59,9 +59,9 @@ trace_relation_policy_ui_assert_contains(
     '历史混装关系应显示只读拆分预览'
 );
 trace_relation_policy_ui_assert_contains(
-    '$link.relation_policy.is_mixed',
+    'detail.link_presentation.priority',
     $view,
-    '历史混装关系应隐藏整体确认表单'
+    '历史混装关系应进入独立优先处理区，避免出现整体确认表单'
 );
 trace_relation_policy_ui_assert_contains(
     '$detail.prefill.relation_type',
