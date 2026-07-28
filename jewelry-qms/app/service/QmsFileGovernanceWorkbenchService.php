@@ -264,6 +264,20 @@ final class QmsFileGovernanceWorkbenchService
                 $procedureBlocks
             );
         }
+        $traceBlocks = (array)($detail['blocks'] ?? []);
+        foreach ($traceBlocks as &$traceBlockRow) {
+            if (is_array($traceBlockRow)) {
+                $traceBlockRow['block'] = self::row(
+                    $traceBlockRow['block'] ?? []
+                );
+            }
+        }
+        unset($traceBlockRow);
+        $detail['blocks'] = $traceBlocks;
+        $traceWorkItems = QmsTraceWorkItemService::build(
+            (array)($detail['blocks'] ?? []),
+            $candidateTrace
+        );
         $documentBlockers = array_values((array)($conflicts['document_blockers'] ?? []));
         $systemNotices = array_values((array)($conflicts['system_notices'] ?? []));
         $workflowStage = (string)($workflow['stage'] ?? '');
@@ -352,6 +366,7 @@ final class QmsFileGovernanceWorkbenchService
             ],
             'semantic_guard' => $semanticGuard,
             'candidate_trace' => $candidateTrace,
+            'trace_work_items' => $traceWorkItems,
             'record_coverage' => $recordCoverage,
             'artifacts' => $artifacts,
             'conflicts' => [
