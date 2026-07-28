@@ -1943,10 +1943,11 @@ class QmsDocumentStructureService
         } catch (\Throwable) {
             $candidateTraceAvailable = false;
         }
-        $options = QmsTraceReviewOptionService::prioritize(
+        $optionGovernance = QmsTraceReviewOptionService::govern(
             self::traceReviewOptions(),
             $candidateTrace
         );
+        $options = (array)($optionGovernance['options'] ?? []);
         $candidateRequested = trim((string)(
             $prefillQuery['candidate_kind'] ?? ''
         )) !== '' || trim((string)(
@@ -1993,6 +1994,9 @@ class QmsDocumentStructureService
             'block' => $block->toArray(),
             'links' => $links,
             'options' => $options,
+            'option_governance_summary' => (array)(
+                $optionGovernance['summary'] ?? []
+            ),
             'default_relation_type' => (string)$block->block_type
                 === 'record_requirement'
                 ? 'requires_record'
@@ -4164,15 +4168,40 @@ class QmsDocumentStructureService
                 ->alias('c')
                 ->leftJoin('qms_sources s', 's.id = c.source_id')
                 ->where('c.soft_delete', 0)
-                ->field('c.id,s.source_code,c.clause_number,c.title')
+                ->field(
+                    'c.id,s.source_code,s.version,s.status,'
+                    . 'c.clause_number,c.title'
+                )
                 ->order('s.source_code', 'asc')
                 ->order('c.clause_number', 'asc')
                 ->limit(600)
                 ->select()
                 ->toArray(),
-            'manual_sections' => QmsManualSection::where('soft_delete', 0)->order('section_number', 'asc')->field('id,section_number,title')->select()->toArray(),
-            'procedure_documents' => Document::where('soft_delete', 0)->where('level', 2)->order('doc_number', 'asc')->field('id,doc_number,title')->select()->toArray(),
-            'record_forms' => RecordFormTemplate::where('soft_delete', 0)->order('doc_number', 'asc')->field('id,doc_number,name')->select()->toArray(),
+            'manual_sections' => Db::table('qms_manual_sections')
+                ->alias('ms')
+                ->leftJoin('documents d', 'd.id = ms.document_id')
+                ->where('ms.soft_delete', 0)
+                ->field(
+                    'ms.id,ms.section_number,ms.title,'
+                    . 'd.doc_number source_doc_number,d.version,d.status'
+                )
+                ->order('ms.section_number', 'asc')
+                ->order('d.version', 'desc')
+                ->select()
+                ->toArray(),
+            'procedure_documents' => Document::where('soft_delete', 0)
+                ->where('level', 2)
+                ->order('doc_number', 'asc')
+                ->field('id,doc_number,title,version,status')
+                ->select()
+                ->toArray(),
+            'record_forms' => RecordFormTemplate::where('soft_delete', 0)
+                ->order('doc_number', 'asc')
+                ->field(
+                    'id,doc_number,canonical_doc_number,name,version,status'
+                )
+                ->select()
+                ->toArray(),
             'positions' => QmsPosition::where('soft_delete', 0)->order('code', 'asc')->field('id,code,name')->select()->toArray(),
             'modules' => QmsBusinessModule::where('soft_delete', 0)->order('code', 'asc')->field('id,code,name')->select()->toArray(),
         ];
