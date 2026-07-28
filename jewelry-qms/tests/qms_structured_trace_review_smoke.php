@@ -64,6 +64,7 @@ $blockId = (string)$block['id'];
 $structuredId = (string)$block['structured_document_id'];
 $reviewNote = '结构化追溯复核 smoke：资料管理员负责计算机软件记录';
 $deleteNote = '结构化追溯复核 smoke：删除测试岗位映射';
+$mixedNote = '结构化追溯复核 smoke：非法混装不得写入';
 
 Db::name('qms_document_block_links')
     ->where('block_id', $blockId)
@@ -72,7 +73,7 @@ Db::name('qms_document_block_links')
     ->update(['soft_delete' => 1]);
 Db::name('qms_document_change_logs')
     ->where('structured_document_id', $structuredId)
-    ->whereIn('revision_note', [$reviewNote, $deleteNote])
+    ->whereIn('revision_note', [$reviewNote, $deleteNote, $mixedNote])
     ->update(['soft_delete' => 1]);
 
 $detail = QmsDocumentStructureService::blockTraceReviewDetail($blockId);
@@ -80,6 +81,62 @@ assert_true(($detail['block']['id'] ?? '') === $blockId, 'Trace review detail re
 assert_true(count($detail['options']['positions'] ?? []) > 0, 'Trace review detail exposes position options');
 assert_true(count($detail['options']['elements'] ?? []) > 0, 'Trace review detail exposes element options');
 assert_true(count($detail['options']['record_forms'] ?? []) > 0, 'Trace review detail exposes record form options');
+
+$manualSectionId = (string)($detail['options']['manual_sections'][0]['id'] ?? '');
+$recordFormId = (string)($detail['options']['record_forms'][0]['id'] ?? '');
+assert_true($manualSectionId !== '', 'Trace review exposes at least one manual section');
+assert_true($recordFormId !== '', 'Trace review exposes at least one record form');
+
+$linksBeforeMixedAttempt = Db::name('qms_document_block_links')
+    ->where('block_id', $blockId)
+    ->where('soft_delete', 0)
+    ->count();
+$logsBeforeMixedAttempt = Db::name('qms_document_change_logs')
+    ->where('structured_document_id', $structuredId)
+    ->where('soft_delete', 0)
+    ->count();
+$mixedError = '';
+try {
+    QmsDocumentStructureService::upsertBlockTraceLink($blockId, [
+        'relation_type' => 'implements',
+        'manual_section_id' => $manualSectionId,
+        'record_form_template_id' => $recordFormId,
+        'confidence' => 'review_required',
+        'note' => $mixedNote,
+    ]);
+} catch (Throwable $exception) {
+    $mixedError = $exception->getMessage();
+}
+
+// 红灯阶段当前实现会错误写入；先清理测试痕迹，再输出失败，避免污染 8021。
+Db::name('qms_document_block_links')
+    ->where('block_id', $blockId)
+    ->where('note', $mixedNote)
+    ->update(['soft_delete' => 1]);
+Db::name('qms_document_change_logs')
+    ->where('structured_document_id', $structuredId)
+    ->where('revision_note', $mixedNote)
+    ->update(['soft_delete' => 1]);
+
+assert_contains(
+    '主链：落实手册只能选择手册章节',
+    $mixedError,
+    'Trace review rejects a mixed manual and record target before writing'
+);
+assert_true(
+    Db::name('qms_document_block_links')
+        ->where('block_id', $blockId)
+        ->where('soft_delete', 0)
+        ->count() === $linksBeforeMixedAttempt,
+    'Rejected mixed trace does not add an active relation'
+);
+assert_true(
+    Db::name('qms_document_change_logs')
+        ->where('structured_document_id', $structuredId)
+        ->where('soft_delete', 0)
+        ->count() === $logsBeforeMixedAttempt,
+    'Rejected mixed trace does not add an active change log'
+);
 
 assert_throws(
     fn () => QmsDocumentStructureService::upsertBlockTraceLink($blockId, [
@@ -131,7 +188,7 @@ try {
     }
     Db::name('qms_document_change_logs')
         ->where('structured_document_id', $structuredId)
-        ->whereIn('revision_note', [$reviewNote, $deleteNote])
+        ->whereIn('revision_note', [$reviewNote, $deleteNote, $mixedNote])
         ->update(['soft_delete' => 1]);
 }
 

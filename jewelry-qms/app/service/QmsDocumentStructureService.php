@@ -2124,6 +2124,7 @@ class QmsDocumentStructureService
         if (!self::tracePayloadHasTarget($payload)) {
             throw new \RuntimeException('至少选择一个追溯对象');
         }
+        QmsTraceRelationPolicyService::validatePayload($payload);
 
         $linkId = (string)($data['link_id'] ?? '');
         $link = $linkId !== ''
