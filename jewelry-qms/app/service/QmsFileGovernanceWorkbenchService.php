@@ -131,6 +131,7 @@ final class QmsFileGovernanceWorkbenchService
                 'section_number' => (string)($block['section_number'] ?? ''),
                 'title' => (string)($block['title'] ?? ''),
                 'block_type' => (string)($block['block_type'] ?? ''),
+                'sort_order' => (int)($block['sort_order'] ?? 0),
                 'review_url' => $reviewUrl,
             ], $blockId !== '' ? $blockId : (string)($block['title'] ?? ''));
 
@@ -258,7 +259,10 @@ final class QmsFileGovernanceWorkbenchService
                 'candidate_complete' => false,
                 'issues' => [],
             ], $candidateTrace);
-            $candidateTrace['review_url'] = $traceReviewUrl;
+            $candidateTrace = QmsTraceCandidateRoutingService::route(
+                $candidateTrace,
+                $procedureBlocks
+            );
         }
         $documentBlockers = array_values((array)($conflicts['document_blockers'] ?? []));
         $systemNotices = array_values((array)($conflicts['system_notices'] ?? []));

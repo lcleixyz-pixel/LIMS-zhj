@@ -36,6 +36,9 @@ foreach ([
     '治理候选（不计闭环）',
     '候选·待复核',
     '候选来源',
+    '建议办理到',
+    '建议用途',
+    '带入此候选',
     '系统设计链条',
     '外部依据',
     '手册条款',
@@ -60,6 +63,9 @@ workbench_ui_assert(
 );
 foreach ([
     'workbench.candidate_trace',
+    'candidateSource.routing_issue',
+    'candidateSection.routing_issue',
+    'candidateRecord.routing_issue',
     'workbench.chain.confirmed_external_sources',
     'workbench.chain.confirmed_manual_sections',
     'workbench.chain.confirmed_record_evidence',
@@ -81,6 +87,10 @@ workbench_ui_assert(
 workbench_ui_assert(
     !str_contains($workbenchView, '<form'),
     'v0.1 工作台不得包含写入表单'
+);
+workbench_ui_assert(
+    !str_contains($workbenchView, '>进入人工追溯复核<'),
+    '有逐条候选入口后不应继续保留含糊的文件级复核按钮'
 );
 workbench_ui_assert(
     str_contains($indexView, '/planning/structures/workbench?id='),

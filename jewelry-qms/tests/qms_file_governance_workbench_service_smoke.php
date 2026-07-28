@@ -493,15 +493,38 @@ $candidateDetail = [
         'title' => '人员能力管理程序',
         'status' => 'draft',
     ],
-    'blocks' => [[
-        'block' => [
-            'id' => 'block-candidate',
-            'title' => '能力要求',
-            'block_type' => 'section',
-            'markdown' => '规定人员能力确认和记录要求。',
+    'blocks' => [
+        [
+            'block' => [
+                'id' => 'block-candidate-purpose',
+                'title' => '目的',
+                'block_type' => 'purpose',
+                'sort_order' => 10,
+                'markdown' => '明确人员能力管理目的。',
+            ],
+            'links' => [],
         ],
-        'links' => [],
-    ]],
+        [
+            'block' => [
+                'id' => 'block-candidate-process',
+                'title' => '工作程序',
+                'block_type' => 'process_step',
+                'sort_order' => 20,
+                'markdown' => '规定人员能力确认方法。',
+            ],
+            'links' => [],
+        ],
+        [
+            'block' => [
+                'id' => 'block-candidate-record',
+                'title' => '相关记录',
+                'block_type' => 'record_requirement',
+                'sort_order' => 30,
+                'markdown' => '规定人员能力确认记录。',
+            ],
+            'links' => [],
+        ],
+    ],
 ];
 $candidateBaseline = QmsFileGovernanceWorkbenchService::fromSnapshot(
     $candidateDetail,
@@ -524,17 +547,29 @@ $candidateWorkbench = QmsFileGovernanceWorkbenchService::fromSnapshot(
         'source_label' => '治理装配蓝图 / 本地条款映射',
         'canonical_doc_number' => 'XZTC/CX-TEST-2022',
         'manual_sections' => [
-            ['section_number' => '6.2', 'title' => '人员'],
+            [
+                'id' => 'manual-candidate-62',
+                'section_number' => '6.2',
+                'title' => '人员',
+                'available' => true,
+            ],
         ],
         'external_sources' => [
             [
+                'id' => 'clause-candidate-62',
                 'source_code' => 'CNAS-CL01:2018',
                 'clause_number' => '6.2',
                 'title' => '人员',
+                'available' => true,
             ],
         ],
         'record_templates' => [
-            ['doc_number' => 'XZTC/BG-11-01', 'name' => '人员能力记录'],
+            [
+                'id' => 'record-candidate-1101',
+                'doc_number' => 'XZTC/BG-11-01',
+                'name' => '人员能力记录',
+                'available' => true,
+            ],
         ],
         'review_required' => true,
         'candidate_complete' => true,
@@ -546,9 +581,35 @@ workbench_service_assert(
     '工作台应单独暴露只读候选链'
 );
 workbench_service_assert(
-    ($candidateWorkbench['candidate_trace']['review_url'] ?? '')
-        === '/planning/structures/links/review?block_id=block-candidate',
-    '候选链应复用现有人工追溯复核入口'
+    ($candidateWorkbench['candidate_trace']['external_sources'][0]['target_block_id'] ?? '')
+        === 'block-candidate-purpose'
+        && ($candidateWorkbench['candidate_trace']['external_sources'][0]['relation_type'] ?? '')
+            === 'basis',
+    '外部依据候选应定向到目的块并带入外部依据用途'
+);
+workbench_service_assert(
+    ($candidateWorkbench['candidate_trace']['manual_sections'][0]['target_block_id'] ?? '')
+        === 'block-candidate-process'
+        && ($candidateWorkbench['candidate_trace']['manual_sections'][0]['relation_type'] ?? '')
+            === 'implements',
+    '手册候选应定向到工作程序块并带入落实手册用途'
+);
+workbench_service_assert(
+    ($candidateWorkbench['candidate_trace']['record_templates'][0]['target_block_id'] ?? '')
+        === 'block-candidate-record'
+        && ($candidateWorkbench['candidate_trace']['record_templates'][0]['relation_type'] ?? '')
+            === 'requires_record',
+    '运行记录候选应定向到记录要求块并带入运行记录用途'
+);
+workbench_service_assert(
+    str_contains(
+        (string)(
+            $candidateWorkbench['candidate_trace']['manual_sections'][0]['review_url']
+            ?? ''
+        ),
+        'candidate_id=manual-candidate-62'
+    ),
+    '每条候选应生成自己的安全预填入口'
 );
 workbench_service_assert(
     $candidateWorkbench['chain']['confirmed_external_sources'] === []

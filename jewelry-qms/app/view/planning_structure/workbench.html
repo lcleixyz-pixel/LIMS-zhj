@@ -77,9 +77,20 @@
                 <div class="border rounded h-100 p-3">
                     <h6>候选外部依据</h6>
                     {volist name="workbench.candidate_trace.external_sources" id="candidateSource"}
-                    <div class="small mt-2">
+                    <div class="small border-top pt-2 mt-2">
                         <span class="fw-semibold">{$candidateSource.source_code} {$candidateSource.clause_number}</span>
                         <div class="text-muted">{$candidateSource.title|default='条款标题待治理'}</div>
+                        {if $candidateSource.routable}
+                        <div class="mt-2">
+                            <div><span class="fw-semibold">建议办理到：</span>{$candidateSource.target_block_title}</div>
+                            <div><span class="fw-semibold">建议用途：</span>{$candidateSource.relation_label}</div>
+                        </div>
+                        <a href="{$candidateSource.review_url}" class="btn btn-sm btn-outline-primary mt-2">
+                            带入此候选
+                        </a>
+                        {else}
+                        <div class="text-danger mt-2">{$candidateSource.routing_issue}</div>
+                        {/if}
                     </div>
                     {/volist}
                     {empty name="workbench.candidate_trace.external_sources"}
@@ -91,9 +102,20 @@
                 <div class="border rounded h-100 p-3">
                     <h6>候选手册条款</h6>
                     {volist name="workbench.candidate_trace.manual_sections" id="candidateSection"}
-                    <div class="small mt-2">
+                    <div class="small border-top pt-2 mt-2">
                         <span class="fw-semibold">{$candidateSection.section_number}</span>
                         <div class="text-muted">{$candidateSection.title|default='章节标题待治理'}</div>
+                        {if $candidateSection.routable}
+                        <div class="mt-2">
+                            <div><span class="fw-semibold">建议办理到：</span>{$candidateSection.target_block_title}</div>
+                            <div><span class="fw-semibold">建议用途：</span>{$candidateSection.relation_label}</div>
+                        </div>
+                        <a href="{$candidateSection.review_url}" class="btn btn-sm btn-outline-primary mt-2">
+                            带入此候选
+                        </a>
+                        {else}
+                        <div class="text-danger mt-2">{$candidateSection.routing_issue}</div>
+                        {/if}
                     </div>
                     {/volist}
                     {empty name="workbench.candidate_trace.manual_sections"}
@@ -105,9 +127,20 @@
                 <div class="border rounded h-100 p-3">
                     <h6>候选运行记录</h6>
                     {volist name="workbench.candidate_trace.record_templates" id="candidateRecord"}
-                    <div class="small mt-2">
+                    <div class="small border-top pt-2 mt-2">
                         <span class="fw-semibold">{$candidateRecord.doc_number}</span>
                         <div class="text-muted">{$candidateRecord.name|default='记录名称待治理'}</div>
+                        {if $candidateRecord.routable}
+                        <div class="mt-2">
+                            <div><span class="fw-semibold">建议办理到：</span>{$candidateRecord.target_block_title}</div>
+                            <div><span class="fw-semibold">建议用途：</span>{$candidateRecord.relation_label}</div>
+                        </div>
+                        <a href="{$candidateRecord.review_url}" class="btn btn-sm btn-outline-primary mt-2">
+                            带入此候选
+                        </a>
+                        {else}
+                        <div class="text-danger mt-2">{$candidateRecord.routing_issue}</div>
+                        {/if}
                     </div>
                     {/volist}
                     {empty name="workbench.candidate_trace.record_templates"}
@@ -123,11 +156,6 @@
             {/volist}
         </div>
         {/if}
-        {notempty name="workbench.candidate_trace.review_url"}
-        <a href="{$workbench.candidate_trace.review_url}" class="btn btn-sm btn-outline-warning mt-3">
-            进入人工追溯复核
-        </a>
-        {/notempty}
     </div>
 </div>
 {/notempty}
