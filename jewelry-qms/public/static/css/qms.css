@@ -652,6 +652,7 @@ a:hover{ color:var(--qms-primary-dark); }
 .qms-trace-work-items-list {
     display: grid;
     gap: 14px;
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .qms-trace-work-item {
@@ -665,6 +666,10 @@ a:hover{ color:var(--qms-primary-dark); }
 
 .qms-trace-work-item[data-priority="blocked"] {
     border-left-color: var(--qms-bad);
+}
+
+.qms-trace-work-item[data-priority="review"] {
+    border-left-color: var(--qms-warn);
 }
 
 .qms-trace-work-item-header {

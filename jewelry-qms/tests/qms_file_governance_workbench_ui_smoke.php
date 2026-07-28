@@ -31,6 +31,7 @@ $workbenchView = (string)@file_get_contents($root . '/app/view/planning_structur
 $indexView = (string)file_get_contents($root . '/app/view/planning_structure/index.html');
 $detailView = (string)file_get_contents($root . '/app/view/planning_structure/view.html');
 $linkReviewView = (string)file_get_contents($root . '/app/view/planning_structure/link_review.html');
+$qmsCss = (string)file_get_contents($root . '/public/static/css/qms.css');
 
 foreach ([
     '按内容块连续办理',
@@ -41,6 +42,10 @@ foreach ([
     'workbench.trace_work_items',
     'qms-trace-work-items',
     'qms-trace-work-item',
+    '当前没有需要汇总办理的内容块。',
+    '当前没有可用办理入口，请返回追溯关系复核配置。',
+    '<article',
+    '<ol class="qms-trace-work-item-steps">',
     '治理候选（不计闭环）',
     '候选·待复核',
     '候选来源',
@@ -64,6 +69,49 @@ foreach ([
 ] as $text) {
     workbench_ui_assert(str_contains($workbenchView, $text), '工作台缺少文案：' . $text);
 }
+
+foreach ([
+    'workbench.trace_work_items.block_count',
+    'workbench.trace_work_items.issue_count',
+    'traceItem.section_number',
+    'traceItem.title',
+    'traceItem.block_id',
+    'traceItem.block_type_label',
+    'traceItem.priority',
+    'traceItem.issues',
+    'traceIssue.label',
+    'traceIssue.message',
+    'traceItem.steps',
+    'traceStep.label',
+    'traceStep.description',
+    'traceItem.candidates',
+    'traceCandidate.candidate_kind_label',
+    'traceCandidate.target_label',
+    'traceCandidate.relation_label',
+    'traceCandidate.recommendation_reason',
+    'traceCandidate.review_url',
+    'traceItem.primary_url',
+] as $traceViewModelPath) {
+    workbench_ui_assert(
+        str_contains($workbenchView, $traceViewModelPath),
+        '连续办理卡应直接消费 ViewModel 字段：' . $traceViewModelPath
+    );
+}
+
+$semanticReasonPosition = strpos($workbenchView, '自动识别原因');
+$traceWorkItemsPosition = strpos(
+    $workbenchView,
+    '<section class="qms-trace-work-items'
+);
+$candidateTracePosition = strpos($workbenchView, '治理候选（不计闭环）');
+workbench_ui_assert(
+    $semanticReasonPosition !== false
+        && $traceWorkItemsPosition !== false
+        && $candidateTracePosition !== false
+        && $semanticReasonPosition < $traceWorkItemsPosition
+        && $traceWorkItemsPosition < $candidateTracePosition,
+    '连续办理区应位于语义原因之后、治理候选之前'
+);
 
 workbench_ui_assert(
     str_contains($workbenchView, 'workbench.chain.external_sources'),
@@ -93,8 +141,16 @@ workbench_ui_assert(
     '工作台不应重复堆叠同一语义警告'
 );
 workbench_ui_assert(
-    !str_contains($workbenchView, '<form'),
+    preg_match('/<\s*form\b/i', $workbenchView) !== 1,
     'v0.1 工作台不得包含写入表单'
+);
+workbench_ui_assert(
+    preg_match(
+        '/method\s*=\s*(?:"\s*post\s*"|\'\s*post\s*\'|post\b)/i',
+        $workbenchView
+    ) !== 1
+        && preg_match('/<\s*script\b/i', $workbenchView) !== 1,
+    '连续办理工作台不得包含 POST 或脚本'
 );
 workbench_ui_assert(
     !str_contains($workbenchView, '>进入人工追溯复核<'),
@@ -120,5 +176,83 @@ workbench_ui_assert(
     && str_contains($linkReviewView, '移除此错误手册挂接'),
     '追溯复核页应能直接确认主链或调整为辅助关系'
 );
+
+$traceCssPosition = strpos(
+    $qmsCss,
+    '.qms-trace-work-items .card-header'
+);
+workbench_ui_assert(
+    $traceCssPosition !== false,
+    'qms.css 应提供连续办理命名空间样式'
+);
+$traceCss = substr($qmsCss, $traceCssPosition);
+foreach ([
+    '.qms-trace-work-items-list',
+    '.qms-trace-work-item',
+    '.qms-trace-work-item-actions',
+    '.qms-trace-work-item[data-priority="blocked"]',
+    '.qms-trace-work-item[data-priority="review"]',
+    '.qms-trace-work-items a:focus-visible',
+    '@media (max-width: 767.98px)',
+] as $traceCssContract) {
+    workbench_ui_assert(
+        str_contains($traceCss, $traceCssContract),
+        '连续办理样式缺少：' . $traceCssContract
+    );
+}
+workbench_ui_assert(
+    preg_match(
+        '/\.qms-trace-work-items-list\s*\{[^}]*'
+            . 'grid-template-columns\s*:\s*minmax\(0,\s*1fr\)/s',
+        $traceCss
+    ) === 1,
+    '连续办理卡列表应明确保持单列'
+);
+foreach (['blocked', 'review'] as $priority) {
+    workbench_ui_assert(
+        preg_match(
+            '/\.qms-trace-work-item\[data-priority="'
+                . $priority
+                . '"\]\s*\{[^}]*border-left-color\s*:/s',
+            $traceCss
+        ) === 1,
+        $priority . ' 办理卡应有命名空间内的左边框颜色'
+    );
+}
+workbench_ui_assert(
+    preg_match(
+        '/@media\s*\(max-width:\s*767\.98px\)\s*\{'
+            . '(?s:.*\.qms-trace-work-item-actions[^}]*'
+            . 'flex-direction\s*:\s*column)'
+            . '(?s:.*\.qms-trace-work-item-actions \.btn[^}]*'
+            . 'width\s*:\s*100%)/',
+        $traceCss
+    ) === 1,
+    '窄屏下办理动作应纵向排列且按钮占满宽度'
+);
+$traceRuleCount = preg_match_all(
+    '/([^{}]+)\{([^{}]*)\}/s',
+    $traceCss,
+    $traceRules,
+    PREG_SET_ORDER
+);
+workbench_ui_assert(
+    $traceRuleCount !== false && $traceRuleCount > 0,
+    '应能解析连续办理命名空间样式规则'
+);
+foreach ($traceRules as $traceRule) {
+    $selector = (string)($traceRule[1] ?? '');
+    if (!str_contains($selector, '.qms-trace-work-item')) {
+        continue;
+    }
+    workbench_ui_assert(
+        preg_match(
+            '/\b(?:animation|transition)(?:-[a-z-]+)?\s*:/i',
+            (string)($traceRule[2] ?? '')
+        ) !== 1,
+        '连续办理命名空间不得新增动画或过渡：'
+            . trim($selector)
+    );
+}
 
 echo "qms_file_governance_workbench_ui_smoke passed\n";

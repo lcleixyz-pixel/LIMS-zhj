@@ -36,6 +36,160 @@ function trace_work_item_render_url_multiset(array $urls): array
     return $urls;
 }
 
+function trace_work_item_render_assert_compiled(
+    string $html,
+    string $scenario
+): void {
+    $templateResiduePattern = '/\{(?:'
+        . '\/?(?:if|elseif|else|volist|notempty|empty)\b[^}]*'
+        . '|\$[^}]+'
+        . ')\}/u';
+    trace_work_item_render_assert(
+        preg_match($templateResiduePattern, $html) !== 1,
+        $scenario . ' 不得残留未编译模板标签或变量'
+    );
+}
+
+function trace_work_item_render_parse(
+    string $html,
+    string $scenario
+): array {
+    $document = new DOMDocument();
+    libxml_use_internal_errors(true);
+    $loaded = $document->loadHTML(
+        '<?xml encoding="utf-8" ?>' . $html,
+        LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+    );
+    libxml_clear_errors();
+    trace_work_item_render_assert(
+        $loaded,
+        $scenario . ' 应能解析为 HTML'
+    );
+
+    return [
+        'document' => $document,
+        'xpath' => new DOMXPath($document),
+    ];
+}
+
+function trace_work_item_render_workbench(
+    array $workbench,
+    string $scenario
+): array {
+    View::layout(false);
+    View::assign('workbench', $workbench);
+    $html = View::fetch('planning_structure/workbench');
+    trace_work_item_render_assert_compiled($html, $scenario);
+    $parsed = trace_work_item_render_parse($html, $scenario);
+
+    return [
+        'html' => $html,
+        'document' => $parsed['document'],
+        'xpath' => $parsed['xpath'],
+    ];
+}
+
+function trace_work_item_render_section(
+    DOMXPath $xpath,
+    string $scenario
+): DOMElement {
+    $sectionNodes = $xpath->query(
+        '//section['
+            . trace_work_item_render_class_xpath('qms-trace-work-items')
+            . ']'
+    );
+    trace_work_item_render_assert(
+        $sectionNodes !== false && $sectionNodes->length === 1,
+        $scenario . ' 应真实渲染一个内容块连续办理区'
+    );
+    $section = $sectionNodes->item(0);
+    trace_work_item_render_assert(
+        $section instanceof DOMElement,
+        $scenario . ' 的连续办理区应为有效 section 元素'
+    );
+
+    return $section;
+}
+
+function trace_work_item_render_article(
+    DOMXPath $xpath,
+    DOMElement $section,
+    string $blockId
+): ?DOMElement {
+    $articles = $xpath->query(
+        './/article['
+            . trace_work_item_render_class_xpath('qms-trace-work-item')
+            . ' and @data-block-id="' . $blockId . '"]',
+        $section
+    );
+    if ($articles === false || $articles->length !== 1) {
+        return null;
+    }
+    $article = $articles->item(0);
+
+    return $article instanceof DOMElement ? $article : null;
+}
+
+function trace_work_item_render_candidates_match_by_article(
+    DOMXPath $xpath,
+    DOMElement $section,
+    array $items
+): bool {
+    foreach ($items as $item) {
+        $blockId = (string)($item['block_id'] ?? '');
+        $article = trace_work_item_render_article(
+            $xpath,
+            $section,
+            $blockId
+        );
+        if ($article === null) {
+            return false;
+        }
+
+        $expectedUrls = [];
+        foreach ((array)($item['candidates'] ?? []) as $candidate) {
+            $expectedUrls[] = (string)($candidate['review_url'] ?? '');
+        }
+
+        $candidateLinks = $xpath->query(
+            './/a[normalize-space(.)="带入此候选"]',
+            $article
+        );
+        if (
+            $candidateLinks === false
+            || $candidateLinks->length !== count($expectedUrls)
+        ) {
+            return false;
+        }
+
+        $renderedUrls = [];
+        foreach ($candidateLinks as $candidateLink) {
+            if (!$candidateLink instanceof DOMElement) {
+                return false;
+            }
+            $url = $candidateLink->getAttribute('href');
+            $parts = parse_url($url);
+            if (!is_array($parts)) {
+                return false;
+            }
+            parse_str((string)($parts['query'] ?? ''), $query);
+            if ((string)($query['block_id'] ?? '') !== $blockId) {
+                return false;
+            }
+            $renderedUrls[] = $url;
+        }
+
+        if (
+            trace_work_item_render_url_multiset($renderedUrls)
+            !== trace_work_item_render_url_multiset($expectedUrls)
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 $workbench = QmsFileGovernanceWorkbenchService::detail(
     '62ef7ecd-d270-4fc2-bccf-49c2986fa838'
 );
@@ -44,44 +198,9 @@ trace_work_item_render_assert(
     '8021 缺少指定的 CX-03-02 GOV-TRIAL/0.2 结构化文件'
 );
 
-View::layout(false);
-View::assign('workbench', $workbench);
-$html = View::fetch('planning_structure/workbench');
-
-trace_work_item_render_assert(
-    !str_contains($html, '{if')
-        && !str_contains($html, '{volist'),
-    '连续办理页面不得残留未编译模板标签'
-);
-
-$document = new DOMDocument();
-libxml_use_internal_errors(true);
-$loaded = $document->loadHTML(
-    '<?xml encoding="utf-8" ?>' . $html,
-    LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
-);
-libxml_clear_errors();
-trace_work_item_render_assert(
-    $loaded,
-    '连续办理页面应能解析为 HTML'
-);
-$xpath = new DOMXPath($document);
-
-$sectionNodes = $xpath->query(
-    '//section['
-        . trace_work_item_render_class_xpath('qms-trace-work-items')
-        . ']'
-);
-trace_work_item_render_assert(
-    $sectionNodes !== false && $sectionNodes->length === 1,
-    '工作台应真实渲染一个内容块连续办理区'
-);
-$section = $sectionNodes->item(0);
-trace_work_item_render_assert(
-    $section instanceof DOMElement,
-    '内容块连续办理区应为有效 section 元素'
-);
-
+$rendered = trace_work_item_render_workbench($workbench, '真实工作台');
+$xpath = $rendered['xpath'];
+$section = trace_work_item_render_section($xpath, '真实工作台');
 $traceWorkItems = (array)($workbench['trace_work_items'] ?? []);
 $items = (array)($traceWorkItems['items'] ?? []);
 $articleNodes = $xpath->query(
@@ -99,24 +218,13 @@ trace_work_item_render_assert(
     '真实样本应渲染办理卡，且数量必须等于模型 block_count'
 );
 
-$expectedCandidateUrls = [];
-$renderedCandidateUrls = [];
+$expectedCandidateCount = 0;
 foreach ($items as $item) {
     $blockId = (string)($item['block_id'] ?? '');
-    $articleList = $xpath->query(
-        './/article['
-            . trace_work_item_render_class_xpath('qms-trace-work-item')
-            . ' and @data-block-id="' . $blockId . '"]',
-        $section
-    );
-    trace_work_item_render_assert(
-        $articleList !== false && $articleList->length === 1,
-        '每个模型 block_id 应对应一张办理卡：' . $blockId
-    );
-    $article = $articleList->item(0);
+    $article = trace_work_item_render_article($xpath, $section, $blockId);
     trace_work_item_render_assert(
         $article instanceof DOMElement,
-        '内容块办理卡应为有效 article 元素：' . $blockId
+        '每个模型 block_id 应对应一张办理卡：' . $blockId
     );
 
     $primaryLinks = $xpath->query(
@@ -135,35 +243,18 @@ foreach ($items as $item) {
         '办理卡主入口必须原样使用模型 primary_url：' . $blockId
     );
 
-    foreach ((array)($item['candidates'] ?? []) as $candidate) {
-        $expectedCandidateUrls[] = (string)(
-            $candidate['review_url'] ?? ''
-        );
-    }
-    $candidateLinks = $xpath->query(
-        './/a[normalize-space(.)="带入此候选"]',
-        $article
+    $expectedCandidateCount += count(
+        (array)($item['candidates'] ?? [])
     );
-    trace_work_item_render_assert(
-        $candidateLinks !== false
-            && $candidateLinks->length
-                === count((array)($item['candidates'] ?? [])),
-        '每张办理卡的候选链接数量必须与模型严格一致：' . $blockId
-    );
-    foreach ($candidateLinks as $candidateLink) {
-        trace_work_item_render_assert(
-            $candidateLink instanceof DOMElement,
-            '候选办理入口必须是链接元素：' . $blockId
-        );
-        $renderedCandidateUrls[] = $candidateLink->getAttribute('href');
-    }
 }
-
 trace_work_item_render_assert(
-    $expectedCandidateUrls !== []
-        && trace_work_item_render_url_multiset($renderedCandidateUrls)
-        === trace_work_item_render_url_multiset($expectedCandidateUrls),
-    '真实样本应有候选，且链接 URL 必须与模型 candidates 严格对应'
+    $expectedCandidateCount > 0
+        && trace_work_item_render_candidates_match_by_article(
+            $xpath,
+            $section,
+            $items
+        ),
+    '真实样本候选必须在所属 article 内与模型 URL 严格对应'
 );
 trace_work_item_render_assert(
     $xpath->query('//form')->length === 0,
@@ -185,9 +276,186 @@ foreach ([
     );
 }
 
+$mutationParsed = trace_work_item_render_parse(
+    $rendered['html'],
+    '跨卡候选 URL 变异'
+);
+$mutationXpath = $mutationParsed['xpath'];
+$mutationSection = trace_work_item_render_section(
+    $mutationXpath,
+    '跨卡候选 URL 变异'
+);
+$mutationArticles = $mutationXpath->query(
+    './/article['
+        . trace_work_item_render_class_xpath('qms-trace-work-item')
+        . ' and .//a[normalize-space(.)="带入此候选"]]',
+    $mutationSection
+);
+trace_work_item_render_assert(
+    $mutationArticles !== false && $mutationArticles->length >= 2,
+    '真实样本至少两张卡应有候选，才能执行跨卡 URL 变异'
+);
+$firstMutationLink = $mutationXpath->query(
+    './/a[normalize-space(.)="带入此候选"]',
+    $mutationArticles->item(0)
+)->item(0);
+$secondMutationLink = $mutationXpath->query(
+    './/a[normalize-space(.)="带入此候选"]',
+    $mutationArticles->item(1)
+)->item(0);
+trace_work_item_render_assert(
+    $firstMutationLink instanceof DOMElement
+        && $secondMutationLink instanceof DOMElement
+        && $firstMutationLink->getAttribute('href')
+            !== $secondMutationLink->getAttribute('href'),
+    '跨卡变异应选取两个不同的候选 URL'
+);
+$firstMutationUrl = $firstMutationLink->getAttribute('href');
+$firstMutationLink->setAttribute(
+    'href',
+    $secondMutationLink->getAttribute('href')
+);
+$secondMutationLink->setAttribute('href', $firstMutationUrl);
+
+$mutatedGlobalUrls = [];
+foreach ($mutationArticles as $mutationArticle) {
+    $mutationLinks = $mutationXpath->query(
+        './/a[normalize-space(.)="带入此候选"]',
+        $mutationArticle
+    );
+    foreach ($mutationLinks as $mutationLink) {
+        $mutatedGlobalUrls[] = $mutationLink->getAttribute('href');
+    }
+}
+$expectedGlobalUrls = [];
+foreach ($items as $item) {
+    foreach ((array)($item['candidates'] ?? []) as $candidate) {
+        $expectedGlobalUrls[] = (string)($candidate['review_url'] ?? '');
+    }
+}
+trace_work_item_render_assert(
+    trace_work_item_render_url_multiset($mutatedGlobalUrls)
+        === trace_work_item_render_url_multiset($expectedGlobalUrls),
+    '跨卡 URL 变异应保持全页 multiset 不变'
+);
+trace_work_item_render_assert(
+    !trace_work_item_render_candidates_match_by_article(
+        $mutationXpath,
+        $mutationSection,
+        $items
+    ),
+    '逐卡契约必须拒绝跨卡交换候选 URL'
+);
+
+$withoutPrimary = $workbench;
+$withoutPrimaryItems = (array)(
+    $withoutPrimary['trace_work_items']['items'] ?? []
+);
+$withoutPrimaryIndex = array_key_first($withoutPrimaryItems);
+trace_work_item_render_assert(
+    $withoutPrimaryIndex !== null,
+    '真实样本应至少有一张卡用于空主入口场景'
+);
+$withoutPrimaryBlockId = (string)(
+    $withoutPrimaryItems[$withoutPrimaryIndex]['block_id'] ?? ''
+);
+$withoutPrimaryItems[$withoutPrimaryIndex]['primary_url'] = '';
+$withoutPrimary['trace_work_items']['items'] = $withoutPrimaryItems;
+$withoutPrimaryRendered = trace_work_item_render_workbench(
+    $withoutPrimary,
+    '空主入口场景'
+);
+$withoutPrimaryXpath = $withoutPrimaryRendered['xpath'];
+$withoutPrimarySection = trace_work_item_render_section(
+    $withoutPrimaryXpath,
+    '空主入口场景'
+);
+foreach ($withoutPrimaryItems as $item) {
+    $blockId = (string)($item['block_id'] ?? '');
+    $article = trace_work_item_render_article(
+        $withoutPrimaryXpath,
+        $withoutPrimarySection,
+        $blockId
+    );
+    trace_work_item_render_assert(
+        $article instanceof DOMElement,
+        '空主入口场景应保留办理卡：' . $blockId
+    );
+    $primaryLinks = $withoutPrimaryXpath->query(
+        './/a[normalize-space(.)="处理此内容块"]',
+        $article
+    );
+    if ($blockId === $withoutPrimaryBlockId) {
+        $withoutPrimaryNotices = $withoutPrimaryXpath->query(
+            './/*['
+                . trace_work_item_render_class_xpath('text-danger')
+                . ' and normalize-space(.)="'
+                . '当前没有可用办理入口，请返回追溯关系复核配置。'
+                . '"]',
+            $article
+        );
+        trace_work_item_render_assert(
+            $primaryLinks->length === 0
+                && $withoutPrimaryNotices->length === 1,
+            'primary_url 为空时应隐藏主链接并显示明确说明'
+                . '，当前主链接=' . $primaryLinks->length
+                . '，说明=' . $withoutPrimaryNotices->length
+        );
+        continue;
+    }
+    $primaryLink = $primaryLinks->item(0);
+    trace_work_item_render_assert(
+        $primaryLinks->length === 1
+            && $primaryLink instanceof DOMElement
+            && $primaryLink->getAttribute('href')
+                === (string)($item['primary_url'] ?? ''),
+        '空主入口场景不得影响其他卡的主链接：' . $blockId
+    );
+}
+trace_work_item_render_assert(
+    $withoutPrimaryXpath->query('//form')->length === 0,
+    '空主入口场景不得渲染 form'
+);
+
+$emptyWorkbench = $workbench;
+$emptyWorkbench['trace_work_items'] = [
+    'items' => [],
+    'block_count' => 0,
+    'issue_count' => 0,
+];
+$emptyRendered = trace_work_item_render_workbench(
+    $emptyWorkbench,
+    '空列表场景'
+);
+$emptyXpath = $emptyRendered['xpath'];
+$emptySection = trace_work_item_render_section(
+    $emptyXpath,
+    '空列表场景'
+);
+trace_work_item_render_assert(
+    $emptyXpath->query(
+        './/article['
+            . trace_work_item_render_class_xpath('qms-trace-work-item')
+            . ']',
+        $emptySection
+    )->length === 0
+        && $emptyXpath->query(
+            './/*[normalize-space(.)="当前没有需要汇总办理的内容块。"]',
+            $emptySection
+        )->length === 1,
+    '空列表场景应只显示明确空状态'
+);
+trace_work_item_render_assert(
+    $emptyXpath->query('//form')->length === 0,
+    '空列表场景不得渲染 form'
+);
+
 echo 'qms_trace_work_item_render_smoke passed: '
     . json_encode([
         'blocks' => count($items),
-        'candidates' => count($renderedCandidateUrls),
+        'candidates' => $expectedCandidateCount,
+        'mutation_rejected' => true,
+        'empty_primary_checked' => $withoutPrimaryBlockId,
+        'empty_state_checked' => true,
     ], JSON_UNESCAPED_UNICODE)
     . PHP_EOL;
