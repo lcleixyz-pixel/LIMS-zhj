@@ -47,19 +47,25 @@ FlinkISO、FlinkISO Lite 和 CakePHP legacy 参考代码已拆至独立归档仓
 
 | 组件 | 当前版本 | 说明 |
 |------|----------|------|
-| 工作区 | 2.2.0 | 缺陷治理 + 签批闸门（三波次 1+2） |
-| jewelry-qms | 2.2.0 | 与 `config/qms.php` 和 `CHANGELOG.md` 保持一致 |
+| 工作区候选版本 | 2.3.0-rc.1 | 文件治理、语义追溯、记录更正、模板换版与中文交互优化 |
+| jewelry-qms 候选版本 | 2.3.0-rc.1 | 记录在 `config/qms.php` 的 `candidate_version` |
+| 稳定运行版本 | 2.2.0 | `config/qms.php` 默认值；8010 本轮保持不变 |
+| 8021 治理试运行 | 2.3.0-rc.1 | 由 `QMS_APP_VERSION` 环境变量注入 |
 
 历史标签：
 
 - `v1.0.0`：工作区首次纳入 FlinkISO 参考项目和 Jewelry QMS 初版
+- `v2.2.0`：缺陷治理、签批闸门与三波次第 1、2 波稳定版本
+- `v2.3.0-rc.1`：治理试运行候选版本；仅本地整理，未合并 `main`、未推送、未部署 8010
 
-后续标签示例：
+候选版转为稳定版后的标签示例：
 
 ```bash
-git tag -a v2.2.0 -m "Jewelry QMS 2.2.0"
-git push origin v2.2.0
+git tag -a v2.3.0 -m "Jewelry QMS 2.3.0"
+git push origin v2.3.0
 ```
+
+候选标签不得作为正式发布证据。转为稳定版本前，应完成 8021 集中验收、确认候选缺陷关闭、同步五个版本锚点，并另行取得合并、推送和 8010 部署授权。
 
 ## 4. 提交信息规范
 
@@ -99,6 +105,14 @@ docs: 对齐 ThinkPHP 8 部署说明
 - `CHANGELOG.md`：版本发布汇总。平时只保留 `[Unreleased]` 提示；发布新版本号时，从日常台账选择对使用者有影响的大项，按主题归拢一次。
 
 不得要求同一项日常变更在两个文件中逐行重复。版本号、发布日期和 Git 标签形成时，必须同步更新 `CHANGELOG.md`、`config/qms.php`、README 版本表和 `docs/VERSIONING.md`。
+
+候选版与稳定版并行时，使用双锚点：
+
+- `candidate_version` 记录仓库当前候选版本；
+- `stable_version` 记录当前稳定版本；
+- `version` 默认采用稳定版本，只允许隔离试运行环境通过 `QMS_APP_VERSION` 显示候选版本。
+
+这样可避免 8021 与 8010 共用源码挂载时，整理候选版本误改 8010 的运行标识。
 
 ## 6. 勿提交内容
 

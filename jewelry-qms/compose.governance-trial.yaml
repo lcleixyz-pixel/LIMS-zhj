@@ -46,6 +46,7 @@ services:
       DB_PORT: "3306"
       DB_CHARSET: utf8mb4
       DEFAULT_LANG: zh-cn
+      QMS_APP_VERSION: 2.3.0-rc.1
       QMS_TRIAL_MODE: "true"
       QMS_TRIAL_BATCH: GOV-TRIAL-20260724
       QMS_ENV_LABEL: 治理试运行模拟环境

@@ -1,7 +1,10 @@
 <?php
 return [
     'title' => '珠宝检测实验室质量管理系统',
-    'version' => '2.2.0',
+    // 8010 未显式设置时继续显示稳定版；8021 由隔离 compose 注入候选版本。
+    'version' => getenv('QMS_APP_VERSION') ?: '2.2.0',
+    'stable_version' => '2.2.0',
+    'candidate_version' => '2.3.0-rc.1',
     'company_id' => '00000000-0000-0000-0000-000000000001',
     'environment_label' => getenv('QMS_ENV_LABEL') ?: '',
     'environment_notice' => getenv('QMS_ENV_NOTICE') ?: '',
