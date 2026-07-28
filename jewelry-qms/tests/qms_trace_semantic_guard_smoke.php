@@ -117,6 +117,10 @@ trace_semantic_guard_assert($cx08Wrong['profile']['expected_manual_sections'] ==
 trace_semantic_guard_assert($cx08Wrong['status'] === 'suspected_mismatch', 'CX-08 仅挂 4.2 应提示疑似错挂');
 trace_semantic_guard_assert(count($cx08Wrong['manual']['confirmed_primary']) === 0, '4.2 不得冒充 CX-08 主链');
 trace_semantic_guard_assert(count($cx08Wrong['manual']['suspected_mismatch']) === 1, '4.2 应列入疑似错挂');
+trace_semantic_guard_assert(
+    ($cx08Wrong['issues'][0]['reason_code'] ?? '') === 'wrong_section',
+    '独立错误章节的顶层问题应标记为章节不匹配'
+);
 
 $cx08Correct = QmsTraceSemanticGuardService::assess(
     [
@@ -167,6 +171,10 @@ $inherited = QmsTraceSemanticGuardService::assess(
 trace_semantic_guard_assert($inherited['status'] === 'review_required', '继承的 8.3 即使原置信度为 high 也必须待复核');
 trace_semantic_guard_assert(count($inherited['manual']['pending_review']) === 1, '继承关系应列入待复核');
 trace_semantic_guard_assert(count($inherited['manual']['confirmed_primary']) === 0, '继承关系不得计入已确认主链');
+trace_semantic_guard_assert(
+    ($inherited['issues'][0]['reason_code'] ?? '') === 'unconfirmed_relation',
+    '正确但继承待复核的顶层问题应标记为尚未确认'
+);
 
 $inheritedWrong = QmsTraceSemanticGuardService::assess(
     [
@@ -238,6 +246,52 @@ $genericCandidate = [
         ['section_number' => '8.4', 'title' => '记录控制'],
     ],
 ];
+$mixedCorrectBlocks = trace_semantic_guard_block(
+    '6.2',
+    'requires_record',
+    'high',
+    '由GOV-TRIAL/0.1追溯关系继承，待0.2逐块复核。'
+);
+$mixedCorrectBlocks[0]['links'][0] += [
+    'record_form_template_id' => 'form-11-01',
+    'record_number' => 'XZTC/BG-11-01',
+    'record_name' => '人员能力记录',
+];
+$mixedCorrectAssessment = QmsTraceSemanticGuardService::assess(
+    [
+        'doc_number' => 'XZTC/CX-11-2022',
+        'title' => '人员管理程序',
+    ],
+    $mixedCorrectBlocks,
+    $genericCandidate
+);
+trace_semantic_guard_assert(
+    $mixedCorrectAssessment['status'] === 'suspected_mismatch',
+    '正确章节夹在记录关系中仍不能计入主链'
+);
+trace_semantic_guard_assert(
+    ($mixedCorrectAssessment['issues'][0]['reason_code'] ?? '') === 'mixed_relation',
+    '正确章节夹在记录关系中的顶层问题应标记为关系混装'
+);
+trace_semantic_guard_assert(
+    str_contains(
+        (string)($mixedCorrectAssessment['issues'][0]['message'] ?? ''),
+        '6.2 章节候选正确'
+    )
+        && str_contains(
+            (string)($mixedCorrectAssessment['issues'][0]['message'] ?? ''),
+            '混在同一关系中'
+        ),
+    '关系混装顶层提示不得再把正确章节说成错挂'
+);
+trace_semantic_guard_assert(
+    str_contains(
+        (string)($mixedCorrectAssessment['issues'][0]['recommended_action'] ?? ''),
+        '拆分预览'
+    ),
+    '关系混装顶层问题应提供拆分动作'
+);
+
 $genericInherited = QmsTraceSemanticGuardService::assess(
     [
         'doc_number' => 'XZTC/CX-11-2022',

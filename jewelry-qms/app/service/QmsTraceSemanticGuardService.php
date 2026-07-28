@@ -43,19 +43,29 @@ final class QmsTraceSemanticGuardService
             'pending_review' => [],
             'suspected_mismatch' => [],
         ];
+        $manualReasons = [
+            'pending_review' => [],
+            'suspected_mismatch' => [],
+        ];
 
         foreach ($blockRows as $blockRow) {
             foreach ((array)($blockRow['links'] ?? []) as $link) {
                 if (!is_array($link) || trim((string)($link['section_number'] ?? '')) === '') {
                     continue;
                 }
-                $state = self::linkState(
+                $assessment = self::assessManualLink(
                     $link,
-                    'manual',
                     (array)($profile['expected_manual_sections'] ?? [])
                 );
+                $state = (string)$assessment['state'];
                 if (isset($manual[$state])) {
                     $manual[$state][] = $link;
+                }
+                if (
+                    isset($manualReasons[$state])
+                    && (string)($assessment['reason_code'] ?? '') !== ''
+                ) {
+                    $manualReasons[$state][] = $assessment;
                 }
             }
         }
@@ -82,18 +92,31 @@ final class QmsTraceSemanticGuardService
                 $status = 'aligned';
             } elseif ($manual['suspected_mismatch'] !== []) {
                 $status = 'suspected_mismatch';
-                $issues[] = [
+                $reason = self::primaryReason(
+                    $manualReasons['suspected_mismatch']
+                );
+                $issue = [
                     'code' => 'manual_primary_mismatch',
                     'severity' => 'high',
-                    'message' => self::mismatchMessage($profile, $manual['suspected_mismatch']),
+                    'message' => (string)($reason['message'] ?? '')
+                        ?: self::mismatchMessage(
+                            $profile,
+                            $manual['suspected_mismatch']
+                        ),
                 ];
+                $issues[] = self::withReason($issue, $reason);
             } elseif ($manual['pending_review'] !== []) {
                 $status = 'review_required';
-                $issues[] = [
+                $reason = self::primaryReason(
+                    $manualReasons['pending_review']
+                );
+                $issue = [
                     'code' => 'manual_primary_review_required',
                     'severity' => 'medium',
-                    'message' => '手册主链候选尚未完成人工复核，不能计入证据链闭合。',
+                    'message' => (string)($reason['message'] ?? '')
+                        ?: '手册主链候选尚未完成人工复核，不能计入证据链闭合。',
                 ];
+                $issues[] = self::withReason($issue, $reason);
             } else {
                 $status = 'missing_primary';
                 $candidateOnly = (bool)($profile['candidate_only'] ?? false);
@@ -433,6 +456,39 @@ final class QmsTraceSemanticGuardService
             'message' => $message,
             'recommended_action' => $recommendedAction,
         ];
+    }
+
+    private static function primaryReason(array $reasons): array
+    {
+        $rank = [
+            'mixed_relation' => 3,
+            'wrong_section' => 2,
+            'unconfirmed_relation' => 1,
+        ];
+        usort(
+            $reasons,
+            static fn(array $left, array $right): int =>
+                ($rank[(string)($right['reason_code'] ?? '')] ?? 0)
+                <=>
+                ($rank[(string)($left['reason_code'] ?? '')] ?? 0)
+        );
+
+        return $reasons[0] ?? [];
+    }
+
+    private static function withReason(array $issue, array $reason): array
+    {
+        if ((string)($reason['reason_code'] ?? '') === '') {
+            return $issue;
+        }
+
+        $issue['reason_code'] = (string)$reason['reason_code'];
+        $issue['reason_label'] = (string)($reason['reason_label'] ?? '');
+        $issue['recommended_action'] = (string)(
+            $reason['recommended_action'] ?? ''
+        );
+
+        return $issue;
     }
 
     private static function candidateMissingMessage(array $profile): string
