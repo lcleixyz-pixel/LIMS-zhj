@@ -171,16 +171,25 @@ final class QmsFileGovernanceWorkbenchService
                         (string)($link['section_number'] ?? '') . '|'
                             . (string)($link['manual_title'] ?? '')
                     );
-                    $manualState = QmsTraceSemanticGuardService::linkState(
+                    $manualAssessment = QmsTraceSemanticGuardService::assessManualLink(
                         $link,
-                        'manual',
                         $expectedManualSections
                     );
+                    $manualState = (string)$manualAssessment['state'];
                     $manualRow = [
                         'id' => (string)($link['manual_section_id'] ?? ''),
                         'section_number' => (string)($link['section_number'] ?? ''),
                         'title' => (string)($link['manual_title'] ?? ''),
                         'governance_state' => $manualState,
+                        'reason_code' => (string)(
+                            $manualAssessment['reason_code'] ?? ''
+                        ),
+                        'reason_label' => (string)(
+                            $manualAssessment['reason_label'] ?? ''
+                        ),
+                        'reason_message' => (string)(
+                            $manualAssessment['message'] ?? ''
+                        ),
                     ];
                     self::pushUniquePreferState($manualSections, $manualRow, $manualKey);
                     self::pushReviewState($reviewStates, $manualState, 'manual|' . $manualKey);
@@ -396,11 +405,16 @@ final class QmsFileGovernanceWorkbenchService
         $actions = [];
         if ($missingChain !== []) {
             $semanticIssue = (string)($semanticGuard['issues'][0]['message'] ?? '');
+            $semanticAction = (string)(
+                $semanticGuard['issues'][0]['recommended_action'] ?? ''
+            );
             $semanticStatus = (string)($semanticGuard['status'] ?? '');
             $expectedManualSections = (string)(
                 $semanticGuard['profile']['expected_manual_sections_text'] ?? ''
             );
-            if ($semanticStatus === 'suspected_mismatch') {
+            if ($semanticAction !== '') {
+                $traceDescription = $semanticAction;
+            } elseif ($semanticStatus === 'suspected_mismatch') {
                 $traceDescription = '进入对应内容块移除错挂关系'
                     . ($expectedManualSections !== ''
                         ? '，再单独建立 ' . $expectedManualSections . ' 手册主链。'

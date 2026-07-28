@@ -241,17 +241,106 @@ workbench_service_assert(
     '工作台应暴露 CX-08 疑似错挂结论'
 );
 workbench_service_assert(
-    str_contains((string)$wrongManual['summary']['message'], '疑似错挂'),
-    '工作台结论文案应明确说明疑似错挂'
+    str_contains((string)$wrongManual['summary']['message'], '当前手册章节 4.2')
+        && str_contains((string)$wrongManual['summary']['message'], '8.3 不一致'),
+    '工作台结论文案应明确说明当前章节与建议章节不一致'
 );
 workbench_service_assert(
     $wrongManual['actions'][0]['url'] === '/planning/structures/links/review?block_id=block-cx08',
     '疑似错挂下一步应直接进入实际含错挂关系的内容块'
 );
 workbench_service_assert(
-    str_contains((string)$wrongManual['actions'][0]['description'], '移除错挂关系')
+    str_contains((string)$wrongManual['actions'][0]['description'], '改为辅助关系')
     && str_contains((string)$wrongManual['actions'][0]['description'], '8.3'),
-    '疑似错挂下一步应说明如何拆分并补建正确手册主链'
+    '章节不匹配下一步应说明如何调整当前关系并补建正确手册主链'
+);
+
+$mixedManual = QmsFileGovernanceWorkbenchService::fromSnapshot(
+    [
+        'document' => [
+            'id' => 'structured-cx11-mixed',
+            'document_id' => 'document-cx11-mixed',
+            'document_role' => 'procedure',
+            'doc_number' => 'XZTC/CX-11-2022',
+            'title' => '人员管理程序',
+            'status' => 'draft',
+        ],
+        'blocks' => [[
+            'block' => [
+                'id' => 'block-cx11-record',
+                'title' => '记录',
+                'block_type' => 'record_requirement',
+                'markdown' => '人员能力确认应形成记录。',
+            ],
+            'links' => [[
+                'clause_id' => 'clause-62',
+                'source_code' => 'CNAS-CL01',
+                'clause_number' => '6.2',
+                'clause_title' => '人员',
+                'relation_type' => 'basis',
+                'confidence' => 'high',
+                'note' => '外部依据人工确认。',
+            ], [
+                'manual_section_id' => 'manual-62',
+                'section_number' => '6.2',
+                'manual_title' => '人员',
+                'record_form_template_id' => 'form-11-01',
+                'record_number' => 'XZTC/BG-11-01',
+                'record_name' => '人员能力记录',
+                'relation_type' => 'requires_record',
+                'confidence' => 'high',
+                'note' => '历史混装关系。',
+            ]],
+        ]],
+    ],
+    [[
+        'block_id' => 'block-cx11-record',
+        'coverage_status' => 'covered',
+        'linked_record_forms' => 1,
+        'schema_field_count' => 5,
+        'trace_review_url' => '/planning/structures/links/review?block_id=block-cx11-record',
+    ]],
+    [],
+    ['document_blockers' => [], 'system_notices' => []],
+    ['id' => 'document-cx11-mixed', 'status' => 'draft'],
+    ['stage' => 'draft', 'stage_label' => '草稿，等待提交'],
+    [
+        'available' => true,
+        'source_kind' => 'governance_blueprint',
+        'source_label' => '治理装配蓝图 / 本地条款映射',
+        'canonical_doc_number' => 'XZTC/CX-11-2022',
+        'manual_sections' => [
+            ['section_number' => '6.2', 'title' => '人员'],
+        ],
+        'external_sources' => [],
+        'record_templates' => [],
+        'review_required' => true,
+        'candidate_complete' => true,
+        'issues' => [],
+    ]
+);
+workbench_service_assert(
+    ($mixedManual['semantic_guard']['issues'][0]['reason_code'] ?? '')
+        === 'mixed_relation',
+    '工作台应保留关系混装原因代码'
+);
+workbench_service_assert(
+    ($mixedManual['chain']['manual_sections'][0]['reason_label'] ?? '')
+        === '关系混装',
+    '工作台手册关系行应提供关系混装短标签'
+);
+workbench_service_assert(
+    str_contains((string)$mixedManual['summary']['message'], '6.2 章节候选正确')
+        && str_contains((string)$mixedManual['summary']['message'], '混在同一关系中'),
+    '工作台结论应说明章节正确而关系形态错误'
+);
+workbench_service_assert(
+    str_contains((string)$mixedManual['actions'][0]['description'], '拆分预览')
+        && !str_contains(
+            (string)$mixedManual['actions'][0]['description'],
+            '移除错挂关系'
+        ),
+    '关系混装下一步应引导拆分，不得误导为章节错挂'
 );
 
 $missingManual = QmsFileGovernanceWorkbenchService::fromSnapshot(

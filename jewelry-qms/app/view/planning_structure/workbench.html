@@ -35,12 +35,24 @@
 </div>
 
 {notempty name="workbench.semantic_guard.issues"}
-<div class="small text-muted mb-3 px-1">
-    <span class="fw-semibold">自动识别依据：</span>
-    {$workbench.semantic_guard.profile.matched_terms_text|default='当前文件标题和正文'}
-    {notempty name="workbench.semantic_guard.profile.expected_manual_sections"}
-    · 建议主手册章节：{$workbench.semantic_guard.profile.expected_manual_sections_text}
+<div class="small text-muted mb-3 px-1 d-flex flex-column gap-1">
+    {notempty name="workbench.semantic_guard.issues.0.reason_label"}
+    <div>
+        <span class="fw-semibold">自动识别原因：</span>
+        {if $workbench.semantic_guard.status == 'review_required'}
+        <span class="badge bg-warning text-dark">{$workbench.semantic_guard.issues.0.reason_label}</span>
+        {else}
+        <span class="badge bg-danger">{$workbench.semantic_guard.issues.0.reason_label}</span>
+        {/if}
+    </div>
     {/notempty}
+    <div>
+        <span class="fw-semibold">自动识别依据：</span>
+        {$workbench.semantic_guard.profile.matched_terms_text|default='当前文件标题和正文'}
+        {notempty name="workbench.semantic_guard.profile.expected_manual_sections"}
+        · 建议主手册章节：{$workbench.semantic_guard.profile.expected_manual_sections_text}
+        {/notempty}
+    </div>
 </div>
 {/notempty}
 
@@ -178,12 +190,15 @@
                             {elseif $section.governance_state == 'supporting'}
                             <span class="badge bg-secondary">辅助关系</span>
                             {elseif $section.governance_state == 'suspected_mismatch'}
-                            <span class="badge bg-danger">疑似错挂</span>
+                            <span class="badge bg-danger">{$section.reason_label|default='疑似错挂'}</span>
                             {else}
-                            <span class="badge bg-warning text-dark">等待复核</span>
+                            <span class="badge bg-warning text-dark">{$section.reason_label|default='等待复核'}</span>
                             {/if}
                         </div>
                         <div class="text-muted">{$section.title|default='章节标题待确认'}</div>
+                        {notempty name="section.reason_message"}
+                        <div class="text-muted mt-1">{$section.reason_message}</div>
+                        {/notempty}
                     </div>
                     {/volist}
                     {empty name="workbench.chain.manual_sections"}

@@ -46,6 +46,7 @@ foreach ([
     '等待复核',
     '疑似错挂',
     '自动识别依据',
+    '自动识别原因',
     '文件内容与审查材料',
     '下一步动作',
     '纸质体系仍为唯一正式体系',
@@ -69,6 +70,10 @@ foreach ([
         '工作台应展示语义防错数据：' . $viewModelPath
     );
 }
+workbench_ui_assert(
+    str_contains($workbenchView, 'section.reason_label'),
+    '手册条款异常标签应消费服务提供的原因短标签'
+);
 workbench_ui_assert(
     !str_contains($workbenchView, '语义防错提示'),
     '工作台不应重复堆叠同一语义警告'
