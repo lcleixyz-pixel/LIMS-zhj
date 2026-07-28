@@ -1922,6 +1922,7 @@ class QmsDocumentStructureService
                 $link,
                 $expectedManualSections
             );
+            $link['relation_policy'] = QmsTraceRelationPolicyService::inspectExistingLink($link);
         }
         unset($link);
 

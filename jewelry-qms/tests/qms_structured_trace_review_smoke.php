@@ -87,6 +87,37 @@ $recordFormId = (string)($detail['options']['record_forms'][0]['id'] ?? '');
 assert_true($manualSectionId !== '', 'Trace review exposes at least one manual section');
 assert_true($recordFormId !== '', 'Trace review exposes at least one record form');
 
+$legacyMixedLinkId = qms_uuid();
+$companyId = (string)Db::name('qms_document_blocks')
+    ->alias('b')
+    ->join('qms_structured_documents sd', 'sd.id = b.structured_document_id')
+    ->where('b.id', $blockId)
+    ->value('sd.company_id');
+assert_true($companyId !== '', 'Trace review block belongs to a company');
+Db::name('qms_document_block_links')->insert([
+    'id' => $legacyMixedLinkId,
+    'company_id' => $companyId,
+    'block_id' => $blockId,
+    'manual_section_id' => $manualSectionId,
+    'record_form_template_id' => $recordFormId,
+    'relation_type' => 'requires_record',
+    'confidence' => 'review_required',
+    'note' => '结构化追溯复核 smoke：历史混装拆分预览',
+    'publish' => 1,
+    'soft_delete' => 0,
+]);
+$legacyDetail = QmsDocumentStructureService::blockTraceReviewDetail($blockId);
+$legacyPolicy = [];
+foreach ((array)($legacyDetail['links'] ?? []) as $legacyLink) {
+    if ((string)($legacyLink['id'] ?? '') === $legacyMixedLinkId) {
+        $legacyPolicy = (array)($legacyLink['relation_policy'] ?? []);
+        break;
+    }
+}
+Db::name('qms_document_block_links')->where('id', $legacyMixedLinkId)->delete();
+assert_true(($legacyPolicy['is_mixed'] ?? false) === true, 'Trace review detail marks a historical mixed relation');
+assert_true(count($legacyPolicy['split_preview'] ?? []) === 2, 'Trace review detail exposes two split preview rows');
+
 $linksBeforeMixedAttempt = Db::name('qms_document_block_links')
     ->where('block_id', $blockId)
     ->where('soft_delete', 0)
