@@ -32,10 +32,10 @@ function trace_work_item_runtime_assert_url(
     string $blockId,
     string $label
 ): void {
-    if ($url === '') {
-        return;
-    }
-
+    trace_work_item_runtime_assert(
+        $url !== '',
+        $label . ' 不得为空'
+    );
     $parts = parse_url($url);
     trace_work_item_runtime_assert(
         is_array($parts)

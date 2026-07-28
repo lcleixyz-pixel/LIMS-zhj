@@ -270,12 +270,32 @@ final class QmsFileGovernanceWorkbenchService
                 $traceBlockRow['block'] = self::row(
                     $traceBlockRow['block'] ?? []
                 );
+                $blockId = trim((string)(
+                    $traceBlockRow['block']['id'] ?? ''
+                ));
+                $traceLinks = [];
+                foreach ((array)($traceBlockRow['links'] ?? []) as $rawLink) {
+                    $traceLink = self::row($rawLink);
+                    if ($traceLink === []) {
+                        continue;
+                    }
+                    if (
+                        $blockId !== ''
+                        && trim((string)($traceLink['review_url'] ?? '')) === ''
+                    ) {
+                        $traceLink['review_method'] = 'GET';
+                        $traceLink['review_url'] =
+                            '/planning/structures/links/review?block_id='
+                            . rawurlencode($blockId);
+                    }
+                    $traceLinks[] = $traceLink;
+                }
+                $traceBlockRow['links'] = $traceLinks;
             }
         }
         unset($traceBlockRow);
-        $detail['blocks'] = $traceBlocks;
         $traceWorkItems = QmsTraceWorkItemService::build(
-            (array)($detail['blocks'] ?? []),
+            $traceBlocks,
             $candidateTrace
         );
         $documentBlockers = array_values((array)($conflicts['document_blockers'] ?? []));
