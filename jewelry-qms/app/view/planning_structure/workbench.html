@@ -56,6 +56,113 @@
 </div>
 {/notempty}
 
+<section class="qms-trace-work-items card mb-3" aria-labelledby="trace-work-items-title">
+    <div class="card-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between gap-1">
+            <h5 id="trace-work-items-title" class="mb-0">按内容块连续办理</h5>
+            <div class="text-muted small">
+                {$workbench.trace_work_items.block_count|default=0} 个内容块，
+                {$workbench.trace_work_items.issue_count|default=0} 个问题
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <p class="qms-trace-work-items-summary">
+            系统只负责归并和导航，不能代替人工判断。每项是否完成，仍以逐条复核结果为准；卡片仅表示待办理内容，不表示已经完成。
+        </p>
+        {notempty name="workbench.trace_work_items.items"}
+        <div class="qms-trace-work-items-list">
+            {volist name="workbench.trace_work_items.items" id="traceItem"}
+            <article
+                class="qms-trace-work-item"
+                data-priority="{$traceItem.priority}"
+                data-block-id="{$traceItem.block_id}"
+                aria-labelledby="trace-work-item-{$traceItem.block_id}"
+            >
+                <div class="qms-trace-work-item-header">
+                    <h6 id="trace-work-item-{$traceItem.block_id}" class="mb-0">
+                        <span>{$traceItem.section_number} {$traceItem.title}</span>
+                        <span class="qms-trace-work-item-meta">
+                            <span>{$traceItem.block_type_label}</span>
+                            <span>{$traceItem.issues|count} 个问题</span>
+                            {if $traceItem.priority == 'blocked'}
+                            <span class="qms-trace-work-item-priority">阻断优先</span>
+                            {else}
+                            <span class="qms-trace-work-item-priority">待复核</span>
+                            {/if}
+                        </span>
+                    </h6>
+                </div>
+
+                <div class="qms-trace-work-item-section">
+                    <div class="qms-trace-work-item-subheading">发现的问题</div>
+                    <div class="qms-trace-work-item-issues">
+                        {volist name="traceItem.issues" id="traceIssue"}
+                        <div class="qms-trace-work-item-issue">
+                            <div class="fw-semibold">{$traceIssue.label}</div>
+                            <div>{$traceIssue.message}</div>
+                        </div>
+                        {/volist}
+                    </div>
+                </div>
+
+                <div class="qms-trace-work-item-section">
+                    <div class="qms-trace-work-item-subheading">本块要做</div>
+                    <ol class="qms-trace-work-item-steps">
+                        {volist name="traceItem.steps" id="traceStep"}
+                        <li>
+                            <span class="fw-semibold">{$traceStep.label}</span>
+                            <span>{$traceStep.description}</span>
+                        </li>
+                        {/volist}
+                    </ol>
+                </div>
+
+                {notempty name="traceItem.candidates"}
+                <div class="qms-trace-work-item-section">
+                    <div class="qms-trace-work-item-subheading">可带入候选</div>
+                    <ul class="qms-trace-work-item-candidates">
+                        {volist name="traceItem.candidates" id="traceCandidate"}
+                        <li>
+                            <div class="qms-trace-work-item-candidate-main">
+                                <div>
+                                    <span class="fw-semibold">{$traceCandidate.candidate_kind_label}</span>
+                                    <span>{$traceCandidate.target_label}</span>
+                                </div>
+                                <div class="text-muted small">建议用途：{$traceCandidate.relation_label}</div>
+                                {notempty name="traceCandidate.recommendation_reason"}
+                                <div class="text-muted small">推荐理由：{$traceCandidate.recommendation_reason}</div>
+                                {/notempty}
+                            </div>
+                            {notempty name="traceCandidate.review_url"}
+                            <a href="{$traceCandidate.review_url}" class="btn btn-sm btn-outline-primary text-nowrap">
+                                带入此候选
+                            </a>
+                            {/notempty}
+                        </li>
+                        {/volist}
+                    </ul>
+                </div>
+                {/notempty}
+
+                <div class="qms-trace-work-item-actions">
+                    {notempty name="traceItem.primary_url"}
+                    <a href="{$traceItem.primary_url}" class="btn btn-sm btn-primary text-nowrap">
+                        处理此内容块
+                    </a>
+                    {else}
+                    <div class="text-danger small">当前没有可用办理入口，请返回追溯关系复核配置。</div>
+                    {/notempty}
+                </div>
+            </article>
+            {/volist}
+        </div>
+        {else}
+        <div class="qms-empty-state">当前没有需要汇总办理的内容块。</div>
+        {/notempty}
+    </div>
+</section>
+
 {notempty name="workbench.candidate_trace"}
 <div class="card mb-3 border-warning">
     <div class="card-header d-flex flex-column flex-md-row justify-content-between gap-1">

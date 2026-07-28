@@ -33,6 +33,14 @@ $detailView = (string)file_get_contents($root . '/app/view/planning_structure/vi
 $linkReviewView = (string)file_get_contents($root . '/app/view/planning_structure/link_review.html');
 
 foreach ([
+    '按内容块连续办理',
+    '系统只负责归并和导航',
+    '本块要做',
+    '处理此内容块',
+    '带入此候选',
+    'workbench.trace_work_items',
+    'qms-trace-work-items',
+    'qms-trace-work-item',
     '治理候选（不计闭环）',
     '候选·待复核',
     '候选来源',
