@@ -785,6 +785,27 @@ $stepCases = [
         'labels' => ['1. 带入候选'],
         'descriptions' => ['核对后保存。'],
     ],
+    'unsafe_candidate_only' => [
+        'blocks' => [[
+            'block' => $stepBlock,
+            'links' => [],
+        ]],
+        'trace' => [
+            'external_sources' => [
+                trace_work_item_candidate(array_merge($stepCandidate, [
+                    'target_id' => 'clause-unsafe-step',
+                    'target_label' => '越界候选入口',
+                    'review_url' => '/logout'
+                        . '?block_id=block-step'
+                        . '&candidate_kind=external_source'
+                        . '&candidate_id=clause-unsafe-step',
+                ])),
+            ],
+        ],
+        'codes' => ['missing_primary'],
+        'labels' => [],
+        'descriptions' => [],
+    ],
     'pending_only' => [
         'blocks' => [[
             'block' => $stepBlock,
@@ -871,6 +892,7 @@ $stepCases = [
     ],
 ];
 $candidateOnlyText = '';
+$unsafeCandidateOnlySteps = [];
 foreach ($stepCases as $caseId => $case) {
     $stepResult = QmsTraceWorkItemService::build(
         (array)$case['blocks'],
@@ -895,6 +917,22 @@ foreach ($stepCases as $caseId => $case) {
             array_column($steps, 'description')
         ));
     }
+    if ($caseId === 'unsafe_candidate_only') {
+        $unsafeCandidateOnlySteps = $steps;
+        trace_work_item_group_assert(
+            'dynamic_steps',
+            count((array)($stepItem['candidates'] ?? [])) === 1
+                && (
+                    $stepItem['candidates'][0]['review_url']
+                    ?? 'unexpected'
+                ) === ''
+                && array_column(
+                    (array)($stepItem['issues'] ?? []),
+                    'code'
+                ) === ['missing_primary'],
+            '越界候选应保留显示和 missing_primary，仅清空其安全入口'
+        );
+    }
 }
 trace_work_item_group_assert(
     'dynamic_steps',
@@ -902,6 +940,11 @@ trace_work_item_group_assert(
         && !str_contains($candidateOnlyText, '错挂')
         && !str_contains($candidateOnlyText, '待复核'),
     '仅 missing_primary 的卡不得虚构混装、错挂或待复核步骤'
+);
+trace_work_item_group_assert(
+    'dynamic_steps',
+    $unsafeCandidateOnlySteps === [],
+    '候选存在但安全 review_url 全为空时不得生成带入候选步骤'
 );
 
 $noLinkIdResult = QmsTraceWorkItemService::build([

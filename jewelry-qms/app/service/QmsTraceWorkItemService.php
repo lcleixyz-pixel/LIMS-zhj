@@ -657,6 +657,13 @@ final class QmsTraceWorkItemService
             true
         );
         $definitions = [];
+        $hasSafeCandidateUrl = false;
+        foreach ($candidates as $candidate) {
+            if (trim((string)($candidate['review_url'] ?? '')) !== '') {
+                $hasSafeCandidateUrl = true;
+                break;
+            }
+        }
         if (isset($issueCodes['mixed_relation'])) {
             $definitions[] = [
                 'key' => 'split_mixed_relation',
@@ -671,7 +678,7 @@ final class QmsTraceWorkItemService
                 'description' => '核对对象和用途后纠正关系。',
             ];
         }
-        if ($candidates !== []) {
+        if ($hasSafeCandidateUrl) {
             $definitions[] = [
                 'key' => 'apply_candidate',
                 'label' => '带入候选',
