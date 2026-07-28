@@ -1934,39 +1934,57 @@ class QmsDocumentStructureService
             'available' => false,
             'error' => '',
         ];
+        $candidateTrace = [];
+        $candidateTraceAvailable = true;
+        try {
+            $candidateTrace = QmsTraceSemanticCandidateService::forDocument(
+                $structured->toArray()
+            );
+        } catch (\Throwable) {
+            $candidateTraceAvailable = false;
+        }
+        $options = QmsTraceReviewOptionService::prioritize(
+            self::traceReviewOptions(),
+            $candidateTrace
+        );
         $candidateRequested = trim((string)(
             $prefillQuery['candidate_kind'] ?? ''
         )) !== '' || trim((string)(
             $prefillQuery['candidate_id'] ?? ''
         )) !== '';
         if ($candidateRequested) {
-            try {
-                $candidateTrace = QmsTraceSemanticCandidateService::forDocument(
-                    $structured->toArray()
-                );
-                $candidateBlocks = QmsDocumentBlock::where(
-                    'structured_document_id',
-                    (string)$structured->id
-                )
-                    ->where('soft_delete', 0)
-                    ->order('sort_order', 'asc')
-                    ->select()
-                    ->toArray();
-                $routedCandidates = QmsTraceCandidateRoutingService::route(
-                    $candidateTrace,
-                    $candidateBlocks
-                );
-                $prefill = QmsTraceCandidateRoutingService::resolvePrefill(
-                    $routedCandidates,
-                    (string)$block->id,
-                    $prefillQuery
-                );
-            } catch (\Throwable) {
+            if (!$candidateTraceAvailable) {
                 $prefill = [
                     'requested' => true,
                     'available' => false,
                     'error' => '候选暂时无法核对，请返回治理工作台重新进入。',
                 ];
+            } else {
+                try {
+                    $candidateBlocks = QmsDocumentBlock::where(
+                        'structured_document_id',
+                        (string)$structured->id
+                    )
+                        ->where('soft_delete', 0)
+                        ->order('sort_order', 'asc')
+                        ->select()
+                        ->toArray();
+                    $routedCandidates = QmsTraceCandidateRoutingService::route(
+                        $candidateTrace,
+                        $candidateBlocks
+                    );
+                    $prefill = QmsTraceCandidateRoutingService::resolvePrefill(
+                        $routedCandidates,
+                        (string)$block->id,
+                        $prefillQuery
+                    );
+                } catch (\Throwable) {
+                    $prefill = [
+                        'requested' => true,
+                        'available' => false,
+                        'error' => '候选暂时无法核对，请返回治理工作台重新进入。',
+                    ];
+                }
             }
         }
 
@@ -1974,7 +1992,11 @@ class QmsDocumentStructureService
             'document' => $structured->toArray(),
             'block' => $block->toArray(),
             'links' => $links,
-            'options' => self::traceReviewOptions(),
+            'options' => $options,
+            'default_relation_type' => (string)$block->block_type
+                === 'record_requirement'
+                ? 'requires_record'
+                : 'implements',
             'prefill' => $prefill,
             'semantic_guard' => $semanticGuard,
             'change_logs' => self::changeLogsForStructuredDocument((string)$structured->id),

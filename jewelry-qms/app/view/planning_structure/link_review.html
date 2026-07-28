@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const targetKind = document.getElementById('relation_target_kind');
     const help = document.getElementById('relation_policy_help');
     const targetGroups = Array.from(document.querySelectorAll('[data-relation-target]'));
+    const searchableSelects = Array.from(document.querySelectorAll('[data-searchable-trace-select]'));
     const policies = {
         basis: {
             visible: ['clause_id', 'element_id'],
@@ -52,6 +53,67 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
+    function normalizeSearchText(value) {
+        return String(value || '').trim().toLocaleLowerCase('zh-CN');
+    }
+
+    function refreshSearchResult(select, input, status) {
+        const query = normalizeSearchText(input.value);
+        const options = Array.from(select.options).filter(function (option) {
+            return option.value !== '';
+        });
+        let matched = 0;
+        let candidateMatched = 0;
+
+        options.forEach(function (option) {
+            const directMatch = query === ''
+                || normalizeSearchText(option.textContent).includes(query);
+            option.hidden = !(directMatch || option.selected);
+            if (directMatch) {
+                matched += 1;
+                if (option.dataset.candidate === '1') {
+                    candidateMatched += 1;
+                }
+            }
+        });
+
+        if (query !== '' && matched === 0) {
+            status.textContent = '未找到，请换用编号或名称；当前选择已保留。';
+            status.classList.add('text-warning');
+            return;
+        }
+        status.classList.remove('text-warning');
+        status.textContent = (query === '' ? '共 ' : '找到 ')
+            + matched + ' 项，其中本文件候选 ' + candidateMatched + ' 项。';
+    }
+
+    searchableSelects.forEach(function (select) {
+        const group = select.closest('[data-relation-target]');
+        const label = group ? group.querySelector('label') : null;
+        const labelText = label ? label.textContent.trim() : '证明对象';
+        const input = document.createElement('input');
+        input.type = 'search';
+        input.className = 'form-control form-control-sm mb-2';
+        input.placeholder = '输入编号或名称搜索';
+        input.dataset.traceSearchInput = '1';
+        input.setAttribute('aria-label', '搜索' + labelText);
+
+        const status = document.createElement('div');
+        status.className = 'form-text';
+        status.dataset.traceSearchStatus = '1';
+        status.setAttribute('aria-live', 'polite');
+
+        select.parentNode.insertBefore(input, select);
+        select.insertAdjacentElement('afterend', status);
+        input.addEventListener('input', function () {
+            refreshSearchResult(select, input, status);
+        });
+        select.addEventListener('change', function () {
+            refreshSearchResult(select, input, status);
+        });
+        refreshSearchResult(select, input, status);
+    });
+
     function applyRelationPolicy() {
         const policy = policies[relationType.value] || policies.implements;
         const flexible = policy.flexible === true;
@@ -62,10 +124,14 @@ document.addEventListener('DOMContentLoaded', function () {
         targetGroups.forEach(function (group) {
             const target = group.getAttribute('data-relation-target');
             const field = group.querySelector('select');
+            const searchInput = group.querySelector('[data-trace-search-input]');
             const visible = visibleTargets.includes(target);
             group.classList.toggle('d-none', !visible);
             field.disabled = !visible;
             field.required = visible && (flexible || policy.required === target);
+            if (searchInput) {
+                searchInput.disabled = !visible;
+            }
         });
         help.textContent = policy.help;
     }
@@ -138,9 +204,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="col-md-4">
                     <label class="form-label" for="relation_type">关系用途</label>
                     <select id="relation_type" name="relation_type" class="form-select">
-                        <option value="implements" {if !$detail.prefill.available || $detail.prefill.relation_type == 'implements'}selected{/if}>主链：落实手册</option>
+                        <option value="implements" {if ($detail.prefill.available && $detail.prefill.relation_type == 'implements') || (!$detail.prefill.available && $detail.default_relation_type == 'implements')}selected{/if}>主链：落实手册</option>
                         <option value="basis" {if $detail.prefill.available && $detail.prefill.relation_type == 'basis'}selected{/if}>主链：外部依据</option>
-                        <option value="requires_record" {if $detail.prefill.available && $detail.prefill.relation_type == 'requires_record'}selected{/if}>主链：运行记录</option>
+                        <option value="requires_record" {if ($detail.prefill.available && $detail.prefill.relation_type == 'requires_record') || (!$detail.prefill.available && $detail.default_relation_type == 'requires_record')}selected{/if}>主链：运行记录</option>
                         <option value="responsible">职责</option>
                         <option value="renders_to">运行入口</option>
                         <option value="mentions">仅提及</option>
@@ -183,64 +249,64 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <div class="col-md-6 d-none" data-relation-target="element_id">
                     <label class="form-label" for="element_id">要素（外部依据时可选）</label>
-                    <select id="element_id" name="element_id" class="form-select" disabled>
+                    <select id="element_id" name="element_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">不关联</option>
                         {volist name="detail.options.elements" id="option"}
-                        <option value="{$option.id}">{$option.name}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}">{if $option.is_candidate}★ 本文件候选 · {/if}{$option.name}</option>
                         {/volist}
                     </select>
                 </div>
                 <div class="col-md-6 d-none" data-relation-target="clause_id">
                     <label class="form-label" for="clause_id">外部条款</label>
-                    <select id="clause_id" name="clause_id" class="form-select" disabled>
+                    <select id="clause_id" name="clause_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择外部条款</option>
                         {volist name="detail.options.clauses" id="option"}
-                        <option value="{$option.id}" {if $detail.prefill.available && $detail.prefill.target_field == 'clause_id' && $detail.prefill.target_id == $option.id}selected{/if}>{$option.source_code} {$option.clause_number} {$option.title}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" {if $detail.prefill.available && $detail.prefill.target_field == 'clause_id' && $detail.prefill.target_id == $option.id}selected{/if}>{if $option.is_candidate}★ 本文件候选 · {/if}{$option.source_code} {$option.clause_number} {$option.title}</option>
                         {/volist}
                     </select>
                 </div>
                 <div class="col-md-6 d-none" data-relation-target="manual_section_id">
                     <label class="form-label" for="manual_section_id">手册章节</label>
-                    <select id="manual_section_id" name="manual_section_id" class="form-select" disabled>
+                    <select id="manual_section_id" name="manual_section_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择手册章节</option>
                         {volist name="detail.options.manual_sections" id="option"}
-                        <option value="{$option.id}" {if $detail.prefill.available && $detail.prefill.target_field == 'manual_section_id' && $detail.prefill.target_id == $option.id}selected{/if}>{$option.section_number} {$option.title}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" {if $detail.prefill.available && $detail.prefill.target_field == 'manual_section_id' && $detail.prefill.target_id == $option.id}selected{/if}>{if $option.is_candidate}★ 本文件候选 · {/if}{$option.section_number} {$option.title}</option>
                         {/volist}
                     </select>
                 </div>
                 <div class="col-md-6 d-none" data-relation-target="procedure_document_id">
                     <label class="form-label" for="procedure_document_id">程序文件</label>
-                    <select id="procedure_document_id" name="procedure_document_id" class="form-select" disabled>
+                    <select id="procedure_document_id" name="procedure_document_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择程序文件</option>
                         {volist name="detail.options.procedure_documents" id="option"}
-                        <option value="{$option.id}">{$option.doc_number} {$option.title}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}">{if $option.is_candidate}★ 本文件候选 · {/if}{$option.doc_number} {$option.title}</option>
                         {/volist}
                     </select>
                 </div>
                 <div class="col-md-6 d-none" data-relation-target="record_form_template_id">
                     <label class="form-label" for="record_form_template_id">记录表格</label>
-                    <select id="record_form_template_id" name="record_form_template_id" class="form-select" disabled>
+                    <select id="record_form_template_id" name="record_form_template_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择记录表格</option>
                         {volist name="detail.options.record_forms" id="option"}
-                        <option value="{$option.id}" {if $detail.prefill.available && $detail.prefill.target_field == 'record_form_template_id' && $detail.prefill.target_id == $option.id}selected{/if}>{$option.doc_number} {$option.name}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" {if $detail.prefill.available && $detail.prefill.target_field == 'record_form_template_id' && $detail.prefill.target_id == $option.id}selected{/if}>{if $option.is_candidate}★ 本文件候选 · {/if}{$option.doc_number} {$option.name}</option>
                         {/volist}
                     </select>
                 </div>
                 <div class="col-md-6 d-none" data-relation-target="position_id">
                     <label class="form-label" for="position_id">岗位</label>
-                    <select id="position_id" name="position_id" class="form-select" disabled>
+                    <select id="position_id" name="position_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择岗位</option>
                         {volist name="detail.options.positions" id="option"}
-                        <option value="{$option.id}">{$option.name}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}">{if $option.is_candidate}★ 本文件候选 · {/if}{$option.name}</option>
                         {/volist}
                     </select>
                 </div>
                 <div class="col-md-6 d-none" data-relation-target="business_module_id">
                     <label class="form-label" for="business_module_id">运行模块</label>
-                    <select id="business_module_id" name="business_module_id" class="form-select" disabled>
+                    <select id="business_module_id" name="business_module_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择运行模块</option>
                         {volist name="detail.options.modules" id="option"}
-                        <option value="{$option.id}">{$option.code} {$option.name}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}">{if $option.is_candidate}★ 本文件候选 · {/if}{$option.code} {$option.name}</option>
                         {/volist}
                     </select>
                 </div>

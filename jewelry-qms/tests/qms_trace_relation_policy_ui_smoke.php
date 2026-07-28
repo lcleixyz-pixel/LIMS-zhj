@@ -83,5 +83,40 @@ trace_relation_policy_ui_assert_contains(
     $view,
     '候选预填仍必须经过现有用途驱动字段切换'
 );
+trace_relation_policy_ui_assert_contains(
+    'data-searchable-trace-select',
+    $view,
+    '证明对象选择框应启用零依赖中文搜索'
+);
+trace_relation_policy_ui_assert_contains(
+    "input.type = 'search'",
+    $view,
+    '搜索控件应使用原生搜索输入'
+);
+trace_relation_policy_ui_assert_contains(
+    '输入编号或名称搜索',
+    $view,
+    '搜索控件应提供中文操作提示'
+);
+trace_relation_policy_ui_assert_contains(
+    '★ 本文件候选',
+    $view,
+    '本文件候选应有明确中文标识'
+);
+trace_relation_policy_ui_assert_contains(
+    'searchInput.disabled = !visible',
+    $view,
+    '隐藏对象的搜索框必须同步禁用'
+);
+trace_relation_policy_ui_assert_contains(
+    "setAttribute('aria-live', 'polite')",
+    $view,
+    '搜索结果说明应能被辅助技术感知'
+);
+trace_relation_policy_ui_assert_contains(
+    '$detail.default_relation_type',
+    $view,
+    '无候选预填时应根据内容块类型选择默认用途'
+);
 
 echo "qms_trace_relation_policy_ui_smoke passed\n";
