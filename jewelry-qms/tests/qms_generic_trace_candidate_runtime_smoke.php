@@ -47,6 +47,7 @@ generic_trace_candidate_assert(
 
 $before = generic_trace_candidate_counts();
 $statusCounts = [];
+$routingCounts = ['routable' => 0, 'blocked' => 0];
 foreach ($procedures as $procedure) {
     $label = (string)$procedure['doc_number'];
     $viewModel = QmsFileGovernanceWorkbenchService::detail((string)$procedure['id']);
@@ -75,11 +76,44 @@ foreach ($procedures as $procedure) {
         (array)($candidate['record_templates'] ?? []) !== [],
         $label . ' 应提供候选运行记录'
     );
-    foreach (['external_sources', 'manual_sections', 'record_templates'] as $candidateKind) {
-        foreach ((array)($candidate[$candidateKind] ?? []) as $candidateRow) {
+    foreach ([
+        'external_sources' => ['external_source', 'basis', 'clause_id'],
+        'manual_sections' => ['manual_section', 'implements', 'manual_section_id'],
+        'record_templates' => [
+            'record_template',
+            'requires_record',
+            'record_form_template_id',
+        ],
+    ] as $candidateCollection => $expectedRouting) {
+        foreach ((array)($candidate[$candidateCollection] ?? []) as $candidateRow) {
             generic_trace_candidate_assert(
                 !array_key_exists('governance_state', (array)$candidateRow),
                 $label . ' 的候选不得伪装成已确认治理关系'
+            );
+            $routable = (bool)($candidateRow['routable'] ?? false);
+            $routingCounts[$routable ? 'routable' : 'blocked']++;
+            if (!(bool)($candidateRow['available'] ?? false)) {
+                generic_trace_candidate_assert(
+                    !$routable
+                        && (string)($candidateRow['routing_issue'] ?? '') !== '',
+                    $label . ' 的未入库候选应说明为何不能带入'
+                );
+                continue;
+            }
+            generic_trace_candidate_assert(
+                $routable
+                    && (string)($candidateRow['candidate_kind'] ?? '')
+                        === $expectedRouting[0]
+                    && (string)($candidateRow['relation_type'] ?? '')
+                        === $expectedRouting[1]
+                    && (string)($candidateRow['target_field'] ?? '')
+                        === $expectedRouting[2]
+                    && (string)($candidateRow['target_block_id'] ?? '') !== ''
+                    && str_contains(
+                        (string)($candidateRow['review_url'] ?? ''),
+                        'candidate_id='
+                    ),
+                $label . ' 的可用候选应定向到内容块并生成安全预填入口'
             );
         }
     }
@@ -118,5 +152,8 @@ generic_trace_candidate_assert(
 
 ksort($statusCounts);
 echo 'qms_generic_trace_candidate_runtime_smoke passed: '
-    . json_encode($statusCounts, JSON_UNESCAPED_UNICODE)
+    . json_encode([
+        'statuses' => $statusCounts,
+        'routing' => $routingCounts,
+    ], JSON_UNESCAPED_UNICODE)
     . PHP_EOL;
