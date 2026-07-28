@@ -1928,6 +1928,7 @@ class QmsDocumentStructureService
             $link['relation_policy'] = QmsTraceRelationPolicyService::inspectExistingLink($link);
         }
         unset($link);
+        $linkPresentation = QmsTraceLinkPresentationService::build($links);
 
         $prefill = [
             'requested' => false,
@@ -2006,6 +2007,7 @@ class QmsDocumentStructureService
             'document' => $structured->toArray(),
             'block' => $block->toArray(),
             'links' => $links,
+            'link_presentation' => $linkPresentation,
             'options' => $options,
             'option_governance_summary' => (array)(
                 $optionGovernance['summary'] ?? []
