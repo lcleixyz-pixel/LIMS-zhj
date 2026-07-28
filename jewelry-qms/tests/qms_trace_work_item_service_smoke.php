@@ -809,4 +809,55 @@ trace_work_item_group_assert(
     '合法入口应只沿用同块已有 GET review_url'
 );
 
+$strictUrlRows = [];
+$strictUrlCases = [
+    'logout' => '/logout?block_id=block-strict-url',
+    'missing-block' => '/planning/structures/links/review?candidate_id=missing-block',
+    'wrong-block' => '/planning/structures/links/review?block_id=other-block',
+    'raw-backslash' => '/\\example.com?block_id=block-strict-url',
+    'encoded-crlf' => '/planning/structures/links/review?block_id=block-strict-url&next=%0d%0a',
+    'encoded-backslash' => '/planning/structures/links/review?block_id=block-strict-url&next=%5clogout',
+    'actual-control' => "/planning/structures/links/review?block_id=block-strict-url&next=\r\n",
+];
+foreach ($strictUrlCases as $caseId => $reviewUrl) {
+    $strictUrlRows[] = trace_work_item_candidate([
+        'candidate_kind' => 'external_source',
+        'candidate_kind_label' => '外部依据',
+        'relation_type' => 'basis',
+        'relation_label' => '主链：外部依据',
+        'target_field' => 'clause_id',
+        'target_id' => 'strict-' . $caseId,
+        'target_label' => '严格入口 ' . $caseId,
+        'target_block_id' => 'block-strict-url',
+        'target_block_title' => '严格入口边界',
+        'target_block_type' => 'purpose',
+        'review_method' => 'GET',
+        'review_url' => $reviewUrl,
+    ]);
+}
+$strictUrlResult = QmsTraceWorkItemService::build([
+    [
+        'block' => [
+            'id' => 'block-strict-url',
+            'section_number' => '7.1',
+            'title' => '严格入口边界',
+            'block_type' => 'purpose',
+            'sort_order' => 10,
+        ],
+        'links' => [],
+    ],
+], [
+    'external_sources' => $strictUrlRows,
+]);
+$strictUrlItem = (array)($strictUrlResult['items'][0] ?? []);
+trace_work_item_group_assert(
+    'url_boundary',
+    ($strictUrlItem['primary_url'] ?? 'unexpected') === ''
+        && array_values(array_unique(array_column(
+            (array)($strictUrlItem['candidates'] ?? []),
+            'review_url'
+        ))) === [''],
+    '只允许同块 planning 关系复核 GET 地址，拒绝越权路径、缺块参数和控制字符歧义'
+);
+
 echo "qms_trace_work_item_service_smoke passed\n";

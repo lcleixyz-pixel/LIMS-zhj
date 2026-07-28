@@ -375,7 +375,7 @@ final class QmsTraceWorkItemService
                 }
                 $candidate = self::candidate($row);
                 $candidate['review_url'] = self::validGetUrl(
-                    (string)$candidate['review_url'],
+                    (string)($row['review_url'] ?? ''),
                     $blockId,
                     (string)($row['review_method'] ?? 'GET')
                 );
@@ -578,28 +578,56 @@ final class QmsTraceWorkItemService
         string $blockId,
         string $method
     ): string {
-        $url = trim($url);
         if (
             $url === ''
             || strtoupper(trim($method)) !== 'GET'
-            || !str_starts_with($url, '/')
-            || str_starts_with($url, '//')
+            || self::hasUrlAmbiguity($url)
         ) {
             return '';
         }
 
-        $query = (string)(parse_url($url, PHP_URL_QUERY) ?? '');
-        if ($query !== '') {
-            parse_str($query, $parameters);
-            $urlBlockId = trim(
-                (string)($parameters['block_id'] ?? '')
-            );
-            if ($urlBlockId !== '' && $urlBlockId !== $blockId) {
-                return '';
-            }
+        $parts = parse_url($url);
+        if (
+            !is_array($parts)
+            || array_key_exists('scheme', $parts)
+            || array_key_exists('host', $parts)
+            || (string)($parts['path'] ?? '')
+                !== '/planning/structures/links/review'
+        ) {
+            return '';
+        }
+
+        $query = (string)($parts['query'] ?? '');
+        parse_str($query, $parameters);
+        if (
+            !isset($parameters['block_id'])
+            || !is_string($parameters['block_id'])
+            || $parameters['block_id'] !== $blockId
+        ) {
+            return '';
         }
 
         return $url;
+    }
+
+    private static function hasUrlAmbiguity(string $url): bool
+    {
+        $decoded = $url;
+        for ($depth = 0; $depth < 3; $depth++) {
+            if (
+                str_contains($decoded, '\\')
+                || preg_match('/[\x00-\x1F\x7F]/', $decoded) === 1
+            ) {
+                return true;
+            }
+            $next = rawurldecode($decoded);
+            if ($next === $decoded) {
+                break;
+            }
+            $decoded = $next;
+        }
+
+        return false;
     }
 
     private static function firstUrl(array ...$groups): string
