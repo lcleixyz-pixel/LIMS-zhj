@@ -242,8 +242,8 @@ foreach ($items as $item) {
     trace_work_item_render_assert(
         $primaryLink instanceof DOMElement
             && $primaryLink->getAttribute('href')
-                === (string)($item['primary_url'] ?? ''),
-        '办理卡主入口必须原样使用模型 primary_url：' . $blockId
+                === (string)($item['review_url'] ?? ''),
+        '办理卡主入口必须原样使用模型 review_url：' . $blockId
     );
     $primaryAriaLabel = $primaryLink->getAttribute('aria-label');
     $primaryVisibleText = trim($primaryLink->textContent);
@@ -269,6 +269,14 @@ foreach ($items as $item) {
 
     $issues = (array)($item['issues'] ?? []);
     $expectedIssueCount += count($issues);
+    trace_work_item_render_assert(
+        (int)($item['issue_count'] ?? -1) === count($issues)
+            && str_contains(
+                $article->textContent,
+                count($issues) . ' 个问题'
+            ),
+        '每张卡应使用模型 issue_count 展示准确问题数：' . $blockId
+    );
     $issueDetails = $xpath->query(
         './details['
             . trace_work_item_render_class_xpath(
@@ -292,15 +300,47 @@ foreach ($items as $item) {
             )->length === 1,
         '问题明细应默认关闭并显示准确数量：' . $blockId
     );
-    foreach ($issues as $issue) {
+    $renderedIssueNodes = $xpath->query(
+        './/div['
+            . trace_work_item_render_class_xpath(
+                'qms-trace-work-item-issue'
+            )
+            . ']',
+        $issueDetail
+    );
+    trace_work_item_render_assert(
+        $renderedIssueNodes !== false
+            && $renderedIssueNodes->length === count($issues),
+        '每个模型问题应渲染一个语义问题项：' . $blockId
+    );
+    foreach ($issues as $issueIndex => $issue) {
         $contextLabel = (string)($issue['context_label'] ?? '');
+        $issueNode = $renderedIssueNodes->item($issueIndex);
+        $issueLabelNodes = $issueNode instanceof DOMElement
+            ? $xpath->query(
+                './div['
+                    . trace_work_item_render_class_xpath(
+                        'qms-trace-work-item-issue-label'
+                    )
+                    . ']',
+                $issueNode
+            )
+            : false;
         trace_work_item_render_assert(
-            $contextLabel !== ''
+            $issueNode instanceof DOMElement
+                && $issueNode->getAttribute('data-severity')
+                    === (string)($issue['severity'] ?? '')
+                && $issueLabelNodes !== false
+                && $issueLabelNodes->length === 1
+                && trim((string)$issueLabelNodes->item(0)?->textContent)
+                    === (string)($issue['label'] ?? '')
+                && $contextLabel !== ''
                 && str_contains(
                     $issueDetail->textContent,
                     '对象：' . $contextLabel
                 ),
-            '问题明细应显示服务提供的对象说明：' . $blockId
+            '问题明细应保留文字状态、语义严重级别和对象说明：'
+                . $blockId
         );
     }
 
@@ -534,7 +574,7 @@ trace_work_item_render_assert(
 $withoutPrimaryBlockId = (string)(
     $withoutPrimaryItems[$withoutPrimaryIndex]['block_id'] ?? ''
 );
-$withoutPrimaryItems[$withoutPrimaryIndex]['primary_url'] = '';
+$withoutPrimaryItems[$withoutPrimaryIndex]['review_url'] = '';
 $withoutPrimary['trace_work_items']['items'] = $withoutPrimaryItems;
 $withoutPrimaryRendered = trace_work_item_render_workbench(
     $withoutPrimary,
@@ -572,7 +612,7 @@ foreach ($withoutPrimaryItems as $item) {
         trace_work_item_render_assert(
             $primaryLinks->length === 0
                 && $withoutPrimaryNotices->length === 1,
-            'primary_url 为空时应隐藏主链接并显示明确说明'
+            'review_url 为空时应隐藏主链接并显示明确说明'
                 . '，当前主链接=' . $primaryLinks->length
                 . '，说明=' . $withoutPrimaryNotices->length
         );
@@ -583,7 +623,7 @@ foreach ($withoutPrimaryItems as $item) {
         $primaryLinks->length === 1
             && $primaryLink instanceof DOMElement
             && $primaryLink->getAttribute('href')
-                === (string)($item['primary_url'] ?? ''),
+                === (string)($item['review_url'] ?? ''),
         '空主入口场景不得影响其他卡的主链接：' . $blockId
     );
 }
@@ -631,7 +671,7 @@ echo 'qms_trace_work_item_render_smoke passed: '
         'issues' => $expectedIssueCount,
         'candidates' => $expectedCandidateCount,
         'mutation_rejected' => true,
-        'empty_primary_checked' => $withoutPrimaryBlockId,
+        'empty_review_url_checked' => $withoutPrimaryBlockId,
         'empty_state_checked' => true,
     ], JSON_UNESCAPED_UNICODE)
     . PHP_EOL;

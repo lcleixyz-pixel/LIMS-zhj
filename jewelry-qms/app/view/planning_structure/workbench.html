@@ -84,7 +84,7 @@
                         <span>{$traceItem.section_number} {$traceItem.title}</span>
                         <span class="qms-trace-work-item-meta">
                             <span>{$traceItem.block_type_label}</span>
-                            <span>{$traceItem.issues|count} 个问题</span>
+                            <span>{$traceItem.issue_count} 个问题</span>
                             {if $traceItem.priority == 'blocked'}
                             <span class="qms-trace-work-item-priority">阻断优先</span>
                             {else}
@@ -107,9 +107,9 @@
                 </div>
 
                 <div class="qms-trace-work-item-actions">
-                    {notempty name="traceItem.primary_url"}
+                    {notempty name="traceItem.review_url"}
                     <a
-                        href="{$traceItem.primary_url}"
+                        href="{$traceItem.review_url}"
                         class="btn btn-sm btn-primary text-nowrap"
                         aria-label="处理此内容块：{$traceItem.section_number} {$traceItem.title}"
                     >
@@ -121,12 +121,15 @@
                 </div>
 
                 <details class="qms-trace-work-item-details" data-detail-kind="issues">
-                    <summary>查看问题明细（{$traceItem.issues|count}）</summary>
+                    <summary>查看问题明细（{$traceItem.issue_count}）</summary>
                     <div class="qms-trace-work-item-details-body">
                         <div class="qms-trace-work-item-issues">
                             {volist name="traceItem.issues" id="traceIssue"}
-                            <div class="qms-trace-work-item-issue">
-                                <div class="fw-semibold">{$traceIssue.label}</div>
+                            <div
+                                class="qms-trace-work-item-issue"
+                                data-severity="{$traceIssue.severity}"
+                            >
+                                <div class="qms-trace-work-item-issue-label">{$traceIssue.label}</div>
                                 <div class="qms-trace-work-item-context">对象：{$traceIssue.context_label}</div>
                                 <div>{$traceIssue.message}</div>
                             </div>

@@ -86,7 +86,7 @@ $blocks = [
             'relation_type' => 'implements',
             'confidence' => 'high',
             'note' => '历史独立关系。',
-            'review_url' => '/planning/structures/links/review?block_id=block-mismatch&link_id=link-mismatch',
+            'review_url' => '/planning/structures/links/review?block_id=block-mismatch',
         ]],
     ],
     [
@@ -109,7 +109,7 @@ $blocks = [
                 'relation_type' => 'requires_record',
                 'confidence' => 'review_required',
                 'note' => '历史混装关系。',
-                'review_url' => '/planning/structures/links/review?block_id=block-mixed&link_id=link-mixed',
+                'review_url' => '/planning/structures/links/review?block_id=block-mixed',
             ],
             [
                 'id' => 'link-mixed',
@@ -122,7 +122,7 @@ $blocks = [
                 'relation_type' => 'requires_record',
                 'confidence' => 'review_required',
                 'note' => '重复的历史混装关系。',
-                'review_url' => '/planning/structures/links/review?block_id=block-mixed&link_id=link-mixed',
+                'review_url' => '/planning/structures/links/review?block_id=block-mixed',
             ],
         ],
     ],
@@ -360,28 +360,20 @@ trace_work_item_assert(
     '已有同目标已确认主链的内容块和无 ID 内容块不得输出'
 );
 
-$expectedSteps = [
-    [
-        'key' => 'review_existing',
-        'label' => '1. 核对当前关系',
-        'description' => '先核对当前内容块已有关系及其复核状态。',
-    ],
-    [
-        'key' => 'resolve_issues',
-        'label' => '2. 处理发现项',
-        'description' => '先拆分混装或纠正错挂，再逐条确认待复核关系。',
-    ],
-    [
-        'key' => 'confirm_primary',
-        'label' => '3. 确认主链',
-        'description' => '对照候选补齐主链并人工确认，完成后返回工作台复核。',
-    ],
-];
 trace_work_item_assert(
-    ($mixed['steps'] ?? []) === $expectedSteps
-        && ($mismatch['steps'] ?? []) === $expectedSteps
-        && ($pending['steps'] ?? []) === $expectedSteps,
-    '中文办理步骤应由服务按固定顺序输出'
+    array_column((array)($mixed['steps'] ?? []), 'label') === [
+        '1. 查看拆分预览',
+        '2. 带入候选',
+    ]
+        && array_column((array)($mismatch['steps'] ?? []), 'label') === [
+            '1. 调整当前错挂关系',
+            '2. 带入候选',
+        ]
+        && array_column((array)($pending['steps'] ?? []), 'label') === [
+            '1. 带入候选',
+            '2. 逐条确认仍待复核的关系',
+        ],
+    '中文办理步骤应按每张卡的实际问题连续编号'
 );
 trace_work_item_assert(
     ($mixed['block_type_label'] ?? '') === '记录要求'
@@ -390,15 +382,16 @@ trace_work_item_assert(
     '内容块类型应转换为稳定中文标签'
 );
 trace_work_item_assert(
-    ($mixed['primary_url'] ?? '') ===
-        '/planning/structures/links/review?block_id=block-mixed&link_id=link-mixed'
-        && ($mismatch['primary_url'] ?? '') ===
-        '/planning/structures/links/review?block_id=block-mismatch&link_id=link-mismatch'
-        && str_contains(
-            (string)($pending['primary_url'] ?? ''),
-            'candidate_id=clause-71'
-        ),
-    '主入口应优先使用同块问题关系 GET 地址，其次使用可路由候选地址'
+    ($mixed['review_url'] ?? '') ===
+        '/planning/structures/links/review?block_id=block-mixed'
+        && ($mismatch['review_url'] ?? '') ===
+        '/planning/structures/links/review?block_id=block-mismatch'
+        && ($pending['review_url'] ?? '') ===
+            '/planning/structures/links/review?block_id=block-pending'
+        && !array_key_exists('primary_url', $mixed)
+        && !array_key_exists('primary_url', $mismatch)
+        && !array_key_exists('primary_url', $pending),
+    '每卡 review_url 应只进入同块关系复核页，不沿用候选三元组'
 );
 
 $issueCount = array_sum(array_map(
@@ -411,6 +404,11 @@ trace_work_item_assert(
     '问题计数应等于所有办理卡问题数之和，且问题与候选均应去重'
 );
 foreach ($items as $item) {
+    trace_work_item_assert(
+        (int)($item['issue_count'] ?? -1)
+            === count((array)($item['issues'] ?? [])),
+        '每张卡的 issue_count 应等于该卡问题数'
+    );
     foreach ((array)($item['issues'] ?? []) as $issue) {
         trace_work_item_assert(
             !array_key_exists('_issue_key', $issue),
@@ -702,6 +700,210 @@ trace_work_item_group_assert(
     '候选应按外部依据、手册、运行记录排序并保留推荐理由'
 );
 
+$stepCandidate = trace_work_item_candidate([
+    'candidate_kind' => 'external_source',
+    'candidate_kind_label' => '外部依据',
+    'relation_type' => 'basis',
+    'relation_label' => '主链：外部依据',
+    'target_field' => 'clause_id',
+    'target_id' => 'clause-step',
+    'target_label' => 'CNAS-CL01 7.1',
+    'target_block_id' => 'block-step',
+    'target_block_title' => '动态步骤',
+    'target_block_type' => 'purpose',
+    'section_number' => '5.2',
+    'review_url' => '/planning/structures/links/review'
+        . '?block_id=block-step'
+        . '&candidate_kind=external_source'
+        . '&candidate_id=clause-step',
+]);
+$stepBlock = [
+    'id' => 'block-step',
+    'section_number' => '7.1',
+    'title' => '动态步骤',
+    'block_type' => 'purpose',
+    'sort_order' => 10,
+];
+$stepCases = [
+    'mixed_only' => [
+        'blocks' => [[
+            'block' => $stepBlock,
+            'links' => [[
+                'id' => 'link-step-mixed',
+                'manual_section_id' => 'manual-step',
+                'record_form_template_id' => 'record-step',
+                'relation_type' => 'requires_record',
+                'confidence' => 'review_required',
+                'review_url' => '/planning/structures/links/review'
+                    . '?block_id=block-step',
+            ]],
+        ]],
+        'trace' => [],
+        'codes' => ['mixed_relation'],
+        'labels' => ['1. 查看拆分预览'],
+        'descriptions' => ['逐条建立正确关系。'],
+    ],
+    'mismatch_only' => [
+        'blocks' => [[
+            'block' => $stepBlock,
+            'links' => [[
+                'id' => 'link-step-mismatch',
+                'manual_section_id' => 'manual-old',
+                'section_number' => '4.2',
+                'relation_type' => 'implements',
+                'confidence' => 'high',
+                'review_url' => '/planning/structures/links/review'
+                    . '?block_id=block-step',
+            ]],
+        ]],
+        'trace' => [
+            'manual_sections' => [
+                trace_work_item_candidate(array_merge($stepCandidate, [
+                    'candidate_kind' => 'manual_section',
+                    'candidate_kind_label' => '手册章节',
+                    'target_field' => 'manual_section_id',
+                    'target_id' => 'manual-expected',
+                    'target_block_id' => 'block-not-rendered',
+                    'review_url' => '/planning/structures/links/review'
+                        . '?block_id=block-not-rendered'
+                        . '&candidate_kind=manual_section'
+                        . '&candidate_id=manual-expected',
+                ])),
+            ],
+        ],
+        'codes' => ['suspected_mismatch'],
+        'labels' => ['1. 调整当前错挂关系'],
+        'descriptions' => ['核对对象和用途后纠正关系。'],
+    ],
+    'candidate_only' => [
+        'blocks' => [[
+            'block' => $stepBlock,
+            'links' => [],
+        ]],
+        'trace' => ['external_sources' => [$stepCandidate]],
+        'codes' => ['missing_primary'],
+        'labels' => ['1. 带入候选'],
+        'descriptions' => ['核对后保存。'],
+    ],
+    'pending_only' => [
+        'blocks' => [[
+            'block' => $stepBlock,
+            'links' => [[
+                'id' => 'link-step-pending',
+                'clause_id' => 'clause-pending',
+                'relation_type' => 'basis',
+                'confidence' => 'review_required',
+                'review_url' => '/planning/structures/links/review'
+                    . '?block_id=block-step',
+            ]],
+        ]],
+        'trace' => [],
+        'codes' => ['pending_review'],
+        'labels' => ['1. 逐条确认仍待复核的关系'],
+        'descriptions' => ['核对当前主链关系是否成立。'],
+    ],
+    'all_in_order' => [
+        'blocks' => [[
+            'block' => $stepBlock,
+            'links' => [
+                [
+                    'id' => 'link-step-mixed',
+                    'manual_section_id' => 'manual-mixed',
+                    'record_form_template_id' => 'record-mixed',
+                    'relation_type' => 'requires_record',
+                    'confidence' => 'review_required',
+                    'review_url' => '/planning/structures/links/review'
+                        . '?block_id=block-step',
+                ],
+                [
+                    'id' => 'link-step-mismatch',
+                    'manual_section_id' => 'manual-old',
+                    'section_number' => '4.2',
+                    'relation_type' => 'implements',
+                    'confidence' => 'high',
+                    'review_url' => '/planning/structures/links/review'
+                        . '?block_id=block-step',
+                ],
+                [
+                    'id' => 'link-step-pending',
+                    'clause_id' => 'clause-pending',
+                    'relation_type' => 'basis',
+                    'confidence' => 'review_required',
+                    'review_url' => '/planning/structures/links/review'
+                        . '?block_id=block-step',
+                ],
+            ],
+        ]],
+        'trace' => [
+            'manual_sections' => [
+                trace_work_item_candidate(array_merge($stepCandidate, [
+                    'candidate_kind' => 'manual_section',
+                    'candidate_kind_label' => '手册章节',
+                    'target_field' => 'manual_section_id',
+                    'target_id' => 'manual-expected',
+                    'target_block_id' => 'block-not-rendered',
+                    'review_url' => '/planning/structures/links/review'
+                        . '?block_id=block-not-rendered'
+                        . '&candidate_kind=manual_section'
+                        . '&candidate_id=manual-expected',
+                ])),
+            ],
+            'external_sources' => [$stepCandidate],
+        ],
+        'codes' => [
+            'mixed_relation',
+            'suspected_mismatch',
+            'pending_review',
+            'missing_primary',
+        ],
+        'labels' => [
+            '1. 查看拆分预览',
+            '2. 调整当前错挂关系',
+            '3. 带入候选',
+            '4. 逐条确认仍待复核的关系',
+        ],
+        'descriptions' => [
+            '逐条建立正确关系。',
+            '核对对象和用途后纠正关系。',
+            '核对后保存。',
+            '核对当前主链关系是否成立。',
+        ],
+    ],
+];
+$candidateOnlyText = '';
+foreach ($stepCases as $caseId => $case) {
+    $stepResult = QmsTraceWorkItemService::build(
+        (array)$case['blocks'],
+        (array)$case['trace']
+    );
+    $stepItem = (array)($stepResult['items'][0] ?? []);
+    $steps = (array)($stepItem['steps'] ?? []);
+    trace_work_item_group_assert(
+        'dynamic_steps',
+        array_column((array)($stepItem['issues'] ?? []), 'code')
+            === (array)$case['codes']
+            && array_column($steps, 'label') === (array)$case['labels']
+            && array_column($steps, 'description')
+                === (array)$case['descriptions']
+            && count(array_column($steps, 'key'))
+                === count(array_unique(array_column($steps, 'key'))),
+        $caseId . ' 应只按实际问题生成连续编号步骤'
+    );
+    if ($caseId === 'candidate_only') {
+        $candidateOnlyText = implode(' ', array_merge(
+            array_column($steps, 'label'),
+            array_column($steps, 'description')
+        ));
+    }
+}
+trace_work_item_group_assert(
+    'dynamic_steps',
+    !str_contains($candidateOnlyText, '混装')
+        && !str_contains($candidateOnlyText, '错挂')
+        && !str_contains($candidateOnlyText, '待复核'),
+    '仅 missing_primary 的卡不得虚构混装、错挂或待复核步骤'
+);
+
 $noLinkIdResult = QmsTraceWorkItemService::build([
     [
         'block' => [
@@ -872,7 +1074,8 @@ $unsafeUrlResult = QmsTraceWorkItemService::build([
 $unsafeUrlItem = (array)($unsafeUrlResult['items'][0] ?? []);
 trace_work_item_group_assert(
     'edges',
-    ($unsafeUrlItem['primary_url'] ?? 'unexpected') === ''
+    ($unsafeUrlItem['review_url'] ?? '') ===
+        '/planning/structures/links/review?block_id=block-unsafe-url'
         && array_values(array_unique(array_column(
             (array)($unsafeUrlItem['candidates'] ?? []),
             'review_url'
@@ -895,45 +1098,196 @@ $existingGetResult = QmsTraceWorkItemService::build([
             'relation_type' => 'basis',
             'confidence' => 'review_required',
             'review_method' => 'GET',
-            'review_url' => '/planning/structures/links/review?block_id=block-existing-get&link_id=link-existing-get',
+            'review_url' => '/planning/structures/links/review?block_id=block-existing-get',
         ]],
     ],
 ], []);
 trace_work_item_group_assert(
     'edges',
-    ($existingGetResult['items'][0]['primary_url'] ?? '') ===
-        '/planning/structures/links/review?block_id=block-existing-get&link_id=link-existing-get',
-    '合法入口应只沿用同块已有 GET review_url'
+    ($existingGetResult['items'][0]['review_url'] ?? '') ===
+        '/planning/structures/links/review?block_id=block-existing-get',
+    '既有关系只允许沿用同块 block_id 的 GET review_url'
 );
 
 $strictUrlRows = [];
 $strictUrlCases = [
-    'logout' => '/logout?block_id=block-strict-url',
-    'missing-block' => '/planning/structures/links/review?candidate_id=missing-block',
-    'wrong-block' => '/planning/structures/links/review?block_id=other-block',
-    'raw-backslash' => '/\\example.com?block_id=block-strict-url',
-    'encoded-crlf' => '/planning/structures/links/review?block_id=block-strict-url&next=%0d%0a',
-    'encoded-backslash' => '/planning/structures/links/review?block_id=block-strict-url&next=%5clogout',
-    'triple-encoded-cr' => '/planning/structures/links/review?block_id=block-strict-url&next=%25250d',
-    'triple-encoded-backslash' => '/planning/structures/links/review?block_id=block-strict-url&next=%25255c',
-    'actual-control' => "/planning/structures/links/review?block_id=block-strict-url&next=\r\n",
+    'logout' => [
+        'target_id' => 'strict-logout',
+        'url' => '/logout?block_id=block-strict-url',
+    ],
+    'next' => [
+        'target_id' => 'strict-next',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=strict-next&next=%2Flogout',
+    ],
+    'confirm' => [
+        'target_id' => 'strict-confirm',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=strict-confirm&confirm=1',
+    ],
+    'duplicate-block' => [
+        'target_id' => 'strict-duplicate-block',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&block_id=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=strict-duplicate-block',
+    ],
+    'block-array' => [
+        'target_id' => 'strict-block-array',
+        'url' => '/planning/structures/links/review'
+            . '?block_id[]=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=strict-block-array',
+    ],
+    'candidate-kind-array' => [
+        'target_id' => 'strict-candidate-kind-array',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind[]=external_source'
+            . '&candidate_id=strict-candidate-kind-array',
+    ],
+    'candidate-id-array' => [
+        'target_id' => 'strict-candidate-id-array',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id[]=strict-candidate-id-array',
+    ],
+    'missing-block' => [
+        'target_id' => 'strict-missing-block',
+        'url' => '/planning/structures/links/review'
+            . '?candidate_kind=external_source'
+            . '&candidate_id=strict-missing-block',
+    ],
+    'wrong-block' => [
+        'target_id' => 'strict-wrong-block',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=other-block'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=strict-wrong-block',
+    ],
+    'wrong-kind' => [
+        'target_id' => 'strict-wrong-kind',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind=manual_section'
+            . '&candidate_id=strict-wrong-kind',
+    ],
+    'wrong-id' => [
+        'target_id' => 'strict-wrong-id',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=other-id',
+    ],
+    'empty-id' => [
+        'target_id' => 'strict-empty-id',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=',
+    ],
+    'fourfold-encoded-id' => [
+        'target_id' => 'strict-fourfold-encoded-id',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=%2525252Flogout',
+    ],
+    'sixfold-encoded-id' => [
+        'target_id' => 'strict-sixfold-encoded-id',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=%25252525252Flogout',
+    ],
+    'expected-backslash' => [
+        'target_id' => "strict\\backslash",
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=strict%5Cbackslash',
+    ],
+    'expected-control' => [
+        'target_id' => "strict\ncontrol",
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=strict%0Acontrol',
+    ],
+    'fragment' => [
+        'target_id' => 'strict-fragment',
+        'url' => '/planning/structures/links/review'
+            . '?block_id=block-strict-url'
+            . '&candidate_kind=external_source'
+            . '&candidate_id=strict-fragment#confirm',
+    ],
+    'raw-backslash' => [
+        'target_id' => 'strict-raw-backslash',
+        'url' => '/\\example.com?block_id=block-strict-url',
+    ],
+    'actual-control' => [
+        'target_id' => 'strict-actual-control',
+        'url' => "/planning/structures/links/review"
+            . "?block_id=block-strict-url\r\n",
+    ],
 ];
-foreach ($strictUrlCases as $caseId => $reviewUrl) {
+foreach ($strictUrlCases as $caseId => $case) {
     $strictUrlRows[] = trace_work_item_candidate([
         'candidate_kind' => 'external_source',
         'candidate_kind_label' => '外部依据',
         'relation_type' => 'basis',
         'relation_label' => '主链：外部依据',
         'target_field' => 'clause_id',
-        'target_id' => 'strict-' . $caseId,
+        'target_id' => (string)$case['target_id'],
         'target_label' => '严格入口 ' . $caseId,
         'target_block_id' => 'block-strict-url',
         'target_block_title' => '严格入口边界',
         'target_block_type' => 'purpose',
         'review_method' => 'GET',
-        'review_url' => $reviewUrl,
+        'review_url' => (string)$case['url'],
     ]);
 }
+$legalCandidateUrl = '/planning/structures/links/review'
+    . '?candidate_id=strict-legal-candidate'
+    . '&block_id=block-strict-url'
+    . '&candidate_kind=external_source';
+$strictUrlRows[] = trace_work_item_candidate([
+    'candidate_kind' => 'external_source',
+    'candidate_kind_label' => '外部依据',
+    'relation_type' => 'basis',
+    'relation_label' => '主链：外部依据',
+    'target_field' => 'clause_id',
+    'target_id' => 'strict-legal-candidate',
+    'target_label' => '合法候选入口',
+    'target_block_id' => 'block-strict-url',
+    'target_block_title' => '严格入口边界',
+    'target_block_type' => 'purpose',
+    'review_method' => 'GET',
+    'review_url' => $legalCandidateUrl,
+]);
+$strictUrlRows[] = trace_work_item_candidate([
+    'candidate_kind' => 'future_kind',
+    'candidate_kind_label' => '未来候选',
+    'relation_type' => 'basis',
+    'relation_label' => '主链：外部依据',
+    'target_field' => 'clause_id',
+    'target_id' => 'strict-unsupported-kind',
+    'target_label' => '不支持的候选类型',
+    'target_block_id' => 'block-strict-url',
+    'target_block_title' => '严格入口边界',
+    'target_block_type' => 'purpose',
+    'review_method' => 'GET',
+    'review_url' => '/planning/structures/links/review'
+        . '?block_id=block-strict-url'
+        . '&candidate_kind=future_kind'
+        . '&candidate_id=strict-unsupported-kind',
+]);
 $strictUrlResult = QmsTraceWorkItemService::build([
     [
         'block' => [
@@ -949,14 +1303,21 @@ $strictUrlResult = QmsTraceWorkItemService::build([
     'external_sources' => $strictUrlRows,
 ]);
 $strictUrlItem = (array)($strictUrlResult['items'][0] ?? []);
+$strictUrlsByTarget = [];
+foreach ((array)($strictUrlItem['candidates'] ?? []) as $candidate) {
+    $strictUrlsByTarget[(string)($candidate['target_id'] ?? '')] =
+        (string)($candidate['review_url'] ?? '');
+}
+$invalidStrictUrls = $strictUrlsByTarget;
+unset($invalidStrictUrls['strict-legal-candidate']);
 trace_work_item_group_assert(
     'url_boundary',
-    ($strictUrlItem['primary_url'] ?? 'unexpected') === ''
-        && array_values(array_unique(array_column(
-            (array)($strictUrlItem['candidates'] ?? []),
-            'review_url'
-        ))) === [''],
-    '只允许同块 planning 关系复核 GET 地址，拒绝越权路径、缺块参数和控制字符歧义'
+    ($strictUrlItem['review_url'] ?? '') ===
+        '/planning/structures/links/review?block_id=block-strict-url'
+        && ($strictUrlsByTarget['strict-legal-candidate'] ?? '')
+            === $legalCandidateUrl
+        && array_values(array_unique($invalidStrictUrls)) === [''],
+    '候选 URL 只允许与当前对象严格匹配的三元组，顺序可变；未知键、重复键、数组、空值、对象错配、多层编码、fragment 和不支持类型必须清空'
 );
 
 echo "qms_trace_work_item_service_smoke passed\n";

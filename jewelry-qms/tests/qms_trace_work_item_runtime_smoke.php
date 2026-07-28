@@ -30,7 +30,9 @@ function trace_work_item_runtime_active_link_count(): int
 function trace_work_item_runtime_assert_url(
     string $url,
     string $blockId,
-    string $label
+    string $label,
+    string $candidateKind = '',
+    string $candidateId = ''
 ): void {
     trace_work_item_runtime_assert(
         $url !== '',
@@ -51,13 +53,16 @@ function trace_work_item_runtime_assert_url(
         (string)($query['block_id'] ?? '') === $blockId,
         $label . ' 的 block_id 必须与办理卡一致'
     );
-    $unexpectedKeys = array_diff(
-        array_keys($query),
-        ['block_id', 'link_id', 'candidate_kind', 'candidate_id']
-    );
+    $expectedQuery = ['block_id' => $blockId];
+    if ($candidateKind !== '' || $candidateId !== '') {
+        $expectedQuery['candidate_kind'] = $candidateKind;
+        $expectedQuery['candidate_id'] = $candidateId;
+    }
+    ksort($query);
+    ksort($expectedQuery);
     trace_work_item_runtime_assert(
-        $unexpectedKeys === [],
-        $label . ' 不得携带写表单或其它越界参数'
+        $query === $expectedQuery,
+        $label . ' 只能使用严格 block_id 或候选三元组查询形状'
     );
 }
 
@@ -196,9 +201,15 @@ $actualCollectionCounts = array_fill_keys(
 foreach ($items as $item) {
     $blockId = (string)($item['block_id'] ?? '');
     trace_work_item_runtime_assert_url(
-        (string)($item['primary_url'] ?? ''),
+        (string)($item['review_url'] ?? ''),
         $blockId,
         '办理卡主入口'
+    );
+    trace_work_item_runtime_assert(
+        (int)($item['issue_count'] ?? -1)
+            === count((array)($item['issues'] ?? []))
+            && !array_key_exists('primary_url', $item),
+        '每张卡必须使用 issue_count 与 review_url 单一模型契约'
     );
 
     foreach ((array)($item['issues'] ?? []) as $issue) {
@@ -208,7 +219,9 @@ foreach ($items as $item) {
         trace_work_item_runtime_assert_url(
             (string)($issue['review_url'] ?? ''),
             $blockId,
-            '问题复核入口'
+            '问题复核入口',
+            (string)($issue['candidate_kind'] ?? ''),
+            (string)($issue['target_id'] ?? '')
         );
     }
 
@@ -225,7 +238,9 @@ foreach ($items as $item) {
         trace_work_item_runtime_assert_url(
             (string)($candidate['review_url'] ?? ''),
             $blockId,
-            '候选复核入口'
+            '候选复核入口',
+            (string)($candidate['candidate_kind'] ?? ''),
+            (string)($candidate['target_id'] ?? '')
         );
     }
 }

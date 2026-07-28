@@ -86,8 +86,10 @@ foreach ([
     'traceItem.block_id',
     'traceItem.block_type_label',
     'traceItem.priority',
+    'traceItem.issue_count',
     'traceItem.issues',
     'traceIssue.label',
+    'traceIssue.severity',
     'traceIssue.message',
     'traceIssue.context_label',
     'traceItem.steps',
@@ -99,13 +101,28 @@ foreach ([
     'traceCandidate.relation_label',
     'traceCandidate.recommendation_reason',
     'traceCandidate.review_url',
-    'traceItem.primary_url',
+    'traceItem.review_url',
 ] as $traceViewModelPath) {
     workbench_ui_assert(
         str_contains($workbenchView, $traceViewModelPath),
         '连续办理卡应直接消费 ViewModel 字段：' . $traceViewModelPath
     );
 }
+workbench_ui_assert(
+    !str_contains($workbenchView, 'traceItem.primary_url'),
+    '连续办理卡模板不得保留含混的 primary_url 别名'
+);
+workbench_ui_assert(
+    str_contains(
+        $workbenchView,
+        'data-severity="{$traceIssue.severity}"'
+    )
+        && str_contains(
+            $workbenchView,
+            'class="qms-trace-work-item-issue-label"'
+        ),
+    '每个问题项应暴露语义严重级别，问题标签应使用独立 class'
+);
 
 $semanticReasonPosition = strpos($workbenchView, '自动识别原因');
 $traceWorkItemsPosition = strpos(
@@ -234,6 +251,9 @@ foreach ([
     '.qms-trace-work-item-actions',
     '.qms-trace-work-item[data-priority="blocked"]',
     '.qms-trace-work-item[data-priority="review"]',
+    '.qms-trace-work-item-issue-label',
+    '.qms-trace-work-item-issue[data-severity="blocked"]',
+    '.qms-trace-work-item-issue[data-severity="review"]',
     '.qms-trace-work-item-details',
     '.qms-trace-work-item-details > summary',
     '.qms-trace-work-item-details > summary:focus-visible',
@@ -245,6 +265,21 @@ foreach ([
         '连续办理样式缺少：' . $traceCssContract
     );
 }
+workbench_ui_assert(
+    preg_match(
+        '/\.qms-trace-work-item-issue\[data-severity="blocked"\]'
+            . ' \.qms-trace-work-item-issue-label\s*\{[^}]*'
+            . 'color\s*:\s*var\(--qms-bad\)\s*;/s',
+        $traceCss
+    ) === 1
+        && preg_match(
+            '/\.qms-trace-work-item-issue\[data-severity="review"\]'
+                . ' \.qms-trace-work-item-issue-label\s*\{[^}]*'
+                . 'color\s*:\s*#7a4510\s*;/si',
+            $traceCss
+        ) === 1,
+    '问题标签应按严重级别使用高对比颜色：blocked 为危险色，review 为深警告色'
+);
 workbench_ui_assert(
     preg_match(
         '/\.qms-trace-work-items-list\s*\{[^}]*'

@@ -11,6 +11,12 @@ final class QmsTraceWorkItemService
         'record_templates',
     ];
 
+    private const CANDIDATE_KINDS = [
+        'external_source',
+        'manual_section',
+        'record_template',
+    ];
+
     private const AUXILIARY_RELATION_TYPES = [
         'supporting',
         'mentions',
@@ -27,24 +33,6 @@ final class QmsTraceWorkItemService
         'record_requirement' => '记录要求',
     ];
 
-    private const STEPS = [
-        [
-            'key' => 'review_existing',
-            'label' => '1. 核对当前关系',
-            'description' => '先核对当前内容块已有关系及其复核状态。',
-        ],
-        [
-            'key' => 'resolve_issues',
-            'label' => '2. 处理发现项',
-            'description' => '先拆分混装或纠正错挂，再逐条确认待复核关系。',
-        ],
-        [
-            'key' => 'confirm_primary',
-            'label' => '3. 确认主链',
-            'description' => '对照候选补齐主链并人工确认，完成后返回工作台复核。',
-        ],
-    ];
-
     public static function build(array $blocks, array $candidateTrace): array
     {
         $expectedManualSections = self::expectedManualSections(
@@ -59,9 +47,6 @@ final class QmsTraceWorkItemService
 
             $issues = [];
             $confirmedPrimary = [];
-            $mixedReviewUrls = [];
-            $mismatchReviewUrls = [];
-            $otherReviewUrls = [];
             foreach ((array)($rawBlockRow['links'] ?? []) as $rawLink) {
                 if (!is_array($rawLink)) {
                     continue;
@@ -97,9 +82,6 @@ final class QmsTraceWorkItemService
                         $linkId,
                         $link
                     ));
-                    if ($reviewUrl !== '') {
-                        $mixedReviewUrls[] = $reviewUrl;
-                    }
                     continue;
                 }
 
@@ -129,9 +111,6 @@ final class QmsTraceWorkItemService
                         $linkId,
                         $link
                     ));
-                    if ($reviewUrl !== '') {
-                        $mismatchReviewUrls[] = $reviewUrl;
-                    }
                 } elseif (
                     $state === 'pending_review'
                     || (
@@ -159,24 +138,18 @@ final class QmsTraceWorkItemService
                         $linkId,
                         $link
                     ));
-                    if ($reviewUrl !== '') {
-                        $otherReviewUrls[] = $reviewUrl;
-                    }
                 }
             }
 
             $candidates = (array)($candidatesByBlock[$blockId] ?? []);
-            $candidateReviewUrls = [];
             foreach ($candidates as $candidate) {
                 $candidateReviewUrl = self::validGetUrl(
                     (string)($candidate['review_url'] ?? ''),
                     $blockId,
-                    'GET'
+                    'GET',
+                    (string)($candidate['candidate_kind'] ?? ''),
+                    (string)($candidate['target_id'] ?? '')
                 );
-                if ($candidateReviewUrl !== '') {
-                    $candidateReviewUrls[] = $candidateReviewUrl;
-                }
-
                 $confirmationKey = self::confirmationKey(
                     (string)($candidate['relation_type'] ?? ''),
                     (string)($candidate['target_field'] ?? ''),
@@ -255,14 +228,15 @@ final class QmsTraceWorkItemService
                 'block_type_label' => self::BLOCK_TYPE_LABELS[$blockType]
                     ?? '内容块',
                 'priority' => $itemRank >= 2 ? 'blocked' : 'review',
+                'issue_count' => count($issues),
                 'issues' => $issues,
-                'steps' => self::STEPS,
+                'steps' => self::stepsFor($issues, $candidates),
                 'candidates' => $candidates,
-                'primary_url' => self::firstUrl(
-                    $mixedReviewUrls,
-                    $mismatchReviewUrls,
-                    $candidateReviewUrls,
-                    $otherReviewUrls
+                'review_url' => self::validGetUrl(
+                    '/planning/structures/links/review?block_id='
+                        . rawurlencode($blockId),
+                    $blockId,
+                    'GET'
                 ),
                 '_sort_rank' => $itemRank,
                 '_sort_order' => (int)($block['sort_order'] ?? 0),
@@ -384,7 +358,9 @@ final class QmsTraceWorkItemService
                 $candidate['review_url'] = self::validGetUrl(
                     (string)($row['review_url'] ?? ''),
                     $blockId,
-                    (string)($row['review_method'] ?? 'GET')
+                    (string)($row['review_method'] ?? 'GET'),
+                    (string)($candidate['candidate_kind'] ?? ''),
+                    (string)($candidate['target_id'] ?? '')
                 );
                 $key = (string)$candidate['candidate_kind']
                     . '|' . (string)$candidate['target_id']
@@ -670,15 +646,70 @@ final class QmsTraceWorkItemService
         };
     }
 
+    private static function stepsFor(array $issues, array $candidates): array
+    {
+        $issueCodes = array_fill_keys(
+            array_map(
+                static fn(array $issue): string =>
+                    (string)($issue['code'] ?? ''),
+                $issues
+            ),
+            true
+        );
+        $definitions = [];
+        if (isset($issueCodes['mixed_relation'])) {
+            $definitions[] = [
+                'key' => 'split_mixed_relation',
+                'label' => '查看拆分预览',
+                'description' => '逐条建立正确关系。',
+            ];
+        }
+        if (isset($issueCodes['suspected_mismatch'])) {
+            $definitions[] = [
+                'key' => 'adjust_mismatch',
+                'label' => '调整当前错挂关系',
+                'description' => '核对对象和用途后纠正关系。',
+            ];
+        }
+        if ($candidates !== []) {
+            $definitions[] = [
+                'key' => 'apply_candidate',
+                'label' => '带入候选',
+                'description' => '核对后保存。',
+            ];
+        }
+        if (isset($issueCodes['pending_review'])) {
+            $definitions[] = [
+                'key' => 'confirm_pending_review',
+                'label' => '逐条确认仍待复核的关系',
+                'description' => '核对当前主链关系是否成立。',
+            ];
+        }
+
+        $steps = [];
+        foreach ($definitions as $index => $definition) {
+            $definition['label'] = ($index + 1) . '. ' . $definition['label'];
+            $steps[] = $definition;
+        }
+
+        return $steps;
+    }
+
     private static function validGetUrl(
         string $url,
         string $blockId,
-        string $method
+        string $method,
+        ?string $candidateKind = null,
+        ?string $candidateId = null
     ): string {
         if (
             $url === ''
-            || strtoupper(trim($method)) !== 'GET'
-            || self::hasUrlAmbiguity($url)
+            || $blockId === ''
+            || $method !== 'GET'
+            || str_contains($url, '\\')
+            || preg_match('/[\x00-\x1F\x7F]/', $url) === 1
+            || str_contains($blockId, '\\')
+            || preg_match('/[\x00-\x1F\x7F]/', $blockId) === 1
         ) {
             return '';
         }
@@ -687,7 +718,11 @@ final class QmsTraceWorkItemService
         if (
             !is_array($parts)
             || array_key_exists('scheme', $parts)
+            || array_key_exists('user', $parts)
+            || array_key_exists('pass', $parts)
             || array_key_exists('host', $parts)
+            || array_key_exists('port', $parts)
+            || array_key_exists('fragment', $parts)
             || (string)($parts['path'] ?? '')
                 !== '/planning/structures/links/review'
         ) {
@@ -695,49 +730,51 @@ final class QmsTraceWorkItemService
         }
 
         $query = (string)($parts['query'] ?? '');
-        parse_str($query, $parameters);
-        if (
-            !isset($parameters['block_id'])
-            || !is_string($parameters['block_id'])
-            || $parameters['block_id'] !== $blockId
-        ) {
+        $expected = ['block_id' => $blockId];
+        $candidateMode = $candidateKind !== null || $candidateId !== null;
+        if ($candidateMode) {
+            $candidateKind = trim((string)$candidateKind);
+            $candidateId = trim((string)$candidateId);
+            if (
+                !in_array($candidateKind, self::CANDIDATE_KINDS, true)
+                || $candidateId === ''
+                || str_contains($candidateKind, '\\')
+                || str_contains($candidateId, '\\')
+                || preg_match(
+                    '/[\x00-\x1F\x7F]/',
+                    $candidateKind . $candidateId
+                ) === 1
+            ) {
+                return '';
+            }
+            $expected['candidate_kind'] = $candidateKind;
+            $expected['candidate_id'] = $candidateId;
+        }
+
+        $pairs = $query === '' ? [] : explode('&', $query);
+        if (count($pairs) !== count($expected)) {
+            return '';
+        }
+        $seen = [];
+        foreach ($pairs as $pair) {
+            if ($pair === '' || substr_count($pair, '=') !== 1) {
+                return '';
+            }
+            [$key, $value] = explode('=', $pair, 2);
+            if (
+                preg_match('/\A[a-z_]+\z/D', $key) !== 1
+                || !array_key_exists($key, $expected)
+                || isset($seen[$key])
+                || $value !== rawurlencode((string)$expected[$key])
+            ) {
+                return '';
+            }
+            $seen[$key] = true;
+        }
+        if (count($seen) !== count($expected)) {
             return '';
         }
 
         return $url;
-    }
-
-    private static function hasUrlAmbiguity(string $url): bool
-    {
-        $decoded = $url;
-        for ($depth = 0; $depth < 3; $depth++) {
-            if (
-                str_contains($decoded, '\\')
-                || preg_match('/[\x00-\x1F\x7F]/', $decoded) === 1
-            ) {
-                return true;
-            }
-            $next = rawurldecode($decoded);
-            if ($next === $decoded) {
-                break;
-            }
-            $decoded = $next;
-        }
-
-        return str_contains($decoded, '\\')
-            || preg_match('/[\x00-\x1F\x7F]/', $decoded) === 1;
-    }
-
-    private static function firstUrl(array ...$groups): string
-    {
-        foreach ($groups as $urls) {
-            foreach ($urls as $url) {
-                if (trim((string)$url) !== '') {
-                    return (string)$url;
-                }
-            }
-        }
-
-        return '';
     }
 }

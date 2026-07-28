@@ -741,6 +741,19 @@ a:hover{ color:var(--qms-primary-dark); }
     line-height: 1.6;
 }
 
+.qms-trace-work-item-issue-label {
+    color: var(--qms-ink);
+    font-weight: 600;
+}
+
+.qms-trace-work-item-issue[data-severity="blocked"] .qms-trace-work-item-issue-label {
+    color: var(--qms-bad);
+}
+
+.qms-trace-work-item-issue[data-severity="review"] .qms-trace-work-item-issue-label {
+    color: #7a4510;
+}
+
 .qms-trace-work-item-context {
     color: var(--qms-ink);
 }
