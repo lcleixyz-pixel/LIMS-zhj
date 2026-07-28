@@ -51,8 +51,8 @@ foreach ([
     '<summary>查看可带入候选（',
     'data-detail-kind="issues"',
     'data-detail-kind="candidates"',
-    'aria-label="处理内容块：',
-    'aria-label="带入候选：',
+    'aria-label="处理此内容块：',
+    'aria-label="带入此候选：',
     '对象：{$traceIssue.context_label}',
     '治理候选（不计闭环）',
     '候选·待复核',
@@ -146,6 +146,13 @@ workbench_ui_assert(
     preg_match('/<details\b[^>]*\sopen(?:\s|=|>)/i', $workbenchView)
         !== 1,
     '问题和候选 details 默认不得展开'
+);
+workbench_ui_assert(
+    preg_match(
+        '/aria-label="带入此候选：[^"]*\{\$traceCandidate\.target_id\}/u',
+        $workbenchView
+    ) !== 1,
+    '候选入口读屏名称不得包含 target_id 等内部标识'
 );
 
 workbench_ui_assert(

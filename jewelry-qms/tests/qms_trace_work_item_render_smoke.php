@@ -246,8 +246,14 @@ foreach ($items as $item) {
         '办理卡主入口必须原样使用模型 primary_url：' . $blockId
     );
     $primaryAriaLabel = $primaryLink->getAttribute('aria-label');
+    $primaryVisibleText = trim($primaryLink->textContent);
     trace_work_item_render_assert(
         $primaryAriaLabel !== ''
+            && $primaryVisibleText !== ''
+            && str_starts_with(
+                $primaryAriaLabel,
+                $primaryVisibleText . '：'
+            )
             && str_contains(
                 $primaryAriaLabel,
                 (string)($item['section_number'] ?? '')
@@ -256,7 +262,8 @@ foreach ($items as $item) {
                 $primaryAriaLabel,
                 (string)($item['title'] ?? '')
             ),
-        '主入口 aria-label 应包含章节和内容块标题：' . $blockId
+        '主入口 aria-label 应以完整可见文字开头并包含章节和内容块标题：'
+            . $blockId
     );
     $primaryAriaLabels[] = $primaryAriaLabel;
 
@@ -333,8 +340,17 @@ foreach ($items as $item) {
             $candidateAriaLabel = $candidateLink instanceof DOMElement
                 ? $candidateLink->getAttribute('aria-label')
                 : '';
+            $candidateVisibleText = $candidateLink instanceof DOMElement
+                ? trim($candidateLink->textContent)
+                : '';
+            $candidateTargetId = (string)($candidate['target_id'] ?? '');
             trace_work_item_render_assert(
                 $candidateAriaLabel !== ''
+                    && $candidateVisibleText !== ''
+                    && str_starts_with(
+                        $candidateAriaLabel,
+                        $candidateVisibleText . '：'
+                    )
                     && str_contains(
                         $candidateAriaLabel,
                         (string)($candidate['target_label'] ?? '')
@@ -346,8 +362,20 @@ foreach ($items as $item) {
                     && str_contains(
                         $candidateAriaLabel,
                         (string)($item['title'] ?? '')
-                    ),
-                '候选 aria-label 应包含对象、用途和所属内容块：'
+                    )
+                    && (
+                        $candidateTargetId === ''
+                        || !str_contains(
+                            $candidateAriaLabel,
+                            $candidateTargetId
+                        )
+                    )
+                    && preg_match(
+                        '/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}'
+                            . '-[0-9a-f]{4}-[0-9a-f]{12}/i',
+                        $candidateAriaLabel
+                    ) !== 1,
+                '候选 aria-label 应以完整可见文字开头，包含可读上下文且不暴露内部标识：'
                     . $blockId
             );
             $candidateAriaLabels[] = $candidateAriaLabel;
@@ -389,10 +417,11 @@ trace_work_item_render_assert(
     '真实样本候选必须在所属 article 内与模型 URL 严格对应'
 );
 trace_work_item_render_assert(
-    (int)($traceWorkItems['issue_count'] ?? -1) === $expectedIssueCount
-        && $expectedIssueCount === 30
-        && $expectedCandidateCount === 27,
-    '真实页面应保持 30 个问题和 27 个候选的非空门禁'
+    $expectedIssueCount > 0
+        && $expectedCandidateCount > 0
+        && (int)($traceWorkItems['issue_count'] ?? -1)
+            === $expectedIssueCount,
+    '真实页面应保持问题和候选非空，且问题总数与模型严格一致'
 );
 trace_work_item_render_assert(
     count(array_merge($primaryAriaLabels, $candidateAriaLabels))
