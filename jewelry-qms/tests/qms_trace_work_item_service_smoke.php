@@ -817,6 +817,8 @@ $strictUrlCases = [
     'raw-backslash' => '/\\example.com?block_id=block-strict-url',
     'encoded-crlf' => '/planning/structures/links/review?block_id=block-strict-url&next=%0d%0a',
     'encoded-backslash' => '/planning/structures/links/review?block_id=block-strict-url&next=%5clogout',
+    'triple-encoded-cr' => '/planning/structures/links/review?block_id=block-strict-url&next=%25250d',
+    'triple-encoded-backslash' => '/planning/structures/links/review?block_id=block-strict-url&next=%25255c',
     'actual-control' => "/planning/structures/links/review?block_id=block-strict-url&next=\r\n",
 ];
 foreach ($strictUrlCases as $caseId => $reviewUrl) {

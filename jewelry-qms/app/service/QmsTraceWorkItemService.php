@@ -627,7 +627,8 @@ final class QmsTraceWorkItemService
             $decoded = $next;
         }
 
-        return false;
+        return str_contains($decoded, '\\')
+            || preg_match('/[\x00-\x1F\x7F]/', $decoded) === 1;
     }
 
     private static function firstUrl(array ...$groups): string
