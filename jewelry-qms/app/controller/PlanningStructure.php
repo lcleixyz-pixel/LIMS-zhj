@@ -126,7 +126,13 @@ class PlanningStructure extends BaseController
 
     public function reviewLinks()
     {
-        $detail = QmsDocumentStructureService::blockTraceReviewDetail((string)$this->request->param('block_id', ''));
+        $detail = QmsDocumentStructureService::blockTraceReviewDetail(
+            (string)$this->request->param('block_id', ''),
+            [
+                'candidate_kind' => (string)$this->request->param('candidate_kind', ''),
+                'candidate_id' => (string)$this->request->param('candidate_id', ''),
+            ]
+        );
         if ($detail === []) {
             Session::flash('warning', '该结构化内容块已不存在，可能来自历史组合包快照；现行追溯请从结构化文件或组合包页面重新进入。');
 

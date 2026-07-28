@@ -63,5 +63,25 @@ trace_relation_policy_ui_assert_contains(
     $view,
     '历史混装关系应隐藏整体确认表单'
 );
+trace_relation_policy_ui_assert_contains(
+    '$detail.prefill.relation_type',
+    $view,
+    '候选带入后应预选关系用途'
+);
+trace_relation_policy_ui_assert_contains(
+    '$detail.prefill.target_field',
+    $view,
+    '候选带入后应只预选对应的唯一对象字段'
+);
+trace_relation_policy_ui_assert_contains(
+    '$detail.prefill.recommendation_reason',
+    $view,
+    '候选带入后应预填可修改的推荐理由'
+);
+trace_relation_policy_ui_assert_contains(
+    'applyRelationPolicy();',
+    $view,
+    '候选预填仍必须经过现有用途驱动字段切换'
+);
 
 echo "qms_trace_relation_policy_ui_smoke passed\n";

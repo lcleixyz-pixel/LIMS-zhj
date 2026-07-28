@@ -1895,7 +1895,10 @@ class QmsDocumentStructureService
         ];
     }
 
-    public static function blockTraceReviewDetail(string $blockId): array
+    public static function blockTraceReviewDetail(
+        string $blockId,
+        array $prefillQuery = []
+    ): array
     {
         $block = QmsDocumentBlock::where('id', $blockId)->where('soft_delete', 0)->find();
         if (!$block) {
@@ -1926,11 +1929,53 @@ class QmsDocumentStructureService
         }
         unset($link);
 
+        $prefill = [
+            'requested' => false,
+            'available' => false,
+            'error' => '',
+        ];
+        $candidateRequested = trim((string)(
+            $prefillQuery['candidate_kind'] ?? ''
+        )) !== '' || trim((string)(
+            $prefillQuery['candidate_id'] ?? ''
+        )) !== '';
+        if ($candidateRequested) {
+            try {
+                $candidateTrace = QmsTraceSemanticCandidateService::forDocument(
+                    $structured->toArray()
+                );
+                $candidateBlocks = QmsDocumentBlock::where(
+                    'structured_document_id',
+                    (string)$structured->id
+                )
+                    ->where('soft_delete', 0)
+                    ->order('sort_order', 'asc')
+                    ->select()
+                    ->toArray();
+                $routedCandidates = QmsTraceCandidateRoutingService::route(
+                    $candidateTrace,
+                    $candidateBlocks
+                );
+                $prefill = QmsTraceCandidateRoutingService::resolvePrefill(
+                    $routedCandidates,
+                    (string)$block->id,
+                    $prefillQuery
+                );
+            } catch (\Throwable) {
+                $prefill = [
+                    'requested' => true,
+                    'available' => false,
+                    'error' => '候选暂时无法核对，请返回治理工作台重新进入。',
+                ];
+            }
+        }
+
         return [
             'document' => $structured->toArray(),
             'block' => $block->toArray(),
             'links' => $links,
             'options' => self::traceReviewOptions(),
+            'prefill' => $prefill,
             'semantic_guard' => $semanticGuard,
             'change_logs' => self::changeLogsForStructuredDocument((string)$structured->id),
         ];
