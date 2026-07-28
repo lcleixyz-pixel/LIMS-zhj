@@ -82,7 +82,7 @@ governance_queue_ui_assert(
     '治理工作台缺少连续办理入口'
 );
 governance_queue_ui_assert(
-    str_contains($documentIndex, '当前电子治理候选')
+    str_contains($documentIndex, '当前试运行版本')
     && str_contains($documentIndex, '纸质现用来源')
     && str_contains($documentIndex, '/planning/structures/governance-queue'),
     '体系文件列表缺少版本角色或治理队列入口'
