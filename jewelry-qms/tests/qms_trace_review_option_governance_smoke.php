@@ -165,5 +165,27 @@ trace_option_governance_assert(
         === '状态待确认',
     '无候选且不重复的对象应保持默认可见'
 );
+trace_option_governance_assert(
+    QmsTraceReviewOptionService::supportsPrefill(
+        $options,
+        [
+            'available' => true,
+            'target_field' => 'clause_id',
+            'target_id' => 'clause-candidate',
+        ]
+    ),
+    '治理后仍存在的候选应允许预填'
+);
+trace_option_governance_assert(
+    !QmsTraceReviewOptionService::supportsPrefill(
+        $options,
+        [
+            'available' => true,
+            'target_field' => 'clause_id',
+            'target_id' => 'clause-invalid',
+        ]
+    ),
+    '已隔离的乱码候选不得继续提供预填捷径'
+);
 
 echo "qms_trace_review_option_governance_smoke passed\n";

@@ -1979,6 +1979,19 @@ class QmsDocumentStructureService
                         (string)$block->id,
                         $prefillQuery
                     );
+                    if (
+                        (bool)($prefill['available'] ?? false)
+                        && !QmsTraceReviewOptionService::supportsPrefill(
+                            $options,
+                            $prefill
+                        )
+                    ) {
+                        $prefill = [
+                            'requested' => true,
+                            'available' => false,
+                            'error' => '候选对象已被选择项治理隔离，不能带入新增关系；已有历史关系未删除，请核对来源后另行治理。',
+                        ];
+                    }
                 } catch (\Throwable) {
                     $prefill = [
                         'requested' => true,

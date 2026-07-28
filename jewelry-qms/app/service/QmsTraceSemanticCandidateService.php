@@ -11,6 +11,42 @@ final class QmsTraceSemanticCandidateService
 
     private static ?array $blueprintCache = null;
 
+    public static function resolveRecordTemplateRows(array $rows): array
+    {
+        $groups = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $canonical = trim((string)(
+                $row['canonical_doc_number'] ?? ''
+            ));
+            if ($canonical === '') {
+                $docNumber = trim((string)($row['doc_number'] ?? ''));
+                $canonical = str_starts_with($docNumber, 'SIM-')
+                    ? substr($docNumber, strlen('SIM-'))
+                    : $docNumber;
+            }
+            if ($canonical !== '') {
+                $groups[$canonical][] = $row;
+            }
+        }
+
+        $resolved = [];
+        foreach ($groups as $canonical => $candidates) {
+            usort(
+                $candidates,
+                static fn(array $left, array $right): int =>
+                    self::recordTemplatePreference($left)
+                    <=> self::recordTemplatePreference($right)
+            );
+            $resolved[$canonical] = $candidates[0];
+        }
+        ksort($resolved, SORT_NATURAL);
+
+        return $resolved;
+    }
+
     public static function forDocument(array $document): array
     {
         $candidate = self::fromBlueprint($document, self::blueprint());
@@ -271,19 +307,7 @@ final class QmsTraceSemanticCandidateService
             );
         }
 
-        $rowByCanonical = [];
-        foreach ($rows as $row) {
-            $canonical = trim((string)($row['canonical_doc_number'] ?? ''));
-            if ($canonical === '') {
-                $docNumber = (string)($row['doc_number'] ?? '');
-                $canonical = str_starts_with($docNumber, 'SIM-')
-                    ? substr($docNumber, strlen('SIM-'))
-                    : $docNumber;
-            }
-            if ($canonical !== '') {
-                $rowByCanonical[$canonical] = $row;
-            }
-        }
+        $rowByCanonical = self::resolveRecordTemplateRows($rows);
 
         $result = [];
         foreach ($candidates as $candidate) {
@@ -304,6 +328,27 @@ final class QmsTraceSemanticCandidateService
         }
 
         return $result;
+    }
+
+    private static function recordTemplatePreference(array $row): array
+    {
+        $version = trim((string)($row['version'] ?? ''));
+        $status = trim((string)($row['status'] ?? ''));
+
+        return [
+            $version === QmsGovernanceVersionResolverService::candidateVersion()
+                ? 0
+                : 1,
+            $status === 'obsolete' ? 1 : 0,
+            match ($status) {
+                'published' => 0,
+                'trial_ready' => 1,
+                'draft' => 2,
+                default => 3,
+            },
+            $version,
+            trim((string)($row['id'] ?? '')),
+        ];
     }
 
     private static function allAvailable(array $rows): bool

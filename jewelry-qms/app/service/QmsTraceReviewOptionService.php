@@ -18,6 +18,16 @@ final class QmsTraceReviewOptionService
         'obsolete' => '已作废',
     ];
 
+    private const PREFILL_OPTION_GROUPS = [
+        'element_id' => 'elements',
+        'clause_id' => 'clauses',
+        'manual_section_id' => 'manual_sections',
+        'procedure_document_id' => 'procedure_documents',
+        'record_form_template_id' => 'record_forms',
+        'position_id' => 'positions',
+        'business_module_id' => 'modules',
+    ];
+
     public static function govern(
         array $options,
         array $candidateTrace
@@ -134,6 +144,35 @@ final class QmsTraceReviewOptionService
             'options' => $governed,
             'summary' => $summary,
         ];
+    }
+
+    public static function supportsPrefill(
+        array $options,
+        array $prefill
+    ): bool {
+        if (!(bool)($prefill['available'] ?? false)) {
+            return false;
+        }
+        $targetField = trim((string)($prefill['target_field'] ?? ''));
+        $targetId = trim((string)($prefill['target_id'] ?? ''));
+        $optionGroup = self::PREFILL_OPTION_GROUPS[$targetField] ?? '';
+        if ($optionGroup === '' || $targetId === '') {
+            return false;
+        }
+
+        foreach ((array)($options[$optionGroup] ?? []) as $row) {
+            if (
+                is_array($row)
+                && hash_equals(
+                    $targetId,
+                    trim((string)($row['id'] ?? ''))
+                )
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function prioritize(
