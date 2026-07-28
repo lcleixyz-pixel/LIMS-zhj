@@ -260,6 +260,15 @@ $mixed = $byBlock['block-mixed'];
 $mismatch = $byBlock['block-mismatch'];
 $pending = $byBlock['block-pending'];
 
+foreach ($items as $item) {
+    foreach ((array)($item['issues'] ?? []) as $issue) {
+        trace_work_item_assert(
+            trim((string)($issue['context_label'] ?? '')) !== '',
+            '每个问题都应提供非空的人可读对象说明'
+        );
+    }
+}
+
 trace_work_item_assert(
     array_column((array)$mixed['issues'], 'code') === [
         'mixed_relation',
@@ -280,6 +289,29 @@ trace_work_item_assert(
         && ($mismatch['priority'] ?? '') === 'blocked'
         && ($pending['priority'] ?? '') === 'review',
     '阻断问题和普通复核问题应使用稳定优先级'
+);
+
+$mixedIssuesByCode = [];
+foreach ((array)$mixed['issues'] as $issue) {
+    $mixedIssuesByCode[(string)($issue['code'] ?? '')] = $issue;
+}
+trace_work_item_assert(
+    ($mixedIssuesByCode['mixed_relation']['context_label'] ?? '')
+        === '手册章节：6.2 人员；运行记录：XZTC/BG-11-01 人员能力记录'
+        && ($mixedIssuesByCode['missing_primary']['context_label'] ?? '')
+            === '候选对象信息待补充'
+        && count(array_unique(array_column(
+            (array)$mixed['issues'],
+            'context_label'
+        ))) === count((array)$mixed['issues']),
+    '混装问题应列出多个人可读对象，缺主链问题应使用候选 target_label，且同卡问题对象可区分'
+);
+trace_work_item_assert(
+    ($mismatch['issues'][0]['context_label'] ?? '')
+        === '手册章节：4.2 保密性'
+        && ($pending['issues'][0]['context_label'] ?? '')
+            === '外部依据：CNAS-CL01:2018 7.1 要求、标书和合同的评审',
+    '既有关系问题应优先使用编号和标题形成对象说明'
 );
 
 $mixedCandidates = (array)($mixed['candidates'] ?? []);
@@ -528,6 +560,71 @@ trace_work_item_group_assert(
             'link-record-review',
         ],
     '三类未确认主链和未知关系应待复核，四类明确辅助关系不得误报'
+);
+trace_work_item_group_assert(
+    'relations',
+    count(array_unique(array_column(
+        $relationIssues,
+        'context_label'
+    ))) === 4
+        && !str_contains(
+            implode('；', array_column($relationIssues, 'context_label')),
+            '_id='
+        ),
+    '同卡不同关系问题应有可区分对象说明，且不得直接展示内部字段名'
+);
+
+$fallbackContextResult = QmsTraceWorkItemService::build([
+    [
+        'block' => [
+            'id' => 'block-context-fallback',
+            'section_number' => '9.1',
+            'title' => '对象说明回退',
+            'block_type' => 'control_requirement',
+            'sort_order' => 10,
+        ],
+        'links' => [[
+            'id' => 'link-context-fallback',
+            'clause_id' => 'd93c9d72-53ef-4b69-86ce-a9aa15f98931',
+            'relation_type' => 'basis',
+            'confidence' => 'review_required',
+        ]],
+    ],
+], []);
+trace_work_item_group_assert(
+    'relations',
+    ($fallbackContextResult['items'][0]['issues'][0]['context_label'] ?? '')
+        === '关联对象信息待补充',
+    '没有人可读对象字段时应使用明确中文回退，不得显示 UUID'
+);
+
+$genericTitleContextResult = QmsTraceWorkItemService::build([
+    [
+        'block' => [
+            'id' => 'block-context-title',
+            'section_number' => '9.2',
+            'title' => '通用标题对象说明',
+            'block_type' => 'control_requirement',
+            'sort_order' => 10,
+        ],
+        'links' => [[
+            'id' => 'link-context-title',
+            'clause_id' => 'clause-context-title',
+            'source_code' => 'GB/T 27025-2019',
+            'clause_number' => '8.4',
+            'title' => '记录控制',
+            'relation_type' => 'basis',
+            'confidence' => 'review_required',
+        ]],
+    ],
+], []);
+trace_work_item_group_assert(
+    'relations',
+    (
+        $genericTitleContextResult['items'][0]['issues'][0]['context_label']
+        ?? ''
+    ) === '外部依据：GB/T 27025-2019 8.4 记录控制',
+    '单一对象应在编号后保留已有通用 title'
 );
 
 $candidateOrderResult = QmsTraceWorkItemService::build([

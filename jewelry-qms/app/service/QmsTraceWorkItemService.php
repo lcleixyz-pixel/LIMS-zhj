@@ -90,6 +90,7 @@ final class QmsTraceWorkItemService
                         'relation_type' => $relationType,
                         'relation_label' => self::relationLabel($relationType),
                         'target_summary' => self::stableTargetSummary($link),
+                        'context_label' => self::readableContextLabel($link),
                         'review_url' => $reviewUrl,
                     ], self::existingIssueKey(
                         'mixed_relation',
@@ -121,6 +122,7 @@ final class QmsTraceWorkItemService
                         'relation_type' => $relationType,
                         'relation_label' => self::relationLabel($relationType),
                         'target_summary' => self::stableTargetSummary($link),
+                        'context_label' => self::readableContextLabel($link),
                         'review_url' => $reviewUrl,
                     ], self::existingIssueKey(
                         'suspected_mismatch',
@@ -150,6 +152,7 @@ final class QmsTraceWorkItemService
                         'relation_type' => $relationType,
                         'relation_label' => self::relationLabel($relationType),
                         'target_summary' => self::stableTargetSummary($link),
+                        'context_label' => self::readableContextLabel($link),
                         'review_url' => $reviewUrl,
                     ], self::existingIssueKey(
                         'pending_review',
@@ -203,6 +206,10 @@ final class QmsTraceWorkItemService
                     ),
                     'target_id' => $targetId,
                     'target_label' => (string)(
+                        $candidate['target_label']
+                        ?? '候选对象信息待补充'
+                    ),
+                    'context_label' => (string)(
                         $candidate['target_label']
                         ?? '候选对象信息待补充'
                     ),
@@ -550,6 +557,96 @@ final class QmsTraceWorkItemService
         }
 
         return implode('|', $parts);
+    }
+
+    private static function readableContextLabel(array $link): string
+    {
+        $definitions = [
+            [
+                'target' => 'element_id',
+                'label' => '管理要素',
+                'fields' => ['element_code', 'element_name'],
+            ],
+            [
+                'target' => 'clause_id',
+                'label' => '外部依据',
+                'fields' => [
+                    'source_code',
+                    'clause_number',
+                    'clause_title',
+                ],
+            ],
+            [
+                'target' => 'manual_section_id',
+                'label' => '手册章节',
+                'fields' => ['section_number', 'manual_title'],
+            ],
+            [
+                'target' => 'procedure_document_id',
+                'label' => '程序文件',
+                'fields' => ['procedure_number', 'procedure_title'],
+            ],
+            [
+                'target' => 'record_form_template_id',
+                'label' => '运行记录',
+                'fields' => ['record_number', 'record_name'],
+            ],
+            [
+                'target' => 'position_id',
+                'label' => '岗位',
+                'fields' => ['position_name'],
+            ],
+            [
+                'target' => 'business_module_id',
+                'label' => '业务模块',
+                'fields' => ['module_code', 'module_name'],
+            ],
+        ];
+
+        $presentTargets = [];
+        foreach ($definitions as $definition) {
+            $targetField = (string)$definition['target'];
+            $targetPresent = trim(
+                (string)($link[$targetField] ?? '')
+            ) !== '';
+            foreach ((array)$definition['fields'] as $field) {
+                if (trim((string)($link[$field] ?? '')) !== '') {
+                    $targetPresent = true;
+                    break;
+                }
+            }
+            if ($targetPresent) {
+                $presentTargets[] = $definition;
+            }
+        }
+
+        $parts = [];
+        $genericTitle = trim((string)($link['title'] ?? ''));
+        foreach ($presentTargets as $definition) {
+            $values = [];
+            foreach ((array)$definition['fields'] as $field) {
+                $value = trim((string)($link[$field] ?? ''));
+                if ($value !== '' && !in_array($value, $values, true)) {
+                    $values[] = $value;
+                }
+            }
+            if (
+                count($presentTargets) === 1
+                && $genericTitle !== ''
+                && !in_array($genericTitle, $values, true)
+            ) {
+                $values[] = $genericTitle;
+            }
+            if ($values === []) {
+                continue;
+            }
+            $parts[] = (string)$definition['label']
+                . '：' . implode(' ', $values);
+        }
+
+        return $parts === []
+            ? '关联对象信息待补充'
+            : implode('；', $parts);
     }
 
     private static function relationLabel(string $relationType): string

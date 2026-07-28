@@ -46,6 +46,14 @@ foreach ([
     '当前没有可用办理入口，请返回追溯关系复核配置。',
     '<article',
     '<ol class="qms-trace-work-item-steps">',
+    '<details',
+    '<summary>查看问题明细（',
+    '<summary>查看可带入候选（',
+    'data-detail-kind="issues"',
+    'data-detail-kind="candidates"',
+    'aria-label="处理内容块：',
+    'aria-label="带入候选：',
+    '对象：{$traceIssue.context_label}',
     '治理候选（不计闭环）',
     '候选·待复核',
     '候选来源',
@@ -81,6 +89,7 @@ foreach ([
     'traceItem.issues',
     'traceIssue.label',
     'traceIssue.message',
+    'traceIssue.context_label',
     'traceItem.steps',
     'traceStep.label',
     'traceStep.description',
@@ -111,6 +120,32 @@ workbench_ui_assert(
         && $semanticReasonPosition < $traceWorkItemsPosition
         && $traceWorkItemsPosition < $candidateTracePosition,
     '连续办理区应位于语义原因之后、治理候选之前'
+);
+
+$traceActionsPosition = strpos(
+    $workbenchView,
+    '<div class="qms-trace-work-item-actions">'
+);
+$traceIssueDetailsPosition = strpos(
+    $workbenchView,
+    'data-detail-kind="issues"'
+);
+$traceCandidateDetailsPosition = strpos(
+    $workbenchView,
+    'data-detail-kind="candidates"'
+);
+workbench_ui_assert(
+    $traceActionsPosition !== false
+        && $traceIssueDetailsPosition !== false
+        && $traceCandidateDetailsPosition !== false
+        && $traceActionsPosition < $traceIssueDetailsPosition
+        && $traceActionsPosition < $traceCandidateDetailsPosition,
+    '主办理动作源码顺序应早于问题和候选折叠明细'
+);
+workbench_ui_assert(
+    preg_match('/<details\b[^>]*\sopen(?:\s|=|>)/i', $workbenchView)
+        !== 1,
+    '问题和候选 details 默认不得展开'
 );
 
 workbench_ui_assert(
@@ -192,6 +227,9 @@ foreach ([
     '.qms-trace-work-item-actions',
     '.qms-trace-work-item[data-priority="blocked"]',
     '.qms-trace-work-item[data-priority="review"]',
+    '.qms-trace-work-item-details',
+    '.qms-trace-work-item-details > summary',
+    '.qms-trace-work-item-details > summary:focus-visible',
     '.qms-trace-work-items a:focus-visible',
     '@media (max-width: 767.98px)',
 ] as $traceCssContract) {
@@ -229,6 +267,56 @@ workbench_ui_assert(
         $traceCss
     ) === 1,
     '窄屏下办理动作应纵向排列且按钮占满宽度'
+);
+workbench_ui_assert(
+    preg_match(
+        '/\.qms-trace-work-item-details\s*>\s*summary\s*\{[^}]*'
+            . 'min-height\s*:\s*44px[^}]*padding\s*:/s',
+        $traceCss
+    ) === 1,
+    '折叠摘要应有清楚间距和至少 44px 触控区域'
+);
+workbench_ui_assert(
+    preg_match(
+        '/\.qms-trace-work-item-meta\s*\{[^}]*'
+            . 'color\s*:\s*var\(--qms-ink\)\s*;/s',
+        $traceCss
+    ) === 1
+        && preg_match(
+            '/\.qms-trace-work-item-priority\s*\{[^}]*'
+                . 'color\s*:\s*var\(--qms-ink\)\s*;/s',
+            $traceCss
+        ) === 1
+        && preg_match(
+            '/\.qms-trace-work-item\[data-priority="blocked"\]'
+                . ' \.qms-trace-work-item-priority\s*\{[^}]*'
+                . 'color\s*:\s*var\(--qms-bad\)\s*;/s',
+            $traceCss
+        ) === 1,
+    '12px 元信息与 review 优先级应使用高对比正文色，blocked 使用高对比危险色'
+);
+$metaAndPriorityCss = '';
+foreach ([
+    '.qms-trace-work-item-meta',
+    '.qms-trace-work-item-priority',
+] as $contrastSelector) {
+    if (
+        preg_match(
+            '/' . preg_quote($contrastSelector, '/')
+                . '\s*\{([^}]*)\}/s',
+            $traceCss,
+            $contrastRule
+        ) === 1
+    ) {
+        $metaAndPriorityCss .= (string)$contrastRule[1];
+    }
+}
+workbench_ui_assert(
+    !str_contains($metaAndPriorityCss, 'var(--qms-ink-2)')
+        && !str_contains($metaAndPriorityCss, 'var(--qms-warn)')
+        && !str_contains(strtolower($metaAndPriorityCss), '#718096')
+        && !str_contains(strtolower($metaAndPriorityCss), '#b7791f'),
+    '小号元信息和 review 标签不得使用低对比灰色或警示色'
 );
 $traceRuleCount = preg_match_all(
     '/([^{}]+)\{([^{}]*)\}/s',

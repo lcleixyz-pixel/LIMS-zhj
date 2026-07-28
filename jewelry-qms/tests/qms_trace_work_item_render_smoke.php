@@ -219,6 +219,9 @@ trace_work_item_render_assert(
 );
 
 $expectedCandidateCount = 0;
+$expectedIssueCount = 0;
+$primaryAriaLabels = [];
+$candidateAriaLabels = [];
 foreach ($items as $item) {
     $blockId = (string)($item['block_id'] ?? '');
     $article = trace_work_item_render_article($xpath, $section, $blockId);
@@ -242,9 +245,138 @@ foreach ($items as $item) {
                 === (string)($item['primary_url'] ?? ''),
         '办理卡主入口必须原样使用模型 primary_url：' . $blockId
     );
+    $primaryAriaLabel = $primaryLink->getAttribute('aria-label');
+    trace_work_item_render_assert(
+        $primaryAriaLabel !== ''
+            && str_contains(
+                $primaryAriaLabel,
+                (string)($item['section_number'] ?? '')
+            )
+            && str_contains(
+                $primaryAriaLabel,
+                (string)($item['title'] ?? '')
+            ),
+        '主入口 aria-label 应包含章节和内容块标题：' . $blockId
+    );
+    $primaryAriaLabels[] = $primaryAriaLabel;
 
-    $expectedCandidateCount += count(
-        (array)($item['candidates'] ?? [])
+    $issues = (array)($item['issues'] ?? []);
+    $expectedIssueCount += count($issues);
+    $issueDetails = $xpath->query(
+        './details['
+            . trace_work_item_render_class_xpath(
+                'qms-trace-work-item-details'
+            )
+            . ' and @data-detail-kind="issues"]',
+        $article
+    );
+    trace_work_item_render_assert(
+        $issueDetails !== false && $issueDetails->length === 1,
+        '每张卡应有一个问题明细 details：' . $blockId
+    );
+    $issueDetail = $issueDetails->item(0);
+    trace_work_item_render_assert(
+        $issueDetail instanceof DOMElement
+            && !$issueDetail->hasAttribute('open')
+            && $xpath->query(
+                './summary[normalize-space(.)="查看问题明细（'
+                    . count($issues) . '）"]',
+                $issueDetail
+            )->length === 1,
+        '问题明细应默认关闭并显示准确数量：' . $blockId
+    );
+    foreach ($issues as $issue) {
+        $contextLabel = (string)($issue['context_label'] ?? '');
+        trace_work_item_render_assert(
+            $contextLabel !== ''
+                && str_contains(
+                    $issueDetail->textContent,
+                    '对象：' . $contextLabel
+                ),
+            '问题明细应显示服务提供的对象说明：' . $blockId
+        );
+    }
+
+    $candidates = (array)($item['candidates'] ?? []);
+    $expectedCandidateCount += count($candidates);
+    $candidateDetails = $xpath->query(
+        './details['
+            . trace_work_item_render_class_xpath(
+                'qms-trace-work-item-details'
+            )
+            . ' and @data-detail-kind="candidates"]',
+        $article
+    );
+    trace_work_item_render_assert(
+        $candidateDetails !== false
+            && $candidateDetails->length === ($candidates === [] ? 0 : 1),
+        '候选明细 details 应与模型候选是否存在一致：' . $blockId
+    );
+    if ($candidates !== []) {
+        $candidateDetail = $candidateDetails->item(0);
+        trace_work_item_render_assert(
+            $candidateDetail instanceof DOMElement
+                && !$candidateDetail->hasAttribute('open')
+                && $xpath->query(
+                    './summary[normalize-space(.)="查看可带入候选（'
+                        . count($candidates) . '）"]',
+                    $candidateDetail
+                )->length === 1,
+            '候选明细应默认关闭并显示准确数量：' . $blockId
+        );
+        $candidateLinks = $xpath->query(
+            './/a[normalize-space(.)="带入此候选"]',
+            $candidateDetail
+        );
+        foreach ($candidates as $candidateIndex => $candidate) {
+            $candidateLink = $candidateLinks->item($candidateIndex);
+            $candidateAriaLabel = $candidateLink instanceof DOMElement
+                ? $candidateLink->getAttribute('aria-label')
+                : '';
+            trace_work_item_render_assert(
+                $candidateAriaLabel !== ''
+                    && str_contains(
+                        $candidateAriaLabel,
+                        (string)($candidate['target_label'] ?? '')
+                    )
+                    && str_contains(
+                        $candidateAriaLabel,
+                        (string)($candidate['relation_label'] ?? '')
+                    )
+                    && str_contains(
+                        $candidateAriaLabel,
+                        (string)($item['title'] ?? '')
+                    ),
+                '候选 aria-label 应包含对象、用途和所属内容块：'
+                    . $blockId
+            );
+            $candidateAriaLabels[] = $candidateAriaLabel;
+        }
+    }
+
+    trace_work_item_render_assert(
+        $xpath->query(
+            './div['
+                . trace_work_item_render_class_xpath(
+                    'qms-trace-work-item-actions'
+                )
+                . ' and following-sibling::details'
+                . '[@data-detail-kind="issues"]]',
+            $article
+        )->length === 1
+            && (
+                $candidates === []
+                || $xpath->query(
+                    './div['
+                        . trace_work_item_render_class_xpath(
+                            'qms-trace-work-item-actions'
+                        )
+                        . ' and following-sibling::details'
+                        . '[@data-detail-kind="candidates"]]',
+                    $article
+                )->length === 1
+            ),
+        '主办理动作在 DOM 中应早于问题和候选明细：' . $blockId
     );
 }
 trace_work_item_render_assert(
@@ -255,6 +387,20 @@ trace_work_item_render_assert(
             $items
         ),
     '真实样本候选必须在所属 article 内与模型 URL 严格对应'
+);
+trace_work_item_render_assert(
+    (int)($traceWorkItems['issue_count'] ?? -1) === $expectedIssueCount
+        && $expectedIssueCount === 30
+        && $expectedCandidateCount === 27,
+    '真实页面应保持 30 个问题和 27 个候选的非空门禁'
+);
+trace_work_item_render_assert(
+    count(array_merge($primaryAriaLabels, $candidateAriaLabels))
+        === count(array_unique(array_merge(
+            $primaryAriaLabels,
+            $candidateAriaLabels
+        ))),
+    '全页主入口和候选入口 aria-label 不得重复'
 );
 trace_work_item_render_assert(
     $xpath->query('//form')->length === 0,
@@ -453,6 +599,7 @@ trace_work_item_render_assert(
 echo 'qms_trace_work_item_render_smoke passed: '
     . json_encode([
         'blocks' => count($items),
+        'issues' => $expectedIssueCount,
         'candidates' => $expectedCandidateCount,
         'mutation_rejected' => true,
         'empty_primary_checked' => $withoutPrimaryBlockId,

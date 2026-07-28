@@ -95,18 +95,6 @@
                 </div>
 
                 <div class="qms-trace-work-item-section">
-                    <div class="qms-trace-work-item-subheading">发现的问题</div>
-                    <div class="qms-trace-work-item-issues">
-                        {volist name="traceItem.issues" id="traceIssue"}
-                        <div class="qms-trace-work-item-issue">
-                            <div class="fw-semibold">{$traceIssue.label}</div>
-                            <div>{$traceIssue.message}</div>
-                        </div>
-                        {/volist}
-                    </div>
-                </div>
-
-                <div class="qms-trace-work-item-section">
                     <div class="qms-trace-work-item-subheading">本块要做</div>
                     <ol class="qms-trace-work-item-steps">
                         {volist name="traceItem.steps" id="traceStep"}
@@ -118,42 +106,67 @@
                     </ol>
                 </div>
 
-                {notempty name="traceItem.candidates"}
-                <div class="qms-trace-work-item-section">
-                    <div class="qms-trace-work-item-subheading">可带入候选</div>
-                    <ul class="qms-trace-work-item-candidates">
-                        {volist name="traceItem.candidates" id="traceCandidate"}
-                        <li>
-                            <div class="qms-trace-work-item-candidate-main">
-                                <div>
-                                    <span class="fw-semibold">{$traceCandidate.candidate_kind_label}</span>
-                                    <span>{$traceCandidate.target_label}</span>
-                                </div>
-                                <div class="text-muted small">建议用途：{$traceCandidate.relation_label}</div>
-                                {notempty name="traceCandidate.recommendation_reason"}
-                                <div class="text-muted small">推荐理由：{$traceCandidate.recommendation_reason}</div>
-                                {/notempty}
-                            </div>
-                            {notempty name="traceCandidate.review_url"}
-                            <a href="{$traceCandidate.review_url}" class="btn btn-sm btn-outline-primary text-nowrap">
-                                带入此候选
-                            </a>
-                            {/notempty}
-                        </li>
-                        {/volist}
-                    </ul>
-                </div>
-                {/notempty}
-
                 <div class="qms-trace-work-item-actions">
                     {notempty name="traceItem.primary_url"}
-                    <a href="{$traceItem.primary_url}" class="btn btn-sm btn-primary text-nowrap">
+                    <a
+                        href="{$traceItem.primary_url}"
+                        class="btn btn-sm btn-primary text-nowrap"
+                        aria-label="处理内容块：{$traceItem.section_number} {$traceItem.title}"
+                    >
                         处理此内容块
                     </a>
                     {else}
                     <div class="text-danger small">当前没有可用办理入口，请返回追溯关系复核配置。</div>
                     {/notempty}
                 </div>
+
+                <details class="qms-trace-work-item-details" data-detail-kind="issues">
+                    <summary>查看问题明细（{$traceItem.issues|count}）</summary>
+                    <div class="qms-trace-work-item-details-body">
+                        <div class="qms-trace-work-item-issues">
+                            {volist name="traceItem.issues" id="traceIssue"}
+                            <div class="qms-trace-work-item-issue">
+                                <div class="fw-semibold">{$traceIssue.label}</div>
+                                <div class="qms-trace-work-item-context">对象：{$traceIssue.context_label}</div>
+                                <div>{$traceIssue.message}</div>
+                            </div>
+                            {/volist}
+                        </div>
+                    </div>
+                </details>
+
+                {notempty name="traceItem.candidates"}
+                <details class="qms-trace-work-item-details" data-detail-kind="candidates">
+                    <summary>查看可带入候选（{$traceItem.candidates|count}）</summary>
+                    <div class="qms-trace-work-item-details-body">
+                        <ul class="qms-trace-work-item-candidates">
+                            {volist name="traceItem.candidates" id="traceCandidate"}
+                            <li>
+                                <div class="qms-trace-work-item-candidate-main">
+                                    <div>
+                                        <span class="fw-semibold">{$traceCandidate.candidate_kind_label}</span>
+                                        <span>{$traceCandidate.target_label}</span>
+                                    </div>
+                                    <div class="text-muted small">建议用途：{$traceCandidate.relation_label}</div>
+                                    {notempty name="traceCandidate.recommendation_reason"}
+                                    <div class="text-muted small">推荐理由：{$traceCandidate.recommendation_reason}</div>
+                                    {/notempty}
+                                </div>
+                                {notempty name="traceCandidate.review_url"}
+                                <a
+                                    href="{$traceCandidate.review_url}"
+                                    class="btn btn-sm btn-outline-primary text-nowrap"
+                                    aria-label="带入候选：{$traceCandidate.target_label}；建议用途：{$traceCandidate.relation_label}；所属内容块：{$traceItem.section_number} {$traceItem.title}；候选类型：{$traceCandidate.candidate_kind_label}；候选标识：{$traceCandidate.target_id}"
+                                >
+                                    带入此候选
+                                </a>
+                                {/notempty}
+                            </li>
+                            {/volist}
+                        </ul>
+                    </div>
+                </details>
+                {/notempty}
             </article>
             {/volist}
         </div>
