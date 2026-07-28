@@ -59,32 +59,46 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function refreshSearchResult(select, input, status) {
         const query = normalizeSearchText(input.value);
+        const showSecondary = select.dataset.showSecondary === '1';
         const options = Array.from(select.options).filter(function (option) {
             return option.value !== '';
         });
         let matched = 0;
         let candidateMatched = 0;
+        let hiddenSecondary = 0;
 
         options.forEach(function (option) {
             const directMatch = query === ''
                 || normalizeSearchText(option.textContent).includes(query);
-            option.hidden = !(directMatch || option.selected);
-            if (directMatch) {
+            const secondary = option.dataset.secondary === '1';
+            const visibleInScope = !secondary || showSecondary
+                || option.selected;
+            option.hidden = !(directMatch && visibleInScope)
+                && !option.selected;
+            if (directMatch && visibleInScope) {
                 matched += 1;
                 if (option.dataset.candidate === '1') {
                     candidateMatched += 1;
                 }
+            } else if (directMatch && secondary) {
+                hiddenSecondary += 1;
             }
         });
 
         if (query !== '' && matched === 0) {
-            status.textContent = '未找到，请换用编号或名称；当前选择已保留。';
+            status.textContent = hiddenSecondary > 0
+                ? '当前范围未找到；另有 ' + hiddenSecondary
+                    + ' 项历史/其他版本，勾选后可查看。'
+                : '未找到，请换用编号或名称；当前选择已保留。';
             status.classList.add('text-warning');
             return;
         }
         status.classList.remove('text-warning');
         status.textContent = (query === '' ? '共 ' : '找到 ')
-            + matched + ' 项，其中本文件候选 ' + candidateMatched + ' 项。';
+            + matched + ' 项，其中本文件候选 ' + candidateMatched + ' 项'
+            + (hiddenSecondary > 0
+                ? '；历史/其他版本已隐藏 ' + hiddenSecondary + ' 项。'
+                : '。');
     }
 
     searchableSelects.forEach(function (select) {
@@ -104,6 +118,34 @@ document.addEventListener('DOMContentLoaded', function () {
         status.setAttribute('aria-live', 'polite');
 
         select.parentNode.insertBefore(input, select);
+        const secondaryCount = Array.from(select.options).filter(
+            function (option) {
+                return option.value !== ''
+                    && option.dataset.secondary === '1';
+            }
+        ).length;
+        if (secondaryCount > 0) {
+            const toggleWrap = document.createElement('div');
+            toggleWrap.className = 'form-check form-switch mb-2';
+            const toggle = document.createElement('input');
+            toggle.type = 'checkbox';
+            toggle.className = 'form-check-input';
+            toggle.id = select.id + '_show_secondary';
+            toggle.dataset.traceSecondaryToggle = '1';
+            const toggleLabel = document.createElement('label');
+            toggleLabel.className = 'form-check-label small';
+            toggleLabel.htmlFor = toggle.id;
+            toggleLabel.textContent = '显示历史/其他版本（'
+                + secondaryCount + '）';
+            toggleWrap.appendChild(toggle);
+            toggleWrap.appendChild(toggleLabel);
+            select.parentNode.insertBefore(toggleWrap, select);
+            toggle.addEventListener('change', function () {
+                const showSecondary = toggle.checked;
+                select.dataset.showSecondary = showSecondary ? '1' : '0';
+                refreshSearchResult(select, input, status);
+            });
+        }
         select.insertAdjacentElement('afterend', status);
         input.addEventListener('input', function () {
             refreshSearchResult(select, input, status);
@@ -173,6 +215,12 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="card mb-3">
     <div class="card-header"><h5 class="mb-0">新增追溯关系</h5></div>
     <div class="card-body">
+        {if $detail.option_governance_summary.clauses.excluded_invalid}
+        <div class="alert alert-warning mb-3" role="alert">
+            已隔离 {$detail.option_governance_summary.clauses.excluded_invalid}
+            条疑似乱码外部条款，不能用于新增关系；已有历史关系未删除，请按来源核验后另行治理。
+        </div>
+        {/if}
         {if $detail.prefill.requested}
             {if $detail.prefill.available}
             <div class="alert alert-info mb-3" role="status">
@@ -252,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <select id="element_id" name="element_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">不关联</option>
                         {volist name="detail.options.elements" id="option"}
-                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}">{if $option.is_candidate}★ 本文件候选 · {/if}{$option.name}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" data-secondary="{if $option.is_secondary}1{else}0{/if}">{$option.governance_label}</option>
                         {/volist}
                     </select>
                 </div>
@@ -261,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <select id="clause_id" name="clause_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择外部条款</option>
                         {volist name="detail.options.clauses" id="option"}
-                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" {if $detail.prefill.available && $detail.prefill.target_field == 'clause_id' && $detail.prefill.target_id == $option.id}selected{/if}>{if $option.is_candidate}★ 本文件候选 · {/if}{$option.source_code} {$option.clause_number} {$option.title}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" data-secondary="{if $option.is_secondary}1{else}0{/if}" {if $detail.prefill.available && $detail.prefill.target_field == 'clause_id' && $detail.prefill.target_id == $option.id}selected{/if}>{$option.governance_label}</option>
                         {/volist}
                     </select>
                 </div>
@@ -270,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <select id="manual_section_id" name="manual_section_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择手册章节</option>
                         {volist name="detail.options.manual_sections" id="option"}
-                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" {if $detail.prefill.available && $detail.prefill.target_field == 'manual_section_id' && $detail.prefill.target_id == $option.id}selected{/if}>{if $option.is_candidate}★ 本文件候选 · {/if}{$option.section_number} {$option.title}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" data-secondary="{if $option.is_secondary}1{else}0{/if}" {if $detail.prefill.available && $detail.prefill.target_field == 'manual_section_id' && $detail.prefill.target_id == $option.id}selected{/if}>{$option.governance_label}</option>
                         {/volist}
                     </select>
                 </div>
@@ -279,7 +327,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <select id="procedure_document_id" name="procedure_document_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择程序文件</option>
                         {volist name="detail.options.procedure_documents" id="option"}
-                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}">{if $option.is_candidate}★ 本文件候选 · {/if}{$option.doc_number} {$option.title}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" data-secondary="{if $option.is_secondary}1{else}0{/if}">{$option.governance_label}</option>
                         {/volist}
                     </select>
                 </div>
@@ -288,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <select id="record_form_template_id" name="record_form_template_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择记录表格</option>
                         {volist name="detail.options.record_forms" id="option"}
-                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" {if $detail.prefill.available && $detail.prefill.target_field == 'record_form_template_id' && $detail.prefill.target_id == $option.id}selected{/if}>{if $option.is_candidate}★ 本文件候选 · {/if}{$option.doc_number} {$option.name}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" data-secondary="{if $option.is_secondary}1{else}0{/if}" {if $detail.prefill.available && $detail.prefill.target_field == 'record_form_template_id' && $detail.prefill.target_id == $option.id}selected{/if}>{$option.governance_label}</option>
                         {/volist}
                     </select>
                 </div>
@@ -297,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <select id="position_id" name="position_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择岗位</option>
                         {volist name="detail.options.positions" id="option"}
-                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}">{if $option.is_candidate}★ 本文件候选 · {/if}{$option.name}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" data-secondary="{if $option.is_secondary}1{else}0{/if}">{$option.governance_label}</option>
                         {/volist}
                     </select>
                 </div>
@@ -306,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <select id="business_module_id" name="business_module_id" class="form-select" data-searchable-trace-select disabled>
                         <option value="">请选择运行模块</option>
                         {volist name="detail.options.modules" id="option"}
-                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}">{if $option.is_candidate}★ 本文件候选 · {/if}{$option.code} {$option.name}</option>
+                        <option value="{$option.id}" data-candidate="{if $option.is_candidate}1{else}0{/if}" data-secondary="{if $option.is_secondary}1{else}0{/if}">{$option.governance_label}</option>
                         {/volist}
                     </select>
                 </div>

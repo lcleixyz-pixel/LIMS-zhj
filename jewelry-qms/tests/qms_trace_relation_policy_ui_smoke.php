@@ -99,9 +99,9 @@ trace_relation_policy_ui_assert_contains(
     '搜索控件应提供中文操作提示'
 );
 trace_relation_policy_ui_assert_contains(
-    '★ 本文件候选',
+    '{$option.governance_label}',
     $view,
-    '本文件候选应有明确中文标识'
+    '本文件候选、版本和状态应使用统一治理标签'
 );
 trace_relation_policy_ui_assert_contains(
     'searchInput.disabled = !visible',
