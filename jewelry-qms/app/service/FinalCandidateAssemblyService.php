@@ -10,6 +10,8 @@ use think\facade\Db;
 
 final class FinalCandidateAssemblyService
 {
+    private const CANDIDATE_BODY_PREFIX = '.team/交接箱/2026-08-20-8021候选试装/06-候选连续正文/';
+
     public static function preview(string $sourceDir): array
     {
         $manifest = FinalCandidateManifestService::build($sourceDir);
@@ -195,6 +197,36 @@ final class FinalCandidateAssemblyService
             $errors[] = 'QMS_TRIAL_BATCH 必须为 ' . GovernedTrialAssemblyBlueprintService::TRIAL_BATCH;
         }
         return $errors;
+    }
+
+    public static function isCandidateIdentity(string $docNumber, string $version): bool
+    {
+        return $version === FinalCandidateManifestService::VERSION
+            && str_starts_with(strtoupper(trim($docNumber)), FinalCandidateManifestService::TRIAL_PREFIX);
+    }
+
+    public static function resolveOutputPath(string $relativePath): ?string
+    {
+        $relativePath = str_replace('\\', '/', trim($relativePath));
+        if (!str_starts_with($relativePath, self::CANDIDATE_BODY_PREFIX)
+            || str_contains($relativePath, '../')
+            || str_starts_with($relativePath, '/')
+        ) {
+            return null;
+        }
+
+        $workspaceRoot = is_dir('/.team') ? '/' : dirname(__DIR__, 3);
+        $allowedRoot = realpath($workspaceRoot . '/.team/交接箱/2026-08-20-8021候选试装/06-候选连续正文');
+        $candidate = realpath($workspaceRoot . '/' . $relativePath);
+        if ($allowedRoot === false
+            || $candidate === false
+            || !is_file($candidate)
+            || !str_starts_with($candidate, $allowedRoot . DIRECTORY_SEPARATOR)
+        ) {
+            return null;
+        }
+
+        return $candidate;
     }
 
     public static function writePackage(array $result, string $outputDir, string $mode): array

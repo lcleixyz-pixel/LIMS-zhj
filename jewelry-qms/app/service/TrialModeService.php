@@ -53,7 +53,12 @@ final class TrialModeService
 
     public static function assertDocumentApprovalAllowed(object|array $document): void
     {
-        $isSimulation = self::isSimulationNumber(self::value($document, 'doc_number'));
+        $docNumber = self::value($document, 'doc_number');
+        $version = self::value($document, 'version');
+        $isSimulation = self::isSimulationNumber($docNumber);
+        if (FinalCandidateAssemblyService::isCandidateIdentity($docNumber, $version)) {
+            throw new DomainException('GOV-TRIAL/0.3 制度文件仍为候选试装，禁止提交审核、批准或发布');
+        }
         if (self::isEnabled() && !$isSimulation) {
             throw new DomainException('受控试运行环境禁止批准或发布非 SIM 正式文件');
         }

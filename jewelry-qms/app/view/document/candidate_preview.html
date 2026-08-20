@@ -1,0 +1,46 @@
+<style>
+    .candidate-preview {
+        position: relative;
+        max-width: 980px;
+        margin: 0 auto;
+        background: #fff;
+    }
+    .candidate-watermark {
+        position: fixed;
+        inset: 42% auto auto 12%;
+        z-index: 0;
+        color: rgba(160, 20, 20, .12);
+        font-size: 64px;
+        font-weight: 700;
+        transform: rotate(-24deg);
+        pointer-events: none;
+        white-space: nowrap;
+    }
+    .candidate-content { position: relative; z-index: 1; }
+    @media print {
+        .candidate-actions, .navbar, footer { display: none !important; }
+        .candidate-preview { max-width: none; }
+        .candidate-watermark { display: block !important; }
+    }
+</style>
+
+<div class="candidate-preview card border-danger-subtle">
+    <div class="candidate-watermark">8021 候选试装 · 非正式</div>
+    <div class="card-header candidate-content d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h5 class="mb-1">{$doc.title}</h5>
+            <div class="small text-muted">{$doc.doc_number} · {$doc.version} · {$doc.status}</div>
+        </div>
+        <div class="candidate-actions d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">打印候选预览</button>
+            <a class="btn btn-sm btn-outline-secondary" href="/document/view?id={$doc.id}">返回文件详情</a>
+        </div>
+    </div>
+    <div class="card-body candidate-content">
+        <div class="alert alert-danger" role="note">
+            <strong>8021 候选试装，非正式文件。</strong>
+            仅用于隔离环境人工复核；纸质体系仍为唯一正式体系。本页打印不生成受控打印记录，不得用于审核、发布或正式运行。
+        </div>
+        <article class="qms-readable-markdown">{$candidateHtml|raw}</article>
+    </div>
+</div>

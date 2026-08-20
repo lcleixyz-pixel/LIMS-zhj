@@ -22,6 +22,7 @@ use app\service\DocumentPresentationService;
 use app\service\DocumentStatusGuardService;
 use app\service\FieldAuditService;
 use app\service\FileService;
+use app\service\FinalCandidateAssemblyService;
 use app\service\GovernedTrialResolvedDocumentService;
 use app\service\QmsDocumentStructureService;
 use app\service\QmsReadableMarkdownService;
@@ -171,6 +172,11 @@ class Document extends BaseController
         if (!$document) {
             throw new HttpException(404, '文件不存在');
         }
+        if (FinalCandidateAssemblyService::isCandidateIdentity((string)$document->doc_number, (string)$document->version)) {
+            Session::flash('error', 'GOV-TRIAL/0.3 候选仅允许只读复核；调整须通过来源快照和候选补丁重新装配。');
+
+            return redirect('/document/view?id=' . $id);
+        }
         if ((string)$document->status !== 'draft') {
             Session::flash('warning', '只有草稿文件可直接编辑。如需修改，请先发起修订或走作废/换版流程。');
 
@@ -313,6 +319,7 @@ class Document extends BaseController
             )
         );
         View::assign('trialModeEnabled', TrialModeService::isEnabled());
+        View::assign('candidatePreviewAvailable', $this->isFinalCandidate($doc));
         View::assign('printLogs', ControlledPrintService::recentLogs((string)$doc->id, 5));
         $signingEmbeds = [];
         if (in_array((string)$doc->status, ['reviewing', 'draft'], true) && \app\service\DocuSealService::isSigningEnabled()) {
@@ -366,6 +373,11 @@ class Document extends BaseController
         if (!$doc) {
             throw new HttpException(404, '文件不存在');
         }
+        if (FinalCandidateAssemblyService::isCandidateIdentity((string)$doc->doc_number, (string)$doc->version)) {
+            Session::flash('error', 'GOV-TRIAL/0.3 候选仅允许只读复核，不能登记为正式文件评审。');
+
+            return redirect('/document/view?id=' . $id);
+        }
 
         if ($this->request->isPost()) {
             $result = (string)$this->request->post('result', '');
@@ -386,6 +398,12 @@ class Document extends BaseController
     public function obsolete()
     {
         $id = (string)$this->request->post('id', '');
+        $doc = $this->loadDocument($id);
+        if (FinalCandidateAssemblyService::isCandidateIdentity((string)$doc->doc_number, (string)$doc->version)) {
+            Session::flash('error', 'GOV-TRIAL/0.3 候选仅允许只读复核，不能通过文件控制流程变更状态。');
+
+            return redirect('/document/view?id=' . $id);
+        }
         $note = trim((string)$this->request->post('review_note', ''));
         $review = DocumentControlService::recordReview($id, 'obsolete', $note !== '' ? $note : '文件作废并发起回收确认', null, Session::get('user.id'));
         Session::flash($review ? 'success' : 'error', $review ? '文件已作废。原接收人将收到回收确认通知，作废文件不再作为受控文件使用。' : '文件作废失败，请确认您有作废权限后重试。');
@@ -396,6 +414,11 @@ class Document extends BaseController
     public function onlyoffice()
     {
         $doc = $this->loadDocument((string)$this->request->param('id', ''));
+        if (FinalCandidateAssemblyService::isCandidateIdentity((string)$doc->doc_number, (string)$doc->version)) {
+            Session::flash('error', 'GOV-TRIAL/0.3 候选仅允许只读预览，不开放在线编辑。');
+
+            return redirect('/document/view?id=' . $doc->id);
+        }
         $serverUrl = rtrim((string)Config::get('qms.onlyoffice.server_url', ''), '/');
         $enabledConfig = Config::get('qms.onlyoffice.enabled', false);
         $enabled = DocumentPresentationService::onlyofficeAvailable(
@@ -530,6 +553,11 @@ class Document extends BaseController
         if (!$doc) {
             throw new HttpException(404, '文件不存在');
         }
+        if (FinalCandidateAssemblyService::isCandidateIdentity((string)$doc->doc_number, (string)$doc->version)) {
+            Session::flash('error', 'GOV-TRIAL/0.3 候选仅允许只读复核，不能发起正式修订流程。');
+
+            return redirect('/document/view?id=' . $id);
+        }
 
         if ($this->request->isPost()) {
             $rev = (int) $doc->revision + 1;
@@ -621,6 +649,13 @@ class Document extends BaseController
         $id = $this->request->param('id');
         $doc = DocumentModel::find($id);
         if ($doc) {
+            try {
+                TrialModeService::assertDocumentApprovalAllowed($doc);
+            } catch (\DomainException $exception) {
+                Session::flash('error', $exception->getMessage());
+
+                return redirect('/document/view?id=' . $id);
+            }
             if ((string)$doc->status !== 'draft') {
                 Session::flash('warning', '当前文件不在草稿状态，无需重复提交。请先查看当前签批进度。');
 
@@ -688,8 +723,34 @@ class Document extends BaseController
             if ($resolvedPath !== null) {
                 FileService::downloadAbsolute($resolvedPath, (string)$doc->file_name);
             }
+            $candidatePath = FinalCandidateAssemblyService::resolveOutputPath((string)$doc->file_path);
+            if ($candidatePath !== null && $this->isFinalCandidate($doc)) {
+                FileService::downloadAbsolute($candidatePath, (string)$doc->file_name);
+            }
         }
         FileService::download($doc->file_path, $doc->file_name);
+    }
+
+    public function candidatePreview()
+    {
+        $doc = $this->loadDocument((string)$this->request->param('id', ''));
+        if (!$this->isFinalCandidate($doc)) {
+            throw new HttpException(404, '候选预览不存在');
+        }
+
+        $absolutePath = FinalCandidateAssemblyService::resolveOutputPath((string)$doc->file_path);
+        if ($absolutePath === null) {
+            throw new HttpException(404, '候选正文不存在');
+        }
+        $content = file_get_contents($absolutePath);
+        if (!is_string($content)) {
+            throw new HttpException(500, '候选正文读取失败');
+        }
+
+        View::assign('doc', $doc);
+        View::assign('candidateHtml', QmsReadableMarkdownService::toHtml($content));
+
+        return View::fetch('document/candidate_preview');
     }
 
     private function loadDocument(string $id): DocumentModel
@@ -710,6 +771,9 @@ class Document extends BaseController
         }
 
         $absolutePath = GovernedTrialResolvedDocumentService::resolveDownloadPath((string)$doc->file_path);
+        if ($absolutePath === null && $this->isFinalCandidate($doc)) {
+            $absolutePath = FinalCandidateAssemblyService::resolveOutputPath((string)$doc->file_path);
+        }
         if ($absolutePath === null) {
             $candidate = public_path() . ltrim((string)$doc->file_path, '/');
             $publicRoot = realpath(public_path());
@@ -735,6 +799,14 @@ class Document extends BaseController
         }
 
         return [true, '<div class="qms-readable-text">' . nl2br(htmlspecialchars($content, ENT_QUOTES, 'UTF-8')) . '</div>'];
+    }
+
+    private function isFinalCandidate(DocumentModel $doc): bool
+    {
+        return TrialModeService::isEnabled()
+            && FinalCandidateAssemblyService::isCandidateIdentity((string)$doc->doc_number, (string)$doc->version)
+            && in_array((string)$doc->status, ['draft', 'obsolete'], true)
+            && FinalCandidateAssemblyService::resolveOutputPath((string)$doc->file_path) !== null;
     }
 
     private function documentTypeFor(string $fileType): string

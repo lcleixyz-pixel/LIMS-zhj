@@ -6,14 +6,14 @@
         </div>
         <div class="d-flex flex-wrap gap-1 align-items-center">
             <!-- 主操作：根据状态和权限只显示一个最可能的下一步 -->
-            {if $doc.status == 'draft' && !empty($signingStatus.rejected) && qms_can_action('document', 'register', $doc)}
+            {if $doc.status == 'draft' && !$candidatePreviewAvailable && !empty($signingStatus.rejected) && qms_can_action('document', 'register', $doc)}
             <a href="/document/edit?id={$doc.id}" class="btn btn-sm btn-primary">修改文件</a>
             {if qms_can_action('document', 'submit_review', $doc)}
             <form method="post" action="/document/submitReview?id={$doc.id}" class="d-inline" onsubmit="return confirm('请确认已完成本轮修改。重新提交后，将从审核人开始新一轮签批。');">
                 <button type="submit" class="btn btn-sm btn-success">修改完成，重新提交</button>
             </form>
             {/if}
-            {elseif $doc.status == 'draft' && qms_can_action('document', 'submit_review', $doc)}
+            {elseif $doc.status == 'draft' && !$candidatePreviewAvailable && qms_can_action('document', 'submit_review', $doc)}
             <form method="post" action="/document/submitReview?id={$doc.id}" class="d-inline">
                 <button type="submit" class="btn btn-sm btn-success">提交审核</button>
             </form>
@@ -27,10 +27,13 @@
             <div class="dropdown d-inline">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">更多</button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    {if !in_array($doc.status, ['trial_ready', 'published']) && empty($signingStatus.rejected) && qms_can_action('document', 'register', $doc)}
+                    {if $candidatePreviewAvailable}
+                    <li><a class="dropdown-item" href="/document/candidatePreview?id={$doc.id}">候选正文预览（非正式）</a></li>
+                    {/if}
+                    {if !$candidatePreviewAvailable && !in_array($doc.status, ['trial_ready', 'published']) && empty($signingStatus.rejected) && qms_can_action('document', 'register', $doc)}
                     <li><a class="dropdown-item" href="/document/edit?id={$doc.id}">编辑</a></li>
                     {/if}
-                    {if qms_can_action('document', 'review', $doc)}
+                    {if !$candidatePreviewAvailable && qms_can_action('document', 'review', $doc)}
                     <li><a class="dropdown-item" href="/document/review?id={$doc.id}">定期评审</a></li>
                     {/if}
                     {if $doc.file_path}

@@ -133,6 +133,7 @@ class ApprovalService
      */
     public static function finalizeDocumentIfFullyApproved(\app\model\Document $doc): bool
     {
+        TrialModeService::assertDocumentApprovalAllowed($doc);
         if (!self::isFullyApproved('Document', (string)$doc->id, (int)$doc->level)) {
             return false;
         }
