@@ -10,6 +10,7 @@ use app\command\P0BuildControlledMigrationPackage;
 use app\command\P0Preflight;
 use app\command\QmsGovernedTrialAssemble;
 use app\command\QmsGovernedTrialResolve;
+use app\command\QmsFinalCandidateAssemble;
 use app\command\QmsManualProcedureAlignmentCheck;
 use app\command\QmsPreimportPackage;
 use app\command\RecordFormRebuildSchema;
@@ -27,6 +28,7 @@ return [
         P0Preflight::class,
         QmsGovernedTrialAssemble::class,
         QmsGovernedTrialResolve::class,
+        QmsFinalCandidateAssemble::class,
         QmsManualProcedureAlignmentCheck::class,
         QmsPreimportPackage::class,
         RecordFormRebuildSchema::class,
