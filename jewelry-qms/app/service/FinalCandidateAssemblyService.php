@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 namespace app\service;
 
+use DomainException;
 use RuntimeException;
+use think\facade\Config;
+use think\facade\Db;
 
 final class FinalCandidateAssemblyService
 {
@@ -70,7 +73,128 @@ final class FinalCandidateAssemblyService
 
     public static function apply(string $sourceDir, ?string $outputDir = null): array
     {
-        throw new RuntimeException('候选写入服务尚未启用');
+        self::assertWritableTrialEnvironment();
+        self::assertSchema();
+        $preview = self::preview($sourceDir);
+        if (($preview['validation']['ok'] ?? false) !== true) {
+            throw new RuntimeException('候选正文预览未通过，不得写入');
+        }
+
+        $outputDir = self::resolvedOutputDir($outputDir);
+        self::writePackage($preview, $outputDir, 'dry-run');
+        $protectedBefore = self::protectedFingerprint();
+        $oldVersionCounts = self::oldVersionCounts();
+        $companyId = (string)Config::get('qms.company_id');
+
+        Db::transaction(function () use ($preview, $outputDir, $companyId, $protectedBefore, $oldVersionCounts): void {
+            foreach ($preview['documents'] as $document) {
+                self::upsertCandidateDocument($document, $outputDir, $companyId);
+            }
+
+            $verification = self::verify();
+            if (($verification['ok'] ?? false) !== true) {
+                throw new RuntimeException('候选写入事务验证失败：' . implode('；', $verification['errors'] ?? []));
+            }
+            if (self::protectedFingerprint() !== $protectedBefore) {
+                throw new RuntimeException('候选写入触碰了既有记录模板或记录实例，事务已回滚');
+            }
+            if (self::oldVersionCounts() !== $oldVersionCounts) {
+                throw new RuntimeException('候选写入改变了GOV-TRIAL/0.1或0.2，事务已回滚');
+            }
+        });
+
+        $verification = self::verify();
+        $result = $preview;
+        $result['mode'] = 'trial_apply';
+        $result['source_validation'] = $preview['validation'];
+        $result['validation'] = $verification;
+        $result['database'] = $verification['counts'] ?? [];
+        $result['package'] = self::writePackage($result, $outputDir, 'apply');
+
+        return $result;
+    }
+
+    public static function verify(): array
+    {
+        $errors = [];
+        $documents = Db::name('documents')
+            ->where('version', FinalCandidateManifestService::VERSION)
+            ->whereLike('doc_number', FinalCandidateManifestService::TRIAL_PREFIX . '%')
+            ->where('soft_delete', 0)
+            ->select()
+            ->toArray();
+        $structures = Db::name('qms_structured_documents')
+            ->where('version', FinalCandidateManifestService::VERSION)
+            ->whereLike('doc_number', FinalCandidateManifestService::TRIAL_PREFIX . '%')
+            ->where('soft_delete', 0)
+            ->select()
+            ->toArray();
+        $blocks = (int)Db::name('qms_document_blocks')->alias('block')
+            ->join('qms_structured_documents structure', 'structure.id=block.structured_document_id')
+            ->where('structure.version', FinalCandidateManifestService::VERSION)
+            ->whereLike('structure.doc_number', FinalCandidateManifestService::TRIAL_PREFIX . '%')
+            ->where('structure.soft_delete', 0)
+            ->where('block.soft_delete', 0)
+            ->count();
+        $drafts = count(array_filter($documents, static fn(array $row): bool => $row['status'] === 'draft'));
+        $obsolete = count(array_filter($documents, static fn(array $row): bool => $row['status'] === 'obsolete'));
+        $published = count(array_filter($documents, static fn(array $row): bool => $row['status'] === 'published'));
+        $nonCandidatePublished = count(array_filter($documents, static fn(array $row): bool => (int)$row['publish'] !== 0));
+
+        if (count($documents) !== 65) {
+            $errors[] = '0.3候选文件数量应为65，当前为' . count($documents);
+        }
+        if (count($structures) !== 65) {
+            $errors[] = '0.3结构化候选数量应为65，当前为' . count($structures);
+        }
+        if ($drafts !== 64 || $obsolete !== 1 || $published !== 0) {
+            $errors[] = "候选状态应为64份草稿、1份废止、0份发布，当前为{$drafts}/{$obsolete}/{$published}";
+        }
+        if ($nonCandidatePublished !== 0) {
+            $errors[] = '候选文件publish标志必须全部为0';
+        }
+        if ($blocks < 65) {
+            $errors[] = '每份候选至少应形成一个内容块';
+        }
+        $templateLinks = (int)Db::name('qms_document_block_links')->alias('link')
+            ->join('qms_document_blocks block', 'block.id=link.block_id')
+            ->join('qms_structured_documents structure', 'structure.id=block.structured_document_id')
+            ->where('structure.version', FinalCandidateManifestService::VERSION)
+            ->whereNotNull('link.record_form_template_id')
+            ->where('link.soft_delete', 0)
+            ->count();
+        if ($templateLinks !== 0) {
+            $errors[] = '第一轮候选存在记录模板链接';
+        }
+
+        return [
+            'ok' => $errors === [],
+            'errors' => $errors,
+            'counts' => [
+                'candidate_documents' => count($documents),
+                'candidate_structures' => count($structures),
+                'candidate_blocks' => $blocks,
+                'draft_documents' => $drafts,
+                'obsolete_documents' => $obsolete,
+                'published_documents' => $published,
+                'record_form_templates' => (int)Db::name('record_form_templates')->where('soft_delete', 0)->count(),
+                'trial_ready_templates' => (int)Db::name('record_form_templates')->where('status', 'trial_ready')->where('soft_delete', 0)->count(),
+                'record_instances' => (int)Db::name('record_form_instances')->count(),
+                'template_links' => $templateLinks,
+            ],
+        ];
+    }
+
+    public static function writableEnvironmentErrors(): array
+    {
+        $errors = [];
+        if (!TrialModeService::isEnabled()) {
+            $errors[] = 'QMS_TRIAL_MODE 未启用';
+        }
+        if (TrialModeService::trialBatch() !== GovernedTrialAssemblyBlueprintService::TRIAL_BATCH) {
+            $errors[] = 'QMS_TRIAL_BATCH 必须为 ' . GovernedTrialAssemblyBlueprintService::TRIAL_BATCH;
+        }
+        return $errors;
     }
 
     public static function writePackage(array $result, string $outputDir, string $mode): array
@@ -188,6 +312,325 @@ final class FinalCandidateAssemblyService
             . '- 状态：' . (string)$document['status'] . '/' . (string)$document['review_class'] . "\n"
             . '- 来源 SHA-256：' . (string)$document['source_sha256'] . "\n"
             . '- 边界：仅用于8021隔离试装；纸质体系仍为唯一正式体系。' . "\n\n---\n\n";
+    }
+
+    private static function assertWritableTrialEnvironment(): void
+    {
+        $errors = self::writableEnvironmentErrors();
+        if ($errors !== []) {
+            throw new DomainException('8021候选试装拒绝写入：' . implode('；', $errors));
+        }
+    }
+
+    private static function assertSchema(): void
+    {
+        foreach ([
+            'documents' => ['supersedes_document_id', 'revision_root_id', 'change_reason'],
+            'qms_structured_documents' => ['document_role', 'source_status', 'review_note'],
+            'qms_document_blocks' => ['stable_key', 'source_locator', 'block_type'],
+        ] as $table => $columns) {
+            $available = Db::query('SHOW COLUMNS FROM `' . $table . '`');
+            $index = array_fill_keys(array_map(static fn(array $row): string => (string)$row['Field'], $available), true);
+            foreach ($columns as $column) {
+                if (!isset($index[$column])) {
+                    throw new RuntimeException('数据库缺少候选试装字段：' . $table . '.' . $column);
+                }
+            }
+        }
+    }
+
+    private static function upsertCandidateDocument(array $document, string $outputDir, string $companyId): void
+    {
+        $existing = Db::name('documents')
+            ->where('doc_number', (string)$document['trial_doc_number'])
+            ->where('version', FinalCandidateManifestService::VERSION)
+            ->where('soft_delete', 0)
+            ->find();
+        if (is_array($existing)) {
+            $reason = json_decode((string)($existing['change_reason'] ?? ''), true);
+            $existingHash = is_array($reason) ? (string)($reason['source_sha256'] ?? '') : '';
+            if ($existingHash !== '' && !hash_equals($existingHash, (string)$document['source_sha256'])) {
+                throw new RuntimeException((string)$document['canonical_doc_number'] . ' 来源哈希漂移，拒绝覆盖0.3候选');
+            }
+        }
+
+        $prior = self::priorCandidateDocument((string)$document['canonical_doc_number']);
+        $documentId = (string)($existing['id'] ?? qms_uuid());
+        $priorId = (string)($prior['id'] ?? '');
+        $fileName = self::safeToken((string)$document['canonical_doc_number'] . '-' . (string)$document['title']) . '.md';
+        $relativeOutput = self::relativeTeamPath($outputDir) . '/06-候选连续正文/' . $fileName;
+        $now = date('Y-m-d H:i:s');
+        $documentRow = [
+            'company_id' => $companyId,
+            'level' => (int)$document['level'],
+            'doc_number' => (string)$document['trial_doc_number'],
+            'title' => '[8021候选试装] ' . (string)$document['title'],
+            'version' => FinalCandidateManifestService::VERSION,
+            'revision' => 3,
+            'effective_date' => null,
+            'review_date' => null,
+            'status' => (string)$document['status'],
+            'file_path' => $relativeOutput,
+            'file_name' => $fileName,
+            'file_type' => 'md',
+            'prepared_by' => null,
+            'reviewed_by' => null,
+            'approved_by' => null,
+            'change_reason' => self::json([
+                'notice' => '仅限8021隔离环境候选试装；不得审核、批准、发布或作为正式运行证据。',
+                'trial_batch' => FinalCandidateManifestService::TRIAL_BATCH,
+                'canonical_doc_number' => (string)$document['canonical_doc_number'],
+                'source_snapshot' => '源文件快照/' . (string)$document['file_name'],
+                'source_sha256' => (string)$document['source_sha256'],
+                'resolved_text_sha256' => (string)$document['resolved_text_sha256'],
+                'review_class' => (string)$document['review_class'],
+                'review_flags' => (array)$document['review_flags'],
+                'time_patch_count' => (int)$document['time_patch_count'],
+            ]),
+            'supersedes_document_id' => (string)($existing['supersedes_document_id'] ?? '') !== ''
+                ? (string)$existing['supersedes_document_id']
+                : ($priorId !== '' ? $priorId : null),
+            'revision_root_id' => (string)($existing['revision_root_id'] ?? '') !== ''
+                ? (string)$existing['revision_root_id']
+                : (string)($prior['revision_root_id'] ?? $priorId ?: $documentId),
+            'publish' => 0,
+            'soft_delete' => 0,
+            'modified' => $now,
+        ];
+        if (is_array($existing)) {
+            Db::name('documents')->where('id', $documentId)->update($documentRow);
+        } else {
+            $documentRow['id'] = $documentId;
+            $documentRow['created'] = $now;
+            Db::name('documents')->insert($documentRow);
+        }
+
+        $existingStructure = Db::name('qms_structured_documents')
+            ->where('doc_number', (string)$document['trial_doc_number'])
+            ->where('version', FinalCandidateManifestService::VERSION)
+            ->where('soft_delete', 0)
+            ->find();
+        $structuredId = (string)($existingStructure['id'] ?? qms_uuid());
+        $structureRow = [
+            'company_id' => $companyId,
+            'source_asset_id' => null,
+            'document_id' => $documentId,
+            'document_role' => (string)$document['document_role'],
+            'doc_number' => (string)$document['trial_doc_number'],
+            'title' => '[8021候选试装] ' . (string)$document['title'],
+            'version' => FinalCandidateManifestService::VERSION,
+            'source_status' => 'draft',
+            'markdown_path' => $relativeOutput,
+            'rendered_file_path' => $relativeOutput,
+            'render_status' => 'rendered',
+            'status' => (string)$document['status'],
+            'review_note' => '状态：' . (string)$document['review_class']
+                . '；来源SHA-256：' . (string)$document['source_sha256']
+                . '；正式发布前须关闭关键待决事项。',
+            'publish' => 1,
+            'soft_delete' => 0,
+            'modified' => $now,
+        ];
+        if (is_array($existingStructure)) {
+            Db::name('qms_structured_documents')->where('id', $structuredId)->update($structureRow);
+        } else {
+            $structureRow['id'] = $structuredId;
+            $structureRow['created'] = $now;
+            Db::name('qms_structured_documents')->insert($structureRow);
+        }
+
+        self::upsertBlocks($structuredId, $documentId, $companyId, $document);
+    }
+
+    private static function upsertBlocks(string $structuredId, string $documentId, string $companyId, array $document): void
+    {
+        $existing = Db::name('qms_document_blocks')
+            ->where('structured_document_id', $structuredId)
+            ->select()
+            ->toArray();
+        $byKey = [];
+        foreach ($existing as $row) {
+            $byKey[(string)$row['stable_key']] = $row;
+        }
+        $activeIds = [];
+        foreach (self::splitMarkdown((string)$document['resolved_body']) as $index => $block) {
+            $stableKey = 'gov03_' . str_pad((string)($index + 1), 3, '0', STR_PAD_LEFT)
+                . '_' . substr(hash('sha256', (string)$block['heading']), 0, 12);
+            $current = $byKey[$stableKey] ?? null;
+            $blockId = (string)($current['id'] ?? qms_uuid());
+            $activeIds[] = $blockId;
+            $row = [
+                'company_id' => $companyId,
+                'structured_document_id' => $structuredId,
+                'document_id' => $documentId,
+                'parent_id' => null,
+                'stable_key' => $stableKey,
+                'section_number' => (string)$block['section_number'],
+                'title' => (string)$block['title'],
+                'block_type' => self::blockType((string)$block['title']),
+                'markdown' => (string)$block['markdown'],
+                'sort_order' => ($index + 1) * 10,
+                'source_locator' => (string)$document['source_sha256'] . '#' . (string)$block['heading'],
+                'status' => (string)$document['status'],
+                'publish' => 1,
+                'soft_delete' => 0,
+                'modified' => date('Y-m-d H:i:s'),
+            ];
+            if (is_array($current)) {
+                Db::name('qms_document_blocks')->where('id', $blockId)->update($row);
+            } else {
+                $row['id'] = $blockId;
+                $row['created'] = date('Y-m-d H:i:s');
+                Db::name('qms_document_blocks')->insert($row);
+            }
+        }
+        $staleIds = array_values(array_diff(array_column($existing, 'id'), $activeIds));
+        if ($staleIds !== []) {
+            Db::name('qms_document_blocks')->whereIn('id', $staleIds)->update([
+                'soft_delete' => 1,
+                'modified' => date('Y-m-d H:i:s'),
+            ]);
+        }
+    }
+
+    private static function splitMarkdown(string $markdown): array
+    {
+        $lines = preg_split('/\R/u', $markdown) ?: [];
+        $blocks = [];
+        $heading = '正文';
+        $buffer = [];
+        $flush = static function () use (&$blocks, &$heading, &$buffer): void {
+            $content = trim(implode("\n", $buffer));
+            if ($content === '') {
+                $buffer = [];
+                return;
+            }
+            $sectionNumber = '';
+            $title = $heading;
+            if (preg_match('/^([0-9]+(?:\.[0-9A-Za-z]+)*)[\.、\s]+(.+)$/u', $heading, $match)) {
+                $sectionNumber = (string)$match[1];
+                $title = trim((string)$match[2]);
+            }
+            $blocks[] = [
+                'heading' => $heading,
+                'section_number' => $sectionNumber,
+                'title' => $title,
+                'markdown' => ($heading !== '正文' ? '## ' . $heading . "\n\n" : '') . $content,
+            ];
+            $buffer = [];
+        };
+        foreach ($lines as $line) {
+            if (preg_match('/^##\s+(.+)$/u', trim($line), $match)) {
+                $flush();
+                $heading = trim((string)$match[1]);
+                continue;
+            }
+            if (str_starts_with(trim($line), '# ')) {
+                continue;
+            }
+            $buffer[] = $line;
+        }
+        $flush();
+
+        return $blocks !== [] ? $blocks : [[
+            'heading' => '正文',
+            'section_number' => '',
+            'title' => '正文',
+            'markdown' => trim($markdown),
+        ]];
+    }
+
+    private static function blockType(string $title): string
+    {
+        foreach ([
+            '目的' => 'purpose',
+            '范围' => 'scope',
+            '职责' => 'responsibility',
+            '工作程序' => 'process_step',
+            '记录' => 'record_requirement',
+        ] as $needle => $type) {
+            if (str_contains($title, $needle)) {
+                return $type;
+            }
+        }
+        return 'text';
+    }
+
+    private static function priorCandidateDocument(string $canonical): ?array
+    {
+        if ($canonical === 'XZTC/SC-2026') {
+            $priorNumber = 'SIM-GOV02-XZTC/SC';
+        } elseif (str_starts_with($canonical, 'XZTC/CX-')) {
+            $priorNumber = 'SIM-GOV02-' . preg_replace('/-2026$/', '-2022', $canonical);
+        } else {
+            return null;
+        }
+        $prior = Db::name('documents')
+            ->where('doc_number', $priorNumber)
+            ->where('version', 'GOV-TRIAL/0.2')
+            ->where('soft_delete', 0)
+            ->find();
+        return is_array($prior) ? $prior : null;
+    }
+
+    private static function protectedFingerprint(): array
+    {
+        $payloads = [
+            'record_form_templates' => Db::name('record_form_templates')
+                ->field('id,doc_number,version,status,trial_batch,publish,soft_delete,modified')
+                ->order('id')->select()->toArray(),
+            'record_form_instances' => Db::name('record_form_instances')
+                ->field('id,doc_number,status,is_simulation,trial_batch,modified')
+                ->order('id')->select()->toArray(),
+        ];
+        $result = [];
+        foreach ($payloads as $table => $rows) {
+            $result[$table] = [
+                'count' => count($rows),
+                'sha256' => hash('sha256', self::json($rows)),
+            ];
+        }
+        return $result;
+    }
+
+    private static function oldVersionCounts(): array
+    {
+        return [
+            'GOV-TRIAL/0.1' => (int)Db::name('qms_structured_documents')
+                ->where('version', 'GOV-TRIAL/0.1')->where('soft_delete', 0)->count(),
+            'GOV-TRIAL/0.2' => (int)Db::name('qms_structured_documents')
+                ->where('version', 'GOV-TRIAL/0.2')->where('soft_delete', 0)->count(),
+        ];
+    }
+
+    private static function resolvedOutputDir(?string $outputDir): string
+    {
+        $outputDir = trim((string)$outputDir);
+        if ($outputDir !== '') {
+            return rtrim($outputDir, DIRECTORY_SEPARATOR);
+        }
+        if (is_dir('/.team')) {
+            return '/.team/交接箱/2026-08-20-8021候选试装';
+        }
+        return dirname(__DIR__, 3) . '/.team/交接箱/2026-08-20-8021候选试装';
+    }
+
+    private static function relativeTeamPath(string $outputDir): string
+    {
+        if (str_starts_with($outputDir, '/.team/')) {
+            return '.team/' . ltrim(substr($outputDir, strlen('/.team/')), '/');
+        }
+        $marker = DIRECTORY_SEPARATOR . '.team' . DIRECTORY_SEPARATOR;
+        $position = strpos($outputDir, $marker);
+        if ($position !== false) {
+            return '.team/' . str_replace(DIRECTORY_SEPARATOR, '/', substr($outputDir, $position + strlen($marker)));
+        }
+        throw new RuntimeException('写入报告目录必须位于.team/交接箱内');
+    }
+
+    private static function json(array $value): string
+    {
+        return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     }
 
     private static function withoutBodies(array $result): array
