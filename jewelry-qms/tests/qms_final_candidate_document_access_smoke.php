@@ -78,5 +78,7 @@ $view = (string)file_get_contents(__DIR__ . '/../app/view/document/candidate_pre
 final_candidate_access_assert(str_contains($view, 'window.print()'), '候选预览必须支持浏览器打印');
 final_candidate_access_assert(str_contains($view, '候选试装') && str_contains($view, '非正式'), '候选预览必须显示非正式水印');
 final_candidate_access_assert(!str_contains($view, 'controlledPrint'), '候选预览不得伪装成受控打印');
+$routes = (string)file_get_contents(__DIR__ . '/../route/app.php');
+final_candidate_access_assert(str_contains($routes, "document/candidatePreview', 'Document/candidatePreview"), '候选预览入口必须登记显式只读路由');
 
 echo "qms_final_candidate_document_access_smoke passed\n";

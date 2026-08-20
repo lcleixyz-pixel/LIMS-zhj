@@ -44,6 +44,7 @@ Route::group(function () {
     Route::rule('document/add', 'Document/add');
     Route::rule('document/edit', 'Document/edit');
     Route::rule('document/view', 'Document/view');
+    Route::get('document/candidatePreview', 'Document/candidatePreview');
     Route::rule('document/revise', 'Document/revise');
     Route::rule('document/review', 'Document/review');
     Route::post('document/distribute', 'Document/distribute');
