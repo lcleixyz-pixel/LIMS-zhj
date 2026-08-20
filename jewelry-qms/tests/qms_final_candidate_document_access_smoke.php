@@ -74,9 +74,11 @@ $controller = (string)file_get_contents(__DIR__ . '/../app/controller/Document.p
 final_candidate_access_assert(str_contains($controller, 'function candidatePreview'), '文件控制器必须提供只读候选预览入口');
 final_candidate_access_assert(str_contains($controller, 'FinalCandidateAssemblyService::resolveOutputPath'), '候选预览和下载必须使用受限路径解析');
 final_candidate_access_assert(str_contains($controller, 'TrialModeService::assertDocumentApprovalAllowed($doc)'), '提交审核入口必须复用候选审批门禁');
+final_candidate_access_assert(str_contains($controller, "'draft', 'obsolete', 'published'"), '0.3测试正式发布后仍应能读取候选正文');
 $view = (string)file_get_contents(__DIR__ . '/../app/view/document/candidate_preview.html');
 final_candidate_access_assert(str_contains($view, 'window.print()'), '候选预览必须支持浏览器打印');
-final_candidate_access_assert(str_contains($view, '候选试装') && str_contains($view, '非正式'), '候选预览必须显示非正式水印');
+final_candidate_access_assert(str_contains($view, '候选试装') && str_contains($view, '非正式'), '草稿候选预览必须显示非正式水印');
+final_candidate_access_assert(str_contains($view, '8021 测试正式预览') && str_contains($view, '纸质体系仍为真实正式体系'), '测试正式发布预览必须保留8021测试边界');
 final_candidate_access_assert(!str_contains($view, 'controlledPrint'), '候选预览不得伪装成受控打印');
 $routes = (string)file_get_contents(__DIR__ . '/../route/app.php');
 final_candidate_access_assert(str_contains($routes, "document/candidatePreview', 'Document/candidatePreview"), '候选预览入口必须登记显式只读路由');

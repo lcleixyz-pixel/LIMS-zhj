@@ -748,7 +748,8 @@ class Document extends BaseController
         }
 
         View::assign('doc', $doc);
-        View::assign('candidateHtml', QmsReadableMarkdownService::toHtml($content));
+        View::assign('isTrialFormalPreview', (string)$doc->status === 'published');
+        View::assign('candidateHtml', QmsReadableMarkdownService::toHtml($this->presentCandidateContent($doc, $content)));
 
         return View::fetch('document/candidate_preview');
     }
@@ -795,7 +796,7 @@ class Document extends BaseController
         }
 
         if (in_array($fileType, ['md', 'markdown'], true)) {
-            return [true, QmsReadableMarkdownService::toHtml($content)];
+            return [true, QmsReadableMarkdownService::toHtml($this->presentCandidateContent($doc, $content))];
         }
 
         return [true, '<div class="qms-readable-text">' . nl2br(htmlspecialchars($content, ENT_QUOTES, 'UTF-8')) . '</div>'];
@@ -805,8 +806,33 @@ class Document extends BaseController
     {
         return TrialModeService::isEnabled()
             && FinalCandidateAssemblyService::isCandidateIdentity((string)$doc->doc_number, (string)$doc->version)
-            && in_array((string)$doc->status, ['draft', 'obsolete'], true)
+            && in_array((string)$doc->status, ['draft', 'obsolete', 'published'], true)
             && FinalCandidateAssemblyService::resolveOutputPath((string)$doc->file_path) !== null;
+    }
+
+    private function presentCandidateContent(DocumentModel $doc, string $content): string
+    {
+        if ((string)$doc->status !== 'published' || !FinalCandidateAssemblyService::isCandidateIdentity((string)$doc->doc_number, (string)$doc->version)) {
+            return $content;
+        }
+
+        return str_replace(
+            [
+                '[8021候选试装]',
+                '- 候选编号：',
+                '- 候选版本：',
+                '- 状态：draft/review_required',
+                '- 边界：仅用于8021隔离试装；纸质体系仍为唯一正式体系。',
+            ],
+            [
+                '[8021测试正式]',
+                '- 8021测试编号：',
+                '- 测试版本：',
+                '- 状态：published（仅8021测试环境）',
+                '- 边界：仅用于8021测试环境验收；纸质体系仍为真实正式体系。',
+            ],
+            $content
+        );
     }
 
     private function documentTypeFor(string $fileType): string

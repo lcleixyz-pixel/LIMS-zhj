@@ -28,7 +28,7 @@
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">更多</button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     {if $candidatePreviewAvailable}
-                    <li><a class="dropdown-item" href="/document/candidatePreview?id={$doc.id}">候选正文预览（非正式）</a></li>
+                    <li><a class="dropdown-item" href="/document/candidatePreview?id={$doc.id}">{if $doc.status == 'published'}8021测试正式预览{else}候选正文预览（非正式）{/if}</a></li>
                     {/if}
                     {if !$candidatePreviewAvailable && !in_array($doc.status, ['trial_ready', 'published']) && empty($signingStatus.rejected) && qms_can_action('document', 'register', $doc)}
                     <li><a class="dropdown-item" href="/document/edit?id={$doc.id}">编辑</a></li>
