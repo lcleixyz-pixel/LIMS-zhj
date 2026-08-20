@@ -75,6 +75,7 @@ final class FinalCandidateTraceSyncService
             self::formalizeCandidateRows();
             $documentMigration = self::applyElementDocumentMigration($documentPlan['rows']);
             $blockMigration = self::applyBlockLinkMigration($blockPlan['rows']);
+            $supplement = self::applySupplementalReviewLinks();
             $hidden = self::hideNonCandidateFormalRows();
 
             $verification = self::verifyFormalTrace();
@@ -94,6 +95,7 @@ final class FinalCandidateTraceSyncService
                 'migration' => [
                     'element_documents' => $documentMigration,
                     'block_links' => $blockMigration,
+                    'supplemental_review_links' => $supplement,
                     'hidden_old_view_rows' => $hidden,
                 ],
                 'validation' => $verification,
@@ -138,6 +140,15 @@ final class FinalCandidateTraceSyncService
         }
         if (($counts['candidate_block_links'] ?? 0) <= 0) {
             $errors[] = '候选章节链路为空';
+        }
+        if (($counts['candidate_manual_block_links'] ?? 0) < 29) {
+            $errors[] = '质量手册待复核章节链路不足，当前为' . (string)($counts['candidate_manual_block_links'] ?? 0);
+        }
+        if (($counts['candidate_work_instruction_element_documents'] ?? 0) < 28) {
+            $errors[] = '非废止作业指导书要素对应不足，当前为' . (string)($counts['candidate_work_instruction_element_documents'] ?? 0);
+        }
+        if (($counts['candidate_work_instruction_block_linked_documents'] ?? 0) < 28) {
+            $errors[] = '非废止作业指导书待复核章节链路不足，当前为' . (string)($counts['candidate_work_instruction_block_linked_documents'] ?? 0);
         }
         if (($counts['candidate_template_block_links'] ?? 0) !== 0) {
             $errors[] = '候选章节不得直接挂接记录表单模板：' . (string)$counts['candidate_template_block_links'];
@@ -207,6 +218,9 @@ final class FinalCandidateTraceSyncService
             'candidate_element_documents' => self::candidateElementDocumentQuery()->count(),
             'old_active_element_documents' => self::oldElementDocumentQuery()->count(),
             'candidate_block_links' => self::candidateBlockLinkQuery()->count(),
+            'candidate_manual_block_links' => self::candidateManualBlockLinkQuery()->count(),
+            'candidate_work_instruction_element_documents' => self::candidateWorkInstructionElementDocumentQuery(),
+            'candidate_work_instruction_block_linked_documents' => self::candidateWorkInstructionBlockLinkedDocuments(),
             'candidate_template_block_links' => self::candidateBlockLinkQuery()->whereNotNull('link.record_form_template_id')->count(),
             'old_active_block_links' => self::oldBlockLinkQuery()->count(),
             'record_form_templates' => (int)Db::name('record_form_templates')->where('soft_delete', 0)->count(),
@@ -236,6 +250,43 @@ final class FinalCandidateTraceSyncService
             ->where('block.soft_delete', 0)
             ->where('link.soft_delete', 0)
             ->where('link.publish', 1);
+    }
+
+    private static function candidateManualBlockLinkQuery()
+    {
+        return self::candidateBlockLinkQuery()
+            ->where('structure.document_role', 'quality_manual');
+    }
+
+    private static function candidateWorkInstructionElementDocumentQuery()
+    {
+        return Db::name('qms_element_documents')->alias('link')
+            ->join('documents document', 'document.id=link.document_id')
+            ->join('qms_structured_documents structure', 'structure.document_id=document.id')
+            ->where('document.version', FinalCandidateManifestService::VERSION)
+            ->whereLike('document.doc_number', FinalCandidateManifestService::TRIAL_PREFIX . 'XZTC/ZY-%')
+            ->where('document.soft_delete', 0)
+            ->where('structure.document_role', 'work_instruction')
+            ->whereNotLike('document.doc_number', FinalCandidateManifestService::TRIAL_PREFIX . 'XZTC/ZY-1-01-%')
+            ->where('link.soft_delete', 0)
+            ->where('link.publish', 1)
+            ->count('DISTINCT document.id');
+    }
+
+    private static function candidateWorkInstructionBlockLinkedDocuments(): int
+    {
+        return (int)Db::name('qms_document_block_links')->alias('link')
+            ->join('qms_document_blocks block', 'block.id=link.block_id')
+            ->join('qms_structured_documents structure', 'structure.id=block.structured_document_id')
+            ->where('structure.version', FinalCandidateManifestService::VERSION)
+            ->whereLike('structure.doc_number', FinalCandidateManifestService::TRIAL_PREFIX . 'XZTC/ZY-%')
+            ->where('structure.document_role', 'work_instruction')
+            ->whereNotLike('structure.doc_number', FinalCandidateManifestService::TRIAL_PREFIX . 'XZTC/ZY-1-01-%')
+            ->where('structure.soft_delete', 0)
+            ->where('block.soft_delete', 0)
+            ->where('link.soft_delete', 0)
+            ->where('link.publish', 1)
+            ->count('DISTINCT structure.id');
     }
 
     private static function oldBlockLinkQuery()
@@ -568,6 +619,154 @@ final class FinalCandidateTraceSyncService
         ];
     }
 
+    private static function applySupplementalReviewLinks(): array
+    {
+        $companyId = (string)Config::get('qms.company_id');
+        $elements = self::activeElementsByKey();
+        $createdElementDocuments = 0;
+        $updatedElementDocuments = 0;
+        $createdBlockLinks = 0;
+        $updatedBlockLinks = 0;
+        $manual = self::candidateStructureByDocNumber(FinalCandidateManifestService::TRIAL_PREFIX . 'XZTC/SC-2026');
+        if (is_array($manual)) {
+            $blocks = self::blocksByTitle((string)$manual['id']);
+            $manualDocumentId = (string)$manual['document_id'];
+            foreach ($elements as $key => $element) {
+                $block = self::manualBlockForElement($key, $blocks);
+                if (!is_array($block)) {
+                    continue;
+                }
+                $elementResult = self::upsertElementDocument(
+                    $companyId,
+                    (string)$element['id'],
+                    $manualDocumentId,
+                    'reference',
+                    '8021补链复核：质量手册总览覆盖该要素；待质量负责人逐条复核后再调整为正式确认链路。'
+                );
+                $createdElementDocuments += $elementResult['created'];
+                $updatedElementDocuments += $elementResult['updated'];
+                $blockResult = self::upsertReviewBlockLink(
+                    $companyId,
+                    (string)$block['id'],
+                    (string)$element['id'],
+                    'basis',
+                    '8021补链复核：质量手册“' . (string)$block['title'] . '”与要素“' . (string)$element['name'] . '”建立待复核总览链路。'
+                );
+                $createdBlockLinks += $blockResult['created'];
+                $updatedBlockLinks += $blockResult['updated'];
+            }
+        }
+
+        $workInstructionDocs = self::candidateWorkInstructions();
+        foreach ($workInstructionDocs as $document) {
+            $elementKeys = self::workInstructionElementKeys((string)$document['doc_number'], (string)$document['title']);
+            if ($elementKeys === []) {
+                continue;
+            }
+            $blocks = self::blocksByTitle((string)$document['structured_document_id']);
+            $primaryBlock = $blocks['目的'] ?? $blocks['范围'] ?? $blocks['正文'] ?? null;
+            $secondaryBlock = $blocks['范围'] ?? $primaryBlock;
+            foreach (array_values(array_unique($elementKeys)) as $index => $key) {
+                $element = $elements[$key] ?? null;
+                if (!is_array($element)) {
+                    continue;
+                }
+                $elementResult = self::upsertElementDocument(
+                    $companyId,
+                    (string)$element['id'],
+                    (string)$document['document_id'],
+                    $index === 0 ? 'primary' : 'reference',
+                    '8021补链复核：按作业指导书题名和用途映射到要素“' . (string)$element['name'] . '”；待技术/质量负责人复核。'
+                );
+                $createdElementDocuments += $elementResult['created'];
+                $updatedElementDocuments += $elementResult['updated'];
+                $block = $index === 0 ? $primaryBlock : $secondaryBlock;
+                if (!is_array($block)) {
+                    continue;
+                }
+                $blockResult = self::upsertReviewBlockLink(
+                    $companyId,
+                    (string)$block['id'],
+                    (string)$element['id'],
+                    'implements',
+                    '8021补链复核：按作业指导书“' . (string)$document['title'] . '”题名/用途建立待复核要素链路；不自动挂接记录表单。'
+                );
+                $createdBlockLinks += $blockResult['created'];
+                $updatedBlockLinks += $blockResult['updated'];
+            }
+        }
+
+        return [
+            'element_documents_created' => $createdElementDocuments,
+            'element_documents_updated' => $updatedElementDocuments,
+            'block_links_created' => $createdBlockLinks,
+            'block_links_updated' => $updatedBlockLinks,
+            'manual_elements_review_required' => is_array($manual) ? count($elements) : 0,
+            'work_instruction_documents_review_required' => count($workInstructionDocs),
+            'notice' => '补链均为8021测试环境review_required/待人工复核，不自动挂接记录表单模板。',
+        ];
+    }
+
+    private static function upsertElementDocument(string $companyId, string $elementId, string $documentId, string $relationType, string $note): array
+    {
+        $now = date('Y-m-d H:i:s');
+        $existing = Db::name('qms_element_documents')
+            ->where('element_id', $elementId)
+            ->where('document_id', $documentId)
+            ->where('relation_type', $relationType)
+            ->find();
+        $payload = [
+            'company_id' => $companyId,
+            'element_id' => $elementId,
+            'document_id' => $documentId,
+            'relation_type' => $relationType,
+            'note' => self::appendNote((string)($existing['note'] ?? ''), $note),
+            'publish' => 1,
+            'soft_delete' => 0,
+            'modified' => $now,
+        ];
+        if (is_array($existing)) {
+            Db::name('qms_element_documents')->where('id', (string)$existing['id'])->update($payload);
+            return ['created' => 0, 'updated' => 1];
+        }
+        $payload['id'] = qms_uuid();
+        $payload['created'] = $now;
+        Db::name('qms_element_documents')->insert($payload);
+        return ['created' => 1, 'updated' => 0];
+    }
+
+    private static function upsertReviewBlockLink(string $companyId, string $blockId, string $elementId, string $relationType, string $note): array
+    {
+        $now = date('Y-m-d H:i:s');
+        $payload = [
+            'company_id' => $companyId,
+            'block_id' => $blockId,
+            'element_id' => $elementId,
+            'clause_id' => null,
+            'manual_section_id' => null,
+            'procedure_document_id' => null,
+            'record_form_template_id' => null,
+            'position_id' => null,
+            'business_module_id' => null,
+            'relation_type' => $relationType,
+            'confidence' => 'review_required',
+            'note' => $note,
+            'publish' => 1,
+            'soft_delete' => 0,
+            'modified' => $now,
+        ];
+        $existing = self::findExistingBlockLink($payload);
+        if (is_array($existing)) {
+            $payload['note'] = self::appendNote((string)($existing['note'] ?? ''), $note);
+            Db::name('qms_document_block_links')->where('id', (string)$existing['id'])->update($payload);
+            return ['created' => 0, 'updated' => 1];
+        }
+        $payload['id'] = qms_uuid();
+        $payload['created'] = $now;
+        Db::name('qms_document_block_links')->insert($payload);
+        return ['created' => 1, 'updated' => 0];
+    }
+
     private static function hideNonCandidateFormalRows(): array
     {
         $now = date('Y-m-d H:i:s');
@@ -639,6 +838,136 @@ final class FinalCandidateTraceSyncService
             'soft_delete' => 1,
             'modified' => $now,
         ]);
+    }
+
+    private static function activeElementsByKey(): array
+    {
+        $rows = Db::name('qms_elements')
+            ->where('publish', 1)
+            ->where('soft_delete', 0)
+            ->order('sort_order')
+            ->select()
+            ->toArray();
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(string)$row['key']] = $row;
+        }
+        return $result;
+    }
+
+    private static function candidateStructureByDocNumber(string $docNumber): ?array
+    {
+        $row = Db::name('qms_structured_documents')
+            ->where('version', FinalCandidateManifestService::VERSION)
+            ->where('doc_number', $docNumber)
+            ->where('soft_delete', 0)
+            ->find();
+        return is_array($row) ? $row : null;
+    }
+
+    private static function blocksByTitle(string $structuredDocumentId): array
+    {
+        $rows = Db::name('qms_document_blocks')
+            ->where('structured_document_id', $structuredDocumentId)
+            ->where('soft_delete', 0)
+            ->whereLike('stable_key', 'gov03_%')
+            ->order('sort_order')
+            ->select()
+            ->toArray();
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(string)$row['title']] = $row;
+        }
+        return $result;
+    }
+
+    private static function manualBlockForElement(string $elementKey, array $blocks): ?array
+    {
+        if (in_array($elementKey, ['impartiality', 'confidentiality'], true)) {
+            return $blocks['目的'] ?? $blocks['正文'] ?? null;
+        }
+        if (in_array($elementKey, [
+            'structure',
+            'personnel',
+            'internal_audit',
+            'management_review',
+            'management_system_documents',
+            'document_control',
+            'management_system_options',
+        ], true)) {
+            return $blocks['附录'] ?? $blocks['正文'] ?? null;
+        }
+        return $blocks['范围'] ?? $blocks['正文'] ?? null;
+    }
+
+    private static function candidateWorkInstructions(): array
+    {
+        return Db::name('qms_structured_documents')->alias('structure')
+            ->join('documents document', 'document.id=structure.document_id')
+            ->field('structure.id AS structured_document_id,structure.doc_number,structure.title,structure.document_id,document.id')
+            ->where('structure.version', FinalCandidateManifestService::VERSION)
+            ->whereLike('structure.doc_number', FinalCandidateManifestService::TRIAL_PREFIX . 'XZTC/ZY-%')
+            ->where('structure.document_role', 'work_instruction')
+            ->whereNotLike('structure.doc_number', FinalCandidateManifestService::TRIAL_PREFIX . 'XZTC/ZY-1-01-%')
+            ->where('structure.soft_delete', 0)
+            ->where('document.soft_delete', 0)
+            ->order('structure.doc_number')
+            ->select()
+            ->toArray();
+    }
+
+    private static function workInstructionElementKeys(string $docNumber, string $title): array
+    {
+        $core = self::docCore($docNumber);
+        $map = [
+            'XZTC/ZY-1-02' => ['data_information', 'technical_records'],
+            'XZTC/ZY-1-03' => ['technical_records', 'results_reporting'],
+            'XZTC/ZY-1-04' => ['data_information', 'technical_records', 'results_reporting'],
+            'XZTC/ZY-1-05' => ['results_reporting', 'document_control'],
+            'XZTC/ZY-1-06' => ['results_reporting', 'document_control'],
+            'XZTC/ZY-2-01' => ['equipment', 'metrological_traceability'],
+            'XZTC/ZY-2-02' => ['methods', 'equipment'],
+            'XZTC/ZY-2-03' => ['methods', 'equipment'],
+            'XZTC/ZY-2-04' => ['methods', 'equipment'],
+            'XZTC/ZY-2-05' => ['methods', 'equipment'],
+            'XZTC/ZY-2-06' => ['methods', 'equipment'],
+            'XZTC/ZY-2-07' => ['methods', 'equipment'],
+            'XZTC/ZY-2-08' => ['methods', 'equipment'],
+            'XZTC/ZY-2-09' => ['equipment', 'metrological_traceability'],
+            'XZTC/ZY-2-10' => ['facilities_environment', 'equipment'],
+            'XZTC/ZY-2-11' => ['methods', 'equipment'],
+            'XZTC/ZY-2-12' => ['methods', 'equipment'],
+            'XZTC/ZY-2-13' => ['methods', 'equipment'],
+            'XZTC/ZY-2-14' => ['methods', 'equipment', 'metrological_traceability'],
+            'XZTC/ZY-2-15' => ['methods', 'equipment', 'measurement_uncertainty'],
+            'XZTC/ZY-2-16' => ['methods', 'equipment'],
+            'XZTC/ZY-2-17' => ['methods', 'equipment'],
+            'XZTC/ZY-2-18' => ['methods', 'equipment'],
+            'XZTC/ZY-3-01' => ['equipment', 'validity_of_results', 'metrological_traceability'],
+            'XZTC/ZY-3-02' => ['equipment', 'validity_of_results', 'metrological_traceability'],
+            'XZTC/ZY-4-01' => ['methods', 'item_handling', 'technical_records'],
+            'XZTC/ZY-4-02' => ['methods', 'item_handling'],
+            'XZTC/ZY-4-03' => ['methods', 'item_handling'],
+        ];
+        if (isset($map[$core])) {
+            return $map[$core];
+        }
+        if (str_contains($title, '期间核查')) {
+            return ['equipment', 'validity_of_results', 'metrological_traceability'];
+        }
+        if (str_contains($title, '证书')) {
+            return ['results_reporting', 'document_control'];
+        }
+        if (str_contains($title, '数据') || str_contains($title, '图片')) {
+            return ['data_information', 'technical_records'];
+        }
+        if (str_contains($title, '检测')) {
+            return ['methods', 'item_handling'];
+        }
+        if (str_contains($title, '仪') || str_contains($title, '镜') || str_contains($title, '灯') || str_contains($title, '天平')) {
+            return ['methods', 'equipment'];
+        }
+        return [];
     }
 
     private static function candidateDocumentsByCore(): array
@@ -850,6 +1179,7 @@ final class FinalCandidateTraceSyncService
     {
         $counts = (array)($result['validation']['counts'] ?? []);
         $migration = (array)($result['migration'] ?? []);
+        $supplement = (array)($migration['supplemental_review_links'] ?? []);
         return "# 8021链路同步验收说明 v0.1\n\n"
             . "- 范围：仅8021测试环境测试正式视图。\n"
             . "- 边界：纸质体系仍是唯一正式体系；不触碰8010、不迁移真实记录、不自动挂接记录表单模板。\n"
@@ -863,7 +1193,16 @@ final class FinalCandidateTraceSyncService
             . "，更新 " . (string)($migration['element_documents']['updated'] ?? 0) . "。\n"
             . "- 章节链路：新增 " . (string)($migration['block_links']['created'] ?? 0)
             . "，更新 " . (string)($migration['block_links']['updated'] ?? 0) . "。\n"
-            . "- `requires_record` 且带真实表单模板ID的链路未自动迁移，保留为人工复核事项。\n";
+            . "- `requires_record` 且带真实表单模板ID的链路未自动迁移，保留为人工复核事项。\n\n"
+            . "## 补链复核\n\n"
+            . "- 补充制度—要素对应：新增 " . (string)($supplement['element_documents_created'] ?? 0)
+            . "，更新 " . (string)($supplement['element_documents_updated'] ?? 0) . "。\n"
+            . "- 补充待复核章节链路：新增 " . (string)($supplement['block_links_created'] ?? 0)
+            . "，更新 " . (string)($supplement['block_links_updated'] ?? 0) . "。\n"
+            . "- 质量手册待复核覆盖要素：" . (string)($counts['candidate_manual_block_links'] ?? 0) . " 个。\n"
+            . "- 非废止作业指导书要素对应：" . (string)($counts['candidate_work_instruction_element_documents'] ?? 0) . " 份。\n"
+            . "- 非废止作业指导书待复核章节链路：" . (string)($counts['candidate_work_instruction_block_linked_documents'] ?? 0) . " 份。\n"
+            . "- 补链状态：均为 `review_required` 或备注待人工复核，不代表正式批准。\n";
     }
 
     private static function writeJson(string $path, array $data): void

@@ -28,6 +28,9 @@ final_candidate_trace_assert(($verification['ok'] ?? false) === true, '8021链�
 final_candidate_trace_assert(($verification['counts']['candidate_blocks'] ?? 0) === 315, '0.3制度解析块必须保持315个');
 final_candidate_trace_assert(($verification['counts']['candidate_element_documents'] ?? 0) >= 25, '0.3制度必须形成要素-制度对应关系');
 final_candidate_trace_assert(($verification['counts']['candidate_block_links'] ?? 0) > 0, '0.3制度必须形成要素-章节链路');
+final_candidate_trace_assert(($verification['counts']['candidate_manual_block_links'] ?? 0) >= 29, '质量手册必须补齐到29个要素的待复核章节链路');
+final_candidate_trace_assert(($verification['counts']['candidate_work_instruction_element_documents'] ?? 0) >= 28, '28份非废止作业指导书必须形成要素对应');
+final_candidate_trace_assert(($verification['counts']['candidate_work_instruction_block_linked_documents'] ?? 0) >= 28, '28份非废止作业指导书必须形成待复核章节链路');
 final_candidate_trace_assert(($verification['counts']['candidate_template_block_links'] ?? -1) === 0, '本轮不得自动挂接记录表单模板');
 final_candidate_trace_assert(($verification['counts']['old_active_block_links'] ?? -1) === 0, '旧版本章节链路必须从现行测试视图隐藏');
 final_candidate_trace_assert(($verification['counts']['old_active_element_documents'] ?? -1) === 0, '旧版本制度-要素链路必须从现行测试视图隐藏');
