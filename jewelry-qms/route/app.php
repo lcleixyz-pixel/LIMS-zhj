@@ -100,6 +100,13 @@ Route::group(function () {
     Route::get('record_form_instance/downloadPreviewPdf', 'RecordFormInstance/downloadPreviewPdf');
     Route::get('record_form_instance/reviewArtifact', 'RecordFormInstance/reviewArtifact');
 
+    Route::get('quality-workbench', 'QualityWorkbench/index');
+    Route::get('quality-workbench/projects', 'QualityWorkbench/projects');
+    Route::get('quality-workbench/projects/view', 'QualityWorkbench/view');
+    Route::post('quality-workbench/tasks/transition', 'QualityWorkbench/transitionTask');
+    Route::post('quality-workbench/projects/accept', 'QualityWorkbench/acceptProject');
+    Route::post('quality-workbench/refresh', 'QualityWorkbench/refresh');
+
     Route::rule('planning/index', 'PlanningDashboard/index');
     Route::post('planning/suggestions/review', 'PlanningDashboard/reviewSuggestion');
     Route::post('planning/suggestions/batchDecide', 'PlanningDashboard/batchDecide');

@@ -1,0 +1,41 @@
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h3 class="mb-1">评审项目</h3>
+        <div class="text-muted">按项目管理文件链路、记录表单、职责、设备、人员、内审、管评和风险。</div>
+    </div>
+    <a href="/quality-workbench" class="btn btn-outline-secondary">返回工作台</a>
+</div>
+
+{if !empty($data.needs_setup)}
+<div class="alert alert-info">工作台表尚未初始化，请先运行 <code>php think qms:refresh-quality-workbench --apply --ack-quality-workbench</code>。</div>
+{else/}
+<div class="mb-3">
+    <a class="btn btn-sm {if $data.selected_status==''}btn-primary{else/}btn-outline-primary{/if}" href="/quality-workbench/projects">全部</a>
+    {foreach $data.labels.project_status as $statusKey=>$statusLabel}
+    <a class="btn btn-sm {if $data.selected_status==$statusKey}btn-primary{else/}btn-outline-primary{/if}" href="/quality-workbench/projects?status={$statusKey}">{$statusLabel}</a>
+    {/foreach}
+</div>
+
+<div class="row">
+    {foreach $data.projects as $project}
+    <div class="col-lg-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <h5>{$project.title}</h5>
+                    <span class="badge bg-secondary">{$project.status_label}</span>
+                </div>
+                <div class="text-muted small mb-2">{$project.scope_label}</div>
+                <p>{$project.conclusion}</p>
+                <div class="small text-muted mb-2">
+                    任务：{$project.task_counts.total|default=0}；
+                    阻断：{$project.task_counts.blocker|default=0}；
+                    待复核：{$project.task_counts.review_required|default=0}
+                </div>
+                <a class="btn btn-sm btn-primary" href="/quality-workbench/projects/view?id={$project.id}">进入评审</a>
+            </div>
+        </div>
+    </div>
+    {/foreach}
+</div>
+{/if}

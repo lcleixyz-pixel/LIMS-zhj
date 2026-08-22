@@ -40,7 +40,7 @@ return [
     'permissions' => [
         'admin' => ['*'],
         'quality_manager' => [
-            'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'approval', 'doc_category', 'doc_template',
+            'dashboard', 'qualityworkbench', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'approval', 'doc_category', 'doc_template',
             'compliance', 'ai_assistant', 'ai_chat',
             'planningdashboard', 'planningelement', 'planningsource', 'planningclause', 'planningstructure', 'planningtraceability', 'planningregulatorycandidate', 'planningchangeevent', 'planningobjective', 'planningresponsibility',
             'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
@@ -51,11 +51,11 @@ return [
             'department', 'employee', 'site', 'equipment_transfer', 'user',
         ],
         'auditor' => [
-            'dashboard', 'calendar', 'compliance', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
+            'dashboard', 'qualityworkbench', 'calendar', 'compliance', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'audit_plan', 'audit_schedule', 'audit_finding', 'audit_checklist',
             'capa', 'nonconformity', 'complaint', 'external_evidence_reference', 'notification',
         ],
         'department_head' => [
-            'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'capa', 'nonconformity', 'complaint', 'external_evidence_reference',
+            'dashboard', 'qualityworkbench', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'capa', 'nonconformity', 'complaint', 'external_evidence_reference',
             'equipment', 'equipment_maintenance', 'equipment_authorization', 'equipment_period_check', 'calibration', 'reference_material',
             'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate', 'notification',
         ],

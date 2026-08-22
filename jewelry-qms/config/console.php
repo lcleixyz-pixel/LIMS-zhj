@@ -12,6 +12,7 @@ use app\command\QmsGovernedTrialAssemble;
 use app\command\QmsGovernedTrialResolve;
 use app\command\QmsFinalCandidateAssemble;
 use app\command\QmsFinalCandidateTraceSync;
+use app\command\QmsQualityWorkbenchRefresh;
 use app\command\QmsManualProcedureAlignmentCheck;
 use app\command\QmsPreimportPackage;
 use app\command\RecordFormRebuildSchema;
@@ -31,6 +32,7 @@ return [
         QmsGovernedTrialResolve::class,
         QmsFinalCandidateAssemble::class,
         QmsFinalCandidateTraceSync::class,
+        QmsQualityWorkbenchRefresh::class,
         QmsManualProcedureAlignmentCheck::class,
         QmsPreimportPackage::class,
         RecordFormRebuildSchema::class,

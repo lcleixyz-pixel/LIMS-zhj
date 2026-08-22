@@ -1,0 +1,165 @@
+{assign name="project" value="$data.project" /}
+{assign name="labels" value="$data.labels" /}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h3 class="mb-1">{$project.title}</h3>
+        <div class="text-muted">{$project.scope_label}</div>
+    </div>
+    <div>
+        <a href="/quality-workbench/projects" class="btn btn-outline-secondary">返回项目列表</a>
+    </div>
+</div>
+
+<div class="alert alert-warning">
+    <div class="fw-semibold">范围边界</div>
+    <div>{$data.formal_system_notice}</div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card h-100 border-primary">
+            <div class="card-body">
+                <div class="text-muted">这页在评什么？</div>
+                <h5>{$data.page_answers.what}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-success">
+            <div class="card-body">
+                <div class="text-muted">当前结论是什么？</div>
+                <h5>{$data.page_answers.conclusion}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-warning">
+            <div class="card-body">
+                <div class="text-muted">下一步谁处理什么？</div>
+                <h5>{$data.page_answers.next}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <span class="badge bg-secondary">{$project.status_label}</span>
+                <span class="ms-2">项目结论：{$project.conclusion}</span>
+            </div>
+            <span class="text-muted">{$data.task_counts.done|default=0}/{$data.task_counts.total|default=0} 已完成</span>
+        </div>
+        <div class="progress" style="height: 12px;">
+            <div class="progress-bar" style="width: {$data.task_counts.percent_done|default=0}%"></div>
+        </div>
+        <div class="small text-muted mt-2">
+            阻断 {$data.task_counts.blocker|default=0}；待人工复核 {$data.task_counts.review_required|default=0}；未关闭 {$data.task_counts.open|default=0}
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header bg-white fw-semibold">任务清单</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+            <tr><th>任务</th><th>严重性</th><th>状态</th><th>负责人</th><th>证据/说明</th><th>处理</th></tr>
+            </thead>
+            <tbody>
+            {foreach $data.tasks as $task}
+            <tr>
+                <td>{$task.title}</td>
+                <td>{$task.severity_label}</td>
+                <td>{$task.status_label}</td>
+                <td>{$task.assigned_role|default='quality_manager'}</td>
+                <td class="text-muted">{$task.evidence_summary|default=''}</td>
+                <td style="min-width: 260px;">
+                    {if $task.action_url}
+                    <a class="btn btn-sm btn-outline-secondary mb-1" href="{$task.action_url}">去处理</a>
+                    {/if}
+                    {if condition="qms_can_action('qualityworkbench', 'transitiontask')"}
+                    <form method="post" action="/quality-workbench/tasks/transition" class="d-inline-block">
+                        {:token()}
+                        <input type="hidden" name="task_id" value="{$task.id}">
+                        <input type="hidden" name="redirect_to" value="/quality-workbench/projects/view?id={$project.id}">
+                        <select name="action" class="form-select form-select-sm d-inline-block" style="width: 92px;">
+                            <option value="start">处理中</option>
+                            <option value="done">完成</option>
+                            <option value="waive">保留</option>
+                            <option value="block">阻断</option>
+                            <option value="reopen">重开</option>
+                        </select>
+                        <input name="note" class="form-control form-control-sm d-inline-block" style="width: 110px;" placeholder="说明">
+                        <button class="btn btn-sm btn-primary" type="submit">记录</button>
+                    </form>
+                    {/if}
+                </td>
+            </tr>
+            {/foreach}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold">证据区</div>
+            <div class="card-body">
+                {if !empty($project.summary.counts)}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        {foreach $project.summary.counts as $key=>$value}
+                        <tr><th>{$key}</th><td>{$value}</td></tr>
+                        {/foreach}
+                    </table>
+                </div>
+                {else/}
+                <pre class="small bg-light p-2 rounded">{$project.summary_text}</pre>
+                {/if}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold">验收区</div>
+            <div class="card-body">
+                <p class="text-muted">项目验收只表示“本系统内该评审项目处理到某状态”；不会锁死原业务模块，也不是纸质体系正式发布。</p>
+                {if condition="qms_can_action('qualityworkbench', 'acceptproject')"}
+                <form method="post" action="/quality-workbench/projects/accept">
+                    {:token()}
+                    <input type="hidden" name="project_id" value="{$project.id}">
+                    <textarea class="form-control mb-2" name="note" rows="3" placeholder="验收说明；保留/阻断/退回必须填写"></textarea>
+                    <button class="btn btn-success" name="decision" value="accept" type="submit">验收通过</button>
+                    <button class="btn btn-outline-warning" name="decision" value="retain" type="submit">保留待复核</button>
+                    <button class="btn btn-outline-danger" name="decision" value="block" type="submit">标记阻断</button>
+                    <button class="btn btn-outline-secondary" name="decision" value="return" type="submit">退回补充</button>
+                </form>
+                {else/}
+                <div class="alert alert-secondary">当前用户没有项目验收权限。</div>
+                {/if}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header bg-white fw-semibold">事件历史</div>
+    <div class="list-group list-group-flush">
+        {if !empty($data.events)}
+        {foreach $data.events as $event}
+        <div class="list-group-item">
+            <span class="text-muted">{$event.created}</span>
+            <span class="badge bg-light text-dark ms-2">{$event.event_type}</span>
+            <span class="ms-2">{$event.old_status_label} → {$event.new_status_label}</span>
+            <div class="small text-muted">{$event.note|default=''}</div>
+        </div>
+        {/foreach}
+        {else/}
+        <div class="list-group-item text-muted">暂无事件。</div>
+        {/if}
+    </div>
+</div>

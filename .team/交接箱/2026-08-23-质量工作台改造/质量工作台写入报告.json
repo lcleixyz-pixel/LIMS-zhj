@@ -1,0 +1,365 @@
+{
+    "mode": "apply",
+    "summary": {
+        "created_projects": 0,
+        "updated_projects": 8,
+        "created_tasks": 0,
+        "updated_tasks": 12,
+        "soft_deleted_tasks": 0,
+        "events": 0
+    },
+    "projects": [
+        {
+            "project_code": "system-document-trace",
+            "title": "文件链路评审",
+            "project_type": "document_trace",
+            "scope_label": "65 份 GOV-TRIAL/0.3 制度文件、29 个质量要素、制度—要素链路与章节链路",
+            "status": "ready_for_acceptance",
+            "conclusion": "文件链路基本满足：65份制度、29个要素、制度—要素链路和章节链路已形成；语义贴合仍保留人工复核。",
+            "owner_role": "quality_manager",
+            "owner_user_id": "",
+            "due_date": null,
+            "summary": {
+                "counts": {
+                    "candidate_documents": 65,
+                    "candidate_published_documents": 65,
+                    "candidate_structures": 65,
+                    "candidate_published_structures": 65,
+                    "candidate_blocks": 315,
+                    "active_non_candidate_documents": 0,
+                    "active_non_candidate_structures": 0,
+                    "active_elements": 29,
+                    "element_clause_links": 153,
+                    "candidate_element_documents": 119,
+                    "old_active_element_documents": 0,
+                    "candidate_block_links": 254,
+                    "candidate_manual_block_links": 29,
+                    "candidate_work_instruction_element_documents": 28,
+                    "candidate_work_instruction_block_linked_documents": 28,
+                    "candidate_template_block_links": 0,
+                    "old_active_block_links": 0,
+                    "record_form_templates": 106,
+                    "trial_ready_templates": 104,
+                    "record_instances": 13
+                },
+                "verification_errors": []
+            },
+            "tasks": [
+                {
+                    "task_type": "trace_review_required",
+                    "title": "人工复核手册、程序、作业指导书链路语义是否贴合",
+                    "severity": "warning",
+                    "status": "review_required",
+                    "source_model": "QmsDocumentBlockLink",
+                    "source_id": "semantic_review",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/planning/traceability",
+                    "evidence_summary": "系统已形成章节链路，但“满足链路”仍需要质量负责人确认语义是否够用。",
+                    "payload": []
+                },
+                {
+                    "task_type": "trace_record_boundary",
+                    "title": "记录表单不在本轮文件链路中自动闭合",
+                    "severity": "info",
+                    "status": "review_required",
+                    "source_model": "RecordFormTemplate",
+                    "source_id": "boundary",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/record_form_template/review",
+                    "evidence_summary": "本轮不自动把记录表单伪造成运行证据；记录表单由单独评审项目处理。",
+                    "payload": []
+                }
+            ]
+        },
+        {
+            "project_code": "system-record-forms",
+            "title": "记录表单评审",
+            "project_type": "record_forms",
+            "scope_label": "记录表单模板状态、字段结构、来源追溯和待复核状态",
+            "status": "ready_for_acceptance",
+            "conclusion": "记录表单已纳入工作台；运行记录闭合不在本轮自动判定。",
+            "owner_role": "quality_manager",
+            "owner_user_id": "",
+            "due_date": null,
+            "summary": {
+                "table_ready": true,
+                "templates": 106,
+                "trial_ready": 104,
+                "published": 0,
+                "review_required": 1,
+                "empty_schema": 0
+            },
+            "tasks": [
+                {
+                    "task_type": "record_review_required",
+                    "title": "处理待复核记录表单模板",
+                    "severity": "warning",
+                    "status": "review_required",
+                    "source_model": "RecordFormTemplate",
+                    "source_id": "review_required",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/record_form_template/review",
+                    "evidence_summary": "待复核模板数量：1",
+                    "payload": []
+                },
+                {
+                    "task_type": "record_runtime_boundary",
+                    "title": "确认记录表单仅纳入模板评审，不伪造运行记录闭环",
+                    "severity": "info",
+                    "status": "review_required",
+                    "source_model": "RecordFormInstance",
+                    "source_id": "boundary",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/record_form_instance/index",
+                    "evidence_summary": "本工作台只显示模板和缺口，不自动生成真实运行证据。",
+                    "payload": []
+                }
+            ]
+        },
+        {
+            "project_code": "system-responsibility",
+            "title": "岗位职责评审",
+            "project_type": "responsibility",
+            "scope_label": "职责链版本、关键岗位和人员任命状态",
+            "status": "blocked",
+            "conclusion": "岗位职责链已纳入工作台；关键岗位仍需人工确认任命与名称不漂移。",
+            "owner_role": "quality_manager",
+            "owner_user_id": "",
+            "due_date": null,
+            "summary": {
+                "versions": 0,
+                "published_or_effective": 0
+            },
+            "tasks": [
+                {
+                    "task_type": "responsibility_no_effective_version",
+                    "title": "确认职责链有效版本",
+                    "severity": "blocker",
+                    "status": "open",
+                    "source_model": "QmsResponsibilityChainVersion",
+                    "source_id": "effective",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/planning/responsibilities",
+                    "evidence_summary": "未读取到 published/effective/active 状态的职责链版本。",
+                    "payload": []
+                },
+                {
+                    "task_type": "responsibility_key_role_review",
+                    "title": "复核关键岗位责任：质量负责人",
+                    "severity": "warning",
+                    "status": "review_required",
+                    "source_model": "QmsResponsibilityAssignment",
+                    "source_id": "质量负责人",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/planning/responsibilities",
+                    "evidence_summary": "关键岗位责任需要人工确认岗位名、任命与职责链一致。",
+                    "payload": []
+                },
+                {
+                    "task_type": "responsibility_key_role_review",
+                    "title": "复核关键岗位责任：技术负责人",
+                    "severity": "warning",
+                    "status": "review_required",
+                    "source_model": "QmsResponsibilityAssignment",
+                    "source_id": "技术负责人",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/planning/responsibilities",
+                    "evidence_summary": "关键岗位责任需要人工确认岗位名、任命与职责链一致。",
+                    "payload": []
+                },
+                {
+                    "task_type": "responsibility_key_role_review",
+                    "title": "复核关键岗位责任：授权签字人",
+                    "severity": "warning",
+                    "status": "review_required",
+                    "source_model": "QmsResponsibilityAssignment",
+                    "source_id": "授权签字人",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/planning/responsibilities",
+                    "evidence_summary": "关键岗位责任需要人工确认岗位名、任命与职责链一致。",
+                    "payload": []
+                }
+            ]
+        },
+        {
+            "project_code": "system-equipment",
+            "title": "设备与计量评审",
+            "project_type": "equipment",
+            "scope_label": "设备台账、校准、期间核查、标准物质和能力路径缺口",
+            "status": "ready_for_acceptance",
+            "conclusion": "设备与计量风险已汇总；关键设备能力路径仍需质量负责人复核。",
+            "owner_role": "quality_manager",
+            "owner_user_id": "",
+            "due_date": null,
+            "summary": {
+                "equipment_table_ready": true,
+                "equipment_count": 0,
+                "calibration_overdue": 0,
+                "calibration_due_30d": 0
+            },
+            "tasks": [
+                {
+                    "task_type": "equipment_capability_path",
+                    "title": "复核关键设备能力路径是否可见",
+                    "severity": "warning",
+                    "status": "review_required",
+                    "source_model": "EquipmentAuthorization",
+                    "source_id": "capability_path",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/equipment_authorization/index",
+                    "evidence_summary": "校准状态可读不等于能力路径已完全闭合，需要人工复核关键设备。",
+                    "payload": []
+                }
+            ]
+        },
+        {
+            "project_code": "system-personnel",
+            "title": "人员能力评审",
+            "project_type": "personnel",
+            "scope_label": "培训、能力确认、证书与关键岗位授权状态",
+            "status": "ready_for_acceptance",
+            "conclusion": "人员能力状态已汇总；授权岗位仍需人工复核证据充分性。",
+            "owner_role": "quality_manager",
+            "owner_user_id": "",
+            "due_date": null,
+            "summary": {
+                "training_records_ready": true,
+                "competency_records_ready": true,
+                "employee_certificates_ready": true,
+                "competency_expired": 0,
+                "certificate_expired": 0
+            },
+            "tasks": [
+                {
+                    "task_type": "personnel_authorization_review",
+                    "title": "复核授权岗位能力证据",
+                    "severity": "warning",
+                    "status": "review_required",
+                    "source_model": "CompetencyRecord",
+                    "source_id": "key_roles",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/competency_record/index",
+                    "evidence_summary": "授权签字人、监督员、关键检测岗位的能力证据需要人工确认。",
+                    "payload": []
+                }
+            ]
+        },
+        {
+            "project_code": "system-audit",
+            "title": "内审评审",
+            "project_type": "audit",
+            "scope_label": "内审计划、日程、检查表、发现项和整改闭环",
+            "status": "ready_for_acceptance",
+            "conclusion": "内审计划与发现项进入工作台；整改闭环按发现项状态跟踪。",
+            "owner_role": "quality_manager",
+            "owner_user_id": "",
+            "due_date": null,
+            "summary": {
+                "open_findings": 0,
+                "overdue_findings": 0
+            },
+            "tasks": []
+        },
+        {
+            "project_code": "system-management-review",
+            "title": "管理评审",
+            "project_type": "management_review",
+            "scope_label": "管理评审输入、输出、措施和验证状态",
+            "status": "ready_for_acceptance",
+            "conclusion": "管理评审输入、输出与措施进入工作台；输入完整性保留人工复核。",
+            "owner_role": "quality_manager",
+            "owner_user_id": "",
+            "due_date": null,
+            "summary": {
+                "planned_reviews": 0,
+                "open_actions": 0,
+                "overdue_actions": 0
+            },
+            "tasks": [
+                {
+                    "task_type": "management_input_review",
+                    "title": "复核管理评审输入是否完整",
+                    "severity": "warning",
+                    "status": "review_required",
+                    "source_model": "ManagementReview",
+                    "source_id": "input_review",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/management_review/index",
+                    "evidence_summary": "输入完整性需要人工判断，系统只显示状态和措施。",
+                    "payload": []
+                }
+            ]
+        },
+        {
+            "project_code": "system-improvement-risk",
+            "title": "改进与风险",
+            "project_type": "capa",
+            "scope_label": "CAPA、不符合、投诉和外部变化事件",
+            "status": "ready_for_acceptance",
+            "conclusion": "改进与风险事项已汇总；验证充分性保留人工复核。",
+            "owner_role": "quality_manager",
+            "owner_user_id": "",
+            "due_date": null,
+            "summary": {
+                "capas_ready": true,
+                "capas_open": 0,
+                "capas_overdue": 0,
+                "nonconformities_ready": true,
+                "nonconformities_open": 0,
+                "nonconformities_overdue": 0,
+                "customer_complaints_ready": true,
+                "customer_complaints_open": 0,
+                "customer_complaints_overdue": 0,
+                "qms_external_change_events_ready": true,
+                "qms_external_change_events_open": 0,
+                "qms_external_change_events_overdue": 0
+            },
+            "tasks": [
+                {
+                    "task_type": "risk_verification_review",
+                    "title": "复核风险与改进措施验证结论",
+                    "severity": "warning",
+                    "status": "review_required",
+                    "source_model": "QualityRisk",
+                    "source_id": "verification",
+                    "assigned_role": "quality_manager",
+                    "assigned_user_id": "",
+                    "due_date": null,
+                    "action_url": "/capa/index",
+                    "evidence_summary": "来源、责任人和措施可见后，验证结论仍需人工确认。",
+                    "payload": []
+                }
+            ]
+        }
+    ],
+    "validation": {
+        "ok": true,
+        "errors": [],
+        "project_count": 8,
+        "task_count": 12,
+        "duplicate_task_keys": 0
+    },
+    "formal_system_notice": "仅限 8021 测试环境内评审项目工作台；纸质体系仍是唯一正式体系，不构成 8010 发布、受控签署或真实运行记录迁移。"
+}

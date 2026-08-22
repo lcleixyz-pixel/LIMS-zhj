@@ -1,0 +1,175 @@
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h3 class="mb-1">质量工作台</h3>
+        <div class="text-muted">把质量工作从“看模块”变成“看项目、任务、证据和验收”。</div>
+    </div>
+    <div class="text-end">
+        <a href="/quality-workbench/projects" class="btn btn-outline-primary">查看全部评审项目</a>
+        {if condition="qms_can_action('qualityworkbench', 'refresh')"}
+        <form method="post" action="/quality-workbench/refresh" class="d-inline">
+            {:token()}
+            <button class="btn btn-primary" type="submit">刷新工作台</button>
+        </form>
+        {/if}
+    </div>
+</div>
+
+<div class="alert alert-warning">
+    <div class="fw-semibold">边界提醒</div>
+    <div>{$summary.formal_system_notice|default=''}</div>
+</div>
+
+{if !empty($summary.needs_setup)}
+<div class="alert alert-info">
+    <div class="fw-semibold">工作台底座尚未写入数据库</div>
+    <div>请在 8021 测试环境运行：<code>php think qms:refresh-quality-workbench --apply --ack-quality-workbench</code>。当前页面先显示干跑预览。</div>
+</div>
+{assign name="previewProjects" value="$summary.preview.projects|default=[]" /}
+<div class="row">
+    {foreach $previewProjects as $project}
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5>{$project.title}</h5>
+                <p class="text-muted mb-2">{$project.scope_label}</p>
+                <div>{$project.conclusion}</div>
+            </div>
+        </div>
+    </div>
+    {/foreach}
+</div>
+{else/}
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card border-primary h-100">
+            <div class="card-body">
+                <div class="text-muted">这页在评什么？</div>
+                <h5 class="mt-1">全部质量工作是否有项目、有任务、有证据、可验收</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success h-100">
+            <div class="card-body">
+                <div class="text-muted">当前结论是什么？</div>
+                <h5 class="mt-1">
+                    {if !empty($summary.blockers)}
+                    仍有阻断项，先处理 blocker
+                    {elseif !empty($summary.ready_projects)}
+                    有项目可验收
+                    {else/}
+                    项目运行中
+                    {/if}
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-warning h-100">
+            <div class="card-body">
+                <div class="text-muted">下一步谁处理什么？</div>
+                <h5 class="mt-1">{$summary.next_action|default='暂无动作'}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold">今日待办</div>
+            <div class="list-group list-group-flush">
+                {if !empty($summary.today_todos)}
+                {foreach $summary.today_todos as $task}
+                <a class="list-group-item list-group-item-action" href="{$task.action_url|default='/quality-workbench'}">
+                    <span class="badge bg-secondary me-2">{$task.severity_label}</span>
+                    {$task.title}
+                    <div class="small text-muted">{$task.evidence_summary|default=''}</div>
+                </a>
+                {/foreach}
+                {else/}
+                <div class="list-group-item text-muted">今天没有分配给你的工作台任务。</div>
+                {/if}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold">阻断事项</div>
+            <div class="list-group list-group-flush">
+                {if !empty($summary.blockers)}
+                {foreach $summary.blockers as $task}
+                <a class="list-group-item list-group-item-action list-group-item-danger" href="{$task.action_url|default='/quality-workbench'}">
+                    <span class="badge bg-danger me-2">阻断项</span>{$task.title}
+                    <div class="small">{$task.evidence_summary|default=''}</div>
+                </a>
+                {/foreach}
+                {else/}
+                <div class="list-group-item text-muted">暂无阻断项。</div>
+                {/if}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">评审项目</span>
+                <a href="/quality-workbench/projects" class="small">全部项目</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>项目</th><th>状态</th><th>结论</th><th></th></tr></thead>
+                    <tbody>
+                    {foreach $summary.projects as $project}
+                    <tr>
+                        <td>{$project.title}</td>
+                        <td>{$project.status_label}</td>
+                        <td class="text-muted">{$project.conclusion}</td>
+                        <td><a class="btn btn-sm btn-outline-primary" href="/quality-workbench/projects/view?id={$project.id}">查看</a></td>
+                    </tr>
+                    {/foreach}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header bg-white fw-semibold">质量风险</div>
+            <div class="list-group list-group-flush">
+                {if !empty($summary.risk_tasks)}
+                {foreach $summary.risk_tasks as $task}
+                <a class="list-group-item list-group-item-action" href="{$task.action_url|default='/quality-workbench'}">
+                    <span class="badge bg-warning text-dark me-2">{$task.severity_label}</span>{$task.title}
+                </a>
+                {/foreach}
+                {else/}
+                <div class="list-group-item text-muted">暂无突出风险任务。</div>
+                {/if}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header bg-white fw-semibold">最近变更</div>
+    <div class="list-group list-group-flush">
+        {if !empty($summary.recent_events)}
+        {foreach $summary.recent_events as $event}
+        <div class="list-group-item">
+            <span class="text-muted">{$event.created}</span>
+            <span class="ms-2">{$event.project_title|default=''}</span>
+            <span class="badge bg-light text-dark ms-2">{$event.old_status_label} → {$event.new_status_label}</span>
+            <div class="small text-muted">{$event.note|default=''}</div>
+        </div>
+        {/foreach}
+        {else/}
+        <div class="list-group-item text-muted">暂无工作台事件。</div>
+        {/if}
+    </div>
+</div>
+{/if}

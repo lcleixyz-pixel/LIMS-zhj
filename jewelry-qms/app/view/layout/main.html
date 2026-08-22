@@ -57,6 +57,11 @@
         <a class="navbar-brand" href="/dashboard/index">工作台</a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav">
+                {if condition="qms_can('qualityworkbench')"}
+                <li class="nav-item">
+                    <a class="nav-link" href="/quality-workbench">质量工作台</a>
+                </li>
+                {/if}
                 {if condition="qms_can('calendar')"}
                 <li class="nav-item">
                     <a class="nav-link" href="/calendar/index">本月待办</a>
