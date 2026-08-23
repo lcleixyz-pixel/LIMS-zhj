@@ -358,7 +358,8 @@ final class FinalCandidateAssemblyService
     {
         foreach ([
             'documents' => ['supersedes_document_id', 'revision_root_id', 'change_reason'],
-            'qms_structured_documents' => ['document_role', 'source_status', 'review_note'],
+            'qms_document_assets' => ['document_id', 'archived_path', 'file_sha256', 'archive_status'],
+            'qms_structured_documents' => ['source_asset_id', 'document_role', 'source_status', 'review_note'],
             'qms_document_blocks' => ['stable_key', 'source_locator', 'block_type'],
         ] as $table => $columns) {
             $available = Db::query('SHOW COLUMNS FROM `' . $table . '`');
@@ -379,8 +380,8 @@ final class FinalCandidateAssemblyService
             ->where('soft_delete', 0)
             ->find();
         if (is_array($existing)) {
-            $reason = json_decode((string)($existing['change_reason'] ?? ''), true);
-            $existingHash = is_array($reason) ? (string)($reason['source_sha256'] ?? '') : '';
+            $reason = DocumentSourceAssetService::changeMetadata((string)($existing['change_reason'] ?? ''));
+            $existingHash = (string)($reason['source_sha256'] ?? '');
             if ($existingHash !== '' && !hash_equals($existingHash, (string)$document['source_sha256'])) {
                 throw new RuntimeException((string)$document['canonical_doc_number'] . ' 来源哈希漂移，拒绝覆盖0.3候选');
             }
@@ -445,7 +446,7 @@ final class FinalCandidateAssemblyService
         $structuredId = (string)($existingStructure['id'] ?? qms_uuid());
         $structureRow = [
             'company_id' => $companyId,
-            'source_asset_id' => null,
+            'source_asset_id' => (string)($existingStructure['source_asset_id'] ?? '') ?: null,
             'document_id' => $documentId,
             'document_role' => (string)$document['document_role'],
             'doc_number' => (string)$document['trial_doc_number'],
@@ -470,6 +471,13 @@ final class FinalCandidateAssemblyService
             $structureRow['created'] = $now;
             Db::name('qms_structured_documents')->insert($structureRow);
         }
+
+        DocumentSourceAssetService::upsertCandidateAsset(
+            $document,
+            $documentId,
+            $structuredId,
+            $relativeOutput
+        );
 
         self::upsertBlocks($structuredId, $documentId, $companyId, $document);
     }

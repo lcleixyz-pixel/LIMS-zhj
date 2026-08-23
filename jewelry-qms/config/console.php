@@ -11,6 +11,7 @@ use app\command\P0Preflight;
 use app\command\QmsGovernedTrialAssemble;
 use app\command\QmsGovernedTrialResolve;
 use app\command\QmsFinalCandidateAssemble;
+use app\command\QmsFinalCandidateSourceAssets;
 use app\command\QmsFinalCandidateTraceSync;
 use app\command\QmsQualityWorkbenchRefresh;
 use app\command\QmsManualProcedureAlignmentCheck;
@@ -31,6 +32,7 @@ return [
         QmsGovernedTrialAssemble::class,
         QmsGovernedTrialResolve::class,
         QmsFinalCandidateAssemble::class,
+        QmsFinalCandidateSourceAssets::class,
         QmsFinalCandidateTraceSync::class,
         QmsQualityWorkbenchRefresh::class,
         QmsManualProcedureAlignmentCheck::class,

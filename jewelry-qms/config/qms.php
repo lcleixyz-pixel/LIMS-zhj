@@ -13,6 +13,11 @@ return [
         'enabled' => env('QMS_TRIAL_MODE', getenv('QMS_TRIAL_MODE') ?: false),
         'batch' => env('QMS_TRIAL_BATCH', getenv('QMS_TRIAL_BATCH') ?: ''),
     ],
+    // 8021 当前固定为纸质运行治理阶段；电子受控还需要独立验证和批准口令。
+    'document_operation_mode' => env(
+        'QMS_DOCUMENT_OPERATION_MODE',
+        getenv('QMS_DOCUMENT_OPERATION_MODE') ?: 'paper_governance'
+    ),
     'simulation_uuid_prefix' => (bool)(env('QMS_SIM_UUID', getenv('QMS_SIM_UUID') ?: false)),
 
     'docLevels' => [
