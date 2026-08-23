@@ -53,7 +53,8 @@
 .qms-reminder-list div:first-child { border-top: 0; }
 .qms-recent-list span,
 .qms-recent-list small,
-.qms-reminder-list span { color: var(--work-muted); font-size: 12px; }
+.qms-reminder-list span,
+.qms-reminder-list small { color: var(--work-muted); font-size: 12px; }
 .qms-reminder-list div { border-top: 1px solid var(--work-line); display: flex; flex-direction: column; gap: 2px; padding: 11px 0; }
 
 @media (max-width: 760px) {

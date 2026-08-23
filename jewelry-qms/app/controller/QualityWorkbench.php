@@ -6,6 +6,7 @@ namespace app\controller;
 use app\BaseController;
 use app\service\QualityWorkbenchService;
 use RuntimeException;
+use think\facade\Db;
 use think\facade\Session;
 use think\facade\View;
 
@@ -14,8 +15,19 @@ class QualityWorkbench extends BaseController
     public function index()
     {
         $service = new QualityWorkbenchService();
-        View::assign('summary', $service->dashboardSummary((string)Session::get('user.id', '')));
+        $userId = (string)Session::get('user.id', '');
+        View::assign('summary', $service->dashboardSummary($userId));
         View::assign('recentReads', (array)Session::get('recent_document_reads', []));
+        View::assign('myReminders', Db::name('notification_users')->alias('nu')
+            ->leftJoin('notifications notification', 'notification.id=nu.notification_id')
+            ->where('nu.user_id', $userId)
+            ->where('notification.soft_delete', 0)
+            ->field('nu.id,nu.status,notification.title,notification.message,notification.created')
+            ->order('nu.status', 'asc')
+            ->order('notification.created', 'desc')
+            ->limit(8)
+            ->select()
+            ->toArray());
 
         return View::fetch('quality_workbench/index');
     }

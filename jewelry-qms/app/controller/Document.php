@@ -87,14 +87,15 @@ class Document extends BaseController
             }
         }
         if ($keyword = trim((string) $this->request->param('keyword', ''))) {
-            $bodyDocumentIds = DocumentReadingService::bodyMatchingDocumentIds($keyword);
-            $query->where(function ($q) use ($keyword, $bodyDocumentIds) {
-                $q->where('doc_number', 'like', '%' . $keyword . '%')
-                    ->whereOr('title', 'like', '%' . $keyword . '%');
-                if ($bodyDocumentIds !== []) {
-                    $q->whereOr('id', 'in', $bodyDocumentIds);
-                }
-            });
+            $metadataDocumentIds = DocumentReadingService::metadataMatchingDocumentIds($keyword);
+            $matchedDocumentIds = $metadataDocumentIds !== []
+                ? $metadataDocumentIds
+                : DocumentReadingService::bodyMatchingDocumentIds($keyword);
+            if ($matchedDocumentIds === []) {
+                $query->where('id', '__NO_DOCUMENT_MATCH__');
+            } else {
+                $query->whereIn('id', $matchedDocumentIds);
+            }
         }
 
         $documents = $query->order('doc_number', 'asc')->paginate(20);

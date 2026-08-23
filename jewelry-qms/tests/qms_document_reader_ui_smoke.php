@@ -32,6 +32,8 @@ document_reader_ui_assert(str_contains($controller, 'function read'), '文件控
 document_reader_ui_assert(str_contains($controller, 'function sourceDownload'), '文件控制器必须提供来源Word下载入口');
 document_reader_ui_assert(str_contains($controller, 'DocumentReadingService'), '正文、目录和链路必须由专用阅读服务聚合');
 document_reader_ui_assert(str_contains($controller, 'DocumentSourceAssetService'), '来源Word必须由受限来源资产服务解析');
+document_reader_ui_assert(str_contains($controller, 'metadataMatchingDocumentIds'), '文件搜索必须先匹配编号和名称，再回退正文');
+document_reader_ui_assert(str_contains($controller, '$metadataDocumentIds !== []'), '编号或名称有结果时不得混入正文引用噪音');
 document_reader_ui_assert(str_contains($controller, "redirect('/document/read?id='"), '旧候选预览必须重定向到统一阅读页');
 
 document_reader_ui_assert(str_contains($index, '/document/read?id={$doc.id}'), '点击文件名称必须直接阅读正文');

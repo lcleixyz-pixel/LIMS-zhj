@@ -79,10 +79,14 @@
                 <div><span>05</span><h2 id="my-reminder-title">与我相关的提醒</h2></div>
                 <a href="/notification/index">全部提醒</a>
             </div>
-            {if !empty($summary.recent_events)}
+            {if !empty($myReminders)}
             <div class="qms-reminder-list">
-                {foreach $summary.recent_events as $event}
-                <div><strong>{$event.note|default='事项有更新'}</strong><span>{$event.created|default=''}</span></div>
+                {foreach $myReminders as $reminder}
+                <div>
+                    <strong>{$reminder.title|default='事项有更新'}</strong>
+                    <span>{$reminder.message|default=''}</span>
+                    <small>{$reminder.created|default=''}</small>
+                </div>
                 {/foreach}
             </div>
             {else/}

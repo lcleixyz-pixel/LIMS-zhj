@@ -44,5 +44,7 @@ foreach (['今天需要处理', '最近阅读文件', '快速查文件', '快速
 quality_workbench_path_b_assert(!str_contains($home, '结构化块'), '普通员工首页不得出现结构化块术语');
 quality_workbench_path_b_assert(!str_contains($home, '要素矩阵'), '普通员工首页不得出现要素矩阵术语');
 quality_workbench_path_b_assert(str_contains($controller, "Session::get('recent_document_reads'"), '我的工作必须读取最近阅读文件');
+quality_workbench_path_b_assert(str_contains($controller, "Db::name('notification_users')"), '与我相关的提醒必须按当前用户读取通知');
+quality_workbench_path_b_assert(str_contains($home, '$myReminders'), '普通员工首页不得用全局项目事件冒充个人提醒');
 
 echo "qms_quality_workbench_path_b_smoke passed\n";

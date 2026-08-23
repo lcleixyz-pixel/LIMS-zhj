@@ -75,6 +75,25 @@ final class DocumentReadingService
         )));
     }
 
+    public static function metadataMatchingDocumentIds(string $keyword): array
+    {
+        $keyword = trim($keyword);
+        if ($keyword === '') {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            'strval',
+            Db::name('documents')
+                ->where('soft_delete', 0)
+                ->where(function ($query) use ($keyword): void {
+                    $query->whereLike('doc_number', '%' . $keyword . '%')
+                        ->whereOr('title', 'like', '%' . $keyword . '%');
+                })
+                ->column('id')
+        )));
+    }
+
     private static function structuredSections(array $structure): array
     {
         $detail = QmsDocumentStructureService::structuredDocumentDetail((string)$structure['id']);
