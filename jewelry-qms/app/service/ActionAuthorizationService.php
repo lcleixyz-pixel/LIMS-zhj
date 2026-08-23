@@ -115,6 +115,12 @@ final class ActionAuthorizationService
             'governedchange.event' => true,
             'governedchange.inbox' => true,
             'governedchange.decide' => self::canDecideRecordCorrection($employeeId),
+            'qualityworkbench.govern'
+                => in_array($identity['role'], ['admin', 'quality_manager', 'auditor'], true)
+                    || self::hasAnyPosition(
+                        $employeeId,
+                        ['quality_manager', 'document_controller', 'internal_auditor', 'technical_manager']
+                    ),
             'qualityworkbench.refresh', 'qualityworkbench.transitiontask', 'qualityworkbench.acceptproject'
                 => self::hasGlobalPosition($employeeId, ['quality_manager']),
 
@@ -861,6 +867,7 @@ final class ActionAuthorizationService
             };
         } elseif ($controller === 'qualityworkbench') {
             $policyAction = match ($action) {
+                'projects', 'view' => 'govern',
                 'refresh' => 'refresh',
                 'transitiontask' => 'transitiontask',
                 'acceptproject' => 'acceptproject',

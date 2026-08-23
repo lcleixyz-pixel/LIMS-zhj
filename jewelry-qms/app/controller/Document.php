@@ -19,10 +19,13 @@ use app\service\ActionAuthorizationService;
 use app\service\ControlledPrintService;
 use app\service\DocumentControlService;
 use app\service\DocumentPresentationService;
+use app\service\DocumentReadingService;
+use app\service\DocumentSourceAssetService;
 use app\service\DocumentStatusGuardService;
 use app\service\FieldAuditService;
 use app\service\FileService;
 use app\service\FinalCandidateAssemblyService;
+use app\service\FinalCandidateManifestService;
 use app\service\GovernedTrialResolvedDocumentService;
 use app\service\QmsDocumentStructureService;
 use app\service\QmsReadableMarkdownService;
@@ -41,6 +44,8 @@ class Document extends BaseController
     {
         $query = DocumentModel::where('soft_delete', 0);
         $pendingForMe = (string)$this->request->param('pending_for_me', '') === '1';
+        $category = trim((string)$this->request->param('category', 'all'));
+        $showHistory = (string)$this->request->param('history', '') === '1';
         $manageableSiteIds = ActionAuthorizationService::documentManageableSiteIds();
         if ($manageableSiteIds !== null) {
             $query->where(function ($query) use ($manageableSiteIds) {
@@ -51,11 +56,23 @@ class Document extends BaseController
             });
         }
 
-        if ($level = $this->request->param('level')) {
+        $categoryLevels = ['manual' => 1, 'procedure' => 2, 'work_instruction' => 3];
+        if (isset($categoryLevels[$category])) {
+            $query->where('level', $categoryLevels[$category]);
+        } elseif ($level = $this->request->param('level')) {
             $query->where('level', $level);
         }
-        if ($status = $this->request->param('status')) {
+        $status = trim((string)$this->request->param('status', ''));
+        if ($category === 'obsolete') {
+            $status = 'obsolete';
+        }
+        if ($status !== '') {
             $query->where('status', $status);
+        }
+        if (!$pendingForMe && !$showHistory && $status !== 'obsolete') {
+            $query->where('version', FinalCandidateManifestService::VERSION)
+                ->whereLike('doc_number', FinalCandidateManifestService::TRIAL_PREFIX . '%')
+                ->where('status', '<>', 'obsolete');
         }
         if ($pendingForMe) {
             $pendingDocumentIds = Approval::where('user_id', (string)Session::get('user.id', ''))
@@ -70,9 +87,13 @@ class Document extends BaseController
             }
         }
         if ($keyword = trim((string) $this->request->param('keyword', ''))) {
-            $query->where(function ($q) use ($keyword) {
+            $bodyDocumentIds = DocumentReadingService::bodyMatchingDocumentIds($keyword);
+            $query->where(function ($q) use ($keyword, $bodyDocumentIds) {
                 $q->where('doc_number', 'like', '%' . $keyword . '%')
                     ->whereOr('title', 'like', '%' . $keyword . '%');
+                if ($bodyDocumentIds !== []) {
+                    $q->whereOr('id', 'in', $bodyDocumentIds);
+                }
             });
         }
 
@@ -80,6 +101,14 @@ class Document extends BaseController
         QmsGovernanceVersionResolverService::decorateControlledDocuments(
             $documents->items()
         );
+        foreach ($documents->items() as $document) {
+            $document->display_title = preg_replace(
+                '/^\[8021(?:候选试装|测试正式)\]\s*/u',
+                '',
+                (string)$document->title
+            ) ?: (string)$document->title;
+            $document->source_available = (bool)(DocumentSourceAssetService::assetForDocument((string)$document->id)['source_available'] ?? false);
+        }
         $categories = DocCategory::where('soft_delete', 0)->select();
 
         View::assign('documents', $documents);
@@ -90,6 +119,8 @@ class Document extends BaseController
             'status' => $this->request->param('status', ''),
             'keyword' => $this->request->param('keyword', ''),
             'pending_for_me' => $pendingForMe ? '1' : '',
+            'category' => $category,
+            'history' => $showHistory ? '1' : '',
         ]);
         View::assign('siteMap', Site::where('soft_delete', 0)->column('name', 'id'));
         View::assign('trialModeEnabled', TrialModeService::isEnabled());
@@ -738,20 +769,39 @@ class Document extends BaseController
             throw new HttpException(404, '候选预览不存在');
         }
 
-        $absolutePath = FinalCandidateAssemblyService::resolveOutputPath((string)$doc->file_path);
-        if ($absolutePath === null) {
-            throw new HttpException(404, '候选正文不存在');
-        }
-        $content = file_get_contents($absolutePath);
-        if (!is_string($content)) {
-            throw new HttpException(500, '候选正文读取失败');
-        }
+        return redirect('/document/read?id=' . rawurlencode((string)$doc->id));
+    }
 
-        View::assign('doc', $doc);
-        View::assign('isTrialFormalPreview', (string)$doc->status === 'published');
-        View::assign('candidateHtml', QmsReadableMarkdownService::toHtml($this->presentCandidateContent($doc, $content)));
+    public function read()
+    {
+        $data = DocumentReadingService::reader((string)$this->request->param('id', ''));
+        $document = (array)$data['document'];
+        $recent = (array)Session::get('recent_document_reads', []);
+        $recent = array_values(array_filter(
+            $recent,
+            static fn(array $row): bool => (string)($row['id'] ?? '') !== (string)$document['id']
+        ));
+        array_unshift($recent, [
+            'id' => (string)$document['id'],
+            'doc_number' => (string)$document['doc_number'],
+            'title' => (string)$document['display_title'],
+            'url' => '/document/read?id=' . rawurlencode((string)$document['id']),
+            'read_at' => date('Y-m-d H:i'),
+        ]);
+        Session::set('recent_document_reads', array_slice($recent, 0, 5));
+        View::assign('data', $data);
 
-        return View::fetch('document/candidate_preview');
+        return View::fetch('document/read');
+    }
+
+    public function sourceDownload()
+    {
+        $doc = $this->loadDocument((string)$this->request->param('id', ''));
+        $asset = DocumentSourceAssetService::assetForDocument((string)$doc->id);
+        if (!is_array($asset) || empty($asset['source_available']) || empty($asset['resolved_path'])) {
+            throw new HttpException(404, '来源Word尚未完成补链或文件校验未通过');
+        }
+        FileService::downloadAbsolute((string)$asset['resolved_path'], (string)$asset['original_name']);
     }
 
     private function loadDocument(string $id): DocumentModel

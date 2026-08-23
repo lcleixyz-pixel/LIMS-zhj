@@ -1,175 +1,93 @@
-<div class="d-flex justify-content-between align-items-start mb-3">
-    <div>
-        <h3 class="mb-1">质量工作台</h3>
-        <div class="text-muted">把质量工作从“看模块”变成“看项目、任务、证据和验收”。</div>
-    </div>
-    <div class="text-end">
-        <a href="/quality-workbench/projects" class="btn btn-outline-primary">查看全部评审项目</a>
-        {if condition="qms_can_action('qualityworkbench', 'refresh')"}
-        <form method="post" action="/quality-workbench/refresh" class="d-inline">
-            {:token()}
-            <button class="btn btn-primary" type="submit">刷新工作台</button>
-        </form>
+<link rel="stylesheet" href="/static/css/qms-workbench-simple.css">
+
+<main class="qms-my-work" id="main-content">
+    <header class="qms-my-work__header">
+        <div>
+            <div class="qms-my-work__eyebrow">日常入口</div>
+            <h1>我的工作</h1>
+            <p>先看今天要做什么；找文件、查记录都从这里进入。</p>
+        </div>
+        {if condition="qms_can_action('qualityworkbench', 'govern')"}
+        <a class="btn btn-outline-secondary" href="/quality-workbench/projects">进入质量管理</a>
         {/if}
-    </div>
-</div>
+    </header>
 
-<div class="alert alert-warning">
-    <div class="fw-semibold">边界提醒</div>
-    <div>{$summary.formal_system_notice|default=''}</div>
-</div>
+    <section class="qms-my-work__notice" aria-label="当前运行依据">
+        <strong>治理中 · 工作以纸质受控文件为准</strong>
+        <span>网页帮助查阅和核对，不替代纸质受控文件。</span>
+    </section>
 
-{if !empty($summary.needs_setup)}
-<div class="alert alert-info">
-    <div class="fw-semibold">工作台底座尚未写入数据库</div>
-    <div>请在 8021 测试环境运行：<code>php think qms:refresh-quality-workbench --apply --ack-quality-workbench</code>。当前页面先显示干跑预览。</div>
-</div>
-{assign name="previewProjects" value="$summary.preview.projects|default=[]" /}
-<div class="row">
-    {foreach $previewProjects as $project}
-    <div class="col-md-6 mb-3">
-        <div class="card h-100">
-            <div class="card-body">
-                <h5>{$project.title}</h5>
-                <p class="text-muted mb-2">{$project.scope_label}</p>
-                <div>{$project.conclusion}</div>
-            </div>
+    <section class="qms-my-work__section" aria-labelledby="today-work-title">
+        <div class="qms-my-work__section-heading">
+            <div><span>01</span><h2 id="today-work-title">今天需要处理</h2></div>
+            <a href="/calendar/index">查看本月待办</a>
         </div>
-    </div>
-    {/foreach}
-</div>
-{else/}
-<div class="row g-3 mb-3">
-    <div class="col-md-4">
-        <div class="card border-primary h-100">
-            <div class="card-body">
-                <div class="text-muted">这页在评什么？</div>
-                <h5 class="mt-1">全部质量工作是否有项目、有任务、有证据、可验收</h5>
-            </div>
+        <div class="qms-action-list">
+            {if !empty($summary.today_todos)}
+            {foreach $summary.today_todos as $task}
+            <a class="qms-action-item" href="{$task.action_url|default='/quality-workbench'}">
+                <div><strong>{$task.title}</strong><p>{$task.evidence_summary|default='打开后可查看需要处理的内容。'}</p></div>
+                <span>去处理 →</span>
+            </a>
+            {/foreach}
+            {else/}
+            <div class="qms-action-empty"><strong>今天没有新事项</strong><span>可以先查阅文件，或继续填写自己的记录。</span></div>
+            {/if}
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-success h-100">
-            <div class="card-body">
-                <div class="text-muted">当前结论是什么？</div>
-                <h5 class="mt-1">
-                    {if !empty($summary.blockers)}
-                    仍有阻断项，先处理 blocker
-                    {elseif !empty($summary.ready_projects)}
-                    有项目可验收
-                    {else/}
-                    项目运行中
-                    {/if}
-                </h5>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-warning h-100">
-            <div class="card-body">
-                <div class="text-muted">下一步谁处理什么？</div>
-                <h5 class="mt-1">{$summary.next_action|default='暂无动作'}</h5>
-            </div>
-        </div>
-    </div>
-</div>
+    </section>
 
-<div class="row g-3">
-    <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-header bg-white fw-semibold">今日待办</div>
-            <div class="list-group list-group-flush">
-                {if !empty($summary.today_todos)}
-                {foreach $summary.today_todos as $task}
-                <a class="list-group-item list-group-item-action" href="{$task.action_url|default='/quality-workbench'}">
-                    <span class="badge bg-secondary me-2">{$task.severity_label}</span>
-                    {$task.title}
-                    <div class="small text-muted">{$task.evidence_summary|default=''}</div>
-                </a>
-                {/foreach}
-                {else/}
-                <div class="list-group-item text-muted">今天没有分配给你的工作台任务。</div>
+    <div class="qms-my-work__grid">
+        <section class="qms-my-work__section" aria-labelledby="find-file-title">
+            <div class="qms-my-work__section-heading"><div><span>02</span><h2 id="find-file-title">快速查文件</h2></div></div>
+            <form class="qms-quick-search" action="/document/index" method="get" role="search">
+                <label class="visually-hidden" for="quick-document-search">查文件</label>
+                <input id="quick-document-search" name="keyword" type="search" placeholder="输入 CX-08 或文件名称">
+                <button type="submit">查找</button>
+            </form>
+            <p class="qms-card-help">点文件名称直接阅读正文；需要时再下载来源 Word 用 WPS 打开。</p>
+            <a class="qms-card-link" href="/document/index">打开文件库 →</a>
+        </section>
+
+        <section class="qms-my-work__section" aria-labelledby="find-record-title">
+            <div class="qms-my-work__section-heading"><div><span>03</span><h2 id="find-record-title">快速查记录</h2></div></div>
+            <p class="qms-card-lead">查看自己填写过的记录，或开始填写一份新记录。</p>
+            <div class="qms-card-actions">
+                <a class="btn btn-dark" href="/record_form_instance/index">查看我的记录</a>
+                {if condition="qms_can_action('record_form_instance', 'create')"}
+                <a class="btn btn-outline-secondary" href="/record_form_instance/create">填写新记录</a>
                 {/if}
             </div>
-        </div>
+        </section>
     </div>
 
-    <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-header bg-white fw-semibold">阻断事项</div>
-            <div class="list-group list-group-flush">
-                {if !empty($summary.blockers)}
-                {foreach $summary.blockers as $task}
-                <a class="list-group-item list-group-item-action list-group-item-danger" href="{$task.action_url|default='/quality-workbench'}">
-                    <span class="badge bg-danger me-2">阻断项</span>{$task.title}
-                    <div class="small">{$task.evidence_summary|default=''}</div>
-                </a>
+    <div class="qms-my-work__grid">
+        <section class="qms-my-work__section" aria-labelledby="recent-file-title">
+            <div class="qms-my-work__section-heading"><div><span>04</span><h2 id="recent-file-title">最近阅读文件</h2></div></div>
+            {if !empty($recentReads)}
+            <div class="qms-recent-list">
+                {foreach $recentReads as $item}
+                <a href="{$item.url}"><span>{$item.doc_number}</span><strong>{$item.title}</strong><small>{$item.read_at}</small></a>
                 {/foreach}
-                {else/}
-                <div class="list-group-item text-muted">暂无阻断项。</div>
-                {/if}
             </div>
-        </div>
-    </div>
-</div>
+            {else/}
+            <div class="qms-action-empty"><strong>还没有最近阅读</strong><span>打开文件正文后，会在这里保留最近 5 份。</span></div>
+            {/if}
+        </section>
 
-<div class="row g-3 mt-1">
-    <div class="col-lg-7">
-        <div class="card h-100">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <span class="fw-semibold">评审项目</span>
-                <a href="/quality-workbench/projects" class="small">全部项目</a>
+        <section class="qms-my-work__section" aria-labelledby="my-reminder-title">
+            <div class="qms-my-work__section-heading">
+                <div><span>05</span><h2 id="my-reminder-title">与我相关的提醒</h2></div>
+                <a href="/notification/index">全部提醒</a>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead><tr><th>项目</th><th>状态</th><th>结论</th><th></th></tr></thead>
-                    <tbody>
-                    {foreach $summary.projects as $project}
-                    <tr>
-                        <td>{$project.title}</td>
-                        <td>{$project.status_label}</td>
-                        <td class="text-muted">{$project.conclusion}</td>
-                        <td><a class="btn btn-sm btn-outline-primary" href="/quality-workbench/projects/view?id={$project.id}">查看</a></td>
-                    </tr>
-                    {/foreach}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-5">
-        <div class="card h-100">
-            <div class="card-header bg-white fw-semibold">质量风险</div>
-            <div class="list-group list-group-flush">
-                {if !empty($summary.risk_tasks)}
-                {foreach $summary.risk_tasks as $task}
-                <a class="list-group-item list-group-item-action" href="{$task.action_url|default='/quality-workbench'}">
-                    <span class="badge bg-warning text-dark me-2">{$task.severity_label}</span>{$task.title}
-                </a>
+            {if !empty($summary.recent_events)}
+            <div class="qms-reminder-list">
+                {foreach $summary.recent_events as $event}
+                <div><strong>{$event.note|default='事项有更新'}</strong><span>{$event.created|default=''}</span></div>
                 {/foreach}
-                {else/}
-                <div class="list-group-item text-muted">暂无突出风险任务。</div>
-                {/if}
             </div>
-        </div>
+            {else/}
+            <div class="qms-action-empty"><strong>暂无新提醒</strong><span>与您有关的处理要求和变更会显示在这里。</span></div>
+            {/if}
+        </section>
     </div>
-</div>
-
-<div class="card mt-3">
-    <div class="card-header bg-white fw-semibold">最近变更</div>
-    <div class="list-group list-group-flush">
-        {if !empty($summary.recent_events)}
-        {foreach $summary.recent_events as $event}
-        <div class="list-group-item">
-            <span class="text-muted">{$event.created}</span>
-            <span class="ms-2">{$event.project_title|default=''}</span>
-            <span class="badge bg-light text-dark ms-2">{$event.old_status_label} → {$event.new_status_label}</span>
-            <div class="small text-muted">{$event.note|default=''}</div>
-        </div>
-        {/foreach}
-        {else/}
-        <div class="list-group-item text-muted">暂无工作台事件。</div>
-        {/if}
-    </div>
-</div>
-{/if}
+</main>

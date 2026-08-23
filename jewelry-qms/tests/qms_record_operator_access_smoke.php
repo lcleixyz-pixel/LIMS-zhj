@@ -229,19 +229,22 @@ try {
     );
     record_operator_case(
         RbacService::canAccess('dashboard')
+        && RbacService::canAccess('qualityworkbench')
+        && RbacService::canAccess('document')
         && RbacService::canAccess('record_form_template')
         && RbacService::canAccess('record_form_instance')
         && RbacService::canAccess('notification'),
         'RO02',
-        '记录填报员可访问工作台、记录模板、本人记录和通知'
+        '记录填报员可访问我的工作、查文件、记录模板、本人记录和通知'
     );
     record_operator_case(
-        !RbacService::canAccess('document')
+        RbacService::canAccess('document')
+        && RbacService::canAccess('qualityworkbench')
         && !RbacService::canAccess('planning_responsibility')
         && !RbacService::canAccess('complaint')
         && !RbacService::canAccess('calendar'),
         'RO03',
-        '记录填报员不能进入体系管理、岗位责任、投诉和综合待办'
+        '记录填报员可日常查文件，但不能进入岗位责任、投诉和综合待办'
     );
     record_operator_case(
         RbacService::canWrite('record_form_instance')
@@ -361,7 +364,8 @@ try {
             RbacService::isRestrictedRecordOperator()
             && RbacService::canAccess('record_form_instance')
             && !RbacService::canAccess('record_form_template')
-            && !RbacService::canAccess('document')
+            && RbacService::canAccess('document')
+            && RbacService::canAccess('qualityworkbench')
             && !RbacService::canAccess('complaint')
             && !RbacService::canWrite('record_form_instance')
             && !ActionAuthorizationService::canRecordOperatorFill()
@@ -401,7 +405,7 @@ try {
                 $ownRequest
             ) === true,
             'RO10-' . $stateName,
-            "任命状态 {$stateName} 时只保留本人历史记录只读权限"
+            "任命状态 {$stateName} 时保留日常查文件和本人历史记录只读权限"
         );
     }
 
@@ -433,7 +437,8 @@ try {
     ActionAuthorizationService::clearRequestCache();
     record_operator_case(
         RbacService::isRestrictedRecordOperator()
-        && !RbacService::canAccess('document')
+        && RbacService::canAccess('document')
+        && RbacService::canAccess('qualityworkbench')
         && ActionAuthorizationService::recordFormVisibilityScope()
             === ['all' => false, 'user_id' => $userId]
         && ActionAuthorizationService::allows('equipment', 'view')

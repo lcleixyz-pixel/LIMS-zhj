@@ -1,116 +1,93 @@
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">体系文件列表</h5>
-        <div class="d-flex flex-wrap gap-2">
-            <a href="/document/index?pending_for_me=1" class="btn btn-outline-success btn-sm">待我签批</a>
-            <a href="/planning/structures/governance-queue" class="btn btn-outline-primary btn-sm">当前治理队列</a>
-            <a href="/document/add" class="btn btn-primary btn-sm">新建文件</a>
+<link rel="stylesheet" href="/static/css/qms-document-reader.css">
+
+<main class="qms-document-library" id="main-content">
+    <header class="qms-document-library__header">
+        <div>
+            <div class="qms-eyebrow">日常查阅</div>
+            <h2>查文件</h2>
+            <p>按编号、名称或正文内容查找，点文件名称直接阅读。</p>
         </div>
+        <div class="qms-document-library__management">
+            {if condition="qms_can_action('document', 'register')"}
+            <a href="/document/index?pending_for_me=1" class="btn btn-outline-secondary btn-sm">待我签批</a>
+            <a href="/document/add" class="btn btn-dark btn-sm">新建文件</a>
+            {/if}
+        </div>
+    </header>
+
+    {if $trialModeEnabled}
+    <section class="qms-operation-notice" aria-label="当前文件运行阶段">
+        <strong>治理中 · 纸质执行</strong>
+        <span>网页用于快速阅读、检索和链路核对，实际工作仍以纸质受控文件为准。</span>
+    </section>
+    {/if}
+
+    {if ($filter.pending_for_me ?? '') == '1'}
+    <div class="alert alert-info" role="status">
+        当前只显示需要您签批的文件。<a href="/document/index" class="alert-link">返回文件库</a>
     </div>
-    <div class="card-body">
-        {if $trialModeEnabled}
-        <div class="alert alert-warning py-2" role="status">
-            <strong>8021 治理试运行：</strong>“当前试运行版本”表示可在本系统模拟使用，纸质文件仍为正式依据。
+    {/if}
+
+    <form method="get" action="/document/index" class="qms-document-search" role="search">
+        <label class="visually-hidden" for="document-library-search">搜索文件</label>
+        <input id="document-library-search" type="search" name="keyword" value="{$filter.keyword|default=''}" placeholder="搜索文件编号、名称或正文关键词" autocomplete="off">
+        <input type="hidden" name="category" value="{$filter.category|default='all'}">
+        {if ($filter.history ?? '') == '1'}<input type="hidden" name="history" value="1">{/if}
+        <button type="submit">查找</button>
+        {if !empty($filter.keyword)}<a href="/document/index?category={$filter.category|default='all'}" class="qms-text-link">清除</a>{/if}
+    </form>
+
+    <nav class="qms-document-tabs" aria-label="文件分类">
+        <a class="{if ($filter.category ?? 'all') == 'all' && ($filter.history ?? '') != '1'}is-active{/if}" href="/document/index?category=all">全部</a>
+        <a class="{if ($filter.category ?? '') == 'manual'}is-active{/if}" href="/document/index?category=manual">质量手册</a>
+        <a class="{if ($filter.category ?? '') == 'procedure'}is-active{/if}" href="/document/index?category=procedure">程序文件</a>
+        <a class="{if ($filter.category ?? '') == 'work_instruction'}is-active{/if}" href="/document/index?category=work_instruction">作业指导书</a>
+        <a class="{if ($filter.category ?? '') == 'obsolete'}is-active{/if}" href="/document/index?category=obsolete">已作废</a>
+        <a class="qms-document-tabs__history {if ($filter.history ?? '') == '1'}is-active{/if}" href="/document/index?history=1">历史版本</a>
+    </nav>
+
+    <section class="qms-document-results" aria-label="文件列表">
+        {volist name="documents" id="doc"}
+        <article class="qms-document-row {if $doc.status == 'obsolete'}is-obsolete{/if}">
+            <div class="qms-document-row__identity">
+                <span class="qms-document-row__number">{$doc.doc_number|default=''}</span>
+                <a class="qms-document-row__title" href="/document/read?id={$doc.id}">{$doc.display_title|default=''}</a>
+                <div class="qms-document-row__meta">
+                    <span>{$doc.version|default='-'}</span>
+                    <span>
+                        {if $doc.level == 1}质量手册
+                        {elseif $doc.level == 2}程序文件
+                        {elseif $doc.level == 3}作业指导书
+                        {else}记录表格{/if}
+                    </span>
+                    {if $doc.status == 'obsolete'}<span class="qms-status is-obsolete">已作废</span>
+                    {elseif $doc.status == 'draft'}<span class="qms-status is-review">治理待复核</span>
+                    {elseif $doc.status == 'published'}<span class="qms-status is-current">8021 当前阅读版</span>
+                    {else}<span class="qms-status">{$doc.status}</span>{/if}
+                </div>
+            </div>
+            <div class="qms-document-row__actions">
+                <a class="btn btn-dark btn-sm" href="/document/read?id={$doc.id}">阅读正文</a>
+                {if !empty($doc.source_available)}
+                <a class="btn btn-outline-secondary btn-sm" href="/document/source-download?id={$doc.id}">来源 Word</a>
+                {else/}
+                <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">来源 Word 待补链</span>
+                {/if}
+                <a class="qms-text-link" href="/document/read?id={$doc.id}#document-relations">查看链路</a>
+                <a class="qms-text-link is-muted" href="/document/view?id={$doc.id}">文件信息</a>
+            </div>
+        </article>
+        {/volist}
+        {empty name="documents"}
+        <div class="qms-empty-state">
+            <h3>没有找到文件</h3>
+            <p>换一个编号、名称或正文关键词再试。</p>
+            <a href="/document/index" class="btn btn-outline-secondary btn-sm">返回全部文件</a>
         </div>
-        {/if}
-        {if ($filter.pending_for_me ?? '') == '1'}
-        <div class="alert alert-info py-2" role="status">
-            <strong>当前查看：待我签批。</strong>
-            这里只列出当前登录账号需要处理的文件；处理完成后，该文件会自动从本清单移除。
-            <a href="/document/index" class="alert-link">返回全部体系文件</a>
-        </div>
-        {/if}
-        <form method="get" action="/document/index" class="row g-2 mb-3">
-            <div class="col-md-2">
-                <select name="level" class="form-select form-select-sm">
-                    <option value="">全部层级</option>
-                    <option value="1" {if ($filter.level ?? '') == '1'}selected{/if}>一级-质量手册</option>
-                    <option value="2" {if ($filter.level ?? '') == '2'}selected{/if}>二级-程序文件</option>
-                    <option value="3" {if ($filter.level ?? '') == '3'}selected{/if}>三级-作业指导书</option>
-                    <option value="4" {if ($filter.level ?? '') == '4'}selected{/if}>四级-记录表单</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <select name="status" class="form-select form-select-sm">
-                    <option value="">全部状态</option>
-                    <option value="draft" {if ($filter.status ?? '') == 'draft'}selected{/if}>草稿</option>
-                    <option value="reviewing" {if ($filter.status ?? '') == 'reviewing'}selected{/if}>审核中</option>
-                    <option value="approved" {if ($filter.status ?? '') == 'approved'}selected{/if}>已批准</option>
-                    <option value="published" {if ($filter.status ?? '') == 'published'}selected{/if}>已发布</option>
-                    <option value="trial_ready" {if ($filter.status ?? '') == 'trial_ready'}selected{/if}>试运行就绪</option>
-                    <option value="obsolete" {if ($filter.status ?? '') == 'obsolete'}selected{/if}>已作废</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <input type="text" name="keyword" class="form-control form-control-sm" placeholder="搜索文件编号/标题" value="{$filter.keyword|default=''}">
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-sm btn-outline-primary">筛选</button>
-                <a href="/document/index" class="btn btn-sm btn-outline-secondary">重置</a>
-            </div>
-        </form>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover table-sm">
-                <thead>
-                    <tr>
-                        <th>文件编号</th>
-                        <th>标题</th>
-                        <th>层级</th>
-                        <th>版本</th>
-                        <th>状态</th>
-                        <th>生效日期</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {volist name="documents" id="doc"}
-                    <tr>
-                        <td>{$doc.doc_number|default=''}</td>
-                        <td><a href="/document/view?id={$doc.id}">{$doc.title|default=''}</a></td>
-                        <td>
-                            {if $doc.level == 1}<span class="badge bg-danger">一级</span>
-                            {elseif $doc.level == 2}<span class="badge bg-warning text-dark">二级</span>
-                            {elseif $doc.level == 3}<span class="badge bg-info text-dark">三级</span>
-                            {else}<span class="badge bg-secondary">四级</span>{/if}
-                        </td>
-                        <td>
-                            {$doc.version|default='1.0'}
-                            {if $doc.governance_version_role == 'current_candidate'}
-                            <div><span class="badge bg-primary mt-1">当前试运行版本</span></div>
-                            {elseif $doc.governance_version_role == 'source_version'}
-                            <div><span class="badge bg-success mt-1">纸质现用来源（正式依据）</span></div>
-                            {elseif $doc.governance_version_role == 'candidate_conflict'}
-                            <div><span class="badge bg-danger mt-1">存在多个候选，需质量员裁决</span></div>
-                            {/if}
-                        </td>
-                        <td>
-                            {if $doc.status == 'draft'}<span class="badge badge-status-draft">草稿</span>
-                            {elseif $doc.status == 'reviewing'}<span class="badge badge-status-review">审核中</span>
-                            {elseif $doc.status == 'approved'}<span class="badge badge-status-approved">已批准</span>
-                            {elseif $doc.status == 'trial_ready'}<span class="badge bg-warning text-dark">试运行就绪</span>
-                            {elseif $doc.status == 'published'}<span class="badge badge-status-effective">已发布</span>
-                            {elseif $doc.status == 'obsolete'}<span class="badge badge-status-obsolete">已作废</span>
-                            {else}<span class="badge bg-secondary">{$doc.status}</span>{/if}
-                        </td>
-                        <td>{$doc.effective_date|default='-'}</td>
-                        <td>
-                            <a href="/document/view?id={$doc.id}" class="btn btn-sm btn-outline-info">查看</a>
-                            {if $doc.status == 'draft'}
-                            <a href="/document/edit?id={$doc.id}" class="btn btn-sm btn-outline-primary">编辑</a>
-                            {/if}
-                        </td>
-                    </tr>
-                    {/volist}
-                    {empty name="documents"}
-                    <tr><td colspan="7" class="text-center text-muted">暂无数据</td></tr>
-                    {/empty}
-                </tbody>
-            </table>
-        </div>
-        <nav>
-            <ul class="pagination pagination-sm justify-content-center">
-                {$pages|raw}
-            </ul>
-        </nav>
-    </div>
-</div>
+        {/empty}
+    </section>
+
+    {if !empty($pages)}
+    <nav class="qms-pagination" aria-label="文件翻页">{$pages|raw}</nav>
+    {/if}
+</main>

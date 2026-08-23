@@ -70,7 +70,7 @@ class FileService
             throw new HttpException(404, '文件未找到');
         }
         header('Content-Type: ' . self::contentType($fullPath));
-        header('Content-Disposition: ' . $disposition . '; filename="' . $displayName . '"');
+        header('Content-Disposition: ' . self::contentDisposition($disposition, $displayName));
         header('Content-Length: ' . filesize($fullPath));
         readfile($fullPath);
         exit;
@@ -82,7 +82,7 @@ class FileService
             throw new HttpException(404, '文件未找到');
         }
         header('Content-Type: ' . self::contentType($fullPath));
-        header('Content-Disposition: ' . $disposition . '; filename="' . $displayName . '"');
+        header('Content-Disposition: ' . self::contentDisposition($disposition, $displayName));
         header('Content-Length: ' . filesize($fullPath));
         readfile($fullPath);
         exit;
@@ -106,5 +106,13 @@ class FileService
             'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             default => 'application/octet-stream',
         };
+    }
+
+    private static function contentDisposition(string $disposition, string $displayName): string
+    {
+        $displayName = basename(str_replace(["\r", "\n", '"'], '', trim($displayName)));
+        $fallback = preg_replace('/[^A-Za-z0-9._-]+/', '_', $displayName) ?: 'download';
+
+        return $disposition . '; filename="' . $fallback . "\"; filename*=UTF-8''" . rawurlencode($displayName);
     }
 }

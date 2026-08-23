@@ -65,14 +65,14 @@ return [
             'training_plan', 'training', 'training_record', 'competency_record', 'employee_certificate', 'notification',
         ],
         'staff' => [
-            'dashboard', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'complaint', 'notification',
+            'dashboard', 'qualityworkbench', 'calendar', 'document', 'record_form_template', 'record_form_instance', 'planningresponsibility', 'complaint', 'notification',
         ],
     ],
 
     // 受限业务岗位在既有系统角色之上进一步收口，不改变 users.role 数据结构。
     'position_permissions' => [
         'record_operator' => [
-            'dashboard', 'record_form_template', 'record_form_instance', 'notification',
+            'dashboard', 'qualityworkbench', 'document', 'record_form_template', 'record_form_instance', 'notification',
         ],
     ],
 

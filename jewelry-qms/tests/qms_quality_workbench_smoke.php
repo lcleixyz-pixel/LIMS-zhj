@@ -50,7 +50,8 @@ qms_quality_workbench_assert(str_contains($routes, "quality-workbench', 'Quality
 qms_quality_workbench_assert(str_contains($routes, "quality-workbench/projects/view', 'QualityWorkbench/view"), '必须登记项目详情路由');
 
 $menu = (string)file_get_contents(__DIR__ . '/../app/view/layout/main.html');
-qms_quality_workbench_assert(str_contains($menu, '质量工作台'), '顶部菜单必须出现质量工作台入口');
+qms_quality_workbench_assert(str_contains($menu, '我的工作'), '顶部菜单必须出现普通员工的我的工作入口');
+qms_quality_workbench_assert(str_contains($menu, '质量管理'), '顶部菜单必须保留单独授权的质量管理入口');
 qms_quality_workbench_assert(str_contains($menu, "qms_can('qualityworkbench')"), '质量工作台菜单必须受权限控制');
 
 $qmsConfig = (string)file_get_contents(__DIR__ . '/../config/qms.php');

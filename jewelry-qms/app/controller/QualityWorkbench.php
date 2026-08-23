@@ -15,6 +15,7 @@ class QualityWorkbench extends BaseController
     {
         $service = new QualityWorkbenchService();
         View::assign('summary', $service->dashboardSummary((string)Session::get('user.id', '')));
+        View::assign('recentReads', (array)Session::get('recent_document_reads', []));
 
         return View::fetch('quality_workbench/index');
     }

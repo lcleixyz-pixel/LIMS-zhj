@@ -1,0 +1,108 @@
+<link rel="stylesheet" href="/static/css/qms-document-reader.css">
+
+<main class="qms-document-reader" id="main-content">
+    <header class="qms-document-reader__header">
+        <div class="qms-document-reader__identity">
+            <a class="qms-back-link" href="/document/index">← 返回文件库</a>
+            <div class="qms-eyebrow">{$data.document.doc_number}</div>
+            <h1>{$data.document.display_title}</h1>
+            <div class="qms-document-reader__meta">
+                <span>版本 {$data.document.version}</span>
+                <span>{$data.document.status_label}</span>
+            </div>
+        </div>
+        <div class="qms-document-reader__actions">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">打印阅读稿（非受控）</button>
+            {if $data.source_available}
+            <a class="btn btn-dark btn-sm" href="/document/source-download?id={$data.document.id}">下载来源 Word（用 WPS 打开）</a>
+            {else/}
+            <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">来源 Word 尚未补链</span>
+            {/if}
+            <a class="qms-text-link" href="{$data.information_url}">文件信息</a>
+        </div>
+    </header>
+
+    <section class="qms-operation-notice" aria-label="当前文件运行阶段">
+        {if $data.operation.mode == 'paper_governance'}
+        <strong>治理中 · 纸质执行</strong>
+        {else/}
+        <strong>{$data.operation.label}</strong>
+        {/if}
+        <span>{$data.operation.notice}</span>
+    </section>
+
+    <div class="qms-document-reader__layout">
+        <nav class="qms-document-reader__toc" aria-label="章节目录">
+            <div class="qms-side-heading">章节目录</div>
+            {if !empty($data.sections)}
+            <ol>
+                {foreach $data.sections as $section}
+                <li><a href="#{$section.anchor}" data-section-link="{$section.anchor}">{$section.label}</a></li>
+                {/foreach}
+            </ol>
+            {else/}
+            <p class="qms-side-empty">该文件尚未生成可定位章节。</p>
+            {/if}
+        </nav>
+
+        <section class="qms-document-reader__content" aria-label="文件正文">
+            <div class="qms-in-document-search">
+                <label for="in-document-search">在本文中查找</label>
+                <div>
+                    <input id="in-document-search" type="search" placeholder="输入关键词" data-document-search autocomplete="off">
+                    <span data-document-search-result aria-live="polite"></span>
+                </div>
+            </div>
+            {if !empty($data.sections)}
+            {foreach $data.sections as $section}
+            <article id="{$section.anchor}" class="qms-readable-section" data-document-section="{$section.anchor}">
+                <header>
+                    {if !empty($section.number)}<span>{$section.number}</span>{/if}
+                    <h2>{$section.title}</h2>
+                </header>
+                <div class="qms-readable-markdown">{$section.html|raw}</div>
+            </article>
+            {/foreach}
+            {else/}
+            <div class="qms-empty-state">
+                <h3>网页正文尚未生成</h3>
+                <p>请先使用来源 Word 查阅，质量人员可在文件信息页检查结构化状态。</p>
+            </div>
+            {/if}
+        </section>
+
+        <aside class="qms-document-reader__relations" id="document-relations" aria-label="文件链路">
+            <div class="qms-side-heading">文件链路</div>
+            <p class="qms-side-intro">只展示系统已有的直接关系；“待复核”不计作链路闭合。</p>
+            {if !empty($data.relation_groups)}
+            {foreach $data.relation_groups as $group}
+            <section class="qms-relation-group">
+                <h2>{$group.title}</h2>
+                {foreach $group.items as $item}
+                <div class="qms-relation-item" data-relation-sections="{foreach $item.sections as $section}{$section.anchor} {/foreach}">
+                    <div class="qms-relation-item__top">
+                        <span>{$item.relation_label}</span>
+                        <span class="qms-relation-state {$item.state_class}">{$item.state_label}</span>
+                    </div>
+                    {foreach $item.targets as $target}
+                    <div class="qms-relation-target"><small>{$target.label}</small><strong>{$target.value}</strong></div>
+                    {/foreach}
+                    {if !empty($item.note)}<p>{$item.note}</p>{/if}
+                    {if !empty($item.sections)}
+                    <div class="qms-relation-sections">
+                        {foreach $item.sections as $section}<a href="#{$section.anchor}">{$section.title}</a>{/foreach}
+                    </div>
+                    {/if}
+                </div>
+                {/foreach}
+            </section>
+            {/foreach}
+            {else/}
+            <div class="qms-side-empty">本文件暂时没有直接链路，质量人员需要继续补链或复核。</div>
+            {/if}
+            <a class="qms-full-trace-link" href="{$data.full_trace_url}">查看完整链路 →</a>
+        </aside>
+    </div>
+</main>
+
+<script src="/static/js/qms-document-reader.js" defer></script>
