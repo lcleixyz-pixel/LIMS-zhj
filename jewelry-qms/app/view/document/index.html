@@ -7,20 +7,15 @@
             <h2>查文件</h2>
             <p>按编号、名称或正文内容查找，点文件名称直接阅读。</p>
         </div>
+        {if ($qmsNavigation.layer ?? 'daily') == 'governance'}
         <div class="qms-document-library__management">
             {if condition="qms_can_action('document', 'register')"}
             <a href="/document/index?pending_for_me=1" class="btn btn-outline-secondary btn-sm">待我签批</a>
             <a href="/document/add" class="btn btn-dark btn-sm">新建文件</a>
             {/if}
         </div>
+        {/if}
     </header>
-
-    {if $trialModeEnabled}
-    <section class="qms-operation-notice" aria-label="当前文件运行阶段">
-        <strong>治理中 · 纸质执行</strong>
-        <span>网页用于快速阅读、检索和链路核对，实际工作仍以纸质受控文件为准。</span>
-    </section>
-    {/if}
 
     {if ($filter.pending_for_me ?? '') == '1'}
     <div class="alert alert-info" role="status">
@@ -43,27 +38,30 @@
         <a class="{if ($filter.category ?? '') == 'procedure'}is-active{/if}" href="/document/index?category=procedure">程序文件</a>
         <a class="{if ($filter.category ?? '') == 'work_instruction'}is-active{/if}" href="/document/index?category=work_instruction">作业指导书</a>
         <a class="{if ($filter.category ?? '') == 'obsolete'}is-active{/if}" href="/document/index?category=obsolete">已作废</a>
+        {if !empty($qmsNavigation.can_govern)}
         <a class="qms-document-tabs__history {if ($filter.history ?? '') == '1'}is-active{/if}" href="/document/index?history=1">历史版本</a>
+        {/if}
     </nav>
 
     <section class="qms-document-results" aria-label="文件列表">
         {volist name="documents" id="doc"}
         <article class="qms-document-row {if $doc.status == 'obsolete'}is-obsolete{/if}">
             <div class="qms-document-row__identity">
-                <span class="qms-document-row__number">{$doc.doc_number|default=''}</span>
+                <span class="qms-document-row__number">{$doc.display_number|default=''}</span>
                 <a class="qms-document-row__title" href="/document/read?id={$doc.id}">{$doc.display_title|default=''}</a>
                 <div class="qms-document-row__meta">
-                    <span>{$doc.version|default='-'}</span>
+                    {if ($qmsNavigation.layer ?? 'daily') == 'governance'}<span>{$doc.version|default='-'}</span>{/if}
                     <span>
                         {if $doc.level == 1}质量手册
                         {elseif $doc.level == 2}程序文件
                         {elseif $doc.level == 3}作业指导书
                         {else}记录表格{/if}
                     </span>
-                    {if $doc.status == 'obsolete'}<span class="qms-status is-obsolete">已作废</span>
-                    {elseif $doc.status == 'draft'}<span class="qms-status is-review">治理待复核</span>
-                    {elseif $doc.status == 'published'}<span class="qms-status is-current">8021 当前阅读版</span>
-                    {else}<span class="qms-status">{$doc.status}</span>{/if}
+                    {if ($qmsNavigation.layer ?? 'daily') == 'daily'}
+                    <span class="qms-status {if $doc.status == 'obsolete'}is-obsolete{else/}is-current{/if}">{$doc.daily_status_label}</span>
+                    {else/}
+                    <span class="qms-status {if $doc.status == 'obsolete'}is-obsolete{elseif $doc.status == 'draft'}is-review{else/}is-current{/if}">{$doc.governance_status_label}</span>
+                    {/if}
                 </div>
             </div>
             <div class="qms-document-row__actions">
@@ -73,15 +71,17 @@
                 {else/}
                 <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">来源 Word 待补链</span>
                 {/if}
-                <a class="qms-text-link" href="/document/read?id={$doc.id}#document-relations">查看链路</a>
+                <a class="qms-text-link" href="/document/read?id={$doc.id}#document-relations">相关信息</a>
+                {if ($qmsNavigation.layer ?? 'daily') == 'governance'}
                 <a class="qms-text-link is-muted" href="/document/view?id={$doc.id}">文件信息</a>
+                {/if}
             </div>
         </article>
         {/volist}
         {empty name="documents"}
         <div class="qms-empty-state">
             <h3>没有找到文件</h3>
-            <p>换一个编号、名称或正文关键词再试。</p>
+            <p>请检查编号，或改用文件名称中的关键词。</p>
             <a href="/document/index" class="btn btn-outline-secondary btn-sm">返回全部文件</a>
         </div>
         {/empty}

@@ -5,6 +5,16 @@
     const resultLabel = document.querySelector('[data-document-search-result]');
     const content = document.querySelector('.qms-document-reader__content');
     const sectionLinks = Array.from(document.querySelectorAll('[data-section-link]'));
+    const relations = document.querySelector('#document-relations');
+
+    function openRelationsFromHash() {
+        if (relations && window.location.hash === '#document-relations') {
+            relations.open = true;
+        }
+    }
+
+    openRelationsFromHash();
+    window.addEventListener('hashchange', openRelationsFromHash);
 
     function clearHighlights() {
         document.querySelectorAll('.qms-readable-markdown mark').forEach(function (mark) {

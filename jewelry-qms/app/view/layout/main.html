@@ -9,6 +9,7 @@
     <link href="/static/css/qms.css" rel="stylesheet">
     <link href="/static/css/qms-copilot.css" rel="stylesheet">
     <link href="/static/css/qms-responsibility.css" rel="stylesheet">
+    <link href="/static/css/qms-navigation.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
 </head>
 <body
@@ -18,10 +19,11 @@
     data-qms-route="{$qmsPageContext.route|default=''}"
     data-qms-module="{$qmsPageContext.module|default=''}"
     data-qms-title="{$qmsPageContext.title|default=''}"
+    data-qms-navigation-layer="{$qmsNavigation.layer|default='governance'}"
     data-qms-copilot-enabled="{if isset($qmsCopilotEnabled) && $qmsCopilotEnabled}1{else}0{/if}"
     data-qms-ai-configured="{if isset($qmsAiConfigured) && $qmsAiConfigured}1{else}0{/if}"
 >
-{if !empty($environmentLabel)}
+{if !empty($environmentLabel) && ($qmsNavigation.layer ?? 'governance') == 'governance'}
 <div class="alert alert-warning rounded-0 border-0 border-bottom mb-0 py-2 text-center" role="status">
     <strong>{$environmentLabel}</strong>
     {if !empty($environmentNotice)}<span class="ms-2">{$environmentNotice}</span>{/if}
@@ -52,29 +54,50 @@
         </div>
     </div>
 </div>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark qms-layer-navigation">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/dashboard/index">工作台</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav">
+        {if ($qmsNavigation.layer ?? 'governance') == 'daily'}
+        <a class="navbar-brand" href="/quality-workbench">日常工作</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#qmsDailyNavigation" aria-controls="qmsDailyNavigation" aria-expanded="false" aria-label="展开日常导航">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="qmsDailyNavigation">
+            <ul class="navbar-nav me-auto">
                 {if condition="qms_can('qualityworkbench')"}
                 <li class="nav-item">
-                    <a class="nav-link" href="/quality-workbench">我的工作</a>
+                    <a class="nav-link {if ($qmsNavigation.active ?? '') == 'work'}active{/if}" href="/quality-workbench">我的工作</a>
                 </li>
                 {/if}
                 {if condition="qms_can('document')"}
                 <li class="nav-item">
-                    <a class="nav-link" href="/document/index">查文件</a>
+                    <a class="nav-link {if ($qmsNavigation.active ?? '') == 'documents'}active{/if}" href="/document/index">查文件</a>
                 </li>
                 {/if}
                 {if condition="qms_can('record_form_instance')"}
                 <li class="nav-item">
-                    <a class="nav-link" href="/record_form_instance/index">查记录</a>
+                    <a class="nav-link {if ($qmsNavigation.active ?? '') == 'records'}active{/if}" href="/record_form_instance/index">查记录</a>
                 </li>
                 {/if}
+            </ul>
+            {if !empty($qmsNavigation.can_govern)}
+            <div class="qms-navigation-entry">
+                <a class="btn btn-sm btn-outline-light" href="/quality-workbench/projects">进入质量管理</a>
+            </div>
+            {/if}
+        </div>
+        {else/}
+        <a class="navbar-brand" href="/quality-workbench/projects">质量管理</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#qmsGovernanceNavigation" aria-controls="qmsGovernanceNavigation" aria-expanded="false" aria-label="展开质量管理导航">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="qmsGovernanceNavigation">
+            <ul class="navbar-nav">
+                <li class="nav-item qms-governance-return">
+                    <a class="nav-link" href="/quality-workbench">← 返回日常工作</a>
+                </li>
                 {if condition="qms_can_action('qualityworkbench', 'govern')"}
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">质量管理</a>
+                    <a class="nav-link dropdown-toggle active" href="#" data-bs-toggle="dropdown">项目与风险</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="/quality-workbench/projects">评审项目</a></li>
                         {if condition="qms_can('capa')"}<li><a class="dropdown-item" href="/capa/index">风险与改进</a></li>{/if}
@@ -322,9 +345,13 @@
                 {/if}
             </ul>
         </div>
+        {/if}
     </div>
 </nav>
-<div class="container mt-3">
+{if $qmsNavigation.layer == 'daily'}
+<div class="qms-daily-boundary" role="status">纸质文件为正式依据 · 系统用于快速查阅与治理核对</div>
+{/if}
+<div class="qms-shell-content {if ($qmsNavigation.layer ?? 'governance') == 'daily'}is-daily{else/}container mt-3 is-governance{/if}">
     {php}$successMessage = session('success'); $warningMessage = session('warning'); $errorMessage = session('error');{/php}
     {if !empty($successMessage)}
     <div class="alert alert-success alert-dismissible fade show" role="alert" aria-live="polite">{$successMessage}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭提示"></button></div>

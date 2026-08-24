@@ -185,11 +185,10 @@
     align-items: start;
     display: grid;
     gap: 24px;
-    grid-template-columns: 210px minmax(0,1fr) 310px;
+    grid-template-columns: 210px minmax(0, 1fr);
 }
 
-.qms-document-reader__toc,
-.qms-document-reader__relations {
+.qms-document-reader__toc {
     max-height: calc(100vh - 120px);
     overflow: auto;
     position: sticky;
@@ -221,7 +220,9 @@
     border-radius: 4px;
     box-shadow: 0 12px 36px rgba(56, 60, 52, .07);
     min-width: 0;
+    max-width: 1100px;
     padding: clamp(28px, 4vw, 58px);
+    width: 100%;
 }
 
 .qms-in-document-search {
@@ -254,6 +255,37 @@
     background: #fff;
     border: 1px solid var(--qms-line);
     border-radius: 10px;
+    grid-column: 1 / -1;
+    overflow: visible;
+}
+.qms-document-reader__relations summary {
+    align-items: center;
+    color: var(--qms-green);
+    cursor: pointer;
+    display: flex;
+    font-weight: 700;
+    gap: 18px;
+    justify-content: space-between;
+    list-style: none;
+    padding: 16px 18px;
+    position: relative;
+}
+.qms-document-reader__relations summary::-webkit-details-marker { display: none; }
+.qms-document-reader__relations summary::after {
+    content: "+";
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1;
+}
+.qms-document-reader__relations[open] summary::after { content: "−"; }
+.qms-document-reader__relations summary small {
+    color: var(--qms-muted);
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: auto;
+}
+.qms-document-reader__relations-body {
+    border-top: 1px solid var(--qms-line);
     padding: 18px;
 }
 .qms-side-intro { font-size: 12px; line-height: 1.55; margin: 8px 0 16px; }
@@ -270,8 +302,7 @@
 .qms-full-trace-link { color: var(--qms-green); display: inline-block; font-size: 13px; font-weight: 700; margin-top: 14px; text-decoration: none; }
 
 @media (max-width: 1180px) {
-    .qms-document-reader__layout { grid-template-columns: 180px minmax(0,1fr); }
-    .qms-document-reader__relations { grid-column: 2; max-height: none; position: static; }
+    .qms-document-reader__layout { grid-template-columns: 180px minmax(0, 1fr); }
 }
 
 @media (max-width: 760px) {
@@ -291,6 +322,9 @@
     .qms-in-document-search { align-items: stretch; flex-direction: column; margin: -24px -18px 28px; padding: 12px 18px; }
     .qms-in-document-search input { width: 100%; }
     .qms-document-reader__relations { margin-top: 18px; }
+    .qms-document-reader__relations summary { align-items: flex-start; flex-direction: column; gap: 4px; }
+    .qms-document-reader__relations summary small { margin-left: 0; }
+    .qms-document-reader__relations summary::after { position: absolute; right: 18px; }
 }
 
 @media print {
