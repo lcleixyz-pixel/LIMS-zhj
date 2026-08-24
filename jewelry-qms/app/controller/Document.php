@@ -108,6 +108,12 @@ class Document extends BaseController
                 '',
                 (string)$document->title
             ) ?: (string)$document->title;
+            $document->display_number = DocumentPresentationService::businessNumber((string)$document->doc_number);
+            $document->daily_status_label = DocumentPresentationService::dailyStatusLabel((string)$document->status);
+            $document->governance_status_label = DocumentPresentationService::statusLabel(
+                (string)$document->status,
+                TrialModeService::isEnabled()
+            );
             $document->source_available = (bool)(DocumentSourceAssetService::assetForDocument((string)$document->id)['source_available'] ?? false);
         }
         $categories = DocCategory::where('soft_delete', 0)->select();
@@ -784,7 +790,7 @@ class Document extends BaseController
         ));
         array_unshift($recent, [
             'id' => (string)$document['id'],
-            'doc_number' => (string)$document['doc_number'],
+            'doc_number' => (string)$document['display_number'],
             'title' => (string)$document['display_title'],
             'url' => '/document/read?id=' . rawurlencode((string)$document['id']),
             'read_at' => date('Y-m-d H:i'),

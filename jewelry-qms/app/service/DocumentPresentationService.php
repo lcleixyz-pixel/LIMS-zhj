@@ -5,6 +5,23 @@ namespace app\service;
 
 final class DocumentPresentationService
 {
+    public static function businessNumber(string $number): string
+    {
+        $original = trim($number);
+        $number = preg_replace('/^SIM-GOV03-/', '', $original) ?? $original;
+        $number = preg_replace('/^XZTC\//', '', $number) ?? $number;
+        $number = preg_replace('/-(?:19|20)\d{2}$/', '', $number) ?? $number;
+
+        return trim($number) !== '' ? trim($number) : $original;
+    }
+
+    public static function dailyStatusLabel(string $status): string
+    {
+        return $status === 'obsolete'
+            ? '已作废 · 仅供追溯'
+            : '当前治理阅读版';
+    }
+
     public static function statusLabel(string $status, bool $trialMode = false): string
     {
         return match ($status) {

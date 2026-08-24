@@ -237,6 +237,12 @@ final class DocumentReadingService
             '',
             (string)($document['title'] ?? '')
         ) ?: (string)($document['title'] ?? '');
+        $document['display_number'] = DocumentPresentationService::businessNumber(
+            (string)($document['doc_number'] ?? '')
+        );
+        $document['daily_status_label'] = DocumentPresentationService::dailyStatusLabel(
+            (string)($document['status'] ?? '')
+        );
         $document['status_label'] = DocumentPresentationService::statusLabel(
             (string)($document['status'] ?? ''),
             TrialModeService::isEnabled()
