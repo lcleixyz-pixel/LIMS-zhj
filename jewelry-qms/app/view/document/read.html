@@ -80,7 +80,6 @@
                     {foreach $item.targets as $target}
                     <div class="qms-relation-target"><small>{$target.label}</small><strong>{$target.value}</strong></div>
                     {/foreach}
-                    {if !empty($item.note)}<p>{$item.note}</p>{/if}
                     {if !empty($item.sections)}
                     <div class="qms-relation-sections">
                         {foreach $item.sections as $section}<a href="#{$section.anchor}">{$section.title}</a>{/foreach}

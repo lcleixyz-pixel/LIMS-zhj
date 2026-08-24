@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use app\service\DocumentPresentationService;
+
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../app/common.php';
 
@@ -55,5 +57,13 @@ document_reader_ui_assert(str_contains($css, ':focus-visible'), '文件阅读交
 document_reader_ui_assert(str_contains($js, 'data-document-search'), '页内搜索脚本必须绑定明确的数据属性');
 document_reader_ui_assert(str_contains($fileService, "filename*=UTF-8''"), '中文来源文件名必须使用浏览器兼容下载头');
 document_reader_ui_assert(!str_contains($reader, 'controlledPrint'), '治理阶段打印不得伪装成受控打印');
+document_reader_ui_assert(
+    DocumentPresentationService::dailyDocumentReference(
+        'SIM-GOV03-XZTC/CX-08-2026',
+        '[8021测试正式] 文件控制程序'
+    ) === 'CX-08 文件控制程序',
+    '日常链路不得暴露试装前缀和内部标签'
+);
+document_reader_ui_assert(!str_contains($reader, '{$item.note}'), '日常链路不得展示机械迁移技术备注');
 
 echo "qms_document_reader_ui_smoke passed\n";

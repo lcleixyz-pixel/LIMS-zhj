@@ -158,6 +158,15 @@ final class DocumentReadingService
             && $confidence === 'high';
         $decorated['reader_state_label'] = $confirmed ? '已确认' : '待复核';
         $decorated['reader_state_class'] = $confirmed ? 'is-confirmed' : 'is-review';
+        foreach ((array)($decorated['targets'] ?? []) as $index => $target) {
+            if ((string)($target['label'] ?? '') !== '程序文件') {
+                continue;
+            }
+            $decorated['targets'][$index]['value'] = DocumentPresentationService::dailyDocumentReference(
+                (string)($decorated['procedure_number'] ?? ''),
+                (string)($decorated['procedure_title'] ?? '')
+            );
+        }
 
         return $decorated;
     }

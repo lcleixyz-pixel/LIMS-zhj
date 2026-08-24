@@ -22,6 +22,18 @@ final class DocumentPresentationService
             : '当前治理阅读版';
     }
 
+    public static function dailyDocumentReference(string $number, string $title): string
+    {
+        $displayNumber = self::businessNumber($number);
+        $displayTitle = preg_replace(
+            '/^\[8021(?:候选试装|测试正式)\]\s*/u',
+            '',
+            trim($title)
+        ) ?? trim($title);
+
+        return trim(implode(' ', array_filter([$displayNumber, $displayTitle])));
+    }
+
     public static function statusLabel(string $status, bool $trialMode = false): string
     {
         return match ($status) {
