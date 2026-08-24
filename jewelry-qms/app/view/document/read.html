@@ -4,11 +4,10 @@
     <header class="qms-document-reader__header">
         <div class="qms-document-reader__identity">
             <a class="qms-back-link" href="/document/index">← 返回文件库</a>
-            <div class="qms-eyebrow">{$data.document.doc_number}</div>
+            <div class="qms-eyebrow">{$data.document.display_number}</div>
             <h1>{$data.document.display_title}</h1>
             <div class="qms-document-reader__meta">
-                <span>版本 {$data.document.version}</span>
-                <span>{$data.document.status_label}</span>
+                <span>{$data.document.daily_status_label}</span>
             </div>
         </div>
         <div class="qms-document-reader__actions">
@@ -18,18 +17,8 @@
             {else/}
             <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">来源 Word 尚未补链</span>
             {/if}
-            <a class="qms-text-link" href="{$data.information_url}">文件信息</a>
         </div>
     </header>
-
-    <section class="qms-operation-notice" aria-label="当前文件运行阶段">
-        {if $data.operation.mode == 'paper_governance'}
-        <strong>治理中 · 纸质执行</strong>
-        {else/}
-        <strong>{$data.operation.label}</strong>
-        {/if}
-        <span>{$data.operation.notice}</span>
-    </section>
 
     <div class="qms-document-reader__layout">
         <nav class="qms-document-reader__toc" aria-label="章节目录">
@@ -71,8 +60,12 @@
             {/if}
         </section>
 
-        <aside class="qms-document-reader__relations" id="document-relations" aria-label="文件链路">
-            <div class="qms-side-heading">文件链路</div>
+        <details class="qms-document-reader__relations" id="document-relations">
+            <summary>
+                <span>相关依据、表格和责任岗位</span>
+                <small>{$data.relationship_count} 项直接关系 · 展开查看</small>
+            </summary>
+            <div class="qms-document-reader__relations-body">
             <p class="qms-side-intro">只展示系统已有的直接关系；“待复核”不计作链路闭合。</p>
             {if !empty($data.relation_groups)}
             {foreach $data.relation_groups as $group}
@@ -98,10 +91,13 @@
             </section>
             {/foreach}
             {else/}
-            <div class="qms-side-empty">本文件暂时没有直接链路，质量人员需要继续补链或复核。</div>
+            <div class="qms-side-empty">当前未建立直接关系，需由质量人员复核。</div>
             {/if}
+            {if condition="qms_can_action('qualityworkbench', 'govern')"}
             <a class="qms-full-trace-link" href="{$data.full_trace_url}">查看完整链路 →</a>
-        </aside>
+            {/if}
+            </div>
+        </details>
     </div>
 </main>
 

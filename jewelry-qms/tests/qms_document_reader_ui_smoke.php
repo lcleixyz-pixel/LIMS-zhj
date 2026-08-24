@@ -43,9 +43,10 @@ foreach (['全部', '质量手册', '程序文件', '作业指导书', '已作�
     document_reader_ui_assert(str_contains($index, $label), '文件库缺少快捷分类：' . $label);
 }
 
-foreach (['当前治理阅读版', '章节目录', '相关依据、表格和责任岗位', '打印阅读稿（非受控）', '下载来源 Word（用 WPS 打开）', '查看完整链路'] as $label) {
+foreach (['章节目录', '相关依据、表格和责任岗位', '打印阅读稿（非受控）', '下载来源 Word（用 WPS 打开）', '查看完整链路'] as $label) {
     document_reader_ui_assert(str_contains($reader, $label), '阅读页缺少关键文案：' . $label);
 }
+document_reader_ui_assert(str_contains($reader, '$data.document.daily_status_label'), '阅读页必须使用日常状态呈现，不得显示数据库内部状态');
 document_reader_ui_assert(str_contains($reader, 'qms-document-reader__toc'), '阅读页必须有章节目录区域');
 document_reader_ui_assert(str_contains($reader, 'qms-document-reader__content'), '阅读页必须有连续正文区域');
 document_reader_ui_assert(str_contains($reader, '<details class="qms-document-reader__relations"'), '阅读页链路必须按需展开');
