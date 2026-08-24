@@ -1,0 +1,77 @@
+.qms-daily-boundary {
+    background: #fbf1cf;
+    border-bottom: 1px solid #e8d9a8;
+    color: #624f1d;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 18px;
+    text-align: center;
+}
+
+.qms-shell-content.is-daily {
+    max-width: none;
+    padding: 0;
+}
+
+.qms-shell-content.is-daily > .alert {
+    margin: 16px auto;
+    max-width: 1240px;
+}
+
+.qms-navigation-entry {
+    align-items: center;
+    display: flex;
+    margin-left: auto;
+}
+
+.qms-navigation-entry .btn {
+    border-color: rgba(255, 255, 255, .58);
+    color: #fff;
+    font-weight: 600;
+}
+
+.qms-navigation-entry .btn:hover,
+.qms-navigation-entry .btn:focus-visible {
+    background: #fff;
+    color: #1d3c32;
+}
+
+.qms-governance-return {
+    border-right: 1px solid rgba(255, 255, 255, .2);
+    margin-right: 8px;
+    padding-right: 15px;
+}
+
+.qms-layer-navigation .nav-link.active {
+    color: #fff;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+}
+
+.qms-layer-navigation a:focus-visible,
+.qms-layer-navigation button:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, .72);
+    outline-offset: 2px;
+}
+
+@media (max-width: 991.98px) {
+    .qms-navigation-entry {
+        align-items: flex-start;
+        margin: 10px 0 2px;
+    }
+
+    .qms-governance-return {
+        border-right: 0;
+        margin: 0;
+        padding-right: 0;
+    }
+}
+
+@media print {
+    .qms-daily-boundary,
+    .qms-layer-navigation {
+        display: none !important;
+    }
+}

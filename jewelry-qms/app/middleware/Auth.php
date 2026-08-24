@@ -6,6 +6,7 @@ namespace app\middleware;
 use app\model\QmsExternalChangeCandidate;
 use app\model\NotificationUser;
 use app\service\ActionAuthorizationService;
+use app\service\NavigationPresentationService;
 use app\service\RbacService;
 use think\facade\Config;
 use think\facade\Session;
@@ -59,6 +60,16 @@ class Auth
         } catch (\Throwable $exception) {
             $pendingRegulatoryCandidateCount = 0;
         }
+        $canGovern = ActionAuthorizationService::allows('qualityworkbench', 'govern');
+        $qmsNavigation = NavigationPresentationService::context(
+            $request->controller(),
+            $request->action(),
+            $canGovern,
+            [
+                'history' => (string)$request->param('history', ''),
+                'pending_for_me' => (string)$request->param('pending_for_me', ''),
+            ]
+        );
 
         View::layout('layout/main');
         View::assign([
@@ -74,6 +85,7 @@ class Auth
             'canViewEquipmentMenu' => ActionAuthorizationService::allows('equipment', 'view'),
             'recordOperatorMode' => RbacService::isRestrictedRecordOperator(),
             'recordOperatorActive' => ActionAuthorizationService::canRecordOperatorFill(),
+            'qmsNavigation' => $qmsNavigation,
         ]);
 
         return $next($request);
