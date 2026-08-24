@@ -43,13 +43,13 @@ foreach (['全部', '质量手册', '程序文件', '作业指导书', '已作�
     document_reader_ui_assert(str_contains($index, $label), '文件库缺少快捷分类：' . $label);
 }
 
-foreach (['治理中 · 纸质执行', '章节目录', '文件链路', '打印阅读稿（非受控）', '下载来源 Word（用 WPS 打开）', '查看完整链路'] as $label) {
+foreach (['当前治理阅读版', '章节目录', '相关依据、表格和责任岗位', '打印阅读稿（非受控）', '下载来源 Word（用 WPS 打开）', '查看完整链路'] as $label) {
     document_reader_ui_assert(str_contains($reader, $label), '阅读页缺少关键文案：' . $label);
 }
 document_reader_ui_assert(str_contains($reader, 'qms-document-reader__toc'), '阅读页必须有章节目录区域');
 document_reader_ui_assert(str_contains($reader, 'qms-document-reader__content'), '阅读页必须有连续正文区域');
-document_reader_ui_assert(str_contains($reader, 'qms-document-reader__relations'), '阅读页必须有链路侧栏');
-document_reader_ui_assert(str_contains($css, 'grid-template-columns'), '阅读页必须使用稳定三栏网格');
+document_reader_ui_assert(str_contains($reader, '<details class="qms-document-reader__relations"'), '阅读页链路必须按需展开');
+document_reader_ui_assert(str_contains($css, 'grid-template-columns: 210px minmax(0, 1fr)'), '阅读页必须使用目录加正文两栏网格');
 document_reader_ui_assert(str_contains($css, ':focus-visible'), '文件阅读交互必须有键盘焦点提示');
 document_reader_ui_assert(str_contains($js, 'data-document-search'), '页内搜索脚本必须绑定明确的数据属性');
 document_reader_ui_assert(str_contains($fileService, "filename*=UTF-8''"), '中文来源文件名必须使用浏览器兼容下载头');
